@@ -1,0 +1,126 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Containerfile
+    image: travel-fi:dev
+    working_dir: /app
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    tty: true
+    stdin_open: true
+    command: >
+      bash -c "
+      rm -f /app/tmp/pids/server.pid &&
+      bundle install &&
+      yarn install &&
+      bundle exec rails db:prepare &&
+      (yarn build:css &
+      yarn build:watch &
+      bundle exec rails server -b 0.0.0.0)
+      "
+    environment:
+      # Rails & Node
+      NODE_ENV: ${NODE_ENV}
+      RAILS_ENV: ${RAILS_ENV}
+      # Application
+      BASE_URL: ${BASE_URL}
+      # Database
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      DATABASE_URL: ${DATABASE_URL}
+      # Twilio
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER}
+      # Hugging Face
+      HUGGINGFACE_API_KEY: ${HUGGINGFACE_API_KEY}
+      # WalletConnect
+      WALLETCONNECT_PROJECT_ID: ${WALLETCONNECT_PROJECT_ID}
+      # Web Push
+      VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      VAPID_PRIVATE_KEY: ${VAPID_PRIVATE_KEY}
+      # Google Analytics
+      GOOGLE_ANALYTICS_ID: ${GOOGLE_ANALYTICS_ID}
+      # Google OAuth
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL}
+      # Blockchain Network
+      CHAIN_ID: ${CHAIN_ID}
+      CHAIN_NAME: ${CHAIN_NAME}
+      CHAIN_EXPLORER_URL: ${CHAIN_EXPLORER_URL}
+      RPC_URL: ${RPC_URL}
+      WSS_URL: ${WSS_URL}
+      # Smart Contracts
+      TOKEN_CONTRACT_ADDRESS: ${TOKEN_CONTRACT_ADDRESS}
+      CROWDSALE_CONTRACT_ADDRESS: ${CROWDSALE_CONTRACT_ADDRESS}
+      REWARDS_CONTRACT_ADDRESS: ${REWARDS_CONTRACT_ADDRESS}
+      USDT_CONTRACT_ADDRESS: ${USDT_CONTRACT_ADDRESS}
+      # Email / SMTP
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_AUTHENTICATION: ${SMTP_AUTHENTICATION}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      MAILER_HOST: ${MAILER_HOST}
+      MAILER_DEFAULT_FROM: ${MAILER_DEFAULT_FROM}
+      # Mailgun
+      MAILGUN_API_KEY: ${MAILGUN_API_KEY}
+      MAILGUN_DOMAIN: ${MAILGUN_DOMAIN}
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+    env_file:
+      - ".env"
+    cpus: "1"
+    mem_limit: "1g"
+
+  postgres:
+    image: postgis/postgis:17-3.5
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: travel_fi
+      POSTGRES_EXTENSIONS: "postgis"
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB -h 127.0.0.1 || exit 1"]
+      interval: 5s
+      timeout: 2s
+      retries: 15
+    cpus: "1.0"
+    mem_limit: "512m"
+
+  #osrm:
+  #  image: osrm/osrm-backend
+  #  volumes:
+  #    - ./data/osrm:/data
+  #  command: osrm-routed --algorithm mld /data/your-region.osrm
+  #  ports:
+  #    - "5000:5000"
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "1025:1025"  # SMTP port
+      - "8025:8025"  # Web UI port
+    cpus: "0.5"
+    mem_limit: "128m"
+  
+volumes:
+  pg-data:
+  node_modules:
+  # networks:
+  #   travel-fi:
+  #     driver: bridge
