@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@source "../../views/**/*.erb";
+@source "../../javascript/**/*.js";
+@source "../../../node_modules/flowbite/**/*.js";
+
+@import "flowbite/src/themes/default";

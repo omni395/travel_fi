@@ -1,0 +1,71 @@
+default: &default
+  
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV.fetch("POSTGRES_USER") { 'user' } %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD") { 'password' } %>
+  host: <%= ENV.fetch("DATABASE_HOST") { 'postgres' } %>
+
+development:
+  primary:
+    <<: *default
+    adapter: postgis
+    database: travel_fi_dev
+    schema_search_path: public,postgis
+  queue:
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_dev_queue
+    migrations_paths: db/queue_migrate
+  cache:
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_dev_cache
+    migrations_paths: db/cache_migrate
+  cable:
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_dev_cable
+    migrations_paths: db/cable_migrate
+
+test:
+  primary:
+    <<: *default
+    adapter: postgis
+    database: travel_fi_test
+    schema_search_path: public,postgis
+  queue: &test_queue
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_test_queue
+  cache:
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_test_cache
+  cable:
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_test_cable
+
+production:
+  primary:
+    <<: *default
+    adapter: postgis
+    database: travel_fi_prod
+    password: <%= ENV["TRAVEL_FI_DATABASE_PASSWORD"] %>
+    schema_search_path: public,postgis
+  queue:
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_prod_queue
+    #migrations_paths: db/queue_migrate
+  cache:
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_prod_cache
+    #migrations_paths: db/cache_migrate
+  cable:
+    <<: *default
+    adapter: postgresql
+    database: travel_fi_prod_cable
+    #migrations_paths: db/migrate
