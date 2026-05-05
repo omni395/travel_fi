@@ -18,7 +18,7 @@ services:
       bundle install &&
       yarn install &&
       bundle exec rails db:prepare &&
-      (yarn build:css &
+      (yarn build:css --watch --poll &
       yarn build:watch &
       bundle exec rails server -b 0.0.0.0)
       "

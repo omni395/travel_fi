@@ -1,0 +1,139 @@
+<!-- Users Form Component -->
+<!-- WebSocket-first: Stimulus controller перехватывает submit и отправляет через WebSocket -->
+<div data-controller="users" class="w-full max-w-2xl">
+
+  <!-- Form Container -->
+  <div class="card bg-base-100 shadow-xl border border-teal-200">
+    <div class="card-body">
+      <!-- Form Header -->
+      <h2 class="card-title text-2xl font-bold text-gray-900 mb-6">
+        <%= t('user.edit_profile_title') %>
+      </h2>
+
+      <!-- Error Messages Alert (hidden by default, shown by Stimulus) -->
+      <div id="edit-form-errors" role="alert" class="alert alert-error hidden mb-4">
+        <i class="mdi mdi-alert-circle text-2xl"></i>
+        <div>
+          <p class="font-bold"><%= t('common.errors') %></p>
+          <ul id="error-list" class="text-sm"></ul>
+        </div>
+      </div>
+
+      <!-- Loading Indicator (hidden by default) -->
+      <div id="edit-form-loading" class="alert alert-info hidden mb-4">
+        <span class="loading loading-spinner loading-md"></span>
+        <span class="font-semibold"><%= t('common.loading') %></span>
+      </div>
+
+    <!-- Form Element with Stimulus Reflex Integration -->
+    <form
+      id="user-edit-form"
+      data-action="submit->users#handleSubmit"
+      data-user-id="<%= @user.id %>"
+      class="space-y-6">
+
+      <!-- CSRF Token -->
+      <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+
+      <!-- Name Field -->
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text"><%= t('activerecord.attributes.user.name') %></span>
+          <span class="label-text-alt text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="user_name"
+          name="name"
+          value="<%= @user.name %>"
+          required
+          minlength="2"
+          maxlength="100"
+          data-users-target="nameInput"
+          class="input input-bordered w-full"
+          placeholder="<%= t('user.name_placeholder') %>">
+        <label class="label">
+          <span class="label-text-alt text-gray-500"><%= t('user.name_hint') %></span>
+        </label>
+      </div>
+
+      <!-- Email Field (Read-only for security) -->
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text"><%= t('activerecord.attributes.user.email') %></span>
+        </label>
+        <input
+          type="email"
+          id="user_email"
+          value="<%= @user.email %>"
+          disabled
+          class="input input-bordered w-full bg-gray-100 cursor-not-allowed">
+        <label class="label">
+          <span class="label-text-alt text-gray-500"><%= t('user.email_cannot_change') %></span>
+        </label>
+      </div>
+
+      <!-- Avatar Upload Field -->
+      <div class="form-control">
+        <label class="label">
+          <span class="label-text"><%= t('user.avatar') %></span>
+          <span class="label-text-alt text-gray-500">(JPG, PNG, WebP, Max 5MB)</span>
+        </label>
+
+        <!-- Avatar Preview -->
+        <div class="mb-3 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <div id="avatar-preview" class="flex justify-center">
+            <% if @user.avatar.attached? && @user.avatar.blob.variable? %>
+              <div class="avatar">
+                <div class="w-32 rounded-full">
+                  <%= image_tag @user.avatar, class: "w-full h-full object-cover" %>
+                </div>
+              </div>
+            <% else %>
+              <div class="avatar placeholder">
+                <div class="bg-gradient-to-br from-teal-400 to-sky-400 text-white w-32 rounded-full">
+                  <span class="text-2xl font-bold"><%= @user.name.first.upcase %></span>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- File Input -->
+        <input
+          type="file"
+          id="user_avatar"
+          name="avatar"
+          accept="image/jpeg,image/png,image/webp"
+          data-users-target="avatarInput"
+          data-action="change->users#previewAvatar"
+          class="file-input file-input-bordered w-full">
+        <label class="label">
+          <span class="label-text-alt text-gray-500"><%= t('user.avatar_hint') %></span>
+        </label>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="card-actions justify-end mt-4">
+        <!-- Save Button -->
+        <button
+          type="submit"
+          id="save-button"
+          data-users-target="submitButton"
+          class="btn bg-gradient-to-r from-teal-600 to-sky-600 text-white hover:from-teal-700 hover:to-sky-700">
+          <i class="mdi mdi-content-save"></i>
+          <%= t('common.save') %>
+        </button>
+
+        <!-- Cancel Button -->
+        <button
+          type="button"
+          id="cancel-button"
+          data-action="click->users#handleCancel"
+          class="btn btn-ghost">
+          <%= t('common.cancel') %>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

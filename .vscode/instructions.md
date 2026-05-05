@@ -4,8 +4,19 @@
 
 ### Фронэнд
 Используются исключительно веб компоненты. НИКАКИХ партиалов.
-Используются исключительно TailwindCSS+Flowbite классы
+Используются исключительно чистый TailwindCSS + https://www.stimulus-components.com
 Для иконок используем иконки MDI в формате svg с обязательным коментрием названия класса иконки.
+
+### Стиль и цвета.
+Приложение должно быть четко тилизировно. Взде придерживться одного стиля в зелено-глбых цветах с соответтвующими оттенками.
+Кастомные стили не должны ипользовться никогда. Вся работа ведется через классы TailwindCSS+ + https://www.stimulus-components.com
+
+### Комментарии
+Все методы должны дыть задокументированы. коментарий с описанием действий писать перед методом.
+
+### Интернационализация
+Используются четыре локали: :en, :ru, :es, :zh
+Не должно бть ни одного захардкоренного текста в приложении ни на одной странице и ни в одном компоненте. все должно быть прописано через ключи.
 
 ### 1️⃣ WebSocket-First подход (ВСЕГДА)
 
@@ -33,14 +44,12 @@ class ItemReflex < ApplicationReflex
     @item = Item.find(params[:id])
     authorize_with_pundit!(@item, :update?)
     ItemUpdateService.call(item: @item, params: params)
-    # Model.after_commit сработает → Broadcaster → CableReady
+    # PaperTrail создает версию → PaperTrail::Version.after_commit → Broadcaster → CableReady
   end
 end
 ```
 
----
-
-### 2️⃣ DATABASE as Single Source of Truth (ВСЕГДА)
+### 2️⃣ PaperTrail record as Single Source of Truth (ВСЕГДА)
 
 **Правило**: Все данные, включая состояние кэша и аудит, должны быть в PostgreSQL. Нет синхронизации между несколькими источниками.
 
@@ -54,8 +63,6 @@ end
 - Создай Migration для новых таблиц
 - Добавь `has_paper_trail` если это таблица с аудитом
 - Убедись что `after_commit` корректно вызывает Broadcaster
-
----
 
 ### 3️⃣ Обязательный поток данных (Reflex → Service → Broadcaster)
 
@@ -71,13 +78,14 @@ end
 4. Service (app/services/):
    - Выполняет бизнес-логику
    - Вызывает Model.save / Model.update / Model.create
-5. Model.after_commit:
+5. PaperTrail создает запись версии (ЕДИНСТВЕННЫЙ триггер)
+6. PaperTrail::Version.after_commit:
    - Вызывает соответствующий Broadcaster
-6. Broadcaster (app/broadcasters/):
+7. Broadcaster (app/broadcasters/):
    - Определяет получателей (фильтрация по ролям)
    - Генерирует CableReady команды
    - Создает Noticed уведомления
-7. CableReady → ActionCable → WebSocket → браузеры → DOM морфинг
+8. CableReady → ActionCable → WebSocket → браузеры → DOM морфинг
 ```
 
 **Это означает**:
@@ -103,7 +111,7 @@ class TripReflex < ApplicationReflex
     trip = Trip.find(params[:id])
     authorize_with_pundit!(trip, :book?)
     TripBookingService.call(trip: trip, user: current_user)
-    # Model.after_commit → Broadcaster → CableReady
+    # PaperTrail создает версию → PaperTrail::Version.after_commit → Broadcaster → CableReady
   end
 end
 
@@ -115,7 +123,7 @@ class TripBookingService
   
   def execute
     trip.update(status: 'booked', booked_by: current_user)
-    # after_commit сработает, вызовет TripBroadcaster
+    # PaperTrail создает версию → PaperTrail::Version.after_commit → TripBroadcaster
   end
 end
 
@@ -134,8 +142,6 @@ class TripBroadcaster
   end
 end
 ```
-
----
 
 ### 4️⃣ Авторизация через Pundit + Rolify (ОБЯЗАТЕЛЬНО в Reflex)
 
@@ -165,8 +171,6 @@ class UserPolicy < ApplicationPolicy
   end
 end
 ```
-
----
 
 ### 5️⃣ Асинхронные операции через SolidQueue (Никогда не блокируй WebSocket)
 
@@ -200,12 +204,10 @@ class PaymentProcessingJob < ApplicationJob
     transaction = Transaction.find(transaction_id)
     # Долгая обработка платежа...
     transaction.update(status: 'completed')
-    # Model.after_commit → Broadcaster → браузер узнает о результате
+    # PaperTrail создает версию → PaperTrail::Version.after_commit → Broadcaster → браузер узнает о результате
   end
 end
 ```
-
----
 
 ### 6️⃣ Rails Way - структура файлов и соглашения
 
@@ -222,7 +224,7 @@ app/
   broadcasters/    ← Выход данных (определяет ЧТО и КОМУ)
     item_broadcaster.rb     ← ItemBroadcaster.call(item)
   models/          ← Модели с callbacks
-    item.rb        ← has_paper_trail; after_commit
+    item.rb        ← has_paper_trail; PaperTrail::Version.after_commit
   policies/        ← Pundit авторизация
     item_policy.rb ← ItemPolicy#update?
   views/
@@ -233,7 +235,7 @@ app/
 **Соглашения по именованию**:
 - ✅ Service классы: `{Model}CreateService`, `{Model}UpdateService`, `{Model}DestroyService`
 - ✅ Reflex методы: `verb_noun` (update_item, delete_trip, book_accommodation)
-- ✅ Broadcaster методы: обычно один `call` метод, срабатывает из after_commit
+- ✅ Broadcaster методы: обычно один `call` метод, срабатывает из PaperTrail::Version.after_commit
 - ✅ Миграции: `rails generate migration AddFieldToTable field:type`
 - ✅ Моделі: `rails generate model Item name:string trip:references`
 
@@ -261,8 +263,6 @@ touch app/policies/trip_review_policy.rb
 rails generate component TripReview
 ```
 
----
-
 ## 📋 Общие правила
 
 ### Комментарии и документация
@@ -280,11 +280,9 @@ rails generate component TripReview
 - Если вижу код, который нарушает эти правила → указываю и предлагаю исправление
 - Всегда объясняю ПОЧЕМУ нужно следовать паттерну (отсылаюсь к README архитектуре)
 
----
-
 ## 🛡️ Обработка ошибок (Error Handling)
 
-**Правило**: Используй исключения в Service для мгновенной остановки, а `after_commit` в модели гарантирует целостность данных.
+**Правило**: Используй исключения в Service для мгновенной остановки, а PaperTrail::Version.after_commit гарантирует целостность данных.
 
 **Как работает**:
 1. Service выбрасывает исключение если что-то не так
@@ -300,7 +298,7 @@ class PaymentService
     raise PaymentError, "Insufficient funds" if user.balance < amount
     raise PaymentError, "Invalid payment method" unless payment_method.valid?
     
-    # Если все ОК, сохраняем (после save → after_commit → Broadcaster)
+    # Если все ОК, сохраняем (после save → PaperTrail создает версию → PaperTrail::Version.after_commit → Broadcaster)
     payment.save!
   end
 end
@@ -329,8 +327,6 @@ export default class extends Controller {
   }
 }
 ```
-
----
 
 ## 🔐 Авторизация - отдельные методы на действие
 
@@ -383,8 +379,6 @@ end
 authorize_with_pundit!(user, :manage?, action: :ban)  # ❌ не явно
 ```
 
----
-
 ### Когда можно отступить от WebSocket-first?
 Только по **ПРЯМОМУ запросу пользователя**:
 - ✅ Экспорт файлов (CSV, PDF) - используй обычный контроллер с `send_file`
@@ -405,7 +399,7 @@ def action_name
   # 3. Делегируй Service
   ResourceService.call(resource: @resource, params: params)
   
-  # Model.after_commit сработает → Broadcaster → CableReady
+  # PaperTrail создает версию → PaperTrail::Version.after_commit → Broadcaster → CableReady
 end
 ```
 
@@ -479,8 +473,6 @@ class ResourceBroadcaster
 end
 ```
 
----
-
 ## 💡 Примеры промптов для тестирования инструкций
 
 ### Пример 1: Правильное использование инструкций
@@ -523,8 +515,6 @@ end
 - ✅ Брузер видит обновление сразу (не ждет Email)
 - ✅ Email отправляется параллельно
 
----
-
 ## 🎯 Рекомендуемые расширения инструкций
 
 Для создания более специфичных правил предложу следующие customizations:
@@ -554,14 +544,10 @@ end
    - Как использовать разные каналы (Email, Push, SMS, In-app)
    - Как обрабатывать preferences пользователя
 
----
-
 ## 📝 Версия инструкций
 
 - **v1.0** - Базовые архитектурные правила (2024-04-23)
 - Следующие версии: будут обновляться при добавлении новых паттернов
-
----
 
 - [ ] Весь новый код в Reflex → Service → Broadcaster
 - [ ] ВСЕ Reflex методы вызывают `authorize_with_pundit!`

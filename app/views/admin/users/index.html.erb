@@ -1,0 +1,10 @@
+<%# Admin Users Index - список пользователей %>
+
+<%= render Admin::UsersListComponent.new(
+      users: @users,
+      search_query: @search_query,
+      status_filter: @status_filter,
+      selected_user: @selected_user,
+      edit_mode: @edit_mode,
+      roles: @roles
+    ) %>

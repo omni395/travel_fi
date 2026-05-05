@@ -8,7 +8,10 @@ const production = process.env.RAILS_ENV === 'production'
 
 const config = {
   // Точка входа твоего приложения
-  entryPoints: ["app/javascript/application.js"],
+  entryPoints: [
+    "app/javascript/application.js",
+    "app/javascript/admin.js"
+  ],
   
   // Собираем всё в один файл
   bundle: true,

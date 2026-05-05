@@ -1,27 +1,37 @@
 # frozen_string_literal: true
 
 class ApplicationReflex < StimulusReflex::Reflex
-  # Put application-wide Reflex behavior and callbacks in this file.
+  include Pundit::Authorization
+  
+  # ActionCable connection использует current_user as identified_by
+  delegate :current_user, to: :connection
+  
+  # Устанавливаем текущего пользователя для Pundit
+  before_reflex do
+    Current.user = current_user
+  end
+
+  # Пробрасываем NotAuthorizedError при ошибке авторизации
+  rescue_from Pundit::NotAuthorizedError do |exception|
+    Rails.logger.warn("Pundit authorization failed: #{exception.message}")
+    morph :nothing
+  end
+
+  # Пробрасываем другие ошибки валидации
+  rescue_from ActiveRecord::RecordInvalid do |exception|
+    Rails.logger.warn("Record validation failed: #{exception.message}")
+    morph :nothing
+  end
+
   #
-  # Learn more at: https://docs.stimulusreflex.com/guide/reflex-classes
+  # Авторизует действие через Pundit
   #
-  # If your ActionCable connection is: `identified_by :current_user`
-  #   delegate :current_user, to: :connection
+  # @param resource [Object] ресурс для авторизации
+  # @param action [Symbol] действие для проверки прав
+  # @raise [Pundit::NotAuthorizedError] если нет прав
   #
-  # current_user delegation allows you to use the Current pattern, too:
-  #   before_reflex do
-  #     Current.user = current_user
-  #   end
-  #
-  # To access view helpers inside Reflexes:
-  #   delegate :helpers, to: :ApplicationController
-  #
-  # If you need to localize your Reflexes, you can set the I18n locale here:
-  #
-  #   before_reflex do
-  #     I18n.locale = :fr
-  #   end
-  #
-  # For code examples, considerations and caveats, see:
-  # https://docs.stimulusreflex.com/guide/patterns#internationalization
+  def authorize_with_pundit!(resource, action)
+    authorize(resource, action)
+  end
 end
+

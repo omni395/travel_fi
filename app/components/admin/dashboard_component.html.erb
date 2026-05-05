@@ -1,0 +1,119 @@
+<%# Admin Dashboard Component - дашборд админки %>
+<%# Отображает статистику и последние активности %>
+
+<div class="p-6">
+  <%# Заголовок страницы %>
+  <h1 class="text-3xl font-bold text-teal-600 mb-6">
+    <%= t('admin.dashboard.title') %>
+  </h1>
+
+  <%# Статистика %>
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+    <%# Количество пользователей %>
+    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
+      <div class="text-sky-600 mb-2">
+        <i class="mdi <%= stat_icon_name(:total_users) %> text-4xl"></i>
+        <%# MDI: <%= stat_icon_name(:total_users) %> %>
+      </div>
+      <div class="text-gray-600 text-sm mb-1"><%= stat_label(:total_users) %></div>
+      <div class="text-3xl font-bold text-sky-600"><%= @stats[:total_users] %></div>
+    </div>
+
+    <%# Активные пользователи %>
+    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
+      <div class="text-teal-600 mb-2">
+        <i class="mdi <%= stat_icon_name(:active_users) %> text-4xl"></i>
+        <%# MDI: <%= stat_icon_name(:active_users) %> %>
+      </div>
+      <div class="text-gray-600 text-sm mb-1"><%= stat_label(:active_users) %></div>
+      <div class="text-3xl font-bold text-teal-600"><%= @stats[:active_users] %></div>
+    </div>
+
+    <%# Заблокированные пользователи %>
+    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
+      <div class="text-red-600 mb-2">
+        <i class="mdi <%= stat_icon_name(:suspended_users) %> text-4xl"></i>
+        <%# MDI: <%= stat_icon_name(:suspended_users) %> %>
+      </div>
+      <div class="text-gray-600 text-sm mb-1"><%= stat_label(:suspended_users) %></div>
+      <div class="text-3xl font-bold text-red-600"><%= @stats[:suspended_users] %></div>
+    </div>
+
+    <%# Новые пользователи за сегодня %>
+    <div class="bg-white rounded-lg shadow-md p-6 flex flex-col items-center justify-center">
+      <div class="text-sky-600 mb-2">
+        <i class="mdi <%= stat_icon_name(:new_users_today) %> text-4xl"></i>
+        <%# MDI: <%= stat_icon_name(:new_users_today) %> %>
+      </div>
+      <div class="text-gray-600 text-sm mb-1"><%= stat_label(:new_users_today) %></div>
+      <div class="text-3xl font-bold text-sky-600"><%= @stats[:new_users_today] %></div>
+    </div>
+  </div>
+
+  <%# Последние пользователи %>
+  <div class="bg-white rounded-lg shadow-md mb-8 overflow-hidden">
+    <div class="p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">
+        <%= t('admin.dashboard.recent_users') %>
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><%= t('admin.users.name') %></th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><%= t('admin.users.email') %></th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><%= t('admin.users.status') %></th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"><%= t('admin.users.created_at') %></th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <% @recent_users.each do |user| %>
+              <tr class="<%= cycle('bg-white', 'bg-gray-50') %>">
+                <td class="px-6 py-4 whitespace-nowrap"><%= user.name %></td>
+                <td class="px-6 py-4 whitespace-nowrap"><%= user.email %></td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full <%= user_status_class(user.status) %>">
+                    <%= t("activerecord.attributes.user.statuses.#{user.status}") %>
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"><%= l(user.created_at, format: :short) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <%# Последние активности %>
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="p-6">
+      <h2 class="text-xl font-semibold text-gray-800 mb-4">
+        <%= t('admin.dashboard.recent_activities') %>
+      </h2>
+      <div class="space-y-4">
+        <% @recent_activities.each do |version| %>
+          <div class="flex items-start">
+            <div class="flex-shrink-0">
+              <div class="h-8 w-8 rounded-full bg-teal-100 flex items-center justify-center">
+                <i class="mdi mdi-history text-teal-500 text-xl"></i>
+                <%# MDI: history %>
+              </div>
+            </div>
+            <div class="ml-4 flex-1 bg-gray-50 rounded-md p-3">
+              <p class="text-sm text-gray-700 font-semibold">
+                <%= version.item_type %>#<%= version.item_id %>
+              </p>
+              <p class="text-xs text-gray-500">
+                <%= t("user_audit.actions.#{version.event}") %>
+              </p>
+              <p class="text-xs text-gray-400">
+                <%= l(version.created_at, format: :short) %>
+              </p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
