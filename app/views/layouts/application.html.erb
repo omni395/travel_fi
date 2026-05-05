@@ -18,11 +18,22 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
+    <!-- Use CDN for Material Design Icons to ensure latest version and reduce asset size (optional) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+
     <%= stylesheet_link_tag :app %>
     <%= javascript_include_tag "application", type: "module" %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="flex flex-col min-h-screen" data-controller="cable">
+    <!-- Navbar Section -->
+    <div class="flex-none">
+      <%= render NavbarComponent.new(user: current_user) %>
+    </div>
+
+    <!-- Content Section -->
+    <div class="flex-1 overflow-y-auto p-4">
+      <%= yield %>
+    </div>
   </body>
 </html>

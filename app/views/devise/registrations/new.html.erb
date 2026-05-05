@@ -1,0 +1,96 @@
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-6 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-md mt-16">
+    <!-- Header -->
+    <div class="text-center mb-2">
+      <h1 class="text-4xl font-bold text-indigo-600 mb-2">Travel-Fi</h1>
+      <h2 class="text-2xl font-bold text-gray-900">Create Account</h2>
+      <p class="text-gray-600 mt-2">Join our community and find WiFi anywhere</p>
+    </div>
+
+    <!-- Sign Up Form -->
+    <div id="devise_registration_form" class="bg-white rounded-xl shadow-lg p-6 mb-2">
+      <%= form_with(model: resource, as: resource_name, url: registration_path(resource_name), html: { multipart: true }) do |form| %>
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+        <% if resource.errors.any? %>
+          <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h4 class="text-red-800 font-bold mb-2"><%= pluralize(resource.errors.count, "error") %> prohibited this user from being saved:</h4>
+            <ul class="list-disc list-inside text-red-700">
+              <% resource.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <!-- Email -->
+        <div class="mb-2">
+          <%= form.label :email, class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "your@example.com" %>
+        </div>
+
+        <!-- Name and Avatar (two-column: 2/3 and 1/3) -->
+        <div class="mb-2 flex gap-3">
+          <!-- Name (3/4 width) -->
+          <div class="w-3/4">
+            <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <%= form.text_field :name, autocomplete: "name", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "Your name" %>
+          </div>
+
+          <!-- Avatar (1/4 width) -->
+          <div class="w-1/4">
+            <%= form.label :avatar, class: "block text-sm font-medium text-gray-700 mb-2" %>
+            <div class="flex items-center gap-3">
+              <%= form.file_field :avatar, id: 'user_avatar_input', accept: 'image/png,image/jpeg,image/webp', class: "hidden" %>
+              <label for="user_avatar_input" class="inline-flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer h-10">
+                <i class="mdi mdi-cloud-upload text-gray-400 text-lg"></i>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mb-2">
+          <%= form.label :password, class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.password_field :password, autocomplete: "new-password", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "Minimum 8 characters" %>
+        </div>
+
+        <!-- Password Confirmation -->
+        <div class="mb-2">
+          <%= form.label :password_confirmation, class: "block text-sm font-medium text-gray-700 mb-2" %>
+          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "Minimum 8 characters" %>
+        </div>
+
+        <!-- Sign Up Button -->
+        <div class="mb-2">
+          <%= form.submit "Create Account", class: "w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium cursor-pointer" %>
+        </div>
+      <% end %>
+
+      <!-- OAuth Divider -->
+      <div class="relative mb-4">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-300"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-white text-gray-500">or sign up with</span>
+        </div>
+      </div>
+
+      <!-- OAuth Buttons (two-column) -->
+      <div class="flex flex-col gap-2">
+        <a href="<%= user_google_oauth2_omniauth_authorize_path %>" class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition cursor-pointer">
+          <%= image_tag 'Google_G_logo.svg', alt: 'Google', class: 'w-5 h-5' %>
+          <span class="font-medium text-gray-700">Google</span>
+        </a>
+      </div>
+      </div>
+      <!-- Sign In Link -->
+      <div class="text-center">
+        <p class="text-gray-600">
+          Already have an account?
+          <%= link_to "Sign In", new_user_session_path, class: "text-indigo-600 hover:text-indigo-700 font-bold" %>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

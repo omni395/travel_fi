@@ -1,0 +1,94 @@
+<!-- Navbar Component: Сине-зеленый градиентный navbar -->
+<nav class="secondary-primary shadow-lg">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between h-16">
+      <!-- Левая часть навбара -->
+      <div class="flex items-center">
+        <!-- Кнопка открытия сайдбара (только на мобильных, < md) -->
+        <button class="text-white hover:bg-secondary p-2 rounded-md md:hidden" data-action="reveal#toggle" type="button">
+          <i class="mdi mdi-menu text-xl"></i>
+          <%# MDI: menu %>
+        </button>
+
+        <!-- Логотип + название -->
+        <%= link_to root_path(locale: I18n.locale), class: "flex items-center hover:bg-transparent transition-colors duration-200 py-2" do %>
+          <%= image_tag "logo-2.png", class: "h-8 w-auto" %>
+          <span class="ml-2 hidden md:inline text-white text-xl font-medium">Travel-Fi</span>
+        <% end %>
+      </div>
+
+      <!-- Центральная часть навбара (навигация на десктопе) -->
+      <div class="hidden md:flex items-center space-x-4">
+        <% main_menu_items.each do |item| %>
+          <%= link_to item[:label], item[:path], class: "text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200" %>
+        <% end %>
+      </div>
+
+      <!-- Правая часть навбара -->
+      <div class="flex items-center space-x-2">
+
+        <!-- Кнопки входа и регистрации (если пользователь не авторизован) -->
+        <% unless user_signed_in? %>
+          <!-- Кнопка входа (иконка + название, на мобильных только иконка) -->
+          <%= link_to new_user_session_path(locale: I18n.locale), class: "text-white hover:bg-secondary px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200" do %>
+            <i class="mdi mdi-login text-xl"></i>
+            <%# MDI: login %>
+            <span class="hidden md:inline ml-1"><%= t("navbar.login") %></span>
+          <% end %>
+
+          <!-- Кнопка регистрации (иконка + название, на мобильных только иконка) -->
+          <%= link_to new_user_registration_path(locale: I18n.locale), class: "bg-white text-secondary hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200" do %>
+            <i class="mdi mdi-account-plus text-xl"></i>
+            <%# MDI: account-plus %>
+            <span class="hidden md:inline ml-1"><%= t("navbar.register") %></span>
+          <% end %>
+        <% else %>
+          <!-- Дропдаун-меню пользователя -->
+          <%= render Ui::DropdownComponent.new do |dropdown| %>
+            <% dropdown.with_trigger do %>
+              <button type="button" data-dropdown-target="trigger" data-action="dropdown#toggle click@window->dropdown#hide" class="flex items-center text-white hover:bg-secondary px-3 py-2 rounded-md transition-colors duration-200">
+                <div class="w-8 h-8 rounded-full overflow-hidden">
+                  <%= image_tag user_avatar, class: "w-full h-full object-cover" %>
+                </div>
+                <span class="hidden md:inline-block text-white font-medium ml-2"><%= @user.name %></span>
+              </button>
+            <% end %>
+            
+            <% dropdown.with_menu do %>
+              <div class="w-48 bg-gradient-primary-to-secondary rounded-md shadow-lg">
+                <div class="py-1">
+                  <% if @user.admin? %>
+                    <%= link_to t("navbar.admin_panel"), admin_root_path(locale: I18n.locale), class: "block px-4 py-2 text-sm text-white hover:bg-gradient-secondary-to-primary", data: { action: "dropdown#toggle" } %>
+                  <% end %>
+                  <%= link_to t("navbar.profile"), user_path(@user, locale: I18n.locale), class: "block px-4 py-2 text-sm text-white hover:bg-gradient-secondary-to-primary", data: { action: "dropdown#toggle" } %>
+                  <%= link_to t("navbar.settings"), "#", class: "block px-4 py-2 text-sm text-white hover:bg-gradient-secondary-to-primary", data: { action: "dropdown#toggle" } %>
+                  <div class="border-t border-white/30 my-2"></div>
+                  <%= link_to t("navbar.logout"), destroy_user_session_path, data: { turbo_method: :delete, turbo_confirm: t("navbar.logout_confirm"), action: "dropdown#toggle" }, class: "block px-4 py-2 text-sm text-white hover:bg-gradient-secondary-to-primary" %>
+                </div>
+              </div>
+            <% end %>
+          <% end %>
+        <% end %>
+
+        <!-- Дропдаун переключения языка -->
+        <%= render Ui::DropdownComponent.new do |dropdown| %>
+          <% dropdown.with_trigger do %>
+            <button type="button" data-dropdown-target="trigger" data-action="dropdown#toggle click@window->dropdown#hide" class="flex items-center text-white hover:bg-secondary px-3 py-2 rounded-md transition-colors duration-200">
+              <span class="text-white font-medium"><%= t("navbar.languages.#{I18n.locale}") %></span>
+            </button>
+          <% end %>
+          <% dropdown.with_menu do %>
+            <div class="w-48 bg-gradient-primary-to-secondary rounded-md shadow-lg">
+              <div class="py-1">
+                <% language_items.each do |item| %>
+                  <%= link_to item[:label], item[:path], class: "block px-4 py-2 text-sm text-white hover:bg-gradient-secondary-to-primary", data: { action: "dropdown#toggle" } %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+
+      </div>
+    </div>
+  </div>
+</nav>

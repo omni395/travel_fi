@@ -1,7 +1,38 @@
 @import "tailwindcss";
 
+/* Настройка путей контента (в v4 используется @source вместо tailwind.config.js) */
 @source "../../views/**/*.erb";
 @source "../../javascript/**/*.js";
-@source "../../../node_modules/flowbite/**/*.js";
+@source "./public/*.html";
+@source "./app/helpers/**/*.rb";
+@source "./app/components/**/*.{rb,erb,html}";
 
-@import "flowbite/src/themes/default";
+@theme {
+  --color-primary: #0288D1;
+  --color-secondary: #26A69A;
+  --color-accent: #FF5722;
+  --color-error: #D32F2F;
+  --color-warning: #FFA000;
+  --color-info: #0288D1;
+  --color-success: #388E3C;
+  --color-text: #fafafa;
+
+  --background-image-gradient-primary-to-secondary: linear-gradient(135deg, rgb(2, 136, 209) 0%, rgb(38, 166, 154) 100%);
+  --background-image-gradient-secondary-to-primary: linear-gradient(135deg, rgb(38, 166, 154) 0%, rgb(2, 136, 209) 100%);
+}
+
+@layer base {
+  a, button, label, input, select, li, .cursor-pointer {
+    cursor: pointer;
+  }
+}
+
+@layer components {
+  /* Использование новых переменных темы через @apply */
+  .primary-secondary { 
+    @apply bg-gradient-to-r from-teal-600 to-sky-600 text-white border-0; 
+  }
+  .secondary-primary { 
+    @apply bg-gradient-to-r from-sky-600 to-teal-600 text-white border-0; 
+  }
+}

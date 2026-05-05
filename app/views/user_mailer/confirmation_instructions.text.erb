@@ -1,0 +1,14 @@
+<%= t('devise.mailer.confirmation_instructions.greeting') %>
+
+<%= t('devise.mailer.confirmation_instructions.instruction') %>
+
+Confirm your account by visiting the link below:
+<%= @confirmation_url %>
+
+<%= t('devise.mailer.confirmation_instructions.instruction_2') %>
+
+<%= t('devise.mailer.confirmation_instructions.closing') %>
+
+--
+<% project_name = (Rails.application.config.respond_to?(:project_name) && Rails.application.config.project_name.present?) ? Rails.application.config.project_name : 'TravelFi' %>
+<%= project_name %>

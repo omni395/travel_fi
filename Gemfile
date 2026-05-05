@@ -10,8 +10,7 @@ gem "pg", "~> 1.1"
 gem "puma", ">= 5.0"
 # Bundle and transpile JavaScript [https://github.com/rails/jsbundling-rails]
 gem "jsbundling-rails"
-# Hotwire's SPA-like page accelerator [https://turbo.hotwired.dev]
-# gem "turbo-rails"
+
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
 # Bundle and process CSS [https://github.com/rails/cssbundling-rails]
@@ -67,6 +66,7 @@ gem "paper_trail" # Аудит: версионирование и логиров
 gem "omniauth-rails_csrf_protection" # CSRF protection для OmniAuth
 gem "omniauth-google-oauth2" # Google OAuth стратегия
 gem "rolify"              # Роли и разрешения для пользователей
+gem "merit"               # Badges, points, rankings для gamification
 
 # --- 2. ФОНОВЫЕ ЗАДАЧИ И КЭШИРОВАНИЕ ---
 gem "solid_queue"  # Database-backed job queue (default in Rails 8)

@@ -1,0 +1,37 @@
+class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+
+  #
+  # Обработчик Google OAuth2 callback
+  # Вызывается когда пользователь возвращается с Google аутентификации
+  #
+  def google_oauth2
+    @user = User.from_google_oauth(request.env['omniauth.auth'])
+
+    if @user.persisted?
+      sign_in @user, event: :authentication
+      UserAuditLogger.log_login(@user) if defined?(UserAuditLogger)
+      
+      # Перенаправляем на главную со сбережением локали
+      redirect_to after_sign_in_path_for(@user), allow_other_host: false
+    else
+      session['devise.google_data'] = request.env['omniauth.auth'].except(:extra)
+      redirect_to new_user_registration_url, alert: @user.errors.full_messages.join("\n")
+    end
+  end
+  
+  #
+  # Обработчик ошибок при OAuth2 аутентификации
+  # Вызывается если пользователь отклонил доступ или произошла ошибка
+  #
+  def failure
+    redirect_to root_path, alert: 'Authentication failed'
+  end
+
+  protected
+
+  def after_sign_in_path_for(resource)
+    # Возвращаем пользователя на страницу, где он был до авторизации
+    # Если сохраненной локации нет, перенаправляем на главную
+    stored_location_for(resource) || root_path(locale: I18n.locale)
+  end
+end

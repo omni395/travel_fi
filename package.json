@@ -3,7 +3,8 @@
   "private": true,
   "devDependencies": {
     "chokidar": "^5.0.0",
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.0",
+    "postcss": "^8.5.12"
   },
   "scripts": {
     "build": "node esbuild.config.mjs",
@@ -13,14 +14,16 @@
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
     "@mdi/font": "^7.4.47",
-    "@tailwindcss/cli": "^4.2.3",
+    "@stimulus-components/dropdown": "^3.0.0",
+    "@stimulus-components/popover": "^7.0.0",
+    "@stimulus-components/reveal": "^5.0.0",
+    "@tailwindcss/cli": "^4.2.4",
     "cable_ready": "^5.0.6",
     "esbuild-rails": "^1.0.3",
-    "flowbite": "^4.0.1",
     "leaflet": "^1.9.4",
     "leaflet-routing-machine": "^3.2.12",
     "stimulus_reflex": "^3.5.5",
-    "tailwindcss": "^4.2.3",
-    "viem": "^2.48.2"
+    "tailwindcss": "^4.2.4",
+    "viem": "^2.48.4"
   }
 }
