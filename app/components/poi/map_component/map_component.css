@@ -1,0 +1,13 @@
+/* poi/map_component — контейнер OpenLayers карты */
+.poi-map {
+  height: 100%;
+  width: 100%;
+  min-height: 300px;
+}
+
+/* На маленьких экранах карта занимает весь экран */
+@media (max-width: 768px) {
+  .poi-map {
+    min-height: calc(100vh - 4rem);
+  }
+}

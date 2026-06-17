@@ -12,56 +12,97 @@
 
     <%= yield :head %>
 
+    <%# === RESOURCE HINTS === %>
+    <link rel="preload" href="<%= asset_path("application.css") %>" as="style">
+    <link rel="modulepreload" href="<%= asset_path("admin.js") %>" crossorigin="anonymous">
+
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
     <link rel="manifest" href="/manifest.json">
 
-    <!-- Material Design Icons (CDN) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+    <%# MDI font загружается локально через esbuild (import в admin.js) %>
+    <%# CDN больше не используется %>
 
-    <!-- Leaflet CSS (CDN) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <%# === CRITICAL CSS === %>
+    <%= critical_css %>
 
-    <!-- Tailwind CSS -->
-    <%= stylesheet_link_tag :app %>
+    <%# === ASYNC CSS === %>
+    <link rel="stylesheet" href="<%= asset_path("application.css") %>" media="print" onload="this.media='all'">
+    <noscript><%= stylesheet_link_tag :app %></noscript>
+
+    <link rel="stylesheet" href="<%= asset_path("components.css") %>" media="print" onload="this.media='all'">
+    <noscript><%= stylesheet_link_tag "components" %></noscript>
+
     <%= javascript_include_tag "admin", type: "module" %>
   </head>
 
-<body class="flex flex-col h-screen bg-gray-50 overflow-hidden" data-controller="cable">
-  <div data-controller="reveal" data-reveal-hidden-class="-translate-x-full" class="flex flex-col h-full">
-    
-    <!-- 1. ХЕДЕР: Фиксированная высота 64px -->
-    <header class="h-16 bg-white border-b shrink-0 relative z-[70]">
-      <%= render NavbarComponent.new(user: current_user) %>
-    </header>
+<body class="flex flex-col h-screen overflow-hidden bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable">
 
-    <div class="flex flex-1 overflow-hidden relative">
-      
-      <!-- 2. МОБИЛЬНЫЙ САЙДБАР: Без изменений -->
-      <aside id="admin-sidebar-mobile" 
-             data-reveal-target="item" 
-             class="fixed top-16 left-0 z-[60] w-64 bg-gradient-primary-to-secondary shadow-2xl transition-transform duration-300 -translate-x-full md:hidden h-[calc(100vh-64px)]">
-        <%= render Admin::SidebarComponent.new(current_page: controller_name, user: current_user, is_mobile: true) %>
-      </aside>
+  <!-- 1. ХЕДЕР: Фиксированная высота 64px -->
+  <header class="h-16 bg-white border-b shrink-0 relative z-70">
+    <%= render Ui::NavbarComponent.new(user: current_user) %>
+  </header>
 
-      <!-- 3. ДЕСКТОПНЫЙ САЙДБАР: FIXED для наложения (Overlay) -->
-      <aside class="hidden md:flex flex-col fixed top-16 left-0 z-30 bg-gradient-primary-to-secondary w-16 hover:w-64 group transition-all duration-300 ease-in-out h-[calc(100vh-64px)]">
-        <%= render Admin::SidebarComponent.new(current_page: controller_name, user: current_user, is_mobile: false) %>
-      </aside>
-
-      <!-- 4. КОНТЕНТ: ml-16 чтобы не подлезал под узкий сайдбар, overflow-y-auto для скролла -->
-      <main class="flex-1 overflow-y-auto p-4 md:p-8 md:ml-16">
-        <%= yield %>
-      </main>
-
-      <!-- 5. ОВЕРЛЕЙ ДЛЯ МОБИЛКИ -->
-      <div data-action="click->reveal#toggle" 
-           data-reveal-target="item" 
-           class="fixed top-16 inset-0 bg-black/50 z-[55] hidden md:hidden">
+  <!-- 2. ОСНОВНОЙ КОНТЕНТ: сайдбар + страница -->
+  <div class="flex flex-1 overflow-hidden">
+    <%= render Ui::SidebarComponent.new do %>
+      <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+        <div class="flex items-center gap-2">
+          <i class="mdi mdi-view-dashboard text-primary text-xl"></i>
+          <h2 class="text-md font-semibold text-gray-900">Admin Panel</h2>
+        </div>
       </div>
-    </div>
+      <nav class="py-2">
+        <%= link_to admin_root_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+          <i class="mdi mdi-view-dashboard text-xl mr-3 shrink-0"></i>
+          <span class="text-sm whitespace-nowrap">Dashboard</span>
+        <% end %>
+        <%= link_to admin_users_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+          <i class="mdi mdi-account-multiple text-xl mr-3 shrink-0"></i>
+          <span class="text-sm whitespace-nowrap">Users</span>
+        <% end %>
+        <%= link_to admin_poi_categories_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+          <i class="mdi mdi-shape-outline text-xl mr-3 shrink-0"></i>
+          <span class="text-sm whitespace-nowrap">POI Categories</span>
+        <% end %>
+        <%= link_to admin_pois_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+          <i class="mdi mdi-map-marker-multiple text-xl mr-3 shrink-0"></i>
+          <span class="text-sm whitespace-nowrap">POIs</span>
+        <% end %>
+        <%= link_to admin_settings_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+          <i class="mdi mdi-cog text-xl mr-3 shrink-0"></i>
+          <span class="text-sm whitespace-nowrap">Settings</span>
+        <% end %>
+      </nav>
+      <div class="absolute bottom-0 left-0 right-0 border-t border-gray-200">
+        <%= link_to root_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors" do %>
+          <i class="mdi mdi-home text-xl mr-3 shrink-0"></i>
+          <span class="text-sm whitespace-nowrap">Back to Site</span>
+        <% end %>
+      </div>
+    <% end %>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-8">
+      <%= yield %>
+    </main>
+  </div>
+
+  <!-- 3. Toast notifications: SSR flash + CableReady target -->
+  <div id="notifications" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <% flash.each do |type, message| %>
+      <% next if message.blank? %>
+      <% toast_type = case type.to_s
+           when "success" then :success
+           when "notice"  then :success
+           when "alert"   then :error
+           when "error"   then :error
+           when "warning" then :warning
+           else :info
+         end %>
+      <%= render Ui::ToastComponent.new(message: message, type: toast_type) %>
+    <% end %>
+    <% flash.clear %>
   </div>
 </body>
 </html>

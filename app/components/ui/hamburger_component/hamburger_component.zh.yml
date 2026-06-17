@@ -1,0 +1,7 @@
+zh:
+  ui:
+    hamburger_component:
+      hamburger_component:
+        toggle: "切换导航菜单"
+        close: "关闭菜单"
+        open: "打开菜单"

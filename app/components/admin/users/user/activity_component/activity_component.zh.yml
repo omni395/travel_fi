@@ -1,0 +1,11 @@
+---
+zh:
+  admin:
+    users:
+      user:
+        activity_component:
+          activity_title: 活动
+          no_activity: 暂无活动
+          type_badge: 徽章
+          type_score: 积分
+          type_action: 操作

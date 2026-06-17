@@ -1,0 +1,48 @@
+# frozen_string_literal: true
+
+# Gamification Configuration
+# Единый конфиг для начислений баллов и бейджей.
+# Ключи:
+#   rewards  — action_key → количество баллов
+#   badges   — badge_id → { key, name, icon, condition }
+
+rewards:
+  registration: 10
+  referral_bonus_referrer: 15
+  referral_bonus_new_user: 5
+  poi_create: 20
+  poi_photo_add: 5
+  comment_create: 5
+  poi_vote: 2
+
+badges:
+  1:
+    key: registration_complete
+    name: Registration Complete
+    icon: mdi-account-check
+    condition: action == 'users#create'
+  2:
+    key: first_poi
+    name: First POI
+    icon: mdi-map-marker-star
+    condition: user.pois.count == 1
+  3:
+    key: contributor
+    name: Contributor
+    icon: mdi-star-face
+    condition: user.pois.count >= 10
+  4:
+    key: explorer
+    name: Explorer
+    icon: mdi-compass
+    condition: user.poi_cities_count >= 5
+  5:
+    key: recruiter
+    name: Recruiter
+    icon: mdi-account-group
+    condition: user.referrals_count >= 5
+  6:
+    key: veteran
+    name: Veteran
+    icon: mdi-shield-star
+    condition: user.level == 5

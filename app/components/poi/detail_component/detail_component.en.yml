@@ -1,0 +1,40 @@
+---
+en:
+  poi:
+    detail_component:
+      tab_info: Info
+      tab_comments: Comments
+      tab_photos: Photos
+      status_pending: Pending
+      status_approved: Approved
+      status_rejected: Rejected
+      status_archived: Archived
+      wheelchair_accessible: Wheelchair accessible
+      characteristics: Characteristics
+      added_by: Added by %{name}
+      verified_count:
+        one: Verified %{count} time
+        other: Verified %{count} times
+      comments_placeholder: Comments are coming soon
+      photos_placeholder: Photos are coming soon
+      edit_button: Edit
+      new_title: Add New Point of Interest
+      edit_title: Edit Point of Interest
+      name: Name
+      name_placeholder: Enter the name of this place
+      category: Category
+      category_prompt: Select a category...
+      position: Position
+      drag_hint: Drag the marker to set the exact position (max 50m radius)
+      address: Address
+      address_placeholder: Street, building number
+      city: City
+      phone: Phone
+      website: Website
+      wheelchair: Wheelchair accessible
+      submit: Add POI
+      save: Save
+      proximity_warning_title: Too far away
+      proximity_warning_message: You need to be within 50 meters of this location to interact with it.
+      no_location_title: Location required
+      no_location_message: Enable location services to interact with points of interest.

@@ -1,4 +1,4 @@
-# frozen_string_literal: true
+ # frozen_string_literal: true
 
 #
 # Admin::BaseController - базовый контроллер для админ-панели
@@ -30,9 +30,9 @@ class Admin::BaseController < ApplicationController
   # Перенаправляет на главную страницу если нет доступа
   #
   def require_admin_or_moderator!
-    unless current_user&.admin? || current_user&.moderator?
-      redirect_to root_path, alert: I18n.t('admin.access_denied')
-    end
+    return if current_user && policy(current_user).admin_panel_access?
+
+    redirect_to root_path, alert: I18n.t('admin.access_denied')
   end
 
   #

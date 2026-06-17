@@ -17,10 +17,10 @@ class ImageTransformService
     # Normalize input to a file-like object on disk (Tempfile)
     temp = normalize_input(io_or_path, filename)
     begin
-      if defined?(ImageProcessing::Vips)
-        transform_with_vips(temp.path, filename: filename, max_size: max_size, max_dimension: max_dimension, format: format)
-      elsif defined?(ImageProcessing::MiniMagick)
+      if defined?(ImageProcessing::MiniMagick)
         transform_with_minimagick(temp.path, filename: filename, max_size: max_size, max_dimension: max_dimension, format: format)
+      elsif defined?(ImageProcessing::Vips)
+        transform_with_vips(temp.path, filename: filename, max_size: max_size, max_dimension: max_dimension, format: format)
       else
         # No processors available — return the original file (caller can decide policy)
         temp

@@ -1,0 +1,8 @@
+---
+zh:
+  ui:
+    confirm_dialog_component:
+      default_title: 确认操作
+      default_message: 您确定要执行此操作吗？
+      confirm: 确认
+      cancel: 取消

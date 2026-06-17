@@ -1,59 +1,41 @@
 <%# frozen_string_literal: true %>
 
-<%#
-# app/views/admin/dashboard/index.html.erb - дашборд админ-панели
-#
-# Отображает:
-# - Статистику приложения
-# - Список последних пользователей
-# - Список последних активностей
-# Использует StimulusReflex для обновления без перезагрузки
-# %>
+<% content_for :title, t("admin.dashboard.title") %>
 
-<% content_for :title, t('admin.dashboard.title') %>
+<%# Хлебные крошки %>
+<%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+  { name: t("admin.dashboard.title") }
+]) %>
 
-<div class="min-h-screen bg-gray-50">
-  <!-- Заголовок страницы -->
-  <div class="bg-white shadow">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center">
-          <!-- Иконка дашборда -->
-          <div class="flex-shrink-0">
-            <span class="mdi mdi-view-dashboard-outline text-teal-500 text-3xl"></span>
-            <%# MDI: view-dashboard-outline %>
-          </div>
+<div class="p-6">
+  <!-- Карточки статистики -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+    <%= render Admin::Dashboard::StatCardComponent.new(
+      title: t("admin.dashboard.total_users"),
+      count: @stats[:total],
+      icon: "mdi-account-group",
+      color: "blue"
+    ) %>
 
-          <!-- Заголовок -->
-          <div class="ml-4">
-            <h1 class="text-2xl font-bold text-gray-900">
-              <%= t('admin.dashboard.title') %>
-            </h1>
-            <p class="text-sm text-gray-500">
-              <%= t('admin.dashboard.subtitle') %>
-            </p>
-          </div>
-        </div>
+    <%= render Admin::Dashboard::StatCardComponent.new(
+      title: t("admin.dashboard.active_users"),
+      count: @stats[:active],
+      icon: "mdi-account-check",
+      color: "green"
+    ) %>
 
-        <!-- Кнопка обновления -->
-        <div class="flex items-center space-x-2">
-          <button data-action="admin--dashboard#refresh"
-                  class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-teal-700 bg-teal-100 hover:bg-teal-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500">
-            <span class="mdi mdi-refresh mr-2"></span>
-            <%# MDI: refresh %>
-            <%= t('admin.dashboard.refresh') %>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+    <%= render Admin::Dashboard::StatCardComponent.new(
+      title: t("admin.dashboard.pending_users"),
+      count: @stats[:pending],
+      icon: "mdi-account-clock",
+      color: "amber"
+    ) %>
 
-  <!-- Содержимое дашборда -->
-  <div id="admin-dashboard" data-controller="admin--dashboard">
-    <%= render Admin::DashboardComponent.new(
-          stats: @stats,
-          recent_users: @recent_users,
-          recent_activities: @recent_activities
-        ) %>
+    <%= render Admin::Dashboard::StatCardComponent.new(
+      title: t("admin.dashboard.restricted_users"),
+      count: @stats[:restricted],
+      icon: "mdi-account-remove",
+      color: "red"
+    ) %>
   </div>
 </div>

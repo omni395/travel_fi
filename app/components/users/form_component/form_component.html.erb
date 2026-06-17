@@ -1,0 +1,131 @@
+<!-- Users::FormComponent -->
+<!-- WebSocket-first: Stimulus controller перехватывает submit и отправляет через WebSocket -->
+<div data-controller="users--form-component" class="w-full max-w-2xl">
+
+  <%= render Ui::CardComponent.new do |card| %>
+    <% card.with_body do %>
+      <!-- Form Header -->
+      <h2 class="text-xl font-bold text-gray-900 mb-6">
+        <%= t(".edit_profile_title") %>
+      </h2>
+
+      <!-- Error Messages Alert (hidden by default, shown by Stimulus) -->
+      <div id="edit-form-errors" role="alert" class="alert-ui alert-ui--error hidden mb-4">
+        <%# MDI: alert-circle %>
+        <i class="mdi mdi-alert-circle text-2xl"></i>
+        <div>
+          <p class="font-bold"><%= t(".errors") %></p>
+          <ul id="error-list" class="text-sm"></ul>
+        </div>
+      </div>
+
+      <!-- Loading Indicator (hidden by default) -->
+      <div id="edit-form-loading" class="alert-ui alert-ui--info hidden mb-4">
+        <span class="spinner"></span>
+        <span class="font-semibold"><%= t(".loading") %></span>
+      </div>
+
+      <!-- Form Element with Stimulus Reflex Integration -->
+      <form
+        id="user-edit-form"
+        data-action="submit->users--form-component#handleSubmit"
+        data-user-id="<%= @user.id %>"
+        class="space-y-6">
+
+        <!-- CSRF Token -->
+        <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
+
+        <!-- Name Field -->
+        <div class="field-group">
+          <label class="flex justify-between">
+            <span class="field-label"><%= t(".name") %></span>
+            <span class="text-error text-xs">*</span>
+          </label>
+          <input
+            type="text"
+            id="user_name"
+            name="name"
+            value="<%= @user.name %>"
+            required
+            minlength="2"
+            maxlength="100"
+            data-users--form-component-target="nameInput"
+            class="field-input"
+            placeholder="<%= t(".name_placeholder") %>"
+            autocomplete="name">
+          <p class="text-xs text-gray-500 mt-1"><%= t(".name_hint") %></p>
+        </div>
+
+        <!-- Email Field (Read-only for security) -->
+        <div class="field-group">
+          <label class="field-label"><%= t(".email") %></label>
+          <input
+            type="email"
+            id="user_email"
+            value="<%= @user.email %>"
+            disabled
+            class="field-input bg-gray-100 cursor-not-allowed"
+            autocomplete="email">
+          <p class="text-xs text-gray-500 mt-1"><%= t(".email_cannot_change") %></p>
+        </div>
+
+        <!-- Avatar Upload Field -->
+        <div class="field-group">
+          <label class="flex justify-between">
+            <span class="field-label"><%= t(".avatar") %></span>
+            <span class="text-xs text-gray-500">(JPG, PNG, WebP, Max 5MB)</span>
+          </label>
+
+          <!-- Avatar Preview -->
+          <div class="mb-3 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <div id="avatar-preview" class="flex justify-center">
+              <% if @user.avatar.attached? && @user.avatar.blob.variable? %>
+                <%= render Ui::AvatarComponent.new(user: @user, size: :lg) %>
+              <% else %>
+                <div class="avatar-ui avatar-ui--lg">
+                  <div class="avatar-ui--fallback avatar-ui--lg">
+                    <span class="text-2xl font-bold"><%= @user.name.first.upcase %></span>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+          </div>
+
+          <!-- File Input -->
+          <input
+            type="file"
+            id="user_avatar"
+            name="avatar"
+            accept="image/jpeg,image/png,image/webp"
+            data-users--form-component-target="avatarInput"
+            data-action="change->users--form-component#previewAvatar"
+            class="field-file">
+          <p class="text-xs text-gray-500 mt-1"><%= t(".avatar_hint") %></p>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end gap-3 mt-4">
+          <!-- Save Button -->
+          <button
+            type="submit"
+            id="save-button"
+            data-users--form-component-target="submitButton"
+            class="btn-ui btn-ui--primary btn-ui--md">
+            <%# MDI: content-save %>
+            <i class="mdi mdi-content-save"></i>
+            <%= t(".save") %>
+          </button>
+
+          <!-- Cancel Button -->
+          <button
+            type="button"
+            id="cancel-button"
+            data-action="click->users--form-component#handleCancel"
+            class="btn-ui btn-ui--ghost btn-ui--md">
+            <%= t(".cancel") %>
+          </button>
+        </div>
+      </form>
+    <% end %>
+  <% end %>
+</div>

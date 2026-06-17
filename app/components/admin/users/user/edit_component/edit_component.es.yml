@@ -1,0 +1,11 @@
+---
+es:
+  admin:
+    users:
+      user:
+        edit_component:
+          cancel: Cancelar
+          save: Guardar
+          registered: Registrado
+          updated: Actualizado
+          last_sign_in: Último inicio de sesión

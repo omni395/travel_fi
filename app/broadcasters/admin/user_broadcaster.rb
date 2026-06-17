@@ -13,6 +13,7 @@
 #   Admin::UserBroadcaster.broadcast_user_destroy(user)
 #
 class Admin::UserBroadcaster
+  include CableReady::Broadcaster
   #
   # Отправляет обновление профиля пользователя
   # Вызывается после успешного обновления пользователя
@@ -21,6 +22,16 @@ class Admin::UserBroadcaster
   #
   def self.broadcast_user_update(user)
     new(user).send_user_update(user)
+  end
+
+  #
+  # Отправляет уведомление о создании нового пользователя
+  # Препендикс строку нового пользователя в таблицу админки
+  #
+  # @param user [User] созданный пользователь
+  #
+  def self.broadcast_user_created(user)
+    new(user).send_user_created(user)
   end
 
   #
@@ -65,23 +76,17 @@ class Admin::UserBroadcaster
 
   #
   # Отправляет обновление профиля пользователя
-  # Морфит компонент UserDetailComponent
+  # Морфит строку пользователя в таблице
   #
   def send_user_update(user)
-    # Морфим компонент детальной информации о пользователе
-    cable_ready.morph(
-      selector: "[data-admin-user-detail]",
-      html: render_user_detail_component(user)
-    )
-
-    # Морфим компонент списка пользователей
-    cable_ready.morph(
-      selector: "[data-admin-users-list]",
+    # Морфим строку пользователя в таблице
+    cable_ready["AdminChannel"].morph(
+      selector: "[data-admin-user-id='#{user.id}']",
       html: render_user_row_component(user)
     )
 
     # Отправляем уведомление об успехе
-    cable_ready.dispatch_event(
+    cable_ready["AdminChannel"].dispatch_event(
       name: "adminUserUpdateSuccess",
       detail: {
         user_id: user.id,
@@ -89,7 +94,7 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready.broadcast
+    cable_ready["AdminChannel"].broadcast
   end
 
   #
@@ -98,12 +103,12 @@ class Admin::UserBroadcaster
   #
   def send_user_destroy(user)
     # Удаляем строку пользователя из списка
-    cable_ready.remove(
-      selector: "[data-admin-user-row='#{user.id}']"
+    cable_ready["AdminChannel"].remove(
+      selector: "[data-admin-user-id='#{user.id}']"
     )
 
     # Отправляем уведомление об успехе
-    cable_ready.dispatch_event(
+    cable_ready["AdminChannel"].dispatch_event(
       name: "adminUserDestroySuccess",
       detail: {
         user_id: user.id,
@@ -111,7 +116,7 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready.broadcast
+    cable_ready["AdminChannel"].broadcast
   end
 
   #
@@ -120,14 +125,14 @@ class Admin::UserBroadcaster
   #
   def send_status_change(user, old_status, new_status)
     # Обновляем бейдж статуса в детальной информации
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin-user-status='#{user.id}']",
       html: render_status_badge(user)
     )
 
     # Отправляем уведомление об успехе
     status_message = I18n.t("admin.users.#{new_status}_success")
-    cable_ready.dispatch_event(
+    cable_ready["AdminChannel"].dispatch_event(
       name: "adminUserStatusChangeSuccess",
       detail: {
         user_id: user.id,
@@ -137,7 +142,7 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready.broadcast
+    cable_ready["AdminChannel"].broadcast
   end
 
   #
@@ -146,7 +151,7 @@ class Admin::UserBroadcaster
   #
   def send_role_change(user, role_name, action)
     # Обновляем список ролей в детальной информации
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin-user-roles='#{user.id}']",
       html: render_user_roles(user)
     )
@@ -156,7 +161,7 @@ class Admin::UserBroadcaster
       I18n.t('admin.users.role_added') : 
       I18n.t('admin.users.role_removed')
 
-    cable_ready.dispatch_event(
+    cable_ready["AdminChannel"].dispatch_event(
       name: "adminUserRoleChangeSuccess",
       detail: {
         user_id: user.id,
@@ -166,24 +171,32 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready.broadcast
+    cable_ready["AdminChannel"].broadcast
   end
 
   private
 
   #
-  # Рендерит компонент детальной информации о пользователе
+  # Отправляет уведомление о создании нового пользователя
+  # Препендикс строку нового пользователя в начало таблицы админки
   #
-  # @param user [User] пользователь для рендеринга
-  # @return [String] HTML компонента
-  #
-  def render_user_detail_component(user)
-    component = Admin::UserDetailComponent.new(
-      user: user,
-      versions: user.versions.order(created_at: :desc).limit(20)
+  def send_user_created(user)
+    # Препендикс строку нового пользователя в таблицу
+    cable_ready["AdminChannel"].prepend(
+      selector: "[data-admin-users-list] tbody",
+      html: render_user_row_component(user)
     )
 
-    ApplicationController.helpers.render_component(component)
+    # Отправляем уведомление об успехе
+    cable_ready["AdminChannel"].dispatch_event(
+      name: "adminUserCreatedSuccess",
+      detail: {
+        user_id: user.id,
+        message: I18n.t('admin.users.create_success')
+      }
+    )
+
+    cable_ready["AdminChannel"].broadcast
   end
 
   #
@@ -193,8 +206,8 @@ class Admin::UserBroadcaster
   # @return [String] HTML компонента
   #
   def render_user_row_component(user)
-    component = Admin::UserRowComponent.new(user: user)
-    ApplicationController.helpers.render_component(component)
+    component = Admin::Users::RowComponent.new(user: user)
+    ApplicationController.render(component, layout: false)
   end
 
   #

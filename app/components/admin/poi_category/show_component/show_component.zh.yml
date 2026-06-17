@@ -1,0 +1,10 @@
+---
+zh:
+  admin:
+    poi_category:
+      show_component:
+        active: 启用
+        inactive: 禁用
+        description: 描述
+        position: 位置
+        pois_count: POI 数量

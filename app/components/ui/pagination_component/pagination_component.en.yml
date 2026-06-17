@@ -1,0 +1,7 @@
+---
+en:
+  ui:
+    pagination_component:
+      navigation: Pagination navigation
+      previous: Previous
+      next: Next

@@ -1,0 +1,44 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/admin/settings/show.html.erb
+#
+# Страница настроек уведомлений админа
+# Показывает все типы событий (включая админские)
+# Использует StimulusReflex для автосохранения при переключении
+# %>
+
+<div class="p-6">
+  <%# Хлебные крошки %>
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.dashboard.title"), path: admin_root_path },
+    { name: t("admin.settings.title") }
+  ]) %>
+
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <!-- Шапка таблицы -->
+    <div class="flex items-center justify-between px-6 py-4 bg-linear-to-br from-primary to-secondary text-white font-semibold text-sm">
+      <span class="w-1/3"><%= t('settings.columns.event_type') %></span>
+      <div class="flex items-center space-x-6">
+        <%# MDI: bell-ring %>
+        <span class="flex items-center space-x-2"><i class="mdi mdi-bell-ring text-lg"></i> <span><%= t('settings.columns.in_app') %></span></span>
+        <%# MDI: email %>
+        <span class="flex items-center space-x-2"><i class="mdi mdi-email text-lg"></i> <span><%= t('settings.columns.email') %></span></span>
+        <%# MDI: cellphone-wireless %>
+        <span class="flex items-center space-x-2"><i class="mdi mdi-cellphone-wireless text-lg"></i> <span><%= t('settings.columns.push') %></span></span>
+      </div>
+    </div>
+
+    <!-- Строки настроек (все типы для админа) -->
+    <div class="px-6 divide-y divide-gray-100">
+      <% %w[
+        new_registration active_user inactive_user
+        pending_verification verification_failed
+        suspended_user banned_user deleted_user
+        user_updated_by_admin profile_updated
+      ].each do |event_type| %>
+        <%= render Settings::FieldComponent.new(setting: @setting, event_type: event_type) %>
+      <% end %>
+    </div>
+  </div>
+</div>

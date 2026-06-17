@@ -1,0 +1,71 @@
+<%# frozen_string_literal: true %>
+
+<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-md">
+    <%# Header %>
+    <div class="text-center mb-4">
+      <h1 class="text-4xl font-bold text-teal-600 mb-2">Travel-Fi</h1>
+      <h2 class="text-2xl font-bold text-gray-900"><%= t('devise.registrations.edit.title', default: 'Edit account') %></h2>
+      <p class="text-gray-600 mt-2"><%= t('devise.registrations.edit.subtitle', default: 'Update your account details') %></p>
+    </div>
+
+    <%# Edit Form %>
+    <div id="devise_edit_form" class="bg-white rounded-xl shadow-lg p-6 mb-4">
+      <%= form_with(model: resource, as: resource_name, url: registration_path(resource_name), method: :put, html: { multipart: true }) do |form| %>
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+        <% if resource.errors.any? %>
+          <div class="alert-ui alert-ui--error mb-4">
+            <ul class="list-disc list-inside">
+              <% resource.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <%# Email %>
+        <div class="field-group mb-4">
+          <%= form.label :email, class: "field-label" %>
+          <%= form.email_field :email, autocomplete: "email", class: "field-input" %>
+        </div>
+
+        <%# Name %>
+        <div class="field-group mb-4">
+          <%= form.label :name, class: "field-label" %>
+          <%= form.text_field :name, autocomplete: "off", class: "field-input" %>
+        </div>
+
+        <%# Password (leave blank if you don't want to change it) %>
+        <div class="field-group mb-4">
+          <%= form.label :password, class: "field-label" %>
+          <%= form.password_field :password, autocomplete: "new-password", class: "field-input", placeholder: t('devise.registrations.edit.password_placeholder', default: 'Leave blank if you don\'t want to change it') %>
+        </div>
+
+        <%# Password Confirmation %>
+        <div class="field-group mb-4">
+          <%= form.label :password_confirmation, class: "field-label" %>
+          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "field-input" %>
+        </div>
+
+        <%# Current Password (needed to confirm changes) %>
+        <div class="field-group mb-4">
+          <%= form.label :current_password, class: "field-label" %>
+          <%= form.password_field :current_password, autocomplete: "current-password", class: "field-input", placeholder: t('devise.registrations.edit.current_password_placeholder', default: 'We need your current password to confirm your changes') %>
+        </div>
+
+        <%# Update Button %>
+        <div class="mb-4">
+          <%= form.submit t('devise.registrations.edit.submit', default: 'Update'), class: "btn-ui btn-ui--primary btn-ui--md w-full" %>
+        </div>
+      <% end %>
+
+      <%# Cancel account %>
+      <div class="text-center pt-4 border-t border-gray-200">
+        <p class="text-sm text-gray-600 mb-2"><%= t('devise.registrations.edit.unhappy', default: 'Unhappy?') %></p>
+        <%= button_to t('devise.registrations.edit.cancel_my_account', default: 'Cancel my account'), registration_path(resource_name), method: :delete, class: "text-red-600 hover:text-red-700 text-sm font-medium", data: { confirm: t('devise.registrations.edit.confirm', default: 'Are you sure?') } %>
+      </div>
+
+      <%= render "devise/shared/links" %>
+    </div>
+  </div>
+</div>

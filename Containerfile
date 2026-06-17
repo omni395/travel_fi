@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG RUBY_VERSION=3.3.1
+ARG RUBY_VERSION=3.4.9
 FROM docker.io/library/ruby:$RUBY_VERSION-slim
 
 # Rails app lives here
@@ -18,7 +18,7 @@ RUN apt-get update -qq && \
     apt-get update -qq && \
     apt-get install --no-install-recommends -y \
     libjemalloc2 \
-    libvips \
+    imagemagick \
     postgresql-client-17 \
     git \
     chromium \

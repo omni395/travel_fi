@@ -1,0 +1,7 @@
+en:
+  ui:
+    hamburger_component:
+      hamburger_component:
+        toggle: "Toggle navigation menu"
+        close: "Close menu"
+        open: "Open menu"

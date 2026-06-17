@@ -1,0 +1,9 @@
+---
+zh:
+  ui:
+    filters_component:
+      search_label: 搜索
+      search_placeholder: 按姓名或邮箱搜索
+      status_label: 状态
+      all_statuses: 所有状态
+      reset: 重置

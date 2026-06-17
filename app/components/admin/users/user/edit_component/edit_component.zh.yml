@@ -1,0 +1,11 @@
+---
+zh:
+  admin:
+    users:
+      user:
+        edit_component:
+          cancel: 取消
+          save: 保存
+          registered: 注册时间
+          updated: 更新时间
+          last_sign_in: 最后登录

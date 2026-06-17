@@ -1,0 +1,6 @@
+---
+en:
+  admin:
+    users:
+      row_component:
+        title: User Row

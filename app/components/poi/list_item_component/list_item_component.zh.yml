@@ -1,0 +1,8 @@
+---
+zh:
+  poi:
+    list_item_component:
+      status_pending: 待审核
+      status_approved: 已批准
+      status_rejected: 已拒绝
+      status_archived: 已归档

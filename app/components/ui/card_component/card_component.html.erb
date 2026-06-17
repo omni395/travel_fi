@@ -1,0 +1,27 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/components/ui/card_component.html.erb
+#
+# Карточка с опциональными header, body, footer слотами.
+# %>
+
+<div data-controller="ui--card-component" class="card-ui">
+  <% if header %>
+    <div class="card-ui__header">
+      <%= header %>
+    </div>
+  <% end %>
+
+  <% if body %>
+    <div class="card-ui__body">
+      <%= body %>
+    </div>
+  <% end %>
+
+  <% if footer %>
+    <div class="card-ui__footer">
+      <%= footer %>
+    </div>
+  <% end %>
+</div>

@@ -2,26 +2,26 @@
   "name": "app",
   "private": true,
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.0",
     "chokidar": "^5.0.0",
     "esbuild": "^0.28.0",
+    "esbuild-postcss": "^0.0.4",
     "postcss": "^8.5.12"
   },
   "scripts": {
-    "build": "node esbuild.config.mjs",
-    "build:watch": "node esbuild.config.mjs --watch",
-    "build:css": "npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css --watch --minify"
+    "build": "rm -rf app/assets/builds/* && node esbuild.config.mjs",
+    "build:watch": "rm -rf app/assets/builds/* && node esbuild.config.mjs --watch",
+    "build:css": "rm -f app/assets/builds/application.css && npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css",
+    "build:css:watch": "npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css --watch",
+    "discover:controllers": "node scripts/discover_components.js"
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
     "@mdi/font": "^7.4.47",
-    "@stimulus-components/dropdown": "^3.0.0",
-    "@stimulus-components/popover": "^7.0.0",
-    "@stimulus-components/reveal": "^5.0.0",
     "@tailwindcss/cli": "^4.2.4",
     "cable_ready": "^5.0.6",
     "esbuild-rails": "^1.0.3",
-    "leaflet": "^1.9.4",
-    "leaflet-routing-machine": "^3.2.12",
+    "ol": "^10.9.0",
     "stimulus_reflex": "^3.5.5",
     "tailwindcss": "^4.2.4",
     "viem": "^2.48.4"

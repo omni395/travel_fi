@@ -1,0 +1,41 @@
+<%# frozen_string_literal: true %>
+
+<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-md">
+    <%# Header %>
+    <div class="text-center mb-4">
+      <h1 class="text-4xl font-bold text-teal-600 mb-2">Travel-Fi</h1>
+      <h2 class="text-2xl font-bold text-gray-900"><%= t('devise.unlocks.new.title', default: 'Resend unlock instructions') %></h2>
+      <p class="text-gray-600 mt-2"><%= t('devise.unlocks.new.subtitle', default: 'Enter your email to receive unlock instructions') %></p>
+    </div>
+
+    <%# Form %>
+    <div id="devise_unlock_form" class="bg-white rounded-xl shadow-lg p-6 mb-4">
+      <%= form_with(model: resource, as: resource_name, url: unlock_path(resource_name), method: :post) do |form| %>
+        <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+        <% if resource.errors.any? %>
+          <div class="alert-ui alert-ui--error mb-4">
+            <ul class="list-disc list-inside">
+              <% resource.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <%# Email %>
+        <div class="field-group mb-4">
+          <%= form.label :email, class: "field-label" %>
+          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "field-input", placeholder: t('devise.unlocks.new.email_placeholder', default: 'your@email.com') %>
+        </div>
+
+        <%# Submit Button %>
+        <div class="mb-4">
+          <%= form.submit t('devise.unlocks.new.submit', default: 'Resend unlock instructions'), class: "btn-ui btn-ui--primary btn-ui--md w-full" %>
+        </div>
+      <% end %>
+
+      <%= render "devise/shared/links" %>
+    </div>
+  </div>
+</div>

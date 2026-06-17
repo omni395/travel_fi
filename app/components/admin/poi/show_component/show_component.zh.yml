@@ -1,0 +1,19 @@
+---
+zh:
+  admin:
+    poi:
+      show_component:
+        missing_translations: '缺少翻译: %{locales}'
+        details: 详情
+        description: 描述
+        address: 地址
+        phone: 电话
+        website: 网站
+        coordinates: 坐标
+        metadata: 元数据
+        no_metadata: 无元数据
+        created_by: 创建者
+        created_at: 创建时间
+        verified_count: 已验证 %{count} 次
+        true: 是
+        false: 否

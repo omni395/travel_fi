@@ -1,0 +1,10 @@
+---
+en:
+  admin:
+    poi_category:
+      show_component:
+        active: Active
+        inactive: Inactive
+        description: Description
+        position: Position
+        pois_count: POIs count

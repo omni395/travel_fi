@@ -1,0 +1,97 @@
+# frozen_string_literal: true
+
+#
+# Admin::PoiCategoriesController - контроллер для управления категориями POI в админке
+#
+# Отвечает за:
+# - Список категорий с фильтрацией (index)
+# - Детальную страницу категории с полями (show)
+# - Создание/обновление категорий (create, update)
+#
+class Admin::PoiCategoriesController < Admin::BaseController
+  PER_PAGE = 20
+
+  #
+  # Отображает список категорий POI
+  #
+  def index
+    authorize PoiCategory, :index?
+
+    @pagy, @categories = pagy(filtered_categories, limit: PER_PAGE)
+  end
+
+  #
+  # Отображает детальную страницу категории с полями
+  #
+  def show
+    @category = PoiCategory.find(params[:id])
+    authorize @category, :show?
+
+    @fields = @category.poi_category_fields.by_position
+  end
+
+  #
+  # Создаёт новую категорию POI
+  #
+  def create
+    authorize PoiCategory, :create?
+
+    @category = PoiCategoryService.create(
+      params: category_params,
+      current_user: current_user
+    )
+
+    redirect_to admin_poi_category_path(@category), notice: t("admin.poi_categories.create_success")
+  rescue PoiCategoryService::CreateError => e
+    flash.now[:alert] = e.message
+    render :new, status: :unprocessable_entity
+  end
+
+  #
+  # Обновляет категорию POI
+  #
+  def update
+    @category = PoiCategory.find(params[:id])
+    authorize @category, :update?
+
+    PoiCategoryService.update(
+      category: @category,
+      params: category_params,
+      current_user: current_user
+    )
+
+    redirect_to admin_poi_category_path(@category), notice: t("admin.poi_categories.update_success")
+  rescue PoiCategoryService::UpdateError => e
+    flash.now[:alert] = e.message
+    render :show, status: :unprocessable_entity
+  end
+
+  private
+
+  #
+  # Разрешенные параметры для категории
+  #
+  # @return [ActionController::Parameters]
+  #
+  def category_params
+    params.require(:poi_category).permit(:name, :slug, :icon, :description, :position, :active)
+  end
+
+  #
+  # Возвращает отфильтрованный список категорий
+  #
+  # @return [ActiveRecord::Relation]
+  #
+  def filtered_categories
+    categories = PoiCategory.all
+
+    categories = categories.where(active: params[:active]) if params[:active].present?
+
+    if params[:q].present?
+      query = "%#{params[:q]}%"
+      categories = categories.where("name->>'en' ILIKE ? OR name->>'ru' ILIKE ? OR slug ILIKE ?", query, query, query)
+    end
+
+    categories.order(position: :asc)
+  end
+end

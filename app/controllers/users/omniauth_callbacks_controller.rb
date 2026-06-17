@@ -10,7 +10,10 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     if @user.persisted?
       sign_in @user, event: :authentication
       UserAuditLogger.log_login(@user) if defined?(UserAuditLogger)
-      
+
+      # Устанавливаем flash-сообщение через штатный ключ devise.omniauth_callbacks.success
+      set_flash_message(:notice, :success, kind: "Google") if is_navigational_format?
+
       # Перенаправляем на главную со сбережением локали
       redirect_to after_sign_in_path_for(@user), allow_other_host: false
     else

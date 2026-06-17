@@ -1,105 +1,126 @@
 ru:
-  navbar:
-    home: "Главная"
-    profile: "Профиль"
-    settings: "Настройки"
-    logout: "Выход"
-    logout_confirm: "Вы уверены, что хотите выйти?"
-    login: "Вход"
-    register: "Регистрация"
-    admin_panel: "Админ-панель"
-    language: "Язык"
-    user_menu: "Открыть меню пользователя"
-    main_menu: "Открыть главное меню"
-    search: "Поиск"
-    notifications: "Уведомления"
-    close: "Закрыть"
-    languages:
-      ru: "RU"
-      en: "EN"
-      es: "ES"
-      zh: "ZH"
+  locales:
+    en: "English"
+    ru: "Русский"
+    es: "Español"
+    zh: "中文"
 
-  common:
-    edit_profile: "Редактировать профиль"
+  pages:
+    index:
+      title: "Полный аудит компонентов"
+      icon_check: "Проверка иконок"
+      alert_visible: "Компонент Alert виден."
+      dropdown: "Выпадающий список"
+      test_item_1: "Тестовый пункт 1"
+      test_item_2: "Тестовый пункт 2"
+      open_modal: "Открыть модальное окно"
+      tab_1: "Вкладка 1"
+      tab_2: "Вкладка 2"
+      content_a: "Содержимое A"
+      content_b: "Содержимое B"
+      accordion_test: "Тест аккордеона"
+      accordion_body: "Тело аккордеона работает, если вы это видите."
+      tooltip: "Подсказка"
+      tooltip_content: "Содержимое подсказки"
+      popover: "Поповер"
+      popover_title: "Заголовок поповера"
+      popover_body: "И вот какое-то потрясающее содержимое."
+      show_drawer: "Показать панель"
+      modal_header: "Заголовок модального окна"
+      modal_body: "Модальное окно работает!"
+      sidebar_item_1: "Пункт боковой панели 1"
+      sidebar_item_2: "Пункт боковой панели 2"
     save: "Сохранить"
     cancel: "Отмена"
     delete: "Удалить"
     loading: "Загрузка..."
     errors: "Ошибки"
 
-  user:
-    reputation: "Репутация"
-    points: "Баллы"
-    level: "Уровень"
-    badges: "Значки"
-    roles: "Роли"
-    referral_code: "Код приглашения"
-    wallet_address: "Адрес кошелька"
-    edit_profile_title: "Редактировать ваш профиль"
-    name_placeholder: "Введите ваше полное имя"
-    name_hint: "Ваше имя будет видно другим пользователям"
-    email_cannot_change: "Email не может быть изменен в целях безопасности"
-    avatar: "Фото профиля"
-    avatar_hint: "Выберите изображение JPG, PNG или WebP. Макс размер: 5MB"
-
   activerecord:
     attributes:
       user:
         name: "Имя"
         email: "Email"
+        referral_code_input: "Код приглашения"
         statuses:
           registered: "Зарегистрирован"
-          pending_verification: "Ожидание проверки"
+          pending_verification: "Ожидание"
           active: "Активен"
-          suspended: "Заблокирован"
-          banned: "Запрещён"
+          suspended: "Заморожен"
+          banned: "Забанен"
           deleted: "Удалён"
+    errors:
+      models:
+        user:
+          attributes:
+            referral_code_input:
+              not_found: "недействителен — пользователь с таким кодом не найден"
 
-  user_audit:
-    actions:
-      login: "Вход в систему"
-      logout: "Выход из системы"
-      registration: "Регистрация"
-      email_verified: "Подтверждение email"
-      password_changed: "Изменение пароля"
-      profile_updated: "Обновление профиля"
-      avatar_changed: "Изменение аватара"
-      email_changed: "Изменение email"
-      name_changed: "Изменение имени"
-      oauth_login: "Вход через OAuth"
+  settings:
+    title: "Настройки уведомлений"
+    updated: "Настройки сохранены"
+    update_error: "Ошибка сохранения настроек"
+    columns:
+      event_type: "Тип события"
+      in_app: "В приложении"
+      email: "Email"
+      push: "Push"
+    field_types:
+      new_registration: "Новая регистрация"
+      inactive_user: "Неактивный пользователь"
+      pending_verification: "Ожидание проверки"
+      verification_failed: "Проверка не пройдена"
+      active_user: "Активный пользователь"
+      suspended_user: "Заблокированный пользователь"
+      banned_user: "Забаненный пользователь"
+      deleted_user: "Удалённый пользователь"
+      user_updated_by_admin: "Обновлён администратором"
+      profile_updated: "Изменение профиля"
+    channels:
+      notifications: "В приложении"
+      email: "Email"
+      push: "Push"
+  notifications:
+    user_updated: "Пользователь %{name} был обновлен."
+    registration: "Новый пользователь зарегистрирован: %{name}."
+    login: "Вход в систему"
+    logout: "Выход из системы"
+    registration_title: "Регистрация"
+    email_verified: "Подтверждение email"
+    password_changed: "Изменение пароля"
+    profile_updated: "Обновление профиля"
+    avatar_changed: "Изменение аватара"
+    email_changed: "Изменение email"
+    name_changed: "Изменение имени"
+    oauth_login: "Вход через OAuth"
 
   admin:
     title: "Админ-панель"
     back_to_site: "Вернуться на сайт"
     profile: "Профиль"
     logout: "Выйти"
-    sidebar:
-      dashboard: "Дашборд"
-      users: "Пользователи"
-      back_to_site: "На сайт"
+    settings:
+      title: "Настройки админа"
     dashboard:
       title: "Панель администратора"
       total_users: "Всего пользователей"
       active_users: "Активные"
-      suspended_users: "Заблокированные"
-      new_users_today: "Новые сегодня"
-      recent_users: "Последние пользователи"
-      recent_activities: "Последние активности"
+      pending_users: "Ожидают"
+      restricted_users: "Заблокированы"
     users:
       index:
         title: "Пользователи"
-      name: "Имя"
-      email: "Email"
-      status: "Статус"
-      created_at: "Дата регистрации"
-      updated_at: "Дата обновления"
-      last_sign_in_at: "Последний вход"
       never: "Никогда"
-      roles: "Роли"
-      actions: "Действия"
-      view: "Просмотр"
-      edit: "Редактировать"
+      system: "Система"
+      deleted_user: "Удаленный пользователь"
+      null_value: "—"
+      boolean_true: "Да"
+      boolean_false: "Нет"
+      initial_creation: "Аккаунт создан"
+      no_roles: "Роли не назначены"
+      details: "Детали"
+      registered_at: "Зарегистрирован"
+      current_status: "Текущий статус"
       edit_title: "Редактирование пользователя: %{name}"
       back_to_list: "Назад к списку"
       back_to_user: "Назад к пользователю"
@@ -107,8 +128,13 @@ ru:
       search_placeholder: "Поиск по имени или email"
       all_statuses: "Все статусы"
       reset: "Сбросить"
-      save: "Сохранить"
-      cancel: "Отмена"
+      create_success: "Пользователь успешно создан"
+      view: "Просмотр"
+      sort_asc: "Сортировка по возрастанию"
+      sort_desc: "Сортировка по убыванию"
+      last_sign_in_at: "Последний вход"
+      actions: "Действия"
+      management: "Управление"
       profile_info: "Информация профиля"
       history: "История изменений"
       manage_roles: "Управление ролями"
@@ -119,24 +145,135 @@ ru:
       role_removed: "Роль успешно удалена"
       role_remove_error: "Ошибка при удалении роли"
       update_success: "Пользователь успешно обновлен"
-      destroy: "Удалить"
       destroy_confirm: "Вы уверены, что хотите удалить этого пользователя?"
       destroy_success: "Пользователь успешно удален"
       destroy_error: "Ошибка при удалении пользователя"
       activate: "Активировать"
       activate_success: "Пользователь успешно активирован"
       activate_error: "Ошибка при активации пользователя"
-      suspend: "Заблокировать"
-      suspend_success: "Пользователь успешно заблокирован"
-      suspend_error: "Ошибка при блокировке пользователя"
+      suspend: "Заморозить"
+      suspend_success: "Пользователь успешно заморожен"
+      suspend_error: "Ошибка при заморозке пользователя"
       ban: "Забанить"
       ban_success: "Пользователь успешно забанен"
       ban_error: "Ошибка при бане пользователя"
       restore: "Восстановить"
       restore_success: "Пользователь успешно восстановлен"
       restore_error: "Ошибка при восстановлении пользователя"
+      activity:
+        badge_earned: "Бейдж #%{badge_id} получен"
+        badge_earned_desc: "Пользователь получил новый бейдж достижения"
+        points_earned: "Начислено %{points} очков"
+        points_earned_desc: "Пользователь получил очки за активность"
+        action_performed: "Выполнено действие"
+        action_performed_desc: "Пользователь выполнил действие в приложении"
+      tabs:
+        activity: "Активность"
+        wallet: "Кошелек"
+        audit_log: "Аудит-лог"
     roles:
       admin: "Администратор"
       moderator: "Модератор"
 
+  activerecord:
+    errors:
+      models:
+        poi_category:
+          attributes:
+            slug:
+              format: "только строчные буквы, цифры и подчеркивания"
+        poi_category_field:
+          attributes:
+            field_key:
+              format: "только строчные буквы, цифры и подчеркивания"
+        poi:
+          attributes:
+            osm_id:
+              taken: "уже используется"
 
+  reflexes:
+    admin:
+      poi_categories:
+        create_success: "Категория успешно создана"
+        create_unauthorized: "У вас нет прав для создания категорий"
+        create_error: "Ошибка при создании категории"
+        update_success: "Категория успешно обновлена"
+        update_unauthorized: "У вас нет прав для обновления этой категории"
+        update_error: "Ошибка при обновлении категории"
+        filter_unauthorized: "У вас нет прав для фильтрации категорий"
+        filter_error: "Ошибка при фильтрации категорий"
+        operation_success: "Операция выполнена успешно!"
+      poi_category_fields:
+        create_success: "Поле успешно создано"
+        create_unauthorized: "У вас нет прав для создания полей"
+        create_error: "Ошибка при создании поля"
+        update_success: "Поле успешно обновлено"
+        update_unauthorized: "У вас нет прав для обновления этого поля"
+        update_error: "Ошибка при обновлении поля"
+        destroy_success: "Поле успешно удалено"
+        destroy_unauthorized: "У вас нет прав для удаления этого поля"
+        destroy_error: "Ошибка при удалении поля"
+        operation_success: "Операция выполнена успешно!"
+      pois:
+        update_success: "POI успешно обновлена"
+        update_unauthorized: "У вас нет прав для обновления этой POI"
+        update_error: "Ошибка при обновлении POI"
+        status_changed: "Статус изменён на %{status}"
+        moderate_unauthorized: "У вас нет прав для модерации POI"
+        status_change_error: "Ошибка при изменении статуса"
+        destroy_success: "POI успешно удалена"
+        destroy_unauthorized: "У вас нет прав для удаления этой POI"
+        destroy_error: "Ошибка при удалении POI"
+        filter_unauthorized: "У вас нет прав для фильтрации POI"
+        filter_error: "Ошибка при фильтрации POI"
+        reset_filters_unauthorized: "У вас нет прав для сброса фильтров"
+        reset_filters_error: "Ошибка при сбросе фильтров"
+        operation_success: "Операция выполнена успешно!"
+
+  pois:
+    guest_warning: "Вы используете режим гостя. Войдите или зарегистрируйтесь, чтобы добавлять и управлять POI."
+    auth_required_title: "Требуется вход"
+    auth_required_message: "Пожалуйста, войдите или зарегистрируйтесь, чтобы просмотреть подробную информацию об этом месте."
+    load_more:
+      one: "Показать ещё 1"
+      few: "Показать ещё %{count}"
+      many: "Показать ещё %{count}"
+      other: "Показать ещё %{count}"
+
+  notifications:
+    poi_updated: "POI %{name} была обновлена."
+
+  gamification:
+    badges:
+      registration_complete:
+        title: "Регистрация завершена"
+        description: "Добро пожаловать! Вы присоединились к нашему сообществу"
+      first_poi:
+        title: "Первая точка"
+        description: "Вы добавили первую точку интереса"
+      contributor:
+        title: "Автор"
+        description: "Вы добавили 10+ точек интереса"
+      explorer:
+        title: "Исследователь"
+        description: "Вы исследовали 5+ городов"
+      recruiter:
+        title: "Рекрутер"
+        description: "Вы пригласили 5+ друзей"
+      veteran:
+        title: "Ветеран"
+        description: "Вы достигли максимального уровня"
+    levels:
+      1: "Новичок"
+      2: "Исследователь"
+      3: "Путешественник"
+      4: "Эксперт"
+      5: "Легенда"
+    rewards:
+      registration: "Бонус за регистрацию"
+      referral_bonus_referrer: "Награда за приглашение"
+      referral_bonus_new_user: "Приглашён другом"
+      poi_create: "Добавлена точка интереса"
+      poi_photo_add: "Добавлено фото"
+      comment_create: "Добавлен комментарий"
+      poi_vote: "Голос за точку"

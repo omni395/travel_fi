@@ -1,0 +1,31 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/admin/poi_categories/index.html.erb - список категорий POI в админке
+#
+# Отображает:
+# - Хлебные крошки
+# - Таблицу категорий с пагинацией
+# - Фильтры и поиск
+# Использует StimulusReflex для обновления без перезагрузки
+# %>
+
+<div class="p-4" data-controller="admin--poi-categories">
+  <%# Хлебные крошки %>
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.poi_categories.index.title") }
+  ]) %>
+
+  <%# Фильтры и поиск %>
+  <%= render ::Ui::FiltersComponent.new(
+        search_query: @search_query,
+        status_filter: @status_filter,
+        search_controller: "admin--poi-categories",
+        search_action: "input->admin--poi-categories#filter",
+        filter_action: "change->admin--poi-categories#filter",
+        reset_action: "admin--poi-categories#resetFilters"
+      ) %>
+
+  <%# Таблица категорий (вынесена в отдельный компонент для CableReady morph) %>
+  <%= render Admin::PoiCategory::TableComponent.new(categories: @categories, pagy: @pagy) %>
+</div>

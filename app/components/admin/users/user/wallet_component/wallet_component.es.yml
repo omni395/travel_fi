@@ -1,0 +1,8 @@
+---
+es:
+  admin:
+    users:
+      user:
+        wallet_component:
+          wallet_title: Billetera
+          wallet_placeholder: Funcionalidad de billetera próximamente

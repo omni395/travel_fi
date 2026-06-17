@@ -1,0 +1,10 @@
+---
+ru:
+  admin:
+    poi_category:
+      show_component:
+        active: Активна
+        inactive: Неактивна
+        description: Описание
+        position: Позиция
+        pois_count: Кол-во POI

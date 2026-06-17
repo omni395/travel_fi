@@ -1,0 +1,8 @@
+---
+en:
+  admin:
+    users:
+      user:
+        wallet_component:
+          wallet_title: Wallet
+          wallet_placeholder: Wallet functionality coming soon

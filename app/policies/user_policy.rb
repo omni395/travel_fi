@@ -11,6 +11,16 @@
 #
 class UserPolicy < ApplicationPolicy
   #
+  # Может ли пользователь просматривать список пользователей?
+  # Может просматривать: админ или модератор
+  #
+  # @return [Boolean]
+  #
+  def index?
+    user.present? && (user.admin? || user.moderator?)
+  end
+
+  #
   # Может ли пользователь видеть профиль?
   # Может видеть: свой профиль или админ может видеть любой профиль
   #
@@ -104,5 +114,18 @@ class UserPolicy < ApplicationPolicy
     return false unless user.present?
     
     user.admin? && user != record
+  end
+
+  #
+  # Имеет ли пользователь доступ к админ-панели?
+  # Доступна админам и модераторам
+  # Используется в NavbarComponent для отображения ссылки на админку
+  #
+  # @return [Boolean]
+  #
+  def admin_panel_access?
+    return false unless user.present?
+
+    user.admin? || user.moderator?
   end
 end

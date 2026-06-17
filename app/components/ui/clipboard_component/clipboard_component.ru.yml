@@ -1,0 +1,4 @@
+ru:
+  ui:
+    clipboard_component:
+      copy: "Копировать"

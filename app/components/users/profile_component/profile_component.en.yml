@@ -1,0 +1,10 @@
+en:
+  users:
+    profile_component:
+      badges: "Badges"
+      roles: "Roles"
+      referral_code: "Referral Code"
+      copy_code: "Copy"
+      referral_hint: "Share this code: %{code} — your friends will use it when signing up!"
+      wallet_address: "Wallet Address"
+      edit_profile: "Edit Profile"

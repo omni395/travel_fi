@@ -1,0 +1,11 @@
+---
+en:
+  admin:
+    users:
+      user:
+        show_component:
+          edit: Edit
+          destroy: Delete
+          registered: Registered
+          updated: Updated
+          last_sign_in: Last sign in

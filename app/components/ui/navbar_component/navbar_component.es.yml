@@ -1,0 +1,27 @@
+---
+es:
+  ui:
+    navbar_component:
+      home: Inicio
+      map: Mapa
+      login: Iniciar sesión
+      register: Registrarse
+      admin_panel: Panel de administración
+      profile: Perfil
+      settings: Ajustes
+      logout: Cerrar sesión
+      logout_confirm: "¿Estás seguro de cerrar sesión?"
+      toggle_menu: Abrir menú de navegación
+      navigation: Navegación
+      account: Cuenta
+      language: Idioma
+      languages:
+        en: EN
+        ru: RU
+        es: ES
+        zh: 中文
+      languages_full:
+        en: English
+        ru: Русский
+        es: Español
+        zh: 中文

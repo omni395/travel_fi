@@ -2,6 +2,15 @@
 
 en:
   devise:
+    shared:
+      links:
+        or_sign_in_with: "Or sign in with"
+        sign_in_with_provider: "Sign in with %{provider}"
+        forgot_your_password: "Forgot your password?"
+        didn_t_receive_confirmation_instructions: "Didn't receive confirmation instructions?"
+        didn_t_receive_unlock_instructions: "Didn't receive unlock instructions?"
+        sign_up: "Sign up"
+        sign_in: "Sign in"
     confirmations:
       confirmed: "Your email address has been successfully confirmed."
       send_instructions: "You will receive an email with instructions for how to confirm your email address in a few minutes."
@@ -37,6 +46,19 @@ en:
       updated: "Your password has been changed successfully. You are now signed in."
       updated_not_active: "Your password has been changed successfully."
     registrations:
+      new:
+        title: "Create Account"
+        subtitle: "Join our community and find WiFi anywhere"
+        email_placeholder: "your@example.com"
+        name_placeholder: "Your name"
+        password_placeholder: "Minimum 8 characters"
+        referral_placeholder: "Referral code (optional)"
+        referral_hint: "Enter a referral code if you were invited by a friend"
+        avatar: "Choose photo"
+        submit: "Create Account"
+        oauth_divider: "or sign up with"
+        has_account: "Already have an account?"
+        sign_in: "Sign In"
       destroyed: "Bye! Your account has been successfully cancelled. We hope to see you again soon."
       signed_up: "Welcome! You have signed up successfully."
       signed_up_but_inactive: "You have signed up successfully. However, we could not sign you in because your account is not yet activated."
@@ -46,6 +68,16 @@ en:
       updated: "Your account has been updated successfully."
       updated_but_not_signed_in: "Your account has been updated successfully, but since your password was changed, you need to sign in again."
     sessions:
+      new:
+        title: "Sign In"
+        subtitle: "Welcome back to our community"
+        email_placeholder: "you@example.com"
+        remember_me: "Remember me"
+        submit: "Sign In"
+        forgot_password: "Forgot Password?"
+        oauth_divider: "or sign in with"
+        no_account: "Don't have an account?"
+        sign_up: "Create one"
       signed_in: "Signed in successfully."
       signed_out: "Signed out successfully."
       already_signed_out: "Signed out successfully."

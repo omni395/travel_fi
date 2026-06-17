@@ -1,0 +1,7 @@
+---
+zh:
+  ui:
+    pagination_component:
+      navigation: 分页导航
+      previous: 上一页
+      next: 下一页

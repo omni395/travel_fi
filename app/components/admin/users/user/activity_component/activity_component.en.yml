@@ -1,0 +1,11 @@
+---
+en:
+  admin:
+    users:
+      user:
+        activity_component:
+          activity_title: Activity
+          no_activity: No activity yet
+          type_badge: Badge
+          type_score: Score
+          type_action: Action

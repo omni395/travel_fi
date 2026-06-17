@@ -3,11 +3,6 @@
 
 import { createConsumer } from '@rails/actioncable'
 
-let consumer = null
+const consumer = createConsumer()
 
-export default () => {
-  if (!consumer) {
-    consumer = createConsumer()
-  }
-  return consumer
-}
+export default consumer

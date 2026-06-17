@@ -6,6 +6,10 @@
 # Сервис для централизованного логирования действий пользователей через PaperTrail
 # Используется для логирования: вход, выход, регистрация, подтверждение email, изменения профиля
 #
+# ВАЖНО: Для audit-событий (login, logout, registration и т.д.) object_changes НЕ передаётся,
+# т.к. эти события не являются изменениями модели в терминах PaperTrail.
+# Для profile_update object_changes передаётся в формате PaperTrail: { field: [old, new] }.
+#
 class PaperTrailAuditService
   class << self
     #
@@ -19,13 +23,7 @@ class PaperTrailAuditService
 
       user.versions.create!(
         event: 'login',
-        whodunnit: user.id.to_s,
-        object_changes: build_changes('login', nil, {
-          email: user.email,
-          ip: request&.remote_ip,
-          user_agent: request&.user_agent,
-          timestamp: Time.current
-        })
+        whodunnit: user.id.to_s
       )
     rescue StandardError => e
       Rails.logger.error("Failed to log login: #{e.class} #{e.message}")
@@ -42,13 +40,7 @@ class PaperTrailAuditService
 
       user.versions.create!(
         event: 'logout',
-        whodunnit: user.id.to_s,
-        object_changes: build_changes('logout', {
-          email: user.email,
-          ip: request&.remote_ip,
-          user_agent: request&.user_agent,
-          timestamp: Time.current
-        }, nil)
+        whodunnit: user.id.to_s
       )
     rescue StandardError => e
       Rails.logger.error("Failed to log logout: #{e.class} #{e.message}")
@@ -63,18 +55,11 @@ class PaperTrailAuditService
     def log_registration(user, request = nil)
       return unless user&.persisted?
 
+      # Для регистрации object_changes не передаётся — это audit-событие
       user.versions.create!(
         event: 'registration',
         whodunnit: user.id.to_s,
-        object_changes: build_changes('registration', nil, {
-          email: user.email,
-          name: user.name,
-          provider: user.provider,
-          uid: user.uid,
-          ip: request&.remote_ip,
-          user_agent: request&.user_agent,
-          timestamp: Time.current
-        })
+        object: user.attributes.to_json
       )
     rescue StandardError => e
       Rails.logger.error("Failed to log registration: #{e.class} #{e.message}")
@@ -88,14 +73,10 @@ class PaperTrailAuditService
     def log_email_confirmation(user)
       return unless user&.persisted?
 
+      # Для email_confirmation object_changes не передаётся
       user.versions.create!(
         event: 'email_confirmed',
-        whodunnit: user.id.to_s,
-        object_changes: build_changes('email_confirmed', nil, {
-          email: user.email,
-          confirmed_at: user.confirmed_at,
-          timestamp: Time.current
-        })
+        whodunnit: user.id.to_s
       )
     rescue StandardError => e
       Rails.logger.error("Failed to log email confirmation: #{e.class} #{e.message}")
@@ -105,15 +86,18 @@ class PaperTrailAuditService
     # Логирует изменение профиля пользователя
     #
     # @param user [User] пользователь
-    # @param changes [Hash] хеш изменений (старые и новые значения)
+    # @param changes [Hash] изменения в формате PaperTrail: { field: [old_value, new_value] }
     #
     def log_profile_update(user, changes)
       return unless user&.persisted? && changes.present?
 
+      # Нормализуем изменения в PaperTrail-формат (поддержка legacy { old:, new: })
+      normalized = normalize_changes(changes)
+
       user.versions.create!(
         event: 'profile_update',
         whodunnit: user.id.to_s,
-        object_changes: build_changes('profile_update', changes[:old], changes[:new])
+        object_changes: normalized.to_json
       )
     rescue StandardError => e
       Rails.logger.error("Failed to log profile update: #{e.class} #{e.message}")
@@ -130,13 +114,7 @@ class PaperTrailAuditService
 
       user.versions.create!(
         event: 'password_changed',
-        whodunnit: user.id.to_s,
-        object_changes: build_changes('password_changed', nil, {
-          email: user.email,
-          ip: request&.remote_ip,
-          user_agent: request&.user_agent,
-          timestamp: Time.current
-        })
+        whodunnit: user.id.to_s
       )
     rescue StandardError => e
       Rails.logger.error("Failed to log password change: #{e.class} #{e.message}")
@@ -154,15 +132,7 @@ class PaperTrailAuditService
 
       user.versions.create!(
         event: 'oauth_login',
-        whodunnit: user.id.to_s,
-        object_changes: build_changes('oauth_login', nil, {
-          email: user.email,
-          provider: provider,
-          uid: user.uid,
-          ip: request&.remote_ip,
-          user_agent: request&.user_agent,
-          timestamp: Time.current
-        })
+        whodunnit: user.id.to_s
       )
     rescue StandardError => e
       Rails.logger.error("Failed to log OAuth login: #{e.class} #{e.message}")
@@ -171,20 +141,33 @@ class PaperTrailAuditService
     private
 
     #
-    # Строит JSON для object_changes
+    # Нормализует формат изменений в PaperTrail-стандарт: { field: [old, new] }
+    # Поддерживает оба входных формата:
+    #   - { field: [old, new] }           (PaperTrail-стандарт)
+    #   - { field: { old: ..., new: ... } } (legacy-формат)
     #
-    # @param action [String] тип действия
-    # @param old_value [Hash, nil] старое значение
-    # @param new_value [Hash, nil] новое значение
-    # @return [String] JSON строка
+    # @param changes [Hash] входные изменения
+    # @return [Hash] нормализованные изменения
     #
-    def build_changes(action, old_value, new_value)
-      {
-        action => {
-          'old' => old_value,
-          'new' => new_value
-        }
-      }.to_json
+    def normalize_changes(changes)
+      return {} if changes.blank?
+
+      changes.each_with_object({}) do |(key, value), result|
+        result[key] = case value
+                      when Hash
+                        if value.key?(:old) || value.key?('old')
+                          # Конвертируем legacy { old:, new: } → [old, new]
+                          [value[:old] || value['old'], value[:new] || value['new']]
+                        else
+                          value.to_json
+                        end
+                      when Array
+                        # Уже PaperTrail-формат
+                        value
+                      else
+                        value
+                      end
+      end
     end
   end
 end

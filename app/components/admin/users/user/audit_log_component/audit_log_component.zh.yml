@@ -1,0 +1,12 @@
+---
+zh:
+  admin:
+    users:
+      user:
+        audit_log_component:
+          audit_log_title: 审计日志
+          audit_field: 字段
+          audit_old_value: 旧值
+          audit_new_value: 新值
+          no_details: 无详细信息
+          no_audit_logs: 未找到审计日志

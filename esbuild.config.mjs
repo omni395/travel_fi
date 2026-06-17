@@ -1,54 +1,84 @@
+#!/usr/bin/env node
+
 import * as esbuild from 'esbuild'
 import path from 'path'
+import fs from 'fs'
+import { execSync } from 'child_process'
 import rails from 'esbuild-rails'
 
-// Проверяем флаг --watch из package.json (скрипт build:watch)
 const watch = process.argv.includes('--watch')
 const production = process.env.RAILS_ENV === 'production'
+const BUILDS_DIR = path.join(process.cwd(), "app/assets/builds")
+
+// Очищаем app/assets/builds/ перед сборкой
+console.log('🧹 esbuild: Cleaning app/assets/builds/...')
+try {
+  fs.rmSync(BUILDS_DIR, { recursive: true, force: true })
+  fs.mkdirSync(BUILDS_DIR, { recursive: true })
+} catch (err) {
+  console.warn(`⚠️  esbuild: Cleanup warning: ${err.message}`)
+}
+
+// Запускаем авто-обнаружение компонентных контроллеров и CSS перед сборкой
+console.log('⚙️  esbuild: Discovering ViewComponent controllers & CSS...')
+try {
+  execSync('node scripts/discover_components.js', { stdio: 'inherit' })
+} catch (err) {
+  console.error('❌ esbuild: discover_components failed:', err.message)
+  process.exit(1)
+}
 
 const config = {
-  // Точка входа твоего приложения
   entryPoints: [
     "app/javascript/application.js",
     "app/javascript/admin.js"
   ],
-  
-  // Собираем всё в один файл
+
   bundle: true,
-  
-  // Куда класть результат (для Propshaft/Sprockets)
+  splitting: false,
+
   outdir: path.join(process.cwd(), "app/assets/builds"),
   absWorkingDir: process.cwd(),
-  
-  // Формат ESM нужен для корректной работы современных Web3 библиотек и type="module"
+
   format: 'esm',
   publicPath: '/assets',
-  
-  // Плагины
+
   plugins: [
-    rails() // Автоматически подхватывает контроллеры, если используешь esbuild-rails
+    rails(),
+    {
+      name: 'rebuild-logger',
+      setup(build) {
+        let count = 0
+        build.onEnd(result => {
+          const time = new Date().toLocaleTimeString()
+          if (result.errors.length > 0) {
+            console.error(`❌ esbuild: Rebuild failed at ${time} (${result.errors.length} errors)`)
+          } else {
+            // После каждого успешного билда копируем _components.css → builds/components.css
+            // чтобы Propshaft мог найти его по asset_path("components.css")
+            const src = path.join(process.cwd(), "app/javascript/controllers/_components.css")
+            const dest = path.join(BUILDS_DIR, "components.css")
+            try {
+              fs.copyFileSync(src, dest)
+              if (count > 0) console.log(`📦 Copied _components.css → builds/components.css (#${count})`)
+            } catch (err) {
+              console.warn(`⚠️  Copy components.css warning: ${err.message}`)
+            }
+            if (count > 0) {
+              console.log(`✅ esbuild: Rebuild #${count} at ${time}`)
+            }
+          }
+          count++
+        })
+      }
+    }
   ],
-  
-  // КРИТИЧНО ДЛЯ WEB3 (Viem, WalletConnect, Ethers)
-  // Заменяем глобальные Node-переменные на браузерные аналоги без лишних полифиллов
+
   define: {
     global: 'window',
     'process.env.NODE_ENV': production ? '"production"' : '"development"',
-    // Сеть
-    'process.env.CHAIN_ID': JSON.stringify(process.env.CHAIN_ID),
-    'process.env.CHAIN_NAME': JSON.stringify(process.env.CHAIN_NAME),
-    'process.env.CHAIN_EXPLORER_URL': JSON.stringify(process.env.CHAIN_EXPLORER_URL),
-    'process.env.RPC_URL': JSON.stringify(process.env.RPC_URL),
-    'process.env.WSS_URL': JSON.stringify(process.env.WSS_URL),
-    // Контракты
-    'process.env.TOKEN_CONTRACT_ADDRESS': JSON.stringify(process.env.TOKEN_CONTRACT_ADDRESS),
-    'process.env.CROWDSALE_CONTRACT_ADDRESS': JSON.stringify(process.env.CROWDSALE_CONTRACT_ADDRESS),
-    'process.env.REWARDS_CONTRACT_ADDRESS': JSON.stringify(process.env.REWARDS_CONTRACT_ADDRESS),
-    'process.env.USDT_CONTRACT_ADDRESS': JSON.stringify(process.env.USDT_CONTRACT_ADDRESS)
   },
 
-  
-  // Лоадеры для ассетов, которые могут импортироваться в JS (Leaflet, шрифты иконки)
   loader: {
     '.css': 'css',
     '.ttf': 'file',
@@ -62,24 +92,20 @@ const config = {
     '.gif': 'file',
     '.webp': 'file'
   },
-  
-  // Настройки сжатия
+
   minify: production,
   sourcemap: !production,
-  
-  // Чтобы избежать конфликтов с именами в некоторых Web3 либах
   preserveSymlinks: true
 }
 
-// Запуск процесса
 async function run() {
   if (watch) {
-    // Режим разработки с отслеживанием изменений
     const context = await esbuild.context(config)
+    await context.rebuild()
+    console.log("⚡ esbuild: Initial build complete")
     await context.watch()
-    console.log("⚡ esbuild: Watching for JS changes...")
+    console.log("⚡ esbuild: Watching for changes (esbuild built-in)...")
   } else {
-    // Разовый билд для продакшена
     await esbuild.build(config)
     console.log("🚀 esbuild: JS Build complete")
   }

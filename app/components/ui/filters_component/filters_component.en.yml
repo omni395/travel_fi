@@ -1,0 +1,9 @@
+---
+en:
+  ui:
+    filters_component:
+      search_label: Search
+      search_placeholder: Search by name or email
+      status_label: Status
+      all_statuses: All Statuses
+      reset: Reset

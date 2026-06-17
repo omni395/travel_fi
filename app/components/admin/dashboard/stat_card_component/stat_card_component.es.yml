@@ -1,0 +1,6 @@
+---
+es:
+  admin:
+    dashboard:
+      stat_card_component:
+        title: Tarjeta de Estadística

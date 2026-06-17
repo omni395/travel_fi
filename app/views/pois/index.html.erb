@@ -1,0 +1,61 @@
+<%# Pois Index - карта POI на весь экран + сайдбар + модалка %>
+<% content_for :content_class, "overflow-hidden p-0" %>
+
+<div class="h-[calc(100vh-4rem)] flex overflow-hidden"
+     data-controller="poi--map-component">
+<%# Сайдбар %>
+<%= render Ui::SidebarComponent.new(width_class: "w-80") do %>
+  <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+    <div class="flex items-center justify-between">
+      <h2 class="text-md font-semibold text-gray-900">
+        <i class="mdi mdi-map-marker-multiple text-emerald-500 mr-0.5"></i>
+        POIs
+      </h2>
+      <% if user_signed_in? %>
+        <button type="button"
+                data-action="click->poi--detail-component#open"
+                class="inline-flex items-center px-2 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors">
+          <i class="mdi mdi-plus mr-1"></i>
+          Add POI
+        </button>
+      <% end %>
+    </div>
+    <div class="mt-2">
+      <input type="text"
+             data-action="input->poi--map-component#filterPois"
+             placeholder="Search POIs..."
+             autocomplete="off"
+             class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500">
+    </div>
+  </div>
+  <div id="poi-list" data-ui--sidebar-component-target="list" class="divide-y divide-gray-100">
+    <%= render Poi::ListItemComponent.with_collection(@pois) %>
+  </div>
+  <div id="poi-detail-wrapper" data-ui--sidebar-component-target="detail" class="hidden">
+    <div id="poi-detail"></div>
+  </div>
+<% end %>
+
+
+  <%# Карта (показывается всегда, с маркером или без) %>
+  <div class="flex-1 min-h-0 relative">
+    <%= render Poi::MapComponent.new %>
+  </div>
+
+  <%# Спиннер загрузки (скрывается после инициализации карты) %>
+  <%# Иконка: mdi-map-search %>
+  <div id="poi-loading"
+       class="absolute inset-0 flex items-center justify-center bg-white z-50"
+       style="top: 4rem;">
+    <div class="text-center">
+      <i class="mdi mdi-map-search text-emerald-500 text-4xl mb-2 block"></i>
+      <%# Иконка: mdi-map-search %>
+      <p class="text-sm text-gray-500"><%= t("pois.loading_location") %></p>
+    </div>
+  </div>
+</div>
+
+<%= render Poi::DetailComponent.new(categories: @categories, user_lat: @user_lat, user_lng: @user_lng) %>
+
+<%# Контейнер для ConfirmDialog аутентификации (для гостей) %>
+<div id="poi-auth-dialog" class="hidden"></div>

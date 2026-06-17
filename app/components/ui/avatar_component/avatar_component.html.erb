@@ -1,0 +1,17 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/components/ui/avatar_component.html.erb
+#
+# Аватар пользователя или заглушка с инициалами.
+# %>
+
+<div data-controller="ui--avatar-component" class="<%= css_class %>">
+  <% if user.avatar.attached? %>
+    <%= image_tag avatar_url, class: "w-full h-full object-cover", alt: t(".alt") %>
+  <% else %>
+    <div class="<%= fallback_class %>">
+      <%= initials %>
+    </div>
+  <% end %>
+</div>

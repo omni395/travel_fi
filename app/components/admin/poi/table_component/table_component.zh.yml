@@ -1,0 +1,12 @@
+---
+zh:
+  admin:
+    poi:
+      table_component:
+        name: 名称
+        category: 分类
+        city: 城市
+        author: 作者
+        status: 状态
+        rating: 评分
+        actions: 操作

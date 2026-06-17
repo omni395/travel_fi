@@ -1,0 +1,8 @@
+<%# Ui::ClipboardComponent - копирование текста %>
+<%# Иконка: mdi-content-copy %>
+<div data-controller="ui--clipboard-component"
+     class="inline-flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
+  <i class="mdi mdi-content-copy text-gray-400 text-sm"></i>
+  <%# Иконка: mdi-content-copy %>
+  <span data-ui--clipboard-component-target="text" class="text-sm"><%= t(".copy") %></span>
+</div>

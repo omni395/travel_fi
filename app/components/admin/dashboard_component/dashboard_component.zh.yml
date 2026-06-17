@@ -1,0 +1,11 @@
+---
+zh:
+  admin:
+    dashboard_component:
+      title: 管理面板
+      total_users: 总用户数
+      active_users: 活跃
+      suspended_users: 已暂停
+      new_users_today: 今日新增
+      recent_users: 最近用户
+      recent_activities: 最近活动

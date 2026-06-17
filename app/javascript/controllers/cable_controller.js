@@ -1,5 +1,6 @@
 import { Controller } from '@hotwired/stimulus'
 import consumer from '../channels/consumer'
+import CableReady from 'cable_ready'
 
 // Глобальный объект для отслеживания активных подписок
 const activeSubscriptions = new Map()
@@ -24,7 +25,7 @@ export default class extends Controller {
   }
 
   createSubscription() {
-    const consumerInstance = consumer()
+    const consumerInstance = consumer
 
     console.log('[CABLE_CONTROLLER] 📤 Creating subscription for UserChannel')
 
@@ -40,6 +41,11 @@ export default class extends Controller {
 
       received(data) {
         console.log('[CABLE_SUBSCRIPTION] 📨 UserChannel: Received', data)
+
+        // Применяем CableReady-операции (тосты, морфинг и т.д.)
+        if (data && data.cableReady) {
+          CableReady.perform(data.operations)
+        }
       },
 
       rejected() {

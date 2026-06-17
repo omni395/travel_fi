@@ -4,7 +4,10 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   username: <%= ENV.fetch("POSTGRES_USER") { 'user' } %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD") { 'password' } %>
+  # Для локальной разработки (без Docker): DATABASE_HOST=localhost
+  # Для запуска в контейнерах: DATABASE_HOST=postgres (или не указывать — дефолт postgres)
   host: <%= ENV.fetch("DATABASE_HOST") { 'postgres' } %>
+  # host: <%= ENV.fetch("DATABASE_HOST") { 'localhost' } %>  # альтернатива для локального запуска
 
 development:
   primary:
@@ -16,17 +19,14 @@ development:
     <<: *default
     adapter: postgresql
     database: travel_fi_dev_queue
-    migrations_paths: db/queue_migrate
   cache:
     <<: *default
     adapter: postgresql
     database: travel_fi_dev_cache
-    migrations_paths: db/cache_migrate
   cable:
     <<: *default
     adapter: postgresql
     database: travel_fi_dev_cable
-    migrations_paths: db/cable_migrate
 
 test:
   primary:
@@ -38,14 +38,17 @@ test:
     <<: *default
     adapter: postgresql
     database: travel_fi_test_queue
+    database_tasks: false
   cache:
     <<: *default
     adapter: postgresql
     database: travel_fi_test_cache
+    database_tasks: false
   cable:
     <<: *default
     adapter: postgresql
     database: travel_fi_test_cable
+    database_tasks: false
 
 production:
   primary:
@@ -58,14 +61,14 @@ production:
     <<: *default
     adapter: postgresql
     database: travel_fi_prod_queue
-    #migrations_paths: db/queue_migrate
+    schema_search_path: public,postgis
   cache:
     <<: *default
     adapter: postgresql
     database: travel_fi_prod_cache
-    #migrations_paths: db/cache_migrate
+    schema_search_path: public,postgis
   cable:
     <<: *default
     adapter: postgresql
     database: travel_fi_prod_cable
-    #migrations_paths: db/migrate
+    schema_search_path: public,postgis

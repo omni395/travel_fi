@@ -1,0 +1,7 @@
+ru:
+  ui:
+    tooltip_component:
+      loading: "Загрузка..."
+      category: "Категория"
+      address: "Адрес"
+      photo: "Фото"

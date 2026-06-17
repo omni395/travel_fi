@@ -1,0 +1,11 @@
+---
+ru:
+  admin:
+    users:
+      table_component:
+        name: Имя
+        email: Email
+        status: Статус
+        roles: Роли
+        created_at: Зарегистрирован
+        updated_at: Обновлён

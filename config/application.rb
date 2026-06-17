@@ -28,7 +28,10 @@ module TravelFi
 
     # I18n configuration for locale in URL path
     config.i18n.default_locale = :en
-    config.i18n.available_locales = [:en, :ru, :es, :zh]
+    config.i18n.available_locales = [ :en, :ru, :es, :zh ]
+
+    # Load ViewComponent sidecar locale files (*.yml inside components/)
+    config.i18n.load_path += Dir[Rails.root.join("app", "components", "**", "*.yml")]
 
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
@@ -40,7 +43,7 @@ module TravelFi
     config.action_mailer.delivery_job = "ActionMailer::MailDeliveryJob"
 
     # Use SQL structure dumps instead of Ruby DSL for PostGIS compatibility
-    #config.active_record.schema_format = :sql
+    # config.active_record.schema_format = :sql
     config.active_record.schema_format = :ruby
 
     ActiveRecord::SchemaDumper.ignore_tables |= %w[

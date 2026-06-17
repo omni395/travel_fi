@@ -1,6 +1,6 @@
 <!-- Users Edit Page -->
 <!-- Отображает форму редактирования профиля через UsersFormComponent -->
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
   <div class="max-w-4xl mx-auto">
     <!-- Back Button -->
     <div class="mb-6">
@@ -11,6 +11,6 @@
     </div>
 
     <!-- Users Form Component -->
-    <%= render UsersFormComponent.new(user: @user) %>
+    <%= render Users::FormComponent.new(user: @user) %>
   </div>
 </div>

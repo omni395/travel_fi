@@ -1,0 +1,33 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/components/ui/breadcrumbs_component.html.erb
+#
+# Отображает навигационную цепочку.
+# Последний элемент — активный (без ссылки, серый текст).
+# Между элементами — иконка mdi-chevron-right.
+# %>
+
+<nav data-controller="ui--breadcrumbs-component" aria-label="<%= t('.navigation') %>" class="mb-4">
+  <ol class="flex flex-wrap items-center gap-1 text-sm">
+    <% breadcrumbs.each_with_index do |crumb, index| %>
+      <% is_last = index == breadcrumbs.length - 1 %>
+
+      <li class="flex items-center gap-1">
+        <%# Разделитель (кроме первого) %>
+        <% if index > 0 %>
+          <!-- mdi: chevron-right -->
+          <i class="mdi mdi-chevron-right text-gray-400 mx-1" aria-hidden="true"></i>
+        <% end %>
+
+        <% if is_last %>
+          <span class="text-gray-500 font-medium" aria-current="page">
+            <%= crumb[:name] %>
+          </span>
+        <% else %>
+          <%= link_to crumb[:name], crumb[:path], class: "text-teal-600 hover:text-teal-800 hover:underline" %>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+</nav>

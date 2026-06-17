@@ -1,0 +1,55 @@
+<%# Poi::ListItemComponent - элемент списка POI %>
+<%# Иконка: mdi-map-marker %>
+<div data-poi-id="<%= poi.id %>"
+     data-poi-name="<%= poi.localized_name %>"
+     data-poi-city="<%= poi.city %>"
+     data-poi-address="<%= poi.address %>"
+     data-poi-lat="<%= poi.latitude %>"
+     data-poi-lng="<%= poi.longitude %>"
+     data-poi-icon="<%= poi.poi_category&.icon %>"
+     data-poi-category="<%= poi.poi_category&.localized_name %>"
+     data-poi-rating="<%= poi.rating&.to_f || 0 %>"
+     data-action="click->poi--list-item-component#showDetail"
+     data-poi--list-item-component-id-param="<%= poi.id %>"
+     class="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150">
+
+  <div class="flex items-start gap-3">
+    <!-- Иконка категории -->
+    <div class="shrink-0 mt-0.5">
+      <% if poi.poi_category.icon.present? %>
+        <i class="mdi <%= poi.poi_category.icon %> text-emerald-500 text-lg"></i>
+        <%# Иконка: динамическая из poi_category.icon %>
+      <% else %>
+        <i class="mdi mdi-map-marker text-emerald-500 text-lg"></i>
+        <%# Иконка: mdi-map-marker %>
+      <% end %>
+    </div>
+
+    <!-- Информация -->
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center justify-between gap-2">
+        <h4 class="text-sm font-medium text-gray-900 truncate"><%= poi.localized_name %></h4>
+        <% if poi.rating > 0 %>
+          <div class="flex items-center gap-0.5 shrink-0">
+            <i class="mdi mdi-star text-yellow-400 text-xs"></i>
+            <%# Иконка: mdi-star %>
+            <span class="text-xs text-gray-500"><%= poi.rating %></span>
+          </div>
+        <% end %>
+      </div>
+
+      <% if poi.address.present? || poi.city.present? %>
+        <p class="text-xs text-gray-500 truncate mt-0.5">
+          <%= [poi.address, poi.city].compact.join(", ") %>
+        </p>
+      <% end %>
+
+      <div class="flex items-center gap-2 mt-1">
+        <span class="text-xs text-gray-400"><%= poi.poi_category.localized_name %></span>
+        <span class="px-1.5 py-0.5 rounded-full text-xs font-medium <%= status_badge_class %>">
+          <%= t(".status_#{poi.status}") %>
+        </span>
+      </div>
+    </div>
+  </div>
+</div>

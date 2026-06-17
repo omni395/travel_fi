@@ -1,0 +1,21 @@
+/* ui/hamburger_component — стили выдвижной панели */
+.ui-hamburger {
+  position: relative;
+}
+
+/* Кнопка-триггер */
+.ui-hamburger__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Выдвижная панель */
+.ui-hamburger__panel {
+  z-index: 50;
+}
+
+/* Оверлей */
+.ui-hamburger__overlay {
+  transition: opacity 0.3s ease-in-out;
+}

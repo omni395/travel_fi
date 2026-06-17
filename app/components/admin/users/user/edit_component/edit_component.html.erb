@@ -1,0 +1,144 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/components/admin/users/user/edit_component.html.erb - форма редактирования профиля
+#
+# Точная копия вёрстки show_component, но с полями формы вместо read-only элементов.
+# - Аватар: кликабельный с camera badge (правый-верхний угол)
+# - Имя: text_field (стиль h1)
+# - Email: email_field (стиль p)
+# - Статус: DropdownComponent + hidden_field
+# - Роль: DropdownComponent + hidden_field (дефолт "user")
+# - Кнопки: Cancel + Save вместо Edit + Delete
+# - divider-ui + 3 инфо-строки: без изменений
+# %>
+
+<%= render Ui::CardComponent.new do |card| %>
+  <% card.with_body do %>
+    <%= form_with model: user, url: admin_user_path(id: user), method: :patch,
+                  data: { controller: "users", action: "submit->users#handleSubmit" } do |f| %>
+
+      <%# Верхняя секция: аватар + поля + кнопки %>
+      <div class="flex flex-col sm:flex-row items-start gap-8">
+        <%# Аватар (кликабельный с camera badge) %>
+        <div class="relative flex-shrink-0" id="avatar-preview">
+          <%= render Ui::AvatarComponent.new(user: user, size: :xl) %>
+          <%= f.file_field :avatar,
+                           id: 'user_avatar_input',
+                           accept: 'image/png,image/jpeg,image/webp',
+                           class: "hidden",
+                           data: { action: "change->users#previewAvatar", users_target: "avatarInput" } %>
+          <label for="user_avatar_input"
+                 class="absolute top-0 right-0 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer shadow-md hover:bg-primary/90 transition-colors">
+            <!-- mdi: camera -->
+            <i class="mdi mdi-camera text-sm"></i>
+          </label>
+        </div>
+
+        <%# Поля: имя, email, статус, роль %>
+        <div class="flex-1 min-w-0">
+          <%# Имя %>
+          <%= f.text_field :name,
+                           value: user.name,
+                           autocomplete: "name",
+                           class: "field-input text-2xl font-bold text-gray-900 truncate",
+                           data: { users_target: "nameInput" } %>
+
+          <%# Email %>
+          <%= f.email_field :email,
+                            value: user.email,
+                            autocomplete: "email",
+                            class: "field-input text-gray-500 font-medium mt-1" %>
+
+          <%# Статус + роль в flex-row %>
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <%# Статус (DropdownComponent) %>
+            <%= f.hidden_field :status, value: user.status, data: { users_target: "statusInput" } %>
+            <%= render Ui::DropdownComponent.new do |dd| %>
+              <% dd.with_trigger do %>
+                <button type="button" data-dropdown-target="trigger" data-action="dropdown#toggle click@window->dropdown#hide" class="btn-ui btn-ui--primary btn-ui--sm">
+                  <span data-users-target="statusText"><%= status_text %></span>
+                  <!-- mdi: chevron-down -->
+                  <i class="mdi mdi-chevron-down ml-1"></i>
+                </button>
+              <% end %>
+              <% dd.with_menu do %>
+                <div class="py-1 min-w-[160px]">
+                  <% status_options.each do |label, val| %>
+                    <button type="button"
+                            data-action="click->users#selectStatus click->dropdown#toggle"
+                            data-value="<%= val %>"
+                            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                      <%= label %>
+                    </button>
+                  <% end %>
+                </div>
+              <% end %>
+            <% end %>
+
+            <%# Роль (DropdownComponent) %>
+            <%= f.hidden_field :role_id, value: current_role_id, data: { users_target: "roleInput" } %>
+            <%= render Ui::DropdownComponent.new do |dd| %>
+              <% dd.with_trigger do %>
+                <button type="button" data-dropdown-target="trigger" data-action="dropdown#toggle click@window->dropdown#hide" class="btn-ui btn-ui--primary btn-ui--sm">
+                  <span data-users-target="roleText"><%= current_role_name %></span>
+                  <!-- mdi: chevron-down -->
+                  <i class="mdi mdi-chevron-down ml-1"></i>
+                </button>
+              <% end %>
+              <% dd.with_menu do %>
+                <div class="py-1 min-w-[160px]">
+                  <% role_options.each do |label, val| %>
+                    <button type="button"
+                            data-action="click->users#selectRole click->dropdown#toggle"
+                            data-value="<%= val %>"
+                            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                      <%= label %>
+                    </button>
+                  <% end %>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Кнопки: Cancel + Save %>
+        <div class="flex flex-col gap-2 w-full sm:w-auto">
+          <%= link_to admin_user_path(id: user, q: params[:q], status: params[:status]),
+                      class: "btn-ui btn-ui--ghost btn-ui--md" do %>
+            <!-- mdi: close -->
+            <i class="mdi mdi-close"></i>
+            <%= t('.cancel') %>
+          <% end %>
+          <%= f.submit t('.save'),
+                       class: "btn-ui btn-ui--primary btn-ui--md",
+                       data: { users_target: "submitButton" } %>
+        </div>
+      </div>
+
+      <%# Информационные строки %>
+      <div class="divider-ui"></div>
+
+      <div class="space-y-2">
+        <span class="text-sm text-gray-400 flex items-center">
+          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <%= t('.registered') %> <%= l(user.created_at, format: :short) %>
+        </span>
+        <span class="text-sm text-gray-400 flex items-center">
+          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <%= t('.updated') %> <%= l(user.updated_at, format: :short) %>
+        </span>
+        <span class="text-sm text-gray-400 flex items-center">
+          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <%= t('.last_sign_in') %> <%= format_date(user.versions.where(event: 'login').last&.created_at) %>
+        </span>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

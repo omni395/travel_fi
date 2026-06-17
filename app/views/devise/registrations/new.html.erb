@@ -1,20 +1,29 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-6 px-4 sm:px-6 lg:px-8">
-  <div class="w-full max-w-md mt-16">
-    <!-- Header -->
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/devise/registrations/new.html.erb - форма регистрации
+#
+# Единый стиль с primary цветовой схемой.
+# Использует field-input, field-label, btn-ui классы.
+# Аватар — кликабельный с badge-индикатором.
+# %>
+
+<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
+  <div class="w-full max-w-md">
+    <%# Header %>
     <div class="text-center mb-2">
-      <h1 class="text-4xl font-bold text-indigo-600 mb-2">Travel-Fi</h1>
-      <h2 class="text-2xl font-bold text-gray-900">Create Account</h2>
-      <p class="text-gray-600 mt-2">Join our community and find WiFi anywhere</p>
+      <h1 class="text-4xl font-bold text-primary mb-2">Travel-Fi</h1>
+      <h2 class="text-2xl font-bold text-gray-900"><%= t('devise.registrations.new.title') %></h2>
+      <p class="text-gray-600 mt-2"><%= t('devise.registrations.new.subtitle') %></p>
     </div>
 
-    <!-- Sign Up Form -->
+    <%# Sign Up Form %>
     <div id="devise_registration_form" class="bg-white rounded-xl shadow-lg p-6 mb-2">
       <%= form_with(model: resource, as: resource_name, url: registration_path(resource_name), html: { multipart: true }) do |form| %>
         <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
         <% if resource.errors.any? %>
-          <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <h4 class="text-red-800 font-bold mb-2"><%= pluralize(resource.errors.count, "error") %> prohibited this user from being saved:</h4>
-            <ul class="list-disc list-inside text-red-700">
+          <div class="alert-ui alert-ui--error mb-4">
+            <ul class="list-disc list-inside">
               <% resource.errors.full_messages.each do |message| %>
                 <li><%= message %></li>
               <% end %>
@@ -22,75 +31,62 @@
           </div>
         <% end %>
 
-        <!-- Email -->
-        <div class="mb-2">
-          <%= form.label :email, class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "your@example.com" %>
+        <%# Email %>
+        <div class="field-group mb-4">
+          <%= form.label :email, class: "field-label" %>
+          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "field-input", placeholder: t('devise.registrations.new.email_placeholder') %>
         </div>
 
-        <!-- Name and Avatar (two-column: 2/3 and 1/3) -->
-        <div class="mb-2 flex gap-3">
-          <!-- Name (3/4 width) -->
-          <div class="w-3/4">
-            <%= form.label :name, class: "block text-sm font-medium text-gray-700 mb-2" %>
-            <%= form.text_field :name, autocomplete: "name", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "Your name" %>
+        <%# Name + Avatar (stack на mobile, строка на desktop) %>
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          <div class="field-group flex-1">
+            <%= form.label :name, class: "field-label" %>
+            <%= form.text_field :name, value: "", autocomplete: "off", class: "field-input", placeholder: t('devise.registrations.new.name_placeholder') %>
           </div>
-
-          <!-- Avatar (1/4 width) -->
-          <div class="w-1/4">
-            <%= form.label :avatar, class: "block text-sm font-medium text-gray-700 mb-2" %>
-            <div class="flex items-center gap-3">
-              <%= form.file_field :avatar, id: 'user_avatar_input', accept: 'image/png,image/jpeg,image/webp', class: "hidden" %>
-              <label for="user_avatar_input" class="inline-flex items-center justify-center w-full px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer h-10">
-                <i class="mdi mdi-cloud-upload text-gray-400 text-lg"></i>
-              </label>
-            </div>
+          <div class="field-group sm:w-auto shrink-0">
+            <%= form.label :avatar, class: "field-label" %>
+            <%= form.file_field :avatar, id: "user_avatar_input", accept: 'image/png,image/jpeg,image/webp', class: "hidden" %>
+            <%= render Ui::BtnComponent.new(color: :secondary, size: :md, html: { type: "button", onclick: "document.getElementById('user_avatar_input').click()" }) do %>
+              <!-- mdi: camera-plus -->
+              <i class="mdi mdi-camera-plus"></i>
+            <% end %>
           </div>
         </div>
 
-        <!-- Password -->
-        <div class="mb-2">
-          <%= form.label :password, class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.password_field :password, autocomplete: "new-password", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "Minimum 8 characters" %>
+        <%# Password + Confirmation (stack на mobile, строка на desktop) %>
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+          <div class="field-group flex-1">
+            <%= form.label :password, class: "field-label" %>
+            <%= form.password_field :password, autocomplete: "new-password", class: "field-input", placeholder: t('devise.registrations.new.password_placeholder') %>
+          </div>
+          <div class="field-group flex-1">
+            <%= form.label :password_confirmation, class: "field-label" %>
+            <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "field-input", placeholder: t('devise.registrations.new.password_placeholder') %>
+          </div>
         </div>
 
-        <!-- Password Confirmation -->
-        <div class="mb-2">
-          <%= form.label :password_confirmation, class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "Minimum 8 characters" %>
+        <%# Referral Code (открытое поле, предзаполняется из params[:ref]) %>
+        <div class="field-group mb-4">
+          <%= form.label :referral_code_input, class: "field-label" %>
+          <%= form.text_field :referral_code_input,
+                value: params[:ref],
+                autocomplete: "off",
+                class: "field-input",
+                placeholder: t('devise.registrations.new.referral_placeholder') %>
+          <p class="text-xs text-gray-500 mt-1">
+            <!-- mdi: information-outline -->
+            <i class="mdi mdi-information-outline text-gray-400 mr-1"></i>
+            <%= t('devise.registrations.new.referral_hint') %>
+          </p>
         </div>
 
-        <!-- Sign Up Button -->
-        <div class="mb-2">
-          <%= form.submit "Create Account", class: "w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium cursor-pointer" %>
+        <%# Sign Up Button %>
+        <div class="mb-4">
+          <%= form.submit t('devise.registrations.new.submit'), class: "btn-ui btn-ui--primary btn-ui--md w-full" %>
         </div>
       <% end %>
 
-      <!-- OAuth Divider -->
-      <div class="relative mb-4">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-300"></div>
-        </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white text-gray-500">or sign up with</span>
-        </div>
-      </div>
-
-      <!-- OAuth Buttons (two-column) -->
-      <div class="flex flex-col gap-2">
-        <a href="<%= user_google_oauth2_omniauth_authorize_path %>" class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition cursor-pointer">
-          <%= image_tag 'Google_G_logo.svg', alt: 'Google', class: 'w-5 h-5' %>
-          <span class="font-medium text-gray-700">Google</span>
-        </a>
-      </div>
-      </div>
-      <!-- Sign In Link -->
-      <div class="text-center">
-        <p class="text-gray-600">
-          Already have an account?
-          <%= link_to "Sign In", new_user_session_path, class: "text-indigo-600 hover:text-indigo-700 font-bold" %>
-        </p>
-      </div>
+      <%= render "devise/shared/links" %>
     </div>
   </div>
 </div>

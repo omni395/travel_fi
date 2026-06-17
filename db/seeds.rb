@@ -2,12 +2,14 @@ ActiveJob::Base.queue_adapter = :inline
 
 PASSWORD = '12345678'
 
-# During seed, disable synchronous delivery errors so we don't crash on SMTP issues
-# Emails will be queued and processed asynchronously by ActiveJob
+# During seed, enable delivery errors to diagnose SMTP issues
 original_raise_errors = ActionMailer::Base.raise_delivery_errors
-ActionMailer::Base.raise_delivery_errors = false
+ActionMailer::Base.raise_delivery_errors = true
 
 begin
+  # Отключаем PaperTrail во время сидирования — версии и бродкасты не нужны
+  PaperTrail.request.enabled = false
+
   # ========== CREATE ROLES ==========
   # Создаем роли для Rolify
   Role.find_or_create_by!(name: 'admin')
@@ -44,11 +46,26 @@ begin
     user.confirmed_at = Time.current
   end
 
-  # Назначаем роль admin через Rolify
+  # Назначаем роль admin через Rolify (после after_create :assign_default_role)
   admin.add_role(:admin) unless admin.has_role?(:admin)
+  admin.remove_role(:user) if admin.has_role?(:user)
   attach_default_avatar(admin)
+  UserService.create_default_settings(admin)
 
   puts "✅ Admin created: admin@example.com (active)"
+
+  # ========== SEED BOT (для seed:pois rake task) ==========
+  seed_bot = User.find_or_create_by!(email: 'seed-bot@example.com') do |user|
+    user.name = 'Seed Bot'
+    user.status = 'active'
+    user.password = SecureRandom.hex(16)
+    user.password_confirmation = user.password
+    user.confirmed_at = Time.current
+  end
+  seed_bot.add_role(:user) unless seed_bot.has_role?(:user)
+  Setting.create_for_user(seed_bot)
+
+  puts "✅ Seed Bot created: seed-bot@example.com"
 
   # ========== GROUP 1: 5 users - CONFIRMED & ACTIVE ==========
   (1..5).each do |i|
@@ -60,9 +77,10 @@ begin
       user.confirmed_at = Time.current
     end
 
-    # Назначаем роль user через Rolify
-    user.add_role(:user) unless user.has_role?(:user)
+    # Роль :user назначается автоматически через after_create :assign_default_role
+    # Для уже существующих пользователей роль уже есть
     attach_default_avatar(user)
+    UserService.create_default_settings(user)
   end
 
   puts "✅ Created 5 ACTIVE users: user-confirmed-[0..4]@example.com"
@@ -80,17 +98,20 @@ begin
       u.confirmation_sent_at = Time.current
     end
 
-    # Назначаем роль user через Rolify
-    user.add_role(:user) unless user.has_role?(:user)
+    # Роль :user назначается автоматически через after_create :assign_default_role
     attach_default_avatar(user)
+    UserService.create_default_settings(user)
 
     # If we created the record (or it already exists) and we generated a raw_token, deliver the mail with raw token
     if user.persisted? && user.confirmed_at.blank? && raw_token.present?
-      UserMailer.confirmation_instructions(user, raw_token).deliver_later
+      UserMailer.confirmation_instructions(user, raw_token).deliver_now
     elsif user.persisted? && user.confirmed_at.blank?
       # fallback to using whatever value user.confirmation_token returns if raw isn't available
-      UserMailer.confirmation_instructions(user, user.confirmation_token).deliver_later
+      UserMailer.confirmation_instructions(user, user.confirmation_token).deliver_now
     end
+  rescue => e
+    Rails.logger.error "[SEEDS] Email delivery failed for #{user&.email || 'unknown'}: #{e.class}: #{e.message}"
+    puts "   ⚠️  Email failed for #{user&.email || 'unknown'}: #{e.message}"
   end
 
   puts "✅ Created 5 PENDING_VERIFICATION users: user-pending-[0..4]@example.com"
@@ -110,14 +131,17 @@ begin
       u.confirmation_token = enc_token
     end
 
-    # Назначаем роль user через Rolify
-    user.add_role(:user) unless user.has_role?(:user)
+    # Роль :user назначается автоматически через after_create :assign_default_role
     attach_default_avatar(user)
+    UserService.create_default_settings(user)
     if user.persisted? && user.confirmed_at.blank? && raw_token.present?
-      UserMailer.confirmation_instructions(user, raw_token).deliver_later
+      UserMailer.confirmation_instructions(user, raw_token).deliver_now
     elsif user.persisted? && user.confirmed_at.blank?
-      UserMailer.confirmation_instructions(user, user.confirmation_token).deliver_later
+      UserMailer.confirmation_instructions(user, user.confirmation_token).deliver_now
     end
+  rescue => e
+    Rails.logger.error "[SEEDS] Email delivery failed for #{user&.email || 'unknown'}: #{e.class}: #{e.message}"
+    puts "   ⚠️  Email failed for #{user&.email || 'unknown'}: #{e.message}"
   end
 
   puts "✅ Created 5 users expiring TOMORROW: user-expires-[0..4]@example.com"
@@ -136,13 +160,16 @@ begin
     user.update_column(:created_at, 6.months.ago) if user.persisted?
     user.update_column(:updated_at, 6.months.ago) if user.persisted?
 
-    # Назначаем роль user через Rolify
-    user.add_role(:user) unless user.has_role?(:user)
+    # Роль :user назначается автоматически через after_create :assign_default_role
     attach_default_avatar(user)
+    UserService.create_default_settings(user)
   end
 
   puts "✅ Created 5 INACTIVE users: user-inactive-[0..4]@example.com"
   puts "   ⏰ Last activity: 6 months ago (will change to INACTIVE tomorrow)"
+
+  # ========== POI CATEGORIES ==========
+  require_relative "seeds/poi_categories"
 
   puts "\n🎉 Seeding completed!"
   puts "\n📊 User Summary:"

@@ -14,11 +14,13 @@ class Admin::DashboardReflex < ApplicationReflex
   # Вызывается при нажатии кнопки обновления
   #
   def refresh
+    morph :nothing
+
     # Проверяем авторизацию через Pundit
     authorize :admin_dashboard, :access?
 
     # Получаем обновленную статистику
-    @stats = AdminStatsService.call
+    @stats = UserService.stats
     @recent_users = User.order(created_at: :desc).limit(10)
     @recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
 
@@ -34,11 +36,13 @@ class Admin::DashboardReflex < ApplicationReflex
   # Вызывается автоматически при изменении данных
   #
   def refresh_stats
+    morph :nothing
+
     # Проверяем авторизацию через Pundit
     authorize :admin_dashboard, :access?
 
     # Получаем обновленную статистику
-    @stats = AdminStatsService.call
+    @stats = UserService.stats
     @recent_users = User.order(created_at: :desc).limit(10)
     @recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
 
@@ -75,6 +79,6 @@ class Admin::DashboardReflex < ApplicationReflex
       recent_activities: @recent_activities
     )
 
-    ApplicationController.helpers.render_component(component)
+    ApplicationController.render(component, layout: false)
   end
 end

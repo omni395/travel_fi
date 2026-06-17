@@ -1,0 +1,7 @@
+es:
+  ui:
+    tooltip_component:
+      loading: "Cargando..."
+      category: "Categoría"
+      address: "Dirección"
+      photo: "Foto"

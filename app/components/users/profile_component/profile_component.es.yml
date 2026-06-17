@@ -1,0 +1,10 @@
+es:
+  users:
+    profile_component:
+      badges: "Insignias"
+      roles: "Roles"
+      referral_code: "Código de Referido"
+      copy_code: "Copiar"
+      referral_hint: "¡Comparte este código: %{code} — tus amigos lo usarán al registrarse!"
+      wallet_address: "Dirección de Billetera"
+      edit_profile: "Editar Perfil"

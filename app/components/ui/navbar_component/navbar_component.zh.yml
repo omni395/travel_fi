@@ -1,0 +1,27 @@
+---
+zh:
+  ui:
+    navbar_component:
+      home: 首页
+      map: 地图
+      login: 登录
+      register: 注册
+      admin_panel: 管理面板
+      profile: 个人资料
+      settings: 设置
+      logout: 退出
+      logout_confirm: 您确定要退出吗？
+      toggle_menu: 打开导航菜单
+      navigation: 导航
+      account: 账户
+      language: 语言
+      languages:
+        en: EN
+        ru: RU
+        es: ES
+        zh: 中文
+      languages_full:
+        en: English
+        ru: Русский
+        es: Español
+        zh: 中文

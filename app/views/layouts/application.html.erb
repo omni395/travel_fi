@@ -11,6 +11,10 @@
 
     <%= yield :head %>
 
+    <%# === RESOURCE HINTS (для ранней загрузки критических ресурсов) === %>
+    <link rel="preload" href="<%= asset_path("application.css") %>" as="style">
+    <link rel="modulepreload" href="<%= asset_path("application.js") %>" crossorigin="anonymous">
+
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
@@ -18,22 +22,51 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <!-- Use CDN for Material Design Icons to ensure latest version and reduce asset size (optional) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+    <%# MDI font загружается локально через esbuild (import в application.js) %>
+    <%# CDN больше не используется — @mdi/font включён в сборку %>
 
-    <%= stylesheet_link_tag :app %>
+    <%# === CRITICAL CSS (inline, не блокирует рендеринг) === %>
+    <%= critical_css %>
+
+    <%# === ASYNC CSS (загружаются без блокировки рендеринга) === %>
+    <%# Основной CSS: Tailwind + OpenLayers + MDI (через @import) %>
+    <link rel="stylesheet" href="<%= asset_path("application.css") %>" media="print" onload="this.media='all'">
+    <noscript><%= stylesheet_link_tag :app %></noscript>
+
+    <%# Компонентный CSS (sidecar) %>
+    <link rel="stylesheet" href="<%= asset_path("components.css") %>" media="print" onload="this.media='all'">
+    <noscript><%= stylesheet_link_tag "components" %></noscript>
+
+    <%# JS — modulepreload уже указан выше, этот тег запускает выполнение %>
     <%= javascript_include_tag "application", type: "module" %>
   </head>
 
-  <body class="flex flex-col min-h-screen" data-controller="cable">
+  <body class="flex flex-col min-h-screen bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable">
     <!-- Navbar Section -->
     <div class="flex-none">
-      <%= render NavbarComponent.new(user: current_user) %>
+      <%= render Ui::NavbarComponent.new(user: current_user) %>
     </div>
 
     <!-- Content Section -->
-    <div class="flex-1 overflow-y-auto p-4">
+    <div class="flex-1 <%= content_for(:content_class) || "overflow-y-auto p-4" %>">
       <%= yield %>
+    </div>
+
+    <!-- Toast notifications: SSR flash + CableReady target -->
+    <div id="notifications" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+      <% flash.each do |type, message| %>
+        <% next if message.blank? %>
+        <% toast_type = case type.to_s
+             when "success" then :success
+             when "notice"  then :success
+             when "alert"   then :error
+             when "error"   then :error
+             when "warning" then :warning
+             else :info
+           end %>
+        <%= render Ui::ToastComponent.new(message: message, type: toast_type) %>
+      <% end %>
+      <% flash.clear %>
     </div>
   </body>
 </html>

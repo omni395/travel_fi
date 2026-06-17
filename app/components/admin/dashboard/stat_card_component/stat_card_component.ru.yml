@@ -1,0 +1,6 @@
+---
+ru:
+  admin:
+    dashboard:
+      stat_card_component:
+        title: Карточка статистики
