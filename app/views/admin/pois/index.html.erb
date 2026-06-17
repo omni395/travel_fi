@@ -1,0 +1,31 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/admin/pois/index.html.erb - список POI в админке
+#
+# Отображает:
+# - Хлебные крошки
+# - Таблицу POI с пагинацией
+# - Фильтры и поиск
+# Использует StimulusReflex для обновления без перезагрузки
+# %>
+
+<div class="p-4" data-controller="admin--pois">
+  <%# Хлебные крошки %>
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.pois.index.title") }
+  ]) %>
+
+  <%# Фильтры и поиск %>
+  <%= render ::Ui::FiltersComponent.new(
+        search_query: @search_query,
+        status_filter: @status_filter,
+        search_controller: "admin--pois",
+        search_action: "input->admin--pois#filter",
+        filter_action: "change->admin--pois#filter",
+        reset_action: "admin--pois#resetFilters"
+      ) %>
+
+  <%# Таблица POI (вынесена в отдельный компонент для CableReady morph) %>
+  <%= render Admin::Poi::TableComponent.new(pois: @pois, pagy: @pagy) %>
+</div>

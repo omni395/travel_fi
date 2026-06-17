@@ -1,0 +1,11 @@
+---
+ru:
+  admin:
+    users:
+      user:
+        activity_component:
+          activity_title: Активность
+          no_activity: Пока нет активности
+          type_badge: Бейдж
+          type_score: Очки
+          type_action: Действие

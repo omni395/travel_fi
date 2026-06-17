@@ -1,0 +1,10 @@
+zh:
+  users:
+    profile_component:
+      badges: "徽章"
+      roles: "角色"
+      referral_code: "邀请码"
+      copy_code: "复制"
+      referral_hint: "分享此代码：%{code} — 您的朋友注册时可以使用它！"
+      wallet_address: "钱包地址"
+      edit_profile: "编辑资料"

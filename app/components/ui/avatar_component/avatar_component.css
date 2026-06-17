@@ -1,0 +1,18 @@
+/* ui/avatar_component — стили аватара (без @apply) */
+.avatar-ui {
+  border-radius: 9999px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.avatar-ui--fallback {
+  background: linear-gradient(135deg, var(--color-secondary), var(--color-primary));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+.avatar-ui--sm { width: 1.75rem; height: 1.75rem; font-size: 0.75rem; }
+.avatar-ui--md { width: 2.5rem; height: 2.5rem; font-size: 0.875rem; }
+.avatar-ui--lg { width: 4rem; height: 4rem; font-size: 1.25rem; }
+.avatar-ui--xl { width: 7rem; height: 7rem; font-size: 2.25rem; }

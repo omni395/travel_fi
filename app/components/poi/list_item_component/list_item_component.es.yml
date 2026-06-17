@@ -1,0 +1,8 @@
+---
+es:
+  poi:
+    list_item_component:
+      status_pending: Pendiente
+      status_approved: Aprobado
+      status_rejected: Rechazado
+      status_archived: Archivado

@@ -1,0 +1,4 @@
+es:
+  ui:
+    clipboard_component:
+      copy: "Copiar"

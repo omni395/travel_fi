@@ -1,0 +1,41 @@
+<%# Ui::ConfirmDialogComponent - модальное окно подтверждения %>
+<div id="<%= dialog_id %>"
+     data-controller="ui--confirm-dialog-component"
+     data-ui--confirm-dialog-component-confirm-url-value="<%= confirm_url %>"
+     data-ui--confirm-dialog-component-confirm-method-value="<%= confirm_method %>"
+     class="fixed inset-0 z-50 hidden"
+     data-action="keydown.esc->ui--confirm-dialog-component#cancel">
+  <div class="absolute inset-0 bg-black/50" data-action="click->ui--confirm-dialog-component#cancel"></div>
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+      <%# Заголовок %>
+      <div class="flex items-center gap-3 mb-4">
+        <% if confirm_variant == :danger %>
+          <%# MDI: alert-circle %>
+          <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+            <i class="mdi mdi-alert-circle text-red-600 text-xl"></i>
+          </div>
+        <% else %>
+          <%# MDI: information-outline %>
+          <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center flex-shrink-0">
+            <i class="mdi mdi-information-outline text-teal-600 text-xl"></i>
+          </div>
+        <% end %>
+        <h3 class="text-lg font-semibold text-gray-900"><%= title %></h3>
+      </div>
+
+      <%# Сообщение %>
+      <p class="text-sm text-gray-600 mb-6"><%= message %></p>
+
+      <%# Кнопки %>
+      <div class="flex justify-end gap-3">
+        <button type="button" data-action="click->ui--confirm-dialog-component#cancel" class="<%= cancel_button_class %>">
+          <%= cancel_text %>
+        </button>
+        <button type="button" data-action="click->ui--confirm-dialog-component#confirm" class="<%= confirm_button_class %>">
+          <%= confirm_text %>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

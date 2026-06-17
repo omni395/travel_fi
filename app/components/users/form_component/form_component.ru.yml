@@ -1,0 +1,15 @@
+ru:
+  users:
+    form_component:
+      edit_profile_title: "Редактировать ваш профиль"
+      name: "Имя"
+      email: "Email"
+      avatar: "Фото профиля"
+      name_placeholder: "Введите ваше полное имя"
+      name_hint: "Ваше имя будет видно другим пользователям"
+      email_cannot_change: "Email не может быть изменен в целях безопасности"
+      avatar_hint: "Выберите изображение JPG, PNG или WebP. Макс размер: 5MB"
+      save: "Сохранить"
+      cancel: "Отмена"
+      loading: "Загрузка..."
+      errors: "Ошибки"

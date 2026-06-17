@@ -1,0 +1,8 @@
+---
+ru:
+  poi:
+    list_item_component:
+      status_pending: Ожидает
+      status_approved: Одобрено
+      status_rejected: Отклонено
+      status_archived: В архиве

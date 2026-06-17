@@ -1,0 +1,57 @@
+<%# frozen_string_literal: true %>
+<%#
+# app/components/ui/filters_component.html.erb
+#
+# Компонент фильтров и поиска
+# Использует Ui::BtnComponent
+# %>
+<div data-controller="ui--filters-component" class="card-ui mb-4">
+  <div class="p-3">
+    <div class="flex items-center gap-3">
+      <%# Поиск с иконкой %>
+      <div class="relative flex-1 min-w-0">
+        <!-- mdi: magnify -->
+        <span class="mdi mdi-magnify absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></span>
+        <label for="search-input" class="sr-only"><%= t('.search_label') %></label>
+        <input id="search-input"
+               type="text"
+               name="q"
+               value="<%= search_query %>"
+               placeholder="<%= t('.search_placeholder') %>"
+               autocomplete="off"
+               data-action="<%= search_action %>"
+               class="field-input pl-10">
+      </div>
+
+      <%# Фильтр по статусу с иконкой %>
+      <div class="relative w-44">
+        <!-- mdi: filter-variant -->
+        <span class="mdi mdi-filter-variant absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></span>
+        <label for="status-select" class="sr-only"><%= t('.status_label') %></label>
+        <select id="status-select"
+                name="status"
+                data-action="<%= filter_action %>"
+                class="field-select pl-10">
+          <option value="">
+            <%= t('.all_statuses') %>
+          </option>
+          <% statuses.each do |s| %>
+            <option value="<%= s %>" <% if status_filter == s %>selected<% end %>>
+              <%= t("activerecord.attributes.user.statuses.#{s}") %>
+            </option>
+          <% end %>
+        </select>
+      </div>
+
+      <%# Сброс фильтров %>
+      <div class="shrink-0">
+        <button data-action="click-><%= reset_action %>"
+                title="<%= t('.reset') %>"
+                class="btn-ui btn-ui--ghost btn-ui--sm">
+          <!-- mdi: filter-remove -->
+          <span class="mdi mdi-filter-remove text-lg"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

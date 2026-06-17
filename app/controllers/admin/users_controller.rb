@@ -3,107 +3,84 @@
 #
 # Admin::UsersController - контроллер для управления пользователями в админке
 #
-# Отвечает за отображение списка пользователей
-# Все операции обновления происходят через StimulusReflex
+# Отвечает за:
+# - Список пользователей с фильтрацией (index)
+# - Детальную страницу пользователя (show)
+# - Обновление данных пользователя (update)
 # Доступ только для пользователей с ролями admin или moderator
 #
 class Admin::UsersController < Admin::BaseController
-  before_action :set_user, only: [:select_user, :start_edit, :cancel_edit, :edit]
-
   PER_PAGE = 20
 
   #
   # Отображает список пользователей с фильтрацией и поиском
-  # Использует Admin::UsersListComponent для реактивного отображения
   #
   def index
     authorize User, :index?
 
     @search_query = params[:q]
     @status_filter = params[:status]
-    @selected_user = nil
-    @edit_mode = false
-    @roles = Role.all
-    @users = filtered_users.order(created_at: :desc).page(params[:page]).per(PER_PAGE)
+    @pagy, @users = pagy(filtered_users.order(created_at: :desc), limit: PER_PAGE)
   end
 
   #
-  # Отображает форму редактирования пользователя
-  # Перенаправляет на start_edit для использования StimulusReflex
+  # Отображает детальную страницу пользователя
+  # GET /admin/users/:id
   #
-  def edit
-    authorize @user, :update?
-    redirect_to select_user_admin_user_path(@user, q: params[:q], status: params[:status])
-  end
-
-  #
-  # Выбирает пользователя для детального просмотра
-  # Используется для морфинга компонента в детальный вид
-  #
-  def select_user
+  def show
+    @user = User.friendly.find(params[:id])
     authorize @user, :show?
 
-    @search_query = params[:q]
-    @status_filter = params[:status]
-    @selected_user = @user
-    @edit_mode = false
+    @edit_mode = params[:edit] == 'true'
+    @activities = UserActivityService.new(user: @user).call
+    @pagy_audit, @versions = pagy(@user.versions.order(created_at: :desc), limit: 20)
     @roles = Role.all
-    @users = filtered_users.order(created_at: :desc).page(params[:page]).per(PER_PAGE)
-
-    render :index
   end
 
   #
-  # Запускает режим редактирования пользователя
-  # Используется для морфинга компонента в форму редактирования
+  # Обновляет данные пользователя
+  # PATCH /admin/users/:id
   #
-  def start_edit
+  def update
+    @user = User.friendly.find(params[:id])
     authorize @user, :update?
 
-    @search_query = params[:q]
-    @status_filter = params[:status]
-    @selected_user = @user
+    Admin::UserService.update(
+      user: @user,
+      params: user_params,
+      current_user: current_user
+    )
+
+    redirect_to admin_user_path(@user), notice: t('admin.users.update_success')
+  rescue Admin::UserService::UpdateError => e
     @edit_mode = true
+    @pagy_audit, @versions = pagy(@user.versions.order(created_at: :desc), limit: 20)
     @roles = Role.all
-    @users = filtered_users.order(created_at: :desc).page(params[:page]).per(PER_PAGE)
-
-    render :index
-  end
-
-  #
-  # Отменяет режим редактирования
-  # Используется для морфинга компонента в детальный вид
-  #
-  def cancel_edit
-    authorize @user, :show?
-
-    @search_query = params[:q]
-    @status_filter = params[:status]
-    @selected_user = @user
-    @edit_mode = false
-    @roles = Role.all
-    @users = filtered_users.order(created_at: :desc).page(params[:page]).per(PER_PAGE)
-
-    render :index
+    flash.now[:alert] = e.message
+    render :show, status: :unprocessable_entity
   end
 
   private
 
   #
-  # Находит пользователя по id
+  # Разрешенные параметры для обновления пользователя
   #
-  def set_user
-    @user = User.find(params[:id])
+  # @return [ActionController::Parameters]
+  #
+  def user_params
+    params.require(:user).permit(:name, :email, :status, role_ids: [])
   end
 
   #
   # Возвращает отфильтрованный список пользователей
   #
+  # @return [ActiveRecord::Relation]
+  #
   def filtered_users
     users = User.all
 
-    # Применяем scope из политики
-    users = policy_scope(users)
+    # Применяем scope из политики Admin::UserPolicy
+    users = Admin::UserPolicy::Scope.new(current_user, users).resolve
 
     # Фильтрация по статусу
     users = users.where(status: params[:status]) if params[:status].present?
@@ -117,4 +94,3 @@ class Admin::UsersController < Admin::BaseController
     users
   end
 end
-

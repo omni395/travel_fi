@@ -1,0 +1,8 @@
+---
+en:
+  ui:
+    confirm_dialog_component:
+      default_title: Confirm action
+      default_message: Are you sure you want to perform this action?
+      confirm: Confirm
+      cancel: Cancel

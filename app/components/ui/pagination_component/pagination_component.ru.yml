@@ -1,0 +1,7 @@
+---
+ru:
+  ui:
+    pagination_component:
+      navigation: Навигация пагинации
+      previous: Предыдущая
+      next: Следующая

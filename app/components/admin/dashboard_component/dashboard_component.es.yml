@@ -1,0 +1,11 @@
+---
+es:
+  admin:
+    dashboard_component:
+      title: Panel de Administración
+      total_users: Usuarios Totales
+      active_users: Activos
+      suspended_users: Suspendidos
+      new_users_today: Nuevos Hoy
+      recent_users: Usuarios Recientes
+      recent_activities: Actividades Recientes

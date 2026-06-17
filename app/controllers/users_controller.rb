@@ -36,10 +36,10 @@ class UsersController < ApplicationController
   private
 
   #
-  # Находит пользователя по id
+  # Находит пользователя по slug или id (FriendlyId)
   #
   def set_user
-    @user = User.find(params[:id])
+    @user = User.friendly.find(params[:id])
   end
 
   #

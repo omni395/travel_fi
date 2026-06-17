@@ -1,0 +1,12 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/components/ui/btn_component.html.erb
+#
+# Кнопка с цветом из темы и размером.
+# Поддерживает любые HTML атрибуты через html: параметр.
+# %>
+
+<button type="button" data-controller="ui--btn-component" class="<%= css_class %>" <%= tag.attributes(attrs) %>>
+  <%= content %>
+</button>

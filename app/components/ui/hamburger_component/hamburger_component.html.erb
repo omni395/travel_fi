@@ -1,0 +1,38 @@
+<%# Ui::HamburgerComponent — универсальная выдвижная панель с бургер-кнопкой %>
+<div class="ui-hamburger"
+     data-controller="ui--hamburger-component"
+     data-ui--hamburger-component-position="<%= @position %>"
+     data-ui--hamburger-component-panel-translate-class="<%= panel_translate_class %>">
+  <%# Кнопка-триггер (кастомная или дефолтный бургер) %>
+  <% if trigger.present? %>
+    <%= trigger %>
+  <% else %>
+    <button type="button"
+            data-action="click->ui--hamburger-component#toggle"
+            data-ui--hamburger-component-target="trigger"
+            aria-label="<%= t(".toggle") %>"
+            class="ui-hamburger__trigger p-2 rounded-md hover:bg-teal-50 transition-colors duration-200 cursor-pointer">
+      <%# MDI: menu — иконка бургера %>
+      <i class="mdi mdi-menu text-xl text-teal-700"
+         data-ui--hamburger-component-target="burgerIcon"></i>
+    </button>
+  <% end %>
+
+  <%# Затемняющий оверлей %>
+  <% if show_overlay? %>
+    <div data-ui--hamburger-component-target="overlay"
+         data-action="click->ui--hamburger-component#handleBackdrop"
+         class="ui-hamburger__overlay fixed inset-0 bg-teal-900/40 z-40 hidden transition-opacity duration-300 ease-in-out opacity-0">
+    </div>
+  <% end %>
+
+  <%# Выдвижная панель %>
+  <div data-ui--hamburger-component-target="panel"
+       class="ui-hamburger__panel fixed top-0 <%= panel_position_class %> h-full <%= @menu_width_class %> max-w-[85vw]
+              bg-white shadow-2xl z-50 transform <%= panel_translate_class %>
+              transition-transform duration-300 ease-in-out overflow-y-auto">
+    <% if menu.present? %>
+      <%= menu %>
+    <% end %>
+  </div>
+</div>

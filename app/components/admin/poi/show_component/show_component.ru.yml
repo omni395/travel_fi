@@ -1,0 +1,19 @@
+---
+ru:
+  admin:
+    poi:
+      show_component:
+        missing_translations: 'Отсутствуют переводы: %{locales}'
+        details: Детали
+        description: Описание
+        address: Адрес
+        phone: Телефон
+        website: Веб-сайт
+        coordinates: Координаты
+        metadata: Метаданные
+        no_metadata: Нет метаданных
+        created_by: Создал
+        created_at: Создано
+        verified_count: Подтверждено %{count} раз
+        true: Да
+        false: Нет

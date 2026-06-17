@@ -1,0 +1,94 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/components/admin/users/user/show_component.html.erb - профиль пользователя
+#
+# Отображает карточку профиля с аватаром, информацией и бейджами.
+# Только просмотр — никакого управления.
+# Использует Ui::CardComponent, Ui::AvatarComponent, Ui::BadgeComponent, Ui::BtnComponent.
+# %>
+
+<% cache [user, I18n.locale] do %>
+  <%= render Ui::CardComponent.new do |card| %>
+    <% card.with_body do %>
+      <%# Верхняя секция: аватар + имя + кнопки %>
+      <div class="flex flex-col sm:flex-row items-start gap-8">
+        <%# Аватар %>
+        <%= render Ui::AvatarComponent.new(user: user, size: :xl) %>
+
+        <%# Имя, email, статус %>
+        <div class="flex-1 min-w-0">
+          <h1 class="text-2xl font-bold text-gray-900 truncate">
+            <%= user.name %>
+          </h1>
+          <p class="text-gray-500 font-medium">
+            <%= user.email %>
+          </p>
+
+          <div class="mt-4 flex flex-wrap items-center gap-3">
+            <%# Статус %>
+            <span class="<%= status_badge_class %>">
+              <%= status_text %>
+            </span>
+          </div>
+
+          <%# Роли (только бейджи) %>
+          <% if user.roles.any? %>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <% user.roles.each do |role| %>
+                <%= render Ui::BadgeComponent.new(color: :secondary, size: :sm) do %>
+                  <%= t("admin.roles.#{role.name}", default: role.name) %>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+
+        <%# Кнопки действий %>
+        <div class="flex flex-col gap-2 w-full sm:w-auto">
+          <%# Редактировать %>
+          <%= link_to admin_user_path(id: user, edit: true, q: params[:q], status: params[:status]),
+                      class: "btn-ui btn-ui--primary btn-ui--md" do %>
+            <!-- mdi: pencil -->
+            <i class="mdi mdi-pencil"></i>
+            <%= t('.edit') %>
+          <% end %>
+
+          <%# Удалить %>
+          <button type="button"
+                  data-action="click->admin--users--table-component#destroyUser"
+                  data-user-id="<%= user.to_param %>"
+                  class="btn-ui btn-ui--danger btn-ui--md">
+            <!-- mdi: delete -->
+            <i class="mdi mdi-delete"></i>
+            <%= t('.destroy') %>
+          </button>
+        </div>
+      </div>
+
+      <%# Информационные строки %>
+      <div class="divider-ui"></div>
+
+      <div class="space-y-2">
+        <span class="text-sm text-gray-400 flex items-center">
+          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <%= t('.registered') %> <%= l(user.created_at, format: :short) %>
+        </span>
+        <span class="text-sm text-gray-400 flex items-center">
+          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <%= t('.updated') %> <%= l(user.updated_at, format: :short) %>
+        </span>
+        <span class="text-sm text-gray-400 flex items-center">
+          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <%= t('.last_sign_in') %> <%= format_date(user.versions.where(event: 'login').last&.created_at) %>
+        </span>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

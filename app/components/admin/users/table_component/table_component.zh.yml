@@ -1,0 +1,11 @@
+---
+zh:
+  admin:
+    users:
+      table_component:
+        name: 姓名
+        email: 邮箱
+        status: 状态
+        roles: 角色
+        created_at: 注册
+        updated_at: 更新

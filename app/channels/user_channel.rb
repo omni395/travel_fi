@@ -35,6 +35,6 @@ class UserChannel < ActionCable::Channel::Base
     # Отписывает пользователя от канала
     #
     def unsubscribed
-      Rails.logger.info("UserChannel: User #{current_user.id} unsubscribed from user_#{current_user.id}")
+      Rails.logger.info("UserChannel: User #{current_user&.id || 'Guest'} unsubscribed")
     end
 end

@@ -87,29 +87,39 @@ class Admin::UserService
   end
 
   #
-  # Ищет пользователей по запросу и статусу
+  # Ищет пользователей по запросу и статусу через Ransack
+  #
+  # Результат кэшируется на 5 минут по ключу search_users/<query>/<status>/<sort>.
+  # Инвалидация происходит при изменении любого пользователя (updated_at).
   #
   # @param query [String, nil] поисковый запрос (имя или email)
   # @param status [String, nil] статус для фильтрации
+  # @param sort_column [String, nil] колонка для сортировки
+  # @param sort_direction [String, nil] направление сортировки (asc/desc)
   # @return [ActiveRecord::Relation] отфильтрованные пользователи
   #
-  def self.search_users(query: nil, status: nil)
-    users = User.includes(:roles)
+  def self.search_users(query: nil, status: nil, sort_column: nil, sort_direction: nil)
+    cache_key = "search_users/#{query}/#{status}/#{sort_column}/#{sort_direction}/#{User.maximum(:updated_at)}"
 
-    # Фильтрация по статусу
-    users = users.where(status: status) if status.present?
+    Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
+      users = User.includes(:roles).where.not(status: 'deleted')
 
-    # Поиск по имени или email
-    if query.present?
-      search_query = "%#{query}%"
-      users = users.where('name LIKE ? OR email LIKE ?', search_query, search_query)
+      conditions = {}
+      conditions[:status_eq] = status if status.present?
+      conditions[:name_or_email_cont] = query if query.present?
+
+      result = users.ransack(conditions).result
+
+      # Применяем сортировку
+      if sort_column.present? && %w[name email status created_at updated_at].include?(sort_column)
+        direction = sort_direction == 'asc' ? :asc : :desc
+        result = result.order(sort_column => direction)
+      else
+        result = result.order(created_at: :desc)
+      end
+
+      result
     end
-
-    # Исключаем удаленных пользователей
-    users = users.where.not(status: 'deleted')
-
-    # Сортируем по дате создания (новые первыми)
-    users.order(created_at: :desc)
   end
 
   attr_reader :user, :params, :current_user
@@ -128,6 +138,7 @@ class Admin::UserService
   def execute_update
     validate_update_params!
     update_user_fields!
+    update_user_roles!
 
     # Устанавливаем контекст админки для broadcast_update
     Current.admin_context = true
@@ -251,6 +262,19 @@ class Admin::UserService
     user.name = params[:name] if params[:name].present?
     user.email = params[:email] if params[:email].present?
     user.status = params[:status] if params[:status].present?
+  end
+
+  #
+  # Обновляет роль пользователя (один пользователь — одна роль)
+  # Заменяет все текущие роли на выбранную
+  #
+  def update_user_roles!
+    return unless params[:role_id].present?
+
+    new_role = Role.find_by(id: params[:role_id])
+    return unless new_role
+
+    user.roles = [ new_role ]
   end
 
   #

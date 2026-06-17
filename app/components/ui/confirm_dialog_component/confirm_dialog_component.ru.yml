@@ -1,0 +1,8 @@
+---
+ru:
+  ui:
+    confirm_dialog_component:
+      default_title: Подтверждение действия
+      default_message: Вы уверены, что хотите выполнить это действие?
+      confirm: Подтвердить
+      cancel: Отмена

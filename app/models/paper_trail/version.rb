@@ -3,38 +3,36 @@
 #
 # PaperTrail::Version - модель для хранения версий изменений
 #
-# Эта модель расширяет стандартную модель PaperTrail::Version
-# Добавляет after_commit callback для вызова соответствующих Broadcaster
+# ВНИМАНИЕ: Этот файл НЕ переопределяет класс PaperTrail::Version,
+# а открывает существующий класс из гема для добавления дополнительной логики.
+# Явно включаем PaperTrail::VersionConcern, чтобы гарантировать наличие
+# всех методов (timestamp_sort_order, object_col_is_json? и др.) независимо
+# от порядка загрузки файлов.
 #
 # Поток: Model.save! → PaperTrail::Version.create! → after_commit → Broadcaster → WebSocket → браузер
 #
 class PaperTrail::Version < ActiveRecord::Base
+  # Явно подключаем модуль VersionConcern, который определяет методы:
+  # - timestamp_sort_order — сортировка по created_at
+  # - object_col_is_json? — проверка типа колонки object в БД
+  include PaperTrail::VersionConcern
+
+  # Связь с пользователем, совершившим изменение
+  belongs_to :user, optional: true
+
   #
-  # Вызывает соответствующий Broadcaster после создания/обновления версии
-  # Определяет тип модели и событие, затем вызывает нужный Broadcaster
+  # Вызывает VersionObserverJob после фиксации транзакции
+  # Это гарантирует, что данные уже в БД перед бродкастом
   #
   after_commit :broadcast_changes, on: [:create, :update, :destroy]
 
   private
 
   #
-  # Определяет какой Broadcaster вызвать на основе типа модели и события
+  # Ставит задачу в очередь для обработки изменений
   #
   def broadcast_changes
-    case item_type
-    when 'User'
-      case event
-      when 'create', 'registration'
-        Admin::DashboardBroadcaster.broadcast_recent_users_update
-        Admin::DashboardBroadcaster.broadcast_stats_update
-      when 'update'
-        Admin::DashboardBroadcaster.broadcast_stats_update
-        Admin::UserBroadcaster.broadcast_user_update(item)
-      when 'destroy'
-        Admin::DashboardBroadcaster.broadcast_stats_update
-        Admin::UserBroadcaster.broadcast_user_destroy(item)
-      end
-    end
+    VersionObserverJob.perform_later(self.id)
   rescue StandardError => e
     Rails.logger.error("PaperTrail::Version.broadcast_changes error: #{e.class} #{e.message}")
   end

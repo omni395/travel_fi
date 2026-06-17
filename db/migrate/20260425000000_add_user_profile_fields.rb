@@ -16,9 +16,7 @@ class AddUserProfileFields < ActiveRecord::Migration[8.1]
     add_column :users, :confirmation_sent_at, :datetime
     add_column :users, :unconfirmed_email, :string
     
-    # Gamification и Reputation
-    add_column :users, :points, :integer, default: 0
-    add_column :users, :reputation, :integer, default: 0
+    # Referral code
     add_column :users, :referral_code, :string
     
     # Web3 / Wallet

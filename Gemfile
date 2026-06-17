@@ -1,5 +1,7 @@
 source "https://rubygems.org"
 
+ruby "3.4.9"
+
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
 gem "rails", "~> 8.1.3"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
@@ -8,21 +10,17 @@ gem "propshaft"
 gem "pg", "~> 1.1"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
-# Bundle and transpile JavaScript [https://github.com/rails/jsbundling-rails]
-gem "jsbundling-rails"
 
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
 # Bundle and process CSS [https://github.com/rails/cssbundling-rails]
 gem "cssbundling-rails"
-# Build JSON APIs with ease [https://github.com/rails/jbuilder]
-gem "jbuilder"
 
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
-gem "tzinfo-data", platforms: %i[ windows jruby ]
+gem "tzinfo-data", platforms: %i[ mswin mingw x64_mingw jruby ]
 
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
@@ -39,7 +37,7 @@ gem "mini_magick"         # Обработка изображений с пом�
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
-  gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+  gem "debug", platforms: %i[ mri mswin mingw x64_mingw ], require: "debug/prelude"
 
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
   gem "bundler-audit", require: false
@@ -59,20 +57,19 @@ end
 
 # --- 1. БЕЗОПАСНОСТЬ, АУТЕНТИФИКАЦИЯ И АУДИТ ---
 gem "devise"    # Система аутентификации (вход/регистрация)
-gem 'devise-i18n' # Локализация Devise
+gem "devise-i18n" # Локализация Devise
 gem "bcrypt"              # Хеширование паролей
 gem "pundit"              # Авторизация: управление доступом на уровне контроллеров
 gem "paper_trail" # Аудит: версионирование и логирование всех изменений в БД
 gem "omniauth-rails_csrf_protection" # CSRF protection для OmniAuth
 gem "omniauth-google-oauth2" # Google OAuth стратегия
 gem "rolify"              # Роли и разрешения для пользователей
-gem "merit"               # Badges, points, rankings для gamification
 
-# --- 2. ФОНОВЫЕ ЗАДАЧИ И КЭШИРОВАНИЕ ---
+# --- 2. ФОНОВЫЕ ЗАДАЧИ, КЭШИРОВАНИЕ И ПОИСК ---
 gem "solid_queue"  # Database-backed job queue (default in Rails 8)
-gem "solid_cable"  # Action Cable adapter для Solid Queue
+gem "solid_cable"  # ActionCable adapter для PostgreSQL (альтернатива Redis)
 gem "solid_cache"  # Cache store для Solid Queue
-gem "solid_queue_dashboard" # Dashboard для управления фоновыми задачами
+gem "solid_queue_dashboard" # Dashboard для управления фоновыми задачами (сторонний инструмент)
 gem "ransack"      # Поиск и фильтрация через Ransack (без внешних сервисов)
 
 # --- 3. ГЕОЛОКАЦИЯ И GIS ---
@@ -92,6 +89,10 @@ gem "rails-i18n"            # Расширенные файлы локализа
 gem "noticed"               # Централизованная система уведомлений с множественными методами доставки
 gem "web-push"
 
+# --- 5. ГЕЙМИФИКАЦИЯ ---
+# Собственная система геймификации: баллы, бейджи, уровни, репутация
+# Конфиг: config/gamification.yml
+# Сервис: GamificationService
 # --- 6. SEO И АНАЛИТИКА ---
 gem "friendly_id"         # Красивые, читаемые URL-адреса
 gem "sitemap_generator"   # Генерация sitemap.xml
@@ -101,6 +102,6 @@ gem "chartkick"           # Удобная визуализация данных
 gem "groupdate"           # Группировка данных по времени (дням, неделям)
 
 gem "twilio-ruby"         # WhatsApp-бот и уведомления
-gem "hugging-face"        # Интеграция с Hugging Face API для AI возможностей 
+gem "hugging-face"        # Интеграция с Hugging Face API для AI возможностей
 
 gem "dotenv-rails"        # Загрузка переменных окружения из .env файла (для локальной разработки)

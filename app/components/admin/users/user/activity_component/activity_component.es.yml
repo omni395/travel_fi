@@ -1,0 +1,11 @@
+---
+es:
+  admin:
+    users:
+      user:
+        activity_component:
+          activity_title: Actividad
+          no_activity: Sin actividad aún
+          type_badge: Insignia
+          type_score: Puntos
+          type_action: Acción

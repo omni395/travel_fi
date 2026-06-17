@@ -1,0 +1,26 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/admin/poi_categories/show.html.erb - детальная страница категории POI
+#
+# Отображает:
+# - Хлебные крошки
+# - Детальную информацию о категории
+# - Список полей категории
+# %>
+
+<div class="p-4">
+  <%# Хлебные крошки %>
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.poi_categories.index.title"), path: admin_poi_categories_path },
+    { name: @category.localized_name }
+  ]) %>
+
+  <%# Детальная информация о категории %>
+  <%= render Admin::PoiCategory::ShowComponent.new(category: @category) %>
+
+  <%# Список полей категории %>
+  <div class="mt-6">
+    <%= render Admin::PoiCategory::FieldsListComponent.new(fields: @fields, category: @category) %>
+  </div>
+</div>

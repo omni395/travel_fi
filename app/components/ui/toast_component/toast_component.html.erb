@@ -1,0 +1,12 @@
+<div role="alert"
+     data-controller="ui--toast-component"
+     data-ui--toast-component-auto-dismiss-timeout-value="<%= @auto_dismiss %>"
+     class="mb-4 p-4 rounded-lg shadow-lg <%= bg_color %> text-white flex items-center justify-between pointer-events-auto">
+  <span><%= @message %></span>
+  <% if @dismissible %>
+    <button data-action="click->ui--toast-component#dismiss" class="ml-4 text-white hover:text-gray-200">
+      <%# MDI: close %>
+      <span class="mdi mdi-close"></span>
+    </button>
+  <% end %>
+</div>

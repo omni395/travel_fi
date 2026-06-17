@@ -1,0 +1,19 @@
+---
+en:
+  admin:
+    poi:
+      show_component:
+        missing_translations: 'Missing translations: %{locales}'
+        details: Details
+        description: Description
+        address: Address
+        phone: Phone
+        website: Website
+        coordinates: Coordinates
+        metadata: Metadata
+        no_metadata: No metadata
+        created_by: Created by
+        created_at: Created at
+        verified_count: Verified %{count} times
+        true: 'Yes'
+        false: 'No'

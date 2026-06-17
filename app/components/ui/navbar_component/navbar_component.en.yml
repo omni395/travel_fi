@@ -1,0 +1,27 @@
+---
+en:
+  ui:
+    navbar_component:
+      home: Home
+      map: Map
+      login: Sign In
+      register: Sign Up
+      admin_panel: Admin Panel
+      profile: Profile
+      settings: Settings
+      logout: Logout
+      logout_confirm: Are you sure you want to sign out?
+      toggle_menu: Toggle navigation menu
+      navigation: Navigation
+      account: Account
+      language: Language
+      languages:
+        en: EN
+        ru: RU
+        es: ES
+        zh: 中文
+      languages_full:
+        en: English
+        ru: Русский
+        es: Español
+        zh: 中文

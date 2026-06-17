@@ -1,0 +1,10 @@
+<%# Poi::MapComponent - контейнер для OpenLayers карты с тултипом %>
+<%# Иконка: mdi-map %>
+<%# data-controller устанавливается на родительском контейнере в index.html.erb %>
+<%# poi-map-features — скрытый контейнер данных для маркеров карты.
+    Заполняется через PoiReflex#load_pois_in_bounds (CableReady morph).
+    Содержит элементы с data-poi-id/data-poi-lat/data-poi-lng для _loadPois().
+    НЕ зависит от DOM сайдбара. %>
+<div class="poi-map"></div>
+<div id="poi-map-features" class="hidden"></div>
+<%= render Ui::TooltipComponent.new %>

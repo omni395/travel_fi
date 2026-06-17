@@ -1,0 +1,6 @@
+---
+es:
+  admin:
+    users:
+      row_component:
+        title: Fila de Usuario

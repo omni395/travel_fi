@@ -1,0 +1,8 @@
+---
+zh:
+  admin:
+    users:
+      user:
+        wallet_component:
+          wallet_title: 钱包
+          wallet_placeholder: 钱包功能即将推出

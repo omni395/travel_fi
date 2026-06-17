@@ -1,0 +1,10 @@
+/* ui/card_component — стили карточки (без @apply) */
+.card-ui {
+  background-color: white;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.card-ui__body { padding: 2rem; }
+.card-ui__header { padding: 1.5rem 2rem 0; }
+.card-ui__footer { padding: 0 2rem 1.5rem; }

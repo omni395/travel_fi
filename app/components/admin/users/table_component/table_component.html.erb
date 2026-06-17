@@ -1,0 +1,83 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/components/admin/users/table_component.html.erb - таблица пользователей
+#
+# Отображает таблицу пользователей с пагинацией и сортировкой.
+# Используется для CableReady morph в Admin::UsersReflex.
+# data-controller="admin--users--table-component" находится на родительском контейнере в index.html.erb
+# %>
+
+<div data-admin-users-list="true">
+  <% cache [users.maximum(:updated_at), users.count, I18n.locale, @sort_column, @sort_direction] do %>
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <button type="button"
+                    data-action="click->admin--users--table-component#sort"
+                    data-sort-column="name"
+                    class="group inline-flex items-center gap-1 hover:text-gray-700">
+              <%= t('.name') %>
+              <!-- mdi: sort-variant -->
+              <span class="mdi mdi-sort-variant text-gray-400 group-hover:text-gray-600 text-sm"></span>
+            </button>
+          </th>
+          <th class="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <button type="button"
+                    data-action="click->admin--users--table-component#sort"
+                    data-sort-column="email"
+                    class="group inline-flex items-center gap-1 hover:text-gray-700">
+              <%= t('.email') %>
+              <!-- mdi: sort-variant -->
+              <span class="mdi mdi-sort-variant text-gray-400 group-hover:text-gray-600 text-sm"></span>
+            </button>
+          </th>
+          <th class="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <button type="button"
+                    data-action="click->admin--users--table-component#sort"
+                    data-sort-column="status"
+                    class="group inline-flex items-center gap-1 hover:text-gray-700">
+              <%= t('.status') %>
+              <!-- mdi: sort-variant -->
+              <span class="mdi mdi-sort-variant text-gray-400 group-hover:text-gray-600 text-sm"></span>
+            </button>
+          </th>
+          <th class="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <%= t('.roles') %>
+          </th>
+          <th class="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <button type="button"
+                    data-action="click->admin--users--table-component#sort"
+                    data-sort-column="created_at"
+                    class="group inline-flex items-center gap-1 hover:text-gray-700">
+              <%= t('.created_at') %>
+              <!-- mdi: sort-variant -->
+              <span class="mdi mdi-sort-variant text-gray-400 group-hover:text-gray-600 text-sm"></span>
+            </button>
+          </th>
+          <th class="px-2 py-1.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <button type="button"
+                    data-action="click->admin--users--table-component#sort"
+                    data-sort-column="updated_at"
+                    class="group inline-flex items-center gap-1 hover:text-gray-700">
+              <%= t('.updated_at') %>
+              <!-- mdi: sort-variant -->
+              <span class="mdi mdi-sort-variant text-gray-400 group-hover:text-gray-600 text-sm"></span>
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-200" data-admin--users--table-component-target="rows">
+        <% users.each do |user| %>
+          <%= render Admin::Users::RowComponent.new(user: user) %>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <%# Пагинация (pagy) %>
+  <%= render ::Ui::PaginationComponent.new(pagy: pagy) if pagy %>
+  <% end %>
+</div>

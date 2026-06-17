@@ -1,0 +1,8 @@
+---
+ru:
+  admin:
+    users:
+      user:
+        wallet_component:
+          wallet_title: Кошелек
+          wallet_placeholder: Функционал кошелька скоро появится

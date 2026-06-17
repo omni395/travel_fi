@@ -1,0 +1,27 @@
+/* Ui Navbar Component */
+.navbar-component {
+  background: linear-gradient(135deg, #0d9488 0%, #0284c7 100%);
+}
+.navbar-component a,
+.navbar-component button {
+  transition: all 0.2s ease-in-out;
+}
+.navbar-component a:hover,
+.navbar-component button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+.navbar-component .mdi {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.navbar-component__dropdown {
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+.navbar-component__avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  object-fit: cover;
+}

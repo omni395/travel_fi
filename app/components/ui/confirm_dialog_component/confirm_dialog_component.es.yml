@@ -1,0 +1,8 @@
+---
+es:
+  ui:
+    confirm_dialog_component:
+      default_title: Confirmar acción
+      default_message: "¿Estás seguro de realizar esta acción?"
+      confirm: Confirmar
+      cancel: Cancelar

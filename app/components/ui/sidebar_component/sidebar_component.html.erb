@@ -1,0 +1,19 @@
+<%# Ui::SidebarComponent — универсальная обёртка сайдбара %>
+<div class="flex shrink-0"
+     data-controller="<%= controller_names %>"
+     data-ui--sidebar-component-hidden-class="ui-sidebar--hidden">
+  <aside class="ui-sidebar <%= @width_class %>"
+         data-ui--sidebar-component-target="sidebar">
+    <%= content %>
+  </aside>
+
+  <!-- Кнопка переключения сайдбара (шеврон) -->
+  <button type="button"
+          data-action="click->ui--sidebar-component#sidebarToggle"
+          aria-label="<%= t(".toggle") %>"
+          class="bg-white border border-l-0 border-gray-200 px-1 py-2 flex items-center justify-center
+                 hover:bg-gray-50 transition-colors cursor-pointer self-stretch shrink-0">
+    <%# MDI: chevron-double-right — скрыт, показывает направление "открыть" %>
+    <i class="mdi mdi-chevron-double-right text-gray-500"></i>
+  </button>
+</div>

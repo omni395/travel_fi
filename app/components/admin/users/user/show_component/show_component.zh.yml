@@ -1,0 +1,11 @@
+---
+zh:
+  admin:
+    users:
+      user:
+        show_component:
+          edit: 编辑
+          destroy: 删除
+          registered: 注册时间
+          updated: 更新时间
+          last_sign_in: 最后登录

@@ -1,0 +1,45 @@
+<%# frozen_string_literal: true %>
+<%#
+# Admin::Users::RowComponent - строка таблицы пользователей
+# Компактная версия с минимальными паддингами
+# %>
+<% cache [user, user.roles.maximum(:updated_at), I18n.locale] do %>
+  <tr class="hover:bg-gray-50 cursor-pointer"
+      data-action="click->admin--users--table-component#visitProfile"
+      data-admin-user-id="<%= user.to_param %>">
+    <td class="px-2 py-1.5 whitespace-nowrap">
+      <div class="flex items-center">
+        <%= render Ui::AvatarComponent.new(user: user, size: :sm) %>
+        <div class="ml-2">
+          <div class="text-xs font-medium text-gray-900">
+            <%= user.name %>
+          </div>
+        </div>
+      </div>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <%= user.email %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap">
+      <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full
+            <%= status_badge_class(user.status) %>">
+        <%= t("activerecord.attributes.user.statuses.#{user.status}") %>
+      </span>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap">
+      <div class="flex flex-wrap gap-0.5">
+        <% user.roles.each do |role| %>
+          <%= render Ui::BadgeComponent.new(color: :secondary, size: :sm) do %>
+            <%= role.name %>
+          <% end %>
+        <% end %>
+      </div>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <%= l(user.created_at, format: :short) %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <%= l(user.last_activity_at, format: :short) if user.last_activity_at %>
+    </td>
+  </tr>
+<% end %>

@@ -1,0 +1,11 @@
+---
+en:
+  admin:
+    users:
+      table_component:
+        name: Name
+        email: Email
+        status: Status
+        roles: Roles
+        created_at: Registered
+        updated_at: Updated

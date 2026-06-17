@@ -1,0 +1,10 @@
+ru:
+  users:
+    profile_component:
+      badges: "Значки"
+      roles: "Роли"
+      referral_code: "Код приглашения"
+      copy_code: "Копировать"
+      referral_hint: "Поделитесь кодом: %{code} — ваши друзья используют его при регистрации!"
+      wallet_address: "Адрес кошелька"
+      edit_profile: "Редактировать профиль"

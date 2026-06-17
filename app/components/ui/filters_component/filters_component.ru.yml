@@ -1,0 +1,9 @@
+---
+ru:
+  ui:
+    filters_component:
+      search_label: Поиск
+      search_placeholder: Поиск по имени или email
+      status_label: Статус
+      all_statuses: Все статусы
+      reset: Сбросить

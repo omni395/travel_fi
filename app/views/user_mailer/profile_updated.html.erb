@@ -1,0 +1,10 @@
+<%# Шаблон письма об обновлении профиля пользователя %>
+<%# Используется UserMailer#profile_updated через Noticed %>
+
+<h1><%= I18n.t("mailer.profile_updated.greeting", name: @user.name) %></h1>
+
+<p><%= I18n.t("mailer.profile_updated.body") %></p>
+
+<p>
+  <%= link_to I18n.t("mailer.profile_updated.view_profile"), user_url(@user, locale: I18n.locale) %>
+</p>

@@ -1,0 +1,7 @@
+ru:
+  ui:
+    hamburger_component:
+      hamburger_component:
+        toggle: "Переключить меню навигации"
+        close: "Закрыть меню"
+        open: "Открыть меню"

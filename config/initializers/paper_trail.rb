@@ -11,9 +11,17 @@
 
 PaperTrail.config.enabled = true
 
-# Сохранять информацию о том, кто сделал изменение
-PaperTrail::Version.class_eval do
-  belongs_to :user, optional: true
-end
-
-
+#
+# Используем JSON-сериализатор для object и object_changes.
+#
+# По умолчанию PaperTrail использует YAML для text-колонок,
+# но UserAuditLogger и PaperTrailAuditService пишут JSON.
+# JSON-сериализатор гарантирует совместимость.
+#
+# ВАЖНО: Существующие YAML-данные в таблице versions нужно сконвертировать:
+#   bin/rails versions:convert_to_json
+#
+# PaperTrail автоматически определяет тип колонки (text/jsonb)
+# через метод object_col_is_json? из VersionConcern.
+#
+PaperTrail.config.serializer = PaperTrail::Serializers::JSON

@@ -1,0 +1,6 @@
+---
+ru:
+  admin:
+    users:
+      row_component:
+        title: Строка пользователя

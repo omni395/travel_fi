@@ -1,0 +1,7 @@
+es:
+  ui:
+    hamburger_component:
+      hamburger_component:
+        toggle: "Alternar menú de navegación"
+        close: "Cerrar menú"
+        open: "Abrir menú"

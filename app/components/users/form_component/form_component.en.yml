@@ -1,0 +1,15 @@
+en:
+  users:
+    form_component:
+      edit_profile_title: "Edit Your Profile"
+      name: "Name"
+      email: "Email"
+      avatar: "Profile Picture"
+      name_placeholder: "Enter your full name"
+      name_hint: "Your name will be visible to other users"
+      email_cannot_change: "Email cannot be changed for security reasons"
+      avatar_hint: "Choose a JPG, PNG, or WebP image. Max file size: 5MB"
+      save: "Save"
+      cancel: "Cancel"
+      loading: "Loading..."
+      errors: "Errors"

@@ -1,0 +1,15 @@
+zh:
+  users:
+    form_component:
+      edit_profile_title: "编辑您的资料"
+      name: "姓名"
+      email: "邮箱"
+      avatar: "头像"
+      name_placeholder: "输入您的全名"
+      name_hint: "您的姓名将对其他用户可见"
+      email_cannot_change: "出于安全考虑，邮箱无法更改"
+      avatar_hint: "选择 JPG、PNG 或 WebP 图片。最大文件大小：5MB"
+      save: "保存"
+      cancel: "取消"
+      loading: "加载中..."
+      errors: "错误"

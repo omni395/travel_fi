@@ -1,0 +1,40 @@
+---
+es:
+  poi:
+    detail_component:
+      tab_info: Información
+      tab_comments: Comentarios
+      tab_photos: Fotos
+      status_pending: Pendiente
+      status_approved: Aprobado
+      status_rejected: Rechazado
+      status_archived: Archivado
+      wheelchair_accessible: Accesible en silla de ruedas
+      characteristics: Características
+      added_by: Añadido por %{name}
+      verified_count:
+        one: Verificado %{count} vez
+        other: Verificado %{count} veces
+      comments_placeholder: Los comentarios estarán disponibles pronto
+      photos_placeholder: Las fotos estarán disponibles pronto
+      edit_button: Editar
+      new_title: Añadir Nuevo Punto de Interés
+      edit_title: Editar Punto de Interés
+      name: Nombre
+      name_placeholder: Ingresa el nombre de este lugar
+      category: Categoría
+      category_prompt: Selecciona una categoría...
+      position: Ubicación
+      drag_hint: Arrastra el marcador para fijar la posición exacta (máx. 50m)
+      address: Dirección
+      address_placeholder: Calle, número
+      city: Ciudad
+      phone: Teléfono
+      website: Sitio web
+      wheelchair: Accesible para silla de ruedas
+      submit: Añadir POI
+      save: Guardar
+      proximity_warning_title: Demasiado lejos
+      proximity_warning_message: Debes estar a menos de 50 metros de este lugar para interactuar con él.
+      no_location_title: Ubicación requerida
+      no_location_message: Activa los servicios de ubicación para interactuar con puntos de interés.

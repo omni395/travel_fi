@@ -14,16 +14,38 @@
 #
 class UserService
   #
-  # Основной входной метод для обновления профиля пользователя
+  # Возвращает статистику по пользователям для дашборда
+  #
+  def self.stats
+    {
+      total: User.count,
+      active: User.active.count,
+      pending: User.pending_verification.count,
+      restricted: User.suspended.count + User.banned.count
+    }
+  end
+
+  #
+  # Обрабатывает вход/регистрацию через Google OAuth
+  #
+  # @param auth [OmniAuth::AuthHash] данные от провайдера
+  # @return [User] найденный или созданный пользователь
+  #
+  def self.handle_google_oauth(auth)
+    new(user: nil, params: {}).handle_google_oauth(auth)
+  end
+
+  #
+  # Единая точка входа для обновления профиля пользователя
+  # Вызывается из Reflex: UserService.call(user: user, params: params)
   #
   # @param user [User] пользователь для обновления
-  # @param params [Hash] параметры для обновления { name:, avatar: }
+  # @param params [Hash] параметры обновления (:name, :avatar)
   # @return [User] обновленный пользователь
-  # @raise [UpdateError] если произойдет ошибка валидации или сохранения
   #
   def self.call(user:, params:)
     service = new(user: user, params: params)
-    service.execute
+    service.update
   end
 
   attr_reader :user, :params
@@ -34,37 +56,118 @@ class UserService
   end
 
   #
-  # Выполняет обновление профиля
+  # Основной метод обновления профиля
+  # 1. Валидация параметров
+  # 2. Обновление полей
+  # 3. Обработка аватара
+  # 4. Сохранение в БД (триггерит PaperTrail → VersionObserverJob → Broadcaster)
   #
-  def execute
+  def update
     validate_params!
     update_user_fields!
-    process_avatar! if avatar_present?
+    process_avatar!
     save_user!
+    user
+  end
+
+  #
+  # Создает настройки уведомлений по умолчанию для нового пользователя
+  #
+  # @param user [User] только что созданный пользователь
+  #
+  def self.create_default_settings(user)
+    Setting.create_for_user(user)
+  end
+
+  #
+  # Обрабатывает логику Google OAuth
+  #
+  def handle_google_oauth(auth)
+    user = User.find_or_initialize_by(provider: 'google_oauth2', uid: auth.uid)
+    is_new_user = user.new_record?
+    
+    if is_new_user
+      user.email = auth.info.email
+      user.name = auth.info.name
+      user.password = SecureRandom.hex(32)
+      user.status = :active
+      user.skip_confirmation!
+    end
+
+    user.save!(validate: false)
+
+    if is_new_user
+      self.class.create_default_settings(user)
+      attach_oauth_avatar(user, auth.info.image) if auth.info.image.present?
+      log_oauth_registration(user, auth)
+      GamificationService.award!(:registration, user)
+    end
 
     user
-  rescue ActiveRecord::RecordInvalid => e
-    raise UpdateError, "Failed to save user: #{e.message}"
-  rescue StandardError => e
-    raise UpdateError, "An error occurred: #{e.message}"
   end
 
   private
+
+  #
+  # Загрузка и оптимизация аватара от OAuth провайдера
+  #
+  def attach_oauth_avatar(user, image_url)
+    image_url = image_url.split("?").first + "?sz=512" if image_url.include?("googleusercontent.com")
+
+    begin
+      require "open-uri"
+      io = URI.parse(image_url).open(read_timeout: 5)
+
+      processed = ImageTransformService.process(
+        io,
+        filename: "avatar_oauth_#{user.id}.webp",
+        max_size: 300.kilobytes,
+        max_dimension: 512,
+        format: "webp"
+      )
+
+      if processed.respond_to?(:path) && File.exist?(processed.path)
+        File.open(processed.path, "rb") do |file_io|
+          user.avatar.attach(
+            io: file_io,
+            filename: "avatar_oauth_#{user.id}.webp",
+            content_type: "image/webp"
+          )
+        end
+      end
+    rescue StandardError => e
+      Rails.logger.warn("User #{user.id}: Failed to attach OAuth avatar: #{e.message}")
+    end
+  end
+
+  #
+  # Логирование события регистрации через OAuth
+  #
+  def log_oauth_registration(user, auth)
+    registration_changes = {
+      email: { old: nil, new: user.email },
+      name: { old: nil, new: user.name },
+      provider: { old: nil, new: auth.provider },
+      uid: { old: nil, new: auth.uid }
+    }
+    registration_changes[:avatar] = { old: nil, new: "Attached" } if user.avatar.attached?
+    UserAuditLogger.log_registration(user, registration_changes)
+  end
 
   #
   # Валидирует входные параметры
   #
   def validate_params!
     if params[:name].present? && params[:name].length < 2
-      raise UpdateError, "Name must be at least 2 characters long"
+      raise UpdateError, I18n.t("user_service.errors.name_too_short")
     end
 
     if params[:name].present? && params[:name].length > 100
-      raise UpdateError, "Name must be no more than 100 characters"
+      raise UpdateError, I18n.t("user_service.errors.name_too_long")
     end
 
     if avatar_present? && !valid_avatar_file?
-      raise UpdateError, "Invalid avatar file: must be JPG, PNG, or WebP"
+      raise UpdateError, I18n.t("user_service.errors.invalid_avatar")
     end
   end
 
@@ -91,7 +194,7 @@ class UserService
     return false unless avatar
 
     # Проверяем content_type
-    allowed_types = ["image/jpeg", "image/png", "image/webp"]
+    allowed_types = [ "image/jpeg", "image/png", "image/webp" ]
 
     # Если это uploaded файл (ActionDispatch::Http::UploadedFile)
     if avatar.respond_to?(:content_type)
@@ -116,7 +219,7 @@ class UserService
         avatar,
         filename: "avatar_#{user.id}.webp",
         max_dimension: 512,
-        format: 'webp'
+        format: "webp"
       )
 
       # Удаляем старый аватар (если есть)
@@ -126,7 +229,7 @@ class UserService
       user.avatar.attach(
         io: processed_image,
         filename: "avatar_#{SecureRandom.hex(4)}.webp",
-        content_type: 'image/webp'
+        content_type: "image/webp"
       )
     rescue StandardError => e
       Rails.logger.error("Failed to process avatar: #{e.class} #{e.message}")
@@ -136,8 +239,8 @@ class UserService
 
   #
   # Сохраняет пользователя в БД
-  # Триггерит валидации и после успешного сохранения вызывает after_commit
-  # after_commit вызовет UserBroadcaster для отправки обновлений в браузеры
+  # После успешного сохранения PaperTrail автоматически создаст версию,
+  # а VersionObserverJob отправит необходимые обновления через Broadcaster
   #
   def save_user!
     unless user.save

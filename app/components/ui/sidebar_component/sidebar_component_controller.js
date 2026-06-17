@@ -1,0 +1,50 @@
+import ApplicationController from '../../../javascript/controllers/application_controller'
+
+// Ui::SidebarComponent — контроллер тоглера сайдбара
+//
+// Управляет:
+//   - Сворачиванием/разворачиванием через ui-sidebar--hidden
+//   - Переключением иконки шеврона
+//
+export default class extends ApplicationController {
+  static targets = ["sidebar"]
+  static classes = ["hidden"]
+
+  connect() {
+    super.connect()
+
+    // На мобильных сайдбар скрыт по умолчанию
+    if (this.isMobile()) {
+      this.sidebarTarget.classList.add(this.hiddenClass)
+    }
+  }
+
+  // ============================================================
+  // УПРАВЛЕНИЕ ВИДИМОСТЬЮ
+  // ============================================================
+
+  // Переключение видимости сайдбара
+  sidebarToggle() {
+    this.sidebarTarget.classList.toggle(this.hiddenClass)
+    this.toggleChevron()
+  }
+
+  // Обновление иконки шеврона
+  toggleChevron() {
+    const btn = this.element.querySelector('[data-action*="ui--sidebar-component#sidebarToggle"]')
+    if (!btn) return
+    const icon = btn.querySelector(".mdi")
+    if (!icon) return
+
+    const isHidden = this.sidebarTarget.classList.contains(this.hiddenClass)
+
+    icon.className = isHidden
+      ? "mdi mdi-chevron-double-right text-gray-500"
+      : "mdi mdi-chevron-double-left text-gray-500"
+  }
+
+  // Проверка мобильного устройства
+  isMobile() {
+    return window.matchMedia("(max-width: 767px)").matches
+  }
+}

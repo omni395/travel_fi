@@ -1,0 +1,11 @@
+---
+ru:
+  admin:
+    dashboard_component:
+      title: Панель управления
+      total_users: Всего пользователей
+      active_users: Активные
+      suspended_users: Заблокированные
+      new_users_today: Новых сегодня
+      recent_users: Последние пользователи
+      recent_activities: Последние активности

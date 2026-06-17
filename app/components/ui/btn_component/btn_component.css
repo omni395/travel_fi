@@ -1,0 +1,38 @@
+/* ui/btn_component — стили кнопок (без @apply) */
+.btn-ui {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  transition: all 0.2s ease;
+}
+.btn-ui--sm { padding: 0.375rem 0.75rem; font-size: 0.75rem; }
+.btn-ui--md { padding: 0.5rem 1rem; font-size: 0.875rem; }
+.btn-ui--lg { padding: 0.75rem 1.5rem; font-size: 1rem; }
+.btn-ui--primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+.btn-ui--primary:hover { opacity: 0.9; }
+.btn-ui--secondary {
+  background-color: var(--color-secondary);
+  color: white;
+}
+.btn-ui--secondary:hover { opacity: 0.9; }
+.btn-ui--ghost {
+  color: #4b5563;
+  background: transparent;
+}
+.btn-ui--ghost:hover { background-color: #f3f4f6; }
+.btn-ui--danger {
+  background-color: color-mix(in srgb, var(--color-error) 10%, transparent);
+  color: var(--color-error);
+  border: 1px solid color-mix(in srgb, var(--color-error) 20%, transparent);
+}
+.btn-ui--danger:hover {
+  background-color: color-mix(in srgb, var(--color-error) 20%, transparent);
+}

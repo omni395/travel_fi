@@ -12,21 +12,21 @@ module AdminHelper
   #
   # @param status [String] статус пользователя
   # @return [String] CSS класс для статуса
-  # 
+  #
   def user_status_class(status)
     case status.to_s
-    when 'active'
-      'bg-green-100 text-green-800'
-    when 'pending_verification'
-      'bg-yellow-100 text-yellow-800'
-    when 'suspended'
-      'bg-orange-100 text-orange-800'
-    when 'banned'
-      'bg-red-100 text-red-800'
-    when 'deleted'
-      'bg-gray-100 text-gray-800'
+    when "active"
+      "bg-green-100 text-green-800"
+    when "pending_verification"
+      "bg-yellow-100 text-yellow-800"
+    when "suspended"
+      "bg-orange-100 text-orange-800"
+    when "banned"
+      "bg-red-100 text-red-800"
+    when "deleted"
+      "bg-gray-100 text-gray-800"
     else
-      'bg-gray-100 text-gray-800'
+      "bg-gray-100 text-gray-800"
     end
   end
 
@@ -38,10 +38,10 @@ module AdminHelper
   #
   def user_status_options
     [
-      [t('activerecord.attributes.user.statuses.pending_verification'), 'pending_verification'],
-      [t('activerecord.attributes.user.statuses.active'), 'active'],
-      [t('activerecord.attributes.user.statuses.suspended'), 'suspended'],
-      [t('activerecord.attributes.user.statuses.banned'), 'banned']
+      [t("activerecord.attributes.user.statuses.pending_verification"), "pending_verification"],
+      [t("activerecord.attributes.user.statuses.active"), "active"],
+      [t("activerecord.attributes.user.statuses.suspended"), "suspended"],
+      [t("activerecord.attributes.user.statuses.banned"), "banned"]
     ]
   end
 
@@ -54,13 +54,13 @@ module AdminHelper
   def flash_class(type)
     case type.to_sym
     when :notice, :success
-      'bg-green-50 border border-green-200'
+      "bg-green-50 border border-green-200"
     when :alert, :error
-      'bg-red-50 border border-red-200'
+      "bg-red-50 border border-red-200"
     when :warning
-      'bg-yellow-50 border border-yellow-200'
+      "bg-yellow-50 border border-yellow-200"
     else
-      'bg-blue-50 border border-blue-200'
+      "bg-blue-50 border border-blue-200"
     end
   end
 
@@ -73,13 +73,13 @@ module AdminHelper
   def flash_icon(type)
     case type.to_sym
     when :notice, :success
-      'mdi-check-circle text-green-500'
+      "mdi-check-circle text-green-500"
     when :alert, :error
-      'mdi-alert-circle text-red-500'
+      "mdi-alert-circle text-red-500"
     when :warning
-      'mdi-alert text-yellow-500'
+      "mdi-alert text-yellow-500"
     else
-      'mdi-information text-blue-500'
+      "mdi-information text-blue-500"
     end
   end
 
@@ -92,13 +92,13 @@ module AdminHelper
   def flash_text_class(type)
     case type.to_sym
     when :notice, :success
-      'text-green-800'
+      "text-green-800"
     when :alert, :error
-      'text-red-800'
+      "text-red-800"
     when :warning
-      'text-yellow-800'
+      "text-yellow-800"
     else
-      'text-blue-800'
+      "text-blue-800"
     end
   end
 end

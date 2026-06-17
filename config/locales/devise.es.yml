@@ -1,0 +1,90 @@
+# Additional translations at http://github.com/plataformatec/devise/wiki/I18n
+
+es:
+  errors:
+    messages:
+      expired: "ha expirado, por favor solicita una nueva"
+      not_found: "no se encontró"
+      already_confirmed: "ya fue confirmado, por favor intenta iniciar sesión"
+      not_locked: "no estaba bloqueado"
+      not_saved:
+        one: "Un error ocurrió al tratar de guardar %{resource}:"
+        other: "%{count} errores ocurrieron al tratar de guardar %{resource}:"
+
+  devise:
+    shared:
+      links:
+        or_sign_in_with: "O iniciar sesión con"
+        sign_in_with_provider: "Iniciar sesión con %{provider}"
+        forgot_your_password: "¿Olvidaste tu contraseña?"
+        didn_t_receive_confirmation_instructions: "¿No recibiste instrucciones de confirmación?"
+        didn_t_receive_unlock_instructions: "¿No recibiste instrucciones de desbloqueo?"
+        sign_up: "Registrarse"
+        sign_in: "Iniciar sesión"
+    failure:
+      already_authenticated: 'Ya has iniciado una sesión.'
+      unauthenticated: 'Tienes que iniciar sesión o registrarte para poder continuar.'
+      unconfirmed: 'Tienes que confirmar tu cuenta para poder continuar.'
+      locked: 'Tu cuenta está bloqueada.'
+      invalid: 'Contraseña o Correo inválidos.'
+      invalid_token: 'Código de autenticación inválido.'
+      timeout: 'Tu sesión expiró, por favor inicia sesión nuevamente para continuar.'
+      inactive: 'Tu cuenta aún no ha sido activada.'
+    sessions:
+      new:
+        title: "Iniciar sesión"
+        subtitle: "Bienvenido de nuevo a nuestra comunidad"
+        email_placeholder: "tu@ejemplo.com"
+        remember_me: "Recuérdame"
+        submit: "Iniciar sesión"
+        forgot_password: "¿Olvidaste tu contraseña?"
+        oauth_divider: "o inicia sesión con"
+        no_account: "¿No tienes cuenta?"
+        sign_up: "Crea una"
+      signed_in: 'Sesión iniciada.'
+      signed_out: 'Sesión finalizada.'
+    passwords:
+      send_instructions: 'Vas a recibir un correo con instrucciones sobre cómo resetear tu contraseña en unos pocos minutos.'
+      updated: 'Tu contraseña fue cambiada. Ya iniciaste sesión.'
+      #updated_not_active: 'Tu contraseña fue cambiada.'
+      #send_paranoid_instructions: "Si tu correo existe en nuestra base de datos, vas a recibir un correo con instrucciones sobre cómo resetear tu contraseña en tu bandeja de entrada."
+    confirmations:
+      send_instructions: 'Vas a recibir un correo con instrucciones sobre cómo confirmar tu cuenta en unos pocos minutos.'
+      #send_paranoid_instructions: 'Si tu correo existe en nuestra base de datos, vas a recibir un correo con instrucciones sobre cómo confirmar tu cuenta en unos pocos minutos.'
+      confirmed: 'Tu cuenta fue confirmada. Ya iniciaste sesión.'
+    registrations:
+      new:
+        title: "Crear cuenta"
+        subtitle: "Únete a nuestra comunidad"
+        email_placeholder: "tu@ejemplo.com"
+        name_placeholder: "Tu nombre"
+        password_placeholder: "Mínimo 8 caracteres"
+        referral_placeholder: "Código de referido (opcional)"
+        referral_hint: "Ingresa un código de referido si fuiste invitado"
+        avatar: "Elegir foto"
+        submit: "Crear cuenta"
+        oauth_divider: "o regístrate con"
+        has_account: "¿Ya tienes cuenta?"
+        sign_in: "Iniciar sesión"
+      signed_up: 'Bienvenido. Tu cuenta fue creada.'
+      inactive_signed_up: 'Tu cuenta fue creada. Sin embargo, no podemos iniciar tu sesión porque tu cuenta está %{reason}.'
+      updated: 'Tu cuenta fue actualizada.'
+      destroyed: 'Fue grato tenerte con nosotros. Tu cuenta fue cancelada.'
+      #reasons:
+      #  inactive: 'inactiva'
+      #  unconfirmed: 'sin confirmar'
+      #  locked: 'bloqueada'
+    unlocks:
+      send_instructions: 'Vas a recibir instrucciones para desbloquear tu cuenta en unos pocos minutos.'
+      unlocked: 'Tu cuenta fue desbloqueada. Ya iniciaste sesión.'
+      #send_paranoid_instructions: 'Si tu cuenta existe, vas a recibir instrucciones para desbloquear tu cuenta en unos pocos minutos.'
+    omniauth_callbacks:
+      success: 'Has sido autorizado satisfactoriamente de la cuenta %{kind}.'
+      failure: 'No has sido autorizado en la cuenta %{kind} porque "%{reason}".'
+    mailer:
+      confirmation_instructions: 
+        subject: 'Instrucciones de confirmación'
+      reset_password_instructions:
+        subject: 'Instrucciones de recuperación de contraseña'
+      unlock_instructions:
+        subject: 'Instrucciones para desbloquear'

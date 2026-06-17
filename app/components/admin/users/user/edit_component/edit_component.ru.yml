@@ -1,0 +1,11 @@
+---
+ru:
+  admin:
+    users:
+      user:
+        edit_component:
+          cancel: Отмена
+          save: Сохранить
+          registered: Зарегистрирован
+          updated: Обновлен
+          last_sign_in: Последний вход

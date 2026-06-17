@@ -1,0 +1,40 @@
+---
+zh:
+  poi:
+    detail_component:
+      tab_info: 信息
+      tab_comments: 评论
+      tab_photos: 照片
+      status_pending: 待审核
+      status_approved: 已批准
+      status_rejected: 已拒绝
+      status_archived: 已归档
+      wheelchair_accessible: 无障碍通道
+      characteristics: 特点
+      added_by: 由 %{name} 添加
+      verified_count:
+        one: 已验证 %{count} 次
+        other: 已验证 %{count} 次
+      comments_placeholder: 评论即将推出
+      photos_placeholder: 照片即将推出
+      edit_button: 编辑
+      new_title: 添加新的兴趣点
+      edit_title: 编辑兴趣点
+      name: 名称
+      name_placeholder: 输入此地点名称
+      category: 分类
+      category_prompt: 选择分类...
+      position: 位置
+      drag_hint: 拖动标记以设置精确位置（最大50米半径）
+      address: 地址
+      address_placeholder: 街道，门牌号
+      city: 城市
+      phone: 电话
+      website: 网站
+      wheelchair: 无障碍通道
+      submit: 添加 POI
+      save: 保存
+      proximity_warning_title: 距离太远
+      proximity_warning_message: 您需要在50米范围内才能与此地点进行交互。
+      no_location_title: 需要位置信息
+      no_location_message: 启用位置服务以与兴趣点进行交互。

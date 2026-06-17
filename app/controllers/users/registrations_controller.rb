@@ -20,6 +20,9 @@ class Users::RegistrationsController < Devise::RegistrationsController
     super do |resource|
       # Логируем регистрацию и вход (Devise вызывает sign_in после create)
       if resource.persisted?
+        # Создаем настройки уведомлений по умолчанию
+        UserService.create_default_settings(resource)
+
         # Логируем регистрацию со ВСЕМИ заполненными полями
         registration_changes = {
           email: { old: nil, new: resource.email },
@@ -27,24 +30,13 @@ class Users::RegistrationsController < Devise::RegistrationsController
         }
         # Добавляем аватар в изменения если был загружен
         registration_changes[:avatar] = { old: nil, new: "Attached" } if resource.avatar.attached?
-        
+
         UserAuditLogger.log_registration(resource, registration_changes) if defined?(UserAuditLogger)
         # Timestamps будут разные благодаря счётчику в UserAuditLogger
         UserAuditLogger.log_login(resource) if defined?(UserAuditLogger)
-        
-        # Show toast notification for successful registration
-        toast_html = ApplicationController.renderer.render(
-          Shared::Notifications::ToastComponent.new(
-            I18n.t('devise.registrations.signed_up'),
-            type: :success,
-            dismissible: true,
-            auto_dismiss: 5000
-          ),
-          layout: false
-        )
-        
-        # Redirect after successful registration
-        format.html { redirect_to after_sign_up_path_for(resource), notice: resource_name.humanize + ' was successfully created.' }
+
+        # Devise сам обрабатывает редирект и flash внутри super
+        # Ничего не делаем — super уже вызвал respond_with
       end
     end
   end
@@ -58,70 +50,70 @@ class Users::RegistrationsController < Devise::RegistrationsController
   def update
     # Обработаем аватар перед обновлением
     process_avatar_before_update
-    
+
     # ПЕРЕД обновлением - сохраняем ТОЧНЫЕ старые значения для логирования
     old_values = {
       name: resource.name,
       email: resource.email,
       avatar_present: resource.avatar.attached?
     }
-    
+
     # Если пароль пустой, исключаем его из параметров для обновления
     # Это позволит пользователю обновлять профиль без изменения пароля
     account_update_params = update_params
     if account_update_params[:password].blank? && account_update_params[:password_confirmation].blank?
       account_update_params = account_update_params.except(:password, :password_confirmation)
     end
-    
+
     # Вызываем стандартный Devise update с уже обработанными параметрами
     self.resource = resource_class.to_adapter.get!(send(:"current_#{resource_name}").to_key)
     prev_unconfirmed_email = resource.unconfirmed_email if resource.respond_to?(:unconfirmed_email)
-    
+
     # Проверяем, меняется ли email (для unconfirmed_email)
     email_changed = account_update_params[:email].present? && resource.email != account_update_params[:email]
     if email_changed
       resource.unconfirmed_email = account_update_params[:email]
     end
-    
+
     # Проверяем, меняется ли пароль
     password_changed = account_update_params[:password].present? && account_update_params[:password_confirmation].present?
     avatar_changed = account_update_params[:avatar].present?
-    
+
     resource_updated = resource.update(account_update_params)
-    
+
     yield resource if block_given?
-    
+
     if resource_updated
       yield resource if block_given?
-      
+
       # Собираем ВСЕ изменения в один объект changes (аналогично админке)
       changes = {}
-      
+
       # Имя
       if old_values[:name] != resource.name
         changes[:name] = { old: old_values[:name], new: resource.name }
       end
-      
+
       # Email
       if email_changed
         changes[:email] = { old: old_values[:email], new: account_update_params[:email] }
       end
-      
+
       # Аватар
       if avatar_changed
         changes[:avatar] = { old: old_values[:avatar_present] ? "Attached" : "None", new: "Attached" }
       end
-      
+
       # Пароль - логируем как защищённое поле
       if password_changed
         changes[:password] = { old: "[Protected]", new: "[Changed]" }
       end
-      
+
       # Логируем ОДНО действие со ВСЕМИ изменениями
       if changes.any?
         UserAuditLogger.log_user_updated_by_user(resource, changes) if defined?(UserAuditLogger)
       end
-      
+
       if is_navigational_format?
         flash_message = update_needs_confirmation?(resource, prev_unconfirmed_email) ?
           :update_needs_confirmation : :updated
@@ -181,14 +173,12 @@ class Users::RegistrationsController < Devise::RegistrationsController
     return unless update_params[:avatar].present?
 
     avatar_file = update_params[:avatar]
-    
+
     begin
       # Обработаем изображение: конвертируем в webp и сжимаем до 100 KB
       processed = ImageTransformService.process(
         avatar_file,
         filename: "avatar_#{current_user.id}",
-        max_size: User::MAX_AVATAR_SIZE,
-        max_dimension: 512,
         format: 'webp'
       )
 
@@ -210,15 +200,13 @@ class Users::RegistrationsController < Devise::RegistrationsController
     return unless sign_up_params[:avatar].present?
 
     avatar_file = sign_up_params[:avatar]
-    
+
     begin
       # Обработаем изображение: конвертируем в webp и сжимаем до 100 KB
       processed = ImageTransformService.process(
         avatar_file,
         filename: "avatar_#{sign_up_params[:email].split('@').first}",
-        max_size: User::MAX_AVATAR_SIZE,
-        max_dimension: 512,
-        format: 'webp'
+        format: "webp"
       )
 
       if processed.respond_to?(:path)
@@ -235,6 +223,6 @@ class Users::RegistrationsController < Devise::RegistrationsController
   end
 
   def sign_up_params
-    params.require(:user).permit(:email, :name, :password, :password_confirmation, :avatar)
+    params.require(:user).permit(:email, :name, :password, :password_confirmation, :avatar, :referral_code_input)
   end
 end

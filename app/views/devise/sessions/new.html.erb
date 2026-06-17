@@ -1,20 +1,28 @@
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-2 px-4 sm:px-6 lg:px-8">
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/devise/sessions/new.html.erb - форма входа
+#
+# Единый стиль с primary цветовой схемой.
+# Использует field-input, field-label, btn-ui классы.
+# %>
+
+<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
   <div class="w-full max-w-md">
-    <!-- Header -->
+    <%# Header %>
     <div class="text-center mb-2">
-      <h1 class="text-4xl font-bold text-indigo-600 mb-2">Travel-Fi</h1>
-      <h2 class="text-2xl font-bold text-gray-900">Sign In</h2>
-      <p class="text-gray-600 mt-2">Welcome back to our community</p>
+      <h1 class="text-4xl font-bold text-teal-600 mb-2">Travel-Fi</h1>
+      <h2 class="text-2xl font-bold text-gray-900"><%= t('devise.sessions.new.title') %></h2>
+      <p class="text-gray-600 mt-2"><%= t('devise.sessions.new.subtitle') %></p>
     </div>
 
-    <!-- Sign In Form -->
+    <%# Sign In Form %>
     <div id="devise_session_form" class="bg-white rounded-xl shadow-lg p-6 mb-2">
       <%= form_with(model: resource, as: resource_name, url: session_path(resource_name)) do |form| %>
         <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
         <% if resource.errors.any? %>
-          <div class="mb-2 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <h4 class="text-red-800 font-bold mb-2"><%= pluralize(resource.errors.count, "error") %> prohibited sign in:</h4>
-            <ul class="list-disc list-inside text-red-700">
+          <div class="alert-ui alert-ui--error mb-4">
+            <ul class="list-disc list-inside">
               <% resource.errors.full_messages.each do |message| %>
                 <li><%= message %></li>
               <% end %>
@@ -22,60 +30,31 @@
           </div>
         <% end %>
 
-        <!-- Email -->
-        <div class="mb-2">
-          <%= form.label :email, class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "you@example.com" %>
+        <%# Email %>
+        <div class="field-group mb-4">
+          <%= form.label :email, class: "field-label" %>
+          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "field-input", placeholder: t('devise.sessions.new.email_placeholder') %>
         </div>
 
-        <!-- Password -->
-        <div class="mb-2">
-          <%= form.label :password, class: "block text-sm font-medium text-gray-700 mb-2" %>
-          <%= form.password_field :password, autocomplete: "current-password", class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" %>
+        <%# Password %>
+        <div class="field-group mb-4">
+          <%= form.label :password, class: "field-label" %>
+          <%= form.password_field :password, autocomplete: "current-password", class: "field-input" %>
         </div>
 
-        <!-- Remember Me -->
-        <div class="mb-2 flex items-center">
-          <%= form.check_box :remember_me, class: "rounded border-gray-300 text-indigo-600" %>
-          <%= form.label :remember_me, "Remember me", class: "ml-2 block text-sm text-gray-700" %>
+        <%# Remember Me %>
+        <div class="mb-4 flex items-center">
+          <%= form.check_box :remember_me, class: "field-checkbox" %>
+          <%= form.label :remember_me, t('devise.sessions.new.remember_me'), class: "ml-2 block text-sm text-gray-700" %>
         </div>
 
-        <!-- Sign In Button -->
-        <div class="mb-2">
-          <%= form.submit "Sign In", class: "w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium cursor-pointer" %>
+        <%# Sign In Button %>
+        <div class="mb-4">
+          <%= form.submit t('devise.sessions.new.submit'), class: "btn-ui btn-ui--primary btn-ui--md w-full" %>
         </div>
       <% end %>
 
-      <!-- Forgot Password -->
-      <div class="text-center mb-4">
-        <%= link_to "Forgot Password?", new_user_password_path, class: "text-indigo-600 hover:text-indigo-700 text-sm font-medium" %>
-      </div>
-
-      <!-- OAuth Divider -->
-      <div class="relative mb-4">
-        <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gray-300"></div>
-        </div>
-        <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white text-gray-500">or sign in with</span>
-        </div>
-      </div>
-
-      <!-- OAuth Buttons (two-column) -->
-      <div class="flex flex-col gap-2">
-        <%= button_to user_google_oauth2_omniauth_authorize_path, method: :post, class: "w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition cursor-pointer bg-white" do %>
-          <%= image_tag 'Google_G_logo.svg', alt: 'Google', class: 'w-5 h-5' %>
-          <span class="font-medium text-gray-700">Google</span>
-        <% end %>
-      </div>
-    </div>
-
-    <!-- Sign Up Link -->
-    <div class="text-center">
-      <p class="text-gray-600">
-        Don't have an account?
-        <%= link_to "Create one", new_user_registration_path, class: "text-indigo-600 hover:text-indigo-700 font-bold" %>
-      </p>
+      <%= render "devise/shared/links" %>
     </div>
   </div>
 </div>

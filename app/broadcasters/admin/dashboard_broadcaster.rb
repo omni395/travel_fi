@@ -1,121 +1,75 @@
 # frozen_string_literal: true
 
-#
-# Admin::DashboardBroadcaster - бродкастер для отправки обновлений статистики
-#
-# Ответственность:
-# 1. Отправляет обновление статистики дашборда
-# 2. Отправляет обновление списка последних пользователей
-# 3. Отправляет обновление списка последних активностей
-#
-# Использование:
-#   Admin::DashboardBroadcaster.broadcast_stats_update
-#   Admin::DashboardBroadcaster.broadcast_recent_users_update
-#   Admin::DashboardBroadcaster.broadcast_recent_activities_update
-#
 class Admin::DashboardBroadcaster
-  #
-  # Отправляет обновление статистики дашборда
-  # Вызывается при изменении данных пользователей
-  #
+  include CableReady::Broadcaster
+
   def self.broadcast_stats_update
     new.send_stats_update
   end
 
-  #
-  # Отправляет обновление списка последних пользователей
-  # Вызывается при создании нового пользователя
-  #
   def self.broadcast_recent_users_update
     new.send_recent_users_update
   end
 
-  #
-  # Отправляет обновление списка последних активностей
-  # Вызывается при изменении любого объекта с Paper Trail
-  #
   def self.broadcast_recent_activities_update
     new.send_recent_activities_update
   end
 
-  #
-  # Отправляет полное обновление дашборда
-  # Обновляет все секции дашборда
-  #
   def self.broadcast_full_update
     new.send_full_update
   end
 
-  #
-  # Отправляет обновление статистики дашборда
-  # Морфит компоненты статистики
-  #
   def send_stats_update
-    stats = AdminStatsService.call
+    stats = UserService.stats
 
     # Обновляем карточки статистики
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin-stats-total-users]",
-      html: stats[:total_users].to_s
+      html: stats[:total].to_s
     )
 
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin-stats-active-users]",
-      html: stats[:active_users].to_s
+      html: stats[:active].to_s
     )
 
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin-stats-suspended-users]",
-      html: stats[:suspended_users].to_s
+      html: stats[:restricted].to_s
     )
 
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin-stats-new-users-today]",
-      html: stats[:new_users_today].to_s
+      html: stats[:pending].to_s
     )
 
-    # Отправляем в admin_channel вместо общего broadcast
-    cable_ready.broadcast_to("AdminChannel")
+    cable_ready["AdminChannel"].broadcast
   end
 
-  #
-  # Отправляет обновление списка последних пользователей
-  # Морфит таблицу последних пользователей
-  #
   def send_recent_users_update
     recent_users = User.order(created_at: :desc).limit(10)
 
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin-recent-users]",
       html: render_recent_users_table(recent_users)
     )
 
-    # Отправляем в admin_channel вместо общего broadcast
-    cable_ready.broadcast_to("AdminChannel")
+    cable_ready["AdminChannel"].broadcast
   end
 
-  #
-  # Отправляет обновление списка последних активностей
-  # Морфит список последних активностей
-  #
   def send_recent_activities_update
     recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
 
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin-recent-activities]",
       html: render_recent_activities_list(recent_activities)
     )
 
-    # Отправляем в admin_channel вместо общего broadcast
-    cable_ready.broadcast_to("AdminChannel")
+    cable_ready["AdminChannel"].broadcast
   end
 
-  #
-  # Отправляет полное обновление дашборда
-  # Морфит весь компонент дашборда
-  #
   def send_full_update
-    stats = AdminStatsService.call
+    stats = UserService.stats
     recent_users = User.order(created_at: :desc).limit(10)
     recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
 
@@ -125,23 +79,16 @@ class Admin::DashboardBroadcaster
       recent_activities: recent_activities
     )
 
-    cable_ready.morph(
+    cable_ready["AdminChannel"].morph(
       selector: "[data-admin--dashboard]",
-      html: ApplicationController.helpers.render_component(component)
+      html: ApplicationController.render(component, layout: false)
     )
 
-    # Отправляем в admin_channel вместо общего broadcast
-    cable_ready.broadcast_to("AdminChannel")
+    cable_ready["AdminChannel"].broadcast
   end
 
   private
 
-  #
-  # Рендерит таблицу последних пользователей
-  #
-  # @param recent_users [Array<User>] последние пользователи
-  # @return [String] HTML таблицы
-  #
   def render_recent_users_table(recent_users)
     ApplicationController.helpers.content_tag(:table, class: 'min-w-full divide-y divide-gray-200') do
       ApplicationController.helpers.content_tag(:thead, class: 'bg-gray-50') do
@@ -189,12 +136,6 @@ class Admin::DashboardBroadcaster
     end
   end
 
-  #
-  # Рендерит список последних активностей
-  #
-  # @param recent_activities [Array<PaperTrail::Version>] последние активности
-  # @return [String] HTML списка
-  #
   def render_recent_activities_list(recent_activities)
     ApplicationController.helpers.content_tag(:div, class: 'space-y-4') do
       recent_activities.map do |version|

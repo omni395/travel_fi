@@ -1,0 +1,27 @@
+---
+ru:
+  ui:
+    navbar_component:
+      home: Главная
+      map: Карта
+      login: Войти
+      register: Регистрация
+      admin_panel: Админ-панель
+      profile: Профиль
+      settings: Настройки
+      logout: Выйти
+      logout_confirm: Вы уверены, что хотите выйти?
+      toggle_menu: Открыть меню навигации
+      navigation: Навигация
+      account: Аккаунт
+      language: Язык
+      languages:
+        en: EN
+        ru: RU
+        es: ES
+        zh: 中文
+      languages_full:
+        en: English
+        ru: Русский
+        es: Español
+        zh: 中文

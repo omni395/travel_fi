@@ -1,9 +1,6 @@
 import { Application } from "@hotwired/stimulus"
 import consumer from "../channels/consumer"
-// Stimulus components https://www.stimulus-components.com/docs/
-import Dropdown from '@stimulus-components/dropdown'
-import RevealController from '@stimulus-components/reveal'
-import Popover from '@stimulus-components/popover'
+import StimulusReflex from 'stimulus_reflex'
 
 const application = Application.start()
 
@@ -12,9 +9,12 @@ application.debug = false
 application.consumer = consumer
 window.Stimulus   = application
 
-// Register Stimulus components
-application.register('dropdown', Dropdown)
-application.register('reveal', RevealController)
-application.register('popover', Popover)
+// Initialize StimulusReflex
+StimulusReflex.initialize(application, consumer, {})
+
+// Все контроллеры регистрируются автоматически через:
+// 1. index.js — glob всех *_controller.js в app/javascript/controllers/
+// 2. _components_index.js — sidecar-контроллеры из ViewComponent
+// См. index.js и _components_index.js
 
 export { application }

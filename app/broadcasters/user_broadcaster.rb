@@ -3,10 +3,11 @@
 #
 # User Broadcaster - отправляет обновления профиля пользователя через WebSocket
 # 
-# Вызывается из User.after_commit колбэка после сохранения профиля
-# Использует CableReady для морфинга компонента в браузере
-#
-# Поток: UserService.save! → after_commit → UserBroadcaster.call → CableReady.morph → браузер
+# Ответственность:
+# 1. Получает обновленного пользователя
+# 2. Рендерит актуальный компонент интерфейса
+# 3. Формирует CableReady команды для обновления DOM
+# 4. Отправляет команды в канал конкретного пользователя
 #
 class UserBroadcaster
   include CableReady::Broadcaster
@@ -33,20 +34,28 @@ class UserBroadcaster
     # Рендерим обновленный компонент
     updated_component_html = render_user_profile_component
 
-    # Отправляем CableReady команды в личный канал пользователя
-    cable_ready["user_#{user.id}"].morph(
+    # Получаем канал для пользователя
+    channel = "user_#{user.id}"
+
+    # 1. Живое обновление профиля (morph)
+    cable_ready[channel].morph(
       selector: "[data-user-profile-id='#{user.id}']",
       html: updated_component_html
     )
 
-    # Dispatch success события для формы
-    cable_ready["user_#{user.id}"].dispatch_event(
-      name: "usersSuccess",
-      detail: { message: "Profile updated successfully!" }
+    # 2. Живое обновление уведомления (toast)
+    toast_html = ApplicationController.renderer.render(Ui::ToastComponent.new(
+      message: I18n.t('notifications.user_updated', name: user.name)
+    ))
+
+    cable_ready[channel].insert_adjacent_html(
+      selector: "#notifications",
+      position: "beforeend",
+      html: toast_html
     )
 
-    # Broadcast всех команд в WebSocket канал пользователя
-    CableReady::Broadcaster.broadcast_to("user_#{user.id}")
+    # Применяем изменения
+    cable_ready[channel].broadcast
 
     Rails.logger.info("UserBroadcaster: Sent profile update for user #{user.id}")
   rescue StandardError => e
@@ -56,16 +65,17 @@ class UserBroadcaster
   private
 
   #
-  # Рендерит компонент UserProfileComponent для текущего пользователя
-  # Возвращает HTML для морфинга
+  # Рендерит компонент Users::ProfileComponent для текущего пользователя
+  #
+  # @return [String] HTML строка компонента
   #
   def render_user_profile_component
-    component = UserProfileComponent.new(user: user)
-    
-    # Используем ApplicationController helpers для рендеринга компонента
-    ApplicationController.helpers.render_component(component)
+    component = Users::ProfileComponent.new(user: user)
+
+    # Используем ApplicationController renderer для рендеринга компонента
+    ApplicationController.renderer.render(component)
   rescue StandardError => e
-    Rails.logger.error("Failed to render UserProfileComponent: #{e.class} #{e.message}")
+    Rails.logger.error("Failed to render Users::ProfileComponent: #{e.class} #{e.message}")
     ""
   end
 end

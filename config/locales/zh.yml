@@ -1,24 +1,9 @@
 zh:
-  navbar:
-    home: "首页"
-    profile: "个人资料"
-    settings: "设置"
-    logout: "登出"
-    logout_confirm: "您确定要登出吗？"
-    login: "登录"
-    register: "注册"
-    admin_panel: "管理面板"
-    language: "语言"
-    user_menu: "打开用户菜单"
-    main_menu: "打开主菜单"
-    search: "搜索"
-    notifications: "通知"
-    close: "关闭"
-    languages:
-      ru: "RU"
-      en: "EN"
-      es: "ES"
-      zh: "ZH"
+  locales:
+    en: "English"
+    ru: "Русский"
+    es: "Español"
+    zh: "中文"
 
   common:
     edit_profile: "编辑资料"
@@ -28,26 +13,12 @@ zh:
     loading: "加载中..."
     errors: "错误"
 
-  user:
-    reputation: "声誉"
-    points: "积分"
-    level: "等级"
-    badges: "徽章"
-    roles: "角色"
-    referral_code: "邀请码"
-    wallet_address: "钱包地址"
-    edit_profile_title: "编辑您的资料"
-    name_placeholder: "输入您的全名"
-    name_hint: "您的姓名将对其他用户可见"
-    email_cannot_change: "出于安全考虑，邮箱无法更改"
-    avatar: "头像"
-    avatar_hint: "选择 JPG、PNG 或 WebP 图片。最大文件大小：5MB"
-
   activerecord:
     attributes:
       user:
         name: "姓名"
         email: "邮箱"
+        referral_code_input: "邀请码"
         statuses:
           registered: "已注册"
           pending_verification: "待验证"
@@ -55,6 +26,40 @@ zh:
           suspended: "已暂停"
           banned: "已封禁"
           deleted: "已删除"
+    errors:
+      models:
+        user:
+          attributes:
+            referral_code_input:
+              not_found: "无效 — 未找到使用此代码的用户"
+
+  settings:
+    title: "通知设置"
+    updated: "设置已保存"
+    update_error: "保存设置时出错"
+    columns:
+      event_type: "事件类型"
+      in_app: "应用内"
+      email: "邮箱"
+      push: "推送"
+    field_types:
+      new_registration: "新注册"
+      inactive_user: "非活跃用户"
+      pending_verification: "待验证"
+      verification_failed: "验证失败"
+      active_user: "活跃用户"
+      suspended_user: "已暂停用户"
+      banned_user: "已封禁用户"
+      deleted_user: "已删除用户"
+      user_updated_by_admin: "管理员更新"
+      profile_updated: "资料更新"
+    channels:
+      notifications: "应用内"
+      email: "邮箱"
+      push: "推送"
+  notifications:
+    user_updated: "用户 %{name} 已更新。"
+    registration: "新用户注册: %{name}。"
 
   user_audit:
     actions:
@@ -74,32 +79,28 @@ zh:
     back_to_site: "返回网站"
     profile: "资料"
     logout: "登出"
-    sidebar:
-      dashboard: "仪表板"
-      users: "用户"
-      back_to_site: "返回网站"
+    settings:
+      title: "管理员设置"
     dashboard:
       title: "管理面板"
       total_users: "总用户数"
-      active_users: "活跃用户"
-      suspended_users: "已暂停用户"
-      new_users_today: "今日新用户"
-      recent_users: "最近用户"
-      recent_activities: "最近活动"
+      active_users: "活跃"
+      pending_users: "待验证"
+      restricted_users: "受限"
     users:
       index:
         title: "用户"
-      name: "姓名"
-      email: "邮箱"
-      status: "状态"
-      created_at: "注册日期"
-      updated_at: "更新时间"
-      last_sign_in_at: "最后登录"
       never: "从未"
-      roles: "角色"
-      actions: "操作"
-      view: "查看"
-      edit: "编辑"
+      system: "系统"
+      deleted_user: "已删除用户"
+      null_value: "—"
+      boolean_true: "是"
+      boolean_false: "否"
+      initial_creation: "账户已创建"
+      no_roles: "未分配角色"
+      details: "详情"
+      registered_at: "注册时间"
+      current_status: "当前状态"
       edit_title: "编辑用户： %{name}"
       back_to_list: "返回列表"
       back_to_user: "返回用户"
@@ -107,8 +108,13 @@ zh:
       search_placeholder: "按姓名或邮箱搜索"
       all_statuses: "所有状态"
       reset: "重置"
-      save: "保存"
-      cancel: "取消"
+      create_success: "用户创建成功"
+      view: "查看"
+      sort_asc: "升序排序"
+      sort_desc: "降序排序"
+      last_sign_in_at: "最后登录"
+      actions: "操作"
+      management: "管理"
       profile_info: "资料信息"
       history: "更改历史"
       manage_roles: "管理角色"
@@ -119,7 +125,6 @@ zh:
       role_removed: "角色移除成功"
       role_remove_error: "移除角色错误"
       update_success: "用户更新成功"
-      destroy: "删除"
       destroy_confirm: "您确定要删除此用户吗？"
       destroy_success: "用户删除成功"
       destroy_error: "删除用户错误"
@@ -135,11 +140,122 @@ zh:
       restore: "恢复"
       restore_success: "用户恢复成功"
       restore_error: "恢复用户错误"
+      activity:
+        badge_earned: "获得徽章 #%{badge_id}"
+        badge_earned_desc: "用户获得了新的成就徽章"
+        points_earned: "获得 %{points} 积分"
+        points_earned_desc: "用户因活动获得积分"
+        action_performed: "执行了操作"
+        action_performed_desc: "用户在应用中执行了操作"
+      tabs:
+        activity: "活动"
+        wallet: "钱包"
+        audit_log: "审计"
     roles:
       admin: "管理员"
       moderator: "版主"
 
+  activerecord:
+    errors:
+      models:
+        poi_category:
+          attributes:
+            slug:
+              format: "仅允许小写字母、数字和下划线"
+        poi_category_field:
+          attributes:
+            field_key:
+              format: "仅允许小写字母、数字和下划线"
+        poi:
+          attributes:
+            osm_id:
+              taken: "已被使用"
+
+  reflexes:
+    admin:
+      poi_categories:
+        create_success: "分类创建成功"
+        create_unauthorized: "您无权创建分类"
+        create_error: "创建分类时出错"
+        update_success: "分类更新成功"
+        update_unauthorized: "您无权更新此分类"
+        update_error: "更新分类时出错"
+        filter_unauthorized: "您无权筛选分类"
+        filter_error: "筛选分类时出错"
+        operation_success: "操作成功！"
+      poi_category_fields:
+        create_success: "字段创建成功"
+        create_unauthorized: "您无权创建字段"
+        create_error: "创建字段时出错"
+        update_success: "字段更新成功"
+        update_unauthorized: "您无权更新此字段"
+        update_error: "更新字段时出错"
+        destroy_success: "字段删除成功"
+        destroy_unauthorized: "您无权删除此字段"
+        destroy_error: "删除字段时出错"
+        operation_success: "操作成功！"
+      pois:
+        update_success: "POI 更新成功"
+        update_unauthorized: "您无权更新此 POI"
+        update_error: "更新 POI 时出错"
+        status_changed: "状态已更改为 %{status}"
+        moderate_unauthorized: "您无权审核 POI"
+        status_change_error: "更改状态时出错"
+        destroy_success: "POI 删除成功"
+        destroy_unauthorized: "您无权删除此 POI"
+        destroy_error: "删除 POI 时出错"
+        filter_unauthorized: "您无权筛选 POI"
+        filter_error: "筛选 POI 时出错"
+        reset_filters_unauthorized: "您无权重置筛选条件"
+        reset_filters_error: "重置筛选条件时出错"
+        operation_success: "操作成功！"
+
+  pois:
+    guest_warning: "您正在以访客身份使用。请登录或注册以添加和管理POI。"
+    auth_required_title: "需要登录"
+    auth_required_message: "请登录或注册以查看此地点的详细信息。"
+    load_more:
+      one: "再显示 1 个"
+      other: "再显示 %{count} 个"
+
+  notifications:
+    poi_updated: "POI %{name} 已更新。"
+
+  gamification:
+    badges:
+      registration_complete:
+        title: "注册完成"
+        description: "欢迎！您已加入我们的社区"
+      first_poi:
+        title: "第一个兴趣点"
+        description: "您添加了第一个兴趣点"
+      contributor:
+        title: "贡献者"
+        description: "您已添加 10+ 个兴趣点"
+      explorer:
+        title: "探索者"
+        description: "您已探索 5+ 个城市"
+      recruiter:
+        title: "招募者"
+        description: "您已邀请 5+ 位朋友"
+      veteran:
+        title: "资深者"
+        description: "您已达到最高等级"
+    levels:
+      1: "新手"
+      2: "探索者"
+      3: "冒险家"
+      4: "专家"
+      5: "传奇"
+    rewards:
+      registration: "注册奖励"
+      referral_bonus_referrer: "推荐奖励"
+      referral_bonus_new_user: "朋友邀请"
+      poi_create: "添加了兴趣点"
+      poi_photo_add: "添加了照片"
+      comment_create: "添加了评论"
+      poi_vote: "为兴趣点投票"
+
   time:
     formats:
       short: "%Y-%m-%d %H:%M"
-

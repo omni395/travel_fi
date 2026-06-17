@@ -1,9 +1,8 @@
 require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
-
   config.session_store :cookie_store, key: "_travel_fi_session"
-  config.action_controller.default_url_options = {host: "localhost", port: 3000}
+  config.action_controller.default_url_options = { host: "localhost", port: 3000 }
   # Settings specified here will take precedence over those in config/application.rb.
 
   # Make code changes take effect immediately without server restart.
@@ -30,30 +29,35 @@ Rails.application.configure do
 
   # Change to :null_store to avoid any caching.
   config.cache_store = :solid_cache_store
+  config.solid_cache.connects_to = { database: { writing: :cache } }
 
+  config.active_job.queue_adapter = :solid_queue
+  config.solid_queue.connects_to = { database: { writing: :queue } }
 
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
+  config.active_storage.variant_processor = :mini_magick
 
-  # Don't care if the mailer can't send.
-  config.action_mailer.raise_delivery_errors = false
+  # Raise delivery errors for debugging email issues
+  config.action_mailer.raise_delivery_errors = true
 
   # Make template changes take effect immediately.
   config.action_mailer.perform_caching = false
 
   # Set localhost to be used by links generated in mailer templates.
-  mailer_host = ENV['MAILER_HOST'] || "localhost:3000"
-  host_parts = mailer_host.split(':')
+  mailer_host = ENV["MAILER_HOST"] || "localhost:3000"
+  host_parts = mailer_host.split(":")
   config.action_mailer.default_url_options = { host: host_parts[0], port: host_parts[1]&.to_i || 3000 }
 
   # Use Mailhog for development email (no authentication needed)
+  # Запуск: docker run -p 1025:1025 -p 8025:8025 mailhog/mailhog
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.smtp_settings = {
-    host: ENV['SMTP_HOST'] || 'mailhog',
-    port: ENV['SMTP_PORT']&.to_i || 1025,
-    authentication: ENV['SMTP_AUTHENTICATION'].present? ? ENV['SMTP_AUTHENTICATION'].to_sym : nil,
-    user_name: ENV['SMTP_USERNAME'],
-    password: ENV['SMTP_PASSWORD'],
+    address: ENV.fetch("SMTP_ADDRESS", "mailhog"),
+    port: ENV.fetch("SMTP_PORT", "1025").to_i,
+    authentication: ENV.fetch("SMTP_AUTHENTICATION", "").presence || nil,
+    user_name: ENV["SMTP_USERNAME"].presence,
+    password: ENV["SMTP_PASSWORD"].presence,
     enable_starttls_auto: false
   }
 
@@ -86,10 +90,6 @@ Rails.application.configure do
 
   # Uncomment if you wish to allow Action Cable access from any origin.
   config.action_cable.disable_request_forgery_protection = true
-  
-  # Включить полное логирование ActionCable для диагностики
-  config.action_cable.logger = Logger.new(STDOUT)
-  config.action_cable.logger.level = Logger::INFO
 
   # Raise error when a before_action's only/except options reference missing actions.
   config.action_controller.raise_on_missing_callback_actions = true

@@ -53,4 +53,16 @@ class UserMailer < ApplicationMailer
     @user = user
     mail(to: @user.email, subject: I18n.t("mailer.account_deleted.subject"))
   end
+
+  #
+  # Письмо об обновлении профиля пользователя
+  # Вызывается из UserProfileNotification через Noticed
+  #
+  # @param recipient [User] получатель уведомления
+  #
+  def profile_updated(recipient)
+    @user = recipient
+
+    mail(to: @user.email, subject: I18n.t("mailer.profile_updated.subject"))
+  end
 end

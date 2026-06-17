@@ -1,0 +1,75 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/admin/users/show.html.erb - детальная страница пользователя
+#
+# Отображает:
+# - Хлебные крошки
+# - Профиль пользователя (ShowComponent) или форму редактирования (EditComponent)
+# - Табы: Activity, Wallet, Audit Log
+# %>
+
+<div class="max-w-4xl mx-auto" data-controller="admin--users">
+  <%# Хлебные крошки %>
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.users.index.title"), path: admin_users_path(q: params[:q], status: params[:status]) },
+    { name: @user.name }
+  ]) %>
+
+  <%# Профиль или форма редактирования %>
+  <div id="user-profile">
+    <% if @edit_mode %>
+      <%= render Admin::Users::User::EditComponent.new(user: @user, roles: @roles) %>
+    <% else %>
+      <%= render Admin::Users::User::ShowComponent.new(user: @user) %>
+    <% end %>
+  </div>
+
+  <%# Табы: Activity, Wallet, Audit Log %>
+  <% active_tab = params[:audit_page].present? ? "audit_log" : "activity" %>
+  <div class="mt-6 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden" data-controller="tabs" data-tabs-active-tab="<%= active_tab %>">
+    <%# Навигация табов %>
+    <nav class="flex p-1 gap-1 bg-slate-100/50">
+      <button type="button"
+              class="tab-active flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold text-teal-700 bg-white rounded-lg shadow-sm ring-1 ring-slate-200 transition-all"
+              data-tabs-target="tab"
+              data-action="click->tabs#switch"
+              data-tab="activity">
+        <!-- mdi: history -->
+        <i class="mdi mdi-history text-base"></i>
+        <%= t('admin.users.tabs.activity') %>
+      </button>
+
+      <button type="button"
+              class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 hover:bg-white/50 rounded-lg transition-all"
+              data-tabs-target="tab"
+              data-action="click->tabs#switch"
+              data-tab="wallet">
+        <!-- mdi: wallet -->
+        <i class="mdi mdi-wallet text-base"></i>
+        <%= t('admin.users.tabs.wallet') %>
+      </button>
+
+      <button type="button"
+              class="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-slate-500 hover:text-slate-700 hover:bg-white/50 rounded-lg transition-all"
+              data-tabs-target="tab"
+              data-action="click->tabs#switch"
+              data-tab="audit_log">
+        <!-- mdi: clipboard-text-search -->
+        <i class="mdi mdi-clipboard-text-search text-base"></i>
+        <%= t('admin.users.tabs.audit_log') %>
+      </button>
+    </nav>
+
+    <%# Содержимое табов %>
+    <div class="p-6 text-slate-600 text-sm" data-tabs-target="panel" data-tab="activity">
+      <%= render Admin::Users::User::ActivityComponent.new(user: @user) %>
+    </div>
+    <div class="p-6 text-slate-600 text-sm hidden" data-tabs-target="panel" data-tab="wallet">
+      <%= render Admin::Users::User::WalletComponent.new(user: @user) %>
+    </div>
+    <div class="p-6 text-slate-600 text-sm hidden" data-tabs-target="panel" data-tab="audit_log">
+      <%= render Admin::Users::User::AuditLogComponent.new(versions: @versions, pagy: @pagy_audit) %>
+    </div>
+  </div>
+</div>

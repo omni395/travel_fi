@@ -1,0 +1,26 @@
+<%# UI::TooltipComponent - тултип для карты (OL Overlay) %>
+<%# Иконка: mdi-map-marker (заменяется динамически из poi_category.icon) %>
+<div id="ui-tooltip" class="ui-tooltip hidden">
+  <!-- Левая колонка: информация -->
+  <div class="tooltip-info">
+    <!-- Категория (иконка + название) -->
+    <div class="tooltip-category">
+      <i class="tooltip-category-icon mdi mdi-map-marker text-emerald-500"></i>
+      <span class="tooltip-category-name"><%= t(".category") %></span>
+    </div>
+    <!-- Название POI -->
+    <div class="tooltip-name"><%= t(".loading") %></div>
+    <!-- Рейтинг -->
+    <div class="tooltip-rating hidden">
+      <i class="mdi mdi-star text-yellow-400 text-xs"></i>
+      <%# Иконка: mdi-star %>
+      <span class="tooltip-rating-value"></span>
+    </div>
+    <!-- Адрес -->
+    <div class="tooltip-address hidden"><%= t(".address") %></div>
+  </div>
+  <!-- Правая колонка: фото (или no-image) -->
+  <div class="tooltip-image">
+    <img class="tooltip-img" src="" alt="<%= t(".photo") %>" onerror="this.style.display='none'">
+  </div>
+</div>

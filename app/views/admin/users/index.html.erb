@@ -1,10 +1,31 @@
-<%# Admin Users Index - список пользователей %>
+<%# frozen_string_literal: true %>
 
-<%= render Admin::UsersListComponent.new(
-      users: @users,
-      search_query: @search_query,
-      status_filter: @status_filter,
-      selected_user: @selected_user,
-      edit_mode: @edit_mode,
-      roles: @roles
-    ) %>
+<%#
+# app/views/admin/users/index.html.erb - список пользователей
+#
+# Отображает:
+# - Хлебные крошки
+# - Таблицу пользователей с пагинацией
+# - Фильтры и поиск
+# Использует StimulusReflex для обновления без перезагрузки
+# %>
+
+<div class="p-4" data-controller="admin--users--table-component">
+  <%# Хлебные крошки %>
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.users.index.title") }
+  ]) %>
+
+  <%# Фильтры и поиск %>
+  <%= render ::Ui::FiltersComponent.new(
+        search_query: @search_query,
+        status_filter: @status_filter,
+        search_controller: "admin--users--table-component",
+        search_action: "input->admin--users--table-component#filter",
+        filter_action: "change->admin--users--table-component#filter",
+        reset_action: "admin--users--table-component#resetFilters"
+      ) %>
+
+  <%# Таблица пользователей (вынесена в отдельный компонент для CableReady morph) %>
+  <%= render Admin::Users::TableComponent.new(users: @users, pagy: @pagy) %>
+</div>

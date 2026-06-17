@@ -1,0 +1,35 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/users/settings/show.html.erb
+#
+# Страница настроек уведомлений пользователя
+# Показывает только profile_updated (изменение профиля)
+# Регистрация, логин, логаут — всегда показывают toast (не настраиваются)
+# Использует StimulusReflex для автосохранения при переключении
+# %>
+
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold text-gray-800 mb-6"><%= t('settings.title') %></h1>
+
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <!-- Шапка таблицы -->
+    <div class="flex items-center justify-between px-6 py-4 bg-linear-to-br from-primary to-secondary text-white font-semibold text-sm">
+      <span class="w-1/3"><%= t('settings.columns.event_type') %></span>
+      <div class="flex items-center space-x-6">
+        <%# MDI: bell-ring %>
+        <span class="flex items-center space-x-2"><i class="mdi mdi-bell-ring text-lg"></i> <span><%= t('settings.columns.in_app') %></span></span>
+        <%# MDI: email %>
+        <span class="flex items-center space-x-2"><i class="mdi mdi-email text-lg"></i> <span><%= t('settings.columns.email') %></span></span>
+        <%# MDI: cellphone-wireless %>
+        <span class="flex items-center space-x-2"><i class="mdi mdi-cellphone-wireless text-lg"></i> <span><%= t('settings.columns.push') %></span></span>
+      </div>
+    </div>
+
+    <!-- Строки настроек (только profile_updated для пользователя) -->
+    <div class="px-6 divide-y divide-gray-100">
+      <%= render Settings::FieldComponent.new(setting: @setting, event_type: 'profile_updated') %>
+    </div>
+  </div>
+
+</div>

@@ -118,4 +118,20 @@ class Admin::DashboardComponent < ApplicationComponent
       'bg-gray-100 text-gray-800'
     end
   end
+
+  #
+  # Возвращает название цвета для StatCardComponent
+  #
+  # @param type [Symbol] тип статистики
+  # @return [String] название цвета (primary, secondary, warning, info)
+  #
+  def stat_color(type)
+    case type
+    when :total_users then 'primary'
+    when :active_users then 'success'
+    when :suspended_users then 'error'
+    when :new_users_today then 'info'
+    else 'gray'
+    end
+  end
 end

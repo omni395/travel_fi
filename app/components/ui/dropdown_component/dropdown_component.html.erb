@@ -1,0 +1,21 @@
+<%# DropdownComponent - универсальный компонент для выпадающего меню %>
+<div data-controller="ui--dropdown-component" class="relative">
+  <%# Кнопка-триггер %>
+  <% if trigger.present? %>
+    <%= trigger %>
+  <% end %>
+
+  <%# Выпадающее меню %>
+  <div
+    data-ui--dropdown-component-target="menu"
+    class="hidden transition transform origin-top-right absolute <%= position_class %> z-50 <%= menu_classes %>"
+    data-transition-enter-from="opacity-0 scale-95"
+    data-transition-enter-to="opacity-100 scale-100"
+    data-transition-leave-from="opacity-100 scale-100"
+    data-transition-leave-to="opacity-0 scale-95"
+  >
+    <% if menu.present? %>
+      <%= menu %>
+    <% end %>
+  </div>
+</div>

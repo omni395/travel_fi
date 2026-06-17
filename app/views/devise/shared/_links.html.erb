@@ -1,25 +1,62 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/devise/shared/_links.html.erb
+#
+# Единый паршиал навигационных ссылок для всех Devise-вьюх.
+# Исключение из общей архитектуры (ViewComponents) — т.к. Devise-вьюхи
+# живут отдельно и не имеют смысла как изолированные компоненты.
+#
+# Содержит:
+#   - OAuth-аутентификацию (Google)
+#   - Восстановление пароля
+#   - Подтверждение email
+#   - Разблокировку аккаунта
+#   - Регистрацию / Вход
+# %>
+
+<%# OAuth Block %>
 <%- if devise_mapping.omniauthable? %>
   <%- resource_class.omniauth_providers.each do |provider| %>
     <% if provider.to_s == 'google_oauth2' %>
-      <%= link_to t('.sign_in_with_provider', provider: 'Google'), user_google_oauth2_omniauth_authorize_path, class: "btn btn-primary" %>
+      <div class="relative mb-4">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-gray-200"></div>
+        </div>
+        <div class="relative flex justify-center text-sm">
+          <span class="px-2 bg-white text-gray-500"><%= t('devise.shared.links.or_sign_in_with') %></span>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2 mb-4">
+        <%= button_to user_google_oauth2_omniauth_authorize_path, method: :post, class: "w-full flex items-center justify-center gap-2 px-4 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition cursor-pointer bg-white" do %>
+          <%= image_tag 'Google_G_logo.svg', alt: 'Google', class: 'w-5 h-5' %>
+          <span class="font-medium text-gray-700"><%= t('devise.shared.links.sign_in_with_provider', provider: 'Google') %></span>
+        <% end %>
+      </div>
     <% end %>
   <% end %>
 <% end %>
 
-<%- if devise_mapping.recoverable? && controller_name != 'passwords' && controller_name != 'registrations' %>
-  <%= link_to t('.forgot_your_password'), new_password_path(resource_name) %><br />
-<% end %>
+<%# Navigation Links %>
+<div class="text-center space-y-2">
+  <%- if devise_mapping.recoverable? && controller_name != 'passwords' && controller_name != 'registrations' %>
+    <%= link_to t('devise.shared.links.forgot_your_password'), new_password_path(resource_name), class: "block text-teal-600 hover:text-teal-700 text-sm" %>
+  <% end %>
 
-<%- if devise_mapping.confirmable? && controller_name != 'confirmations' %>
-  <%= link_to t('.didn_t_receive_confirmation_instructions'), new_confirmation_path(resource_name) %><br />
-<% end %>
+  <%- if devise_mapping.confirmable? && controller_name != 'confirmations' %>
+    <%= link_to t('devise.shared.links.didn_t_receive_confirmation_instructions'), new_confirmation_path(resource_name), class: "block text-teal-600 hover:text-teal-700 text-sm" %>
+  <% end %>
 
-<%- if devise_mapping.lockable? && resource_class.unlock_strategy_enabled?(:email) && controller_name != 'unlocks' %>
-  <%= link_to t('.didn_t_receive_unlock_instructions'), new_unlock_path(resource_name) %><br />
-<% end %>
+  <%- if devise_mapping.lockable? && resource_class.unlock_strategy_enabled?(:email) && controller_name != 'unlocks' %>
+    <%= link_to t('devise.shared.links.didn_t_receive_unlock_instructions'), new_unlock_path(resource_name), class: "block text-teal-600 hover:text-teal-700 text-sm" %>
+  <% end %>
 
-<%- if devise_mapping.registerable? && controller_name != 'registrations' %>
-  <%= link_to t('.sign_up'), new_registration_path(resource_name), class: "btn btn-secondary" %><br />
-<% end %>
+  <%- if devise_mapping.registerable? && controller_name != 'registrations' %>
+    <%= link_to t('devise.shared.links.sign_up'), new_registration_path(resource_name), class: "block text-teal-600 hover:text-teal-700 font-bold" %>
+  <% end %>
 
-<%= link_to t('.sign_in'), new_user_session_path, class: "btn btn-primary" %><br />
+  <%- if controller_name != 'sessions' %>
+    <%= link_to t('devise.shared.links.sign_in'), new_user_session_path, class: "block text-teal-600 hover:text-teal-700 font-bold" %>
+  <% end %>
+</div>
