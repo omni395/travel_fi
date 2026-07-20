@@ -20,13 +20,6 @@
         </button>
       <% end %>
     </div>
-    <div class="mt-2">
-      <input type="text"
-             data-action="input->poi--map-component#filterPois"
-             placeholder="Search POIs..."
-             autocomplete="off"
-             class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500">
-    </div>
   </div>
   <div id="poi-list" data-ui--sidebar-component-target="list" class="divide-y divide-gray-100">
     <%= render Poi::ListItemComponent.with_collection(@pois) %>
@@ -39,7 +32,7 @@
 
   <%# Карта (показывается всегда, с маркером или без) %>
   <div class="flex-1 min-h-0 relative">
-    <%= render Poi::MapComponent.new %>
+    <%= render Poi::MapComponent.new(categories: @categories) %>
   </div>
 
   <%# Спиннер загрузки (скрывается после инициализации карты) %>

@@ -25,7 +25,7 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       current_user: current_user
     )
 
-    cable_ready.redirect_to(url: admin_poi_category_path(category))
+    cable_ready.redirect_to(url: admin_poi_category_path(id: category))
     cable_ready.broadcast
 
     send_success(I18n.t("reflexes.admin.poi_categories.create_success"))
@@ -46,7 +46,7 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   def update(params = {})
     morph :nothing
 
-    category = PoiCategory.find(params[:id] || element.dataset.id)
+    category = PoiCategory.friendly.find(params[:id] || element.dataset.id)
     authorize_with_pundit!(category, :update?)
 
     PoiCategoryService.update(
@@ -55,7 +55,7 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       current_user: current_user
     )
 
-    component = Admin::PoiCategory::ShowComponent.new(category: category)
+    component = Admin::PoiCategories::PoiCategory::ShowComponent.new(category: category)
     html = ApplicationController.render(component, layout: false)
     morph "#poi-category-detail", html
 
@@ -75,8 +75,6 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   # @param params [Hash] параметры { query:, active:, page: }
   #
   def filter(params = {})
-    morph :nothing
-
     query = params[:query]
     active = params[:active]
     page = (params[:page] || 1).to_i

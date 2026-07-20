@@ -1,0 +1,47 @@
+<%# Admin::PoiCategories::PoiCategory::PoisListComponent - список POI категории %>
+<div class="bg-white shadow rounded-lg p-6">
+  <h3 class="text-lg font-semibold text-gray-900 mb-4">
+    <i class="mdi mdi-map-marker-multiple text-gray-500 mr-2"></i>
+    <%# Иконка: mdi-map-marker-multiple %>
+    <%= t(".title", count: category.pois.count) %>
+  </h3>
+
+  <% if pois.any? %>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"><%= t(".name") %></th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"><%= t(".city") %></th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"><%= t(".status") %></th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"><%= t(".author") %></th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase"><%= t(".created") %></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <% pois.each do |poi| %>
+            <tr class="hover:bg-gray-50 cursor-pointer"
+                onclick="window.location.href='<%= admin_poi_path(id: poi) %>'">
+              <td class="px-4 py-3 text-sm text-gray-900"><%= poi.localized_name %></td>
+              <td class="px-4 py-3 text-sm text-gray-500"><%= poi.city || "-" %></td>
+              <td class="px-4 py-3 text-sm">
+                <span class="px-2 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full
+                  <%= poi.status == 'approved' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800' %>">
+                  <%= t("admin.pois.poi.row_component.status.#{poi.status}", default: poi.status.humanize) %>
+                </span>
+              </td>
+              <td class="px-4 py-3 text-sm text-gray-500"><%= poi.user.name %></td>
+              <td class="px-4 py-3 text-sm text-gray-500"><%= render Ui::DateComponent.new(poi.created_at) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <div class="text-center py-8 text-gray-500">
+      <i class="mdi mdi-map-marker-off text-4xl mb-2"></i>
+      <%# Иконка: mdi-map-marker-off %>
+      <p><%= t(".no_pois") %></p>
+    </div>
+  <% end %>
+</div>

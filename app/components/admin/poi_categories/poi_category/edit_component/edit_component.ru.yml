@@ -1,0 +1,14 @@
+---
+ru:
+  admin:
+    poi_categories:
+      poi_category:
+        edit_component:
+          name: Название
+          slug: URL-идентификатор
+          icon: Иконка
+          description: Описание
+          position: Позиция
+          active: Активна
+          save: Сохранить
+          cancel: Отмена

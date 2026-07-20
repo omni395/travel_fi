@@ -1,0 +1,9 @@
+en:
+  poi:
+    filters_component:
+      search_placeholder: "Search POIs..."
+      all_categories: "All categories"
+      select_all: "Select All"
+      deselect_all: "Deselect All"
+      selected: "selected"
+      reset: "Reset"

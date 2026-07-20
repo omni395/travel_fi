@@ -27,7 +27,7 @@ class Admin::Users::User::EditComponent < ApplicationComponent
   # @return [String] текст статуса
   #
   def status_text
-    t("activerecord.attributes.user.statuses.#{user.status}")
+    t("activerecord.attributes.user.statuses_full.#{user.status}", default: t("activerecord.attributes.user.statuses.#{user.status}"))
   end
 
   #
@@ -78,17 +78,5 @@ class Admin::Users::User::EditComponent < ApplicationComponent
   #
   def default_role_id
     Role.find_by(name: 'user')&.id
-  end
-
-  #
-  # Форматирует дату
-  #
-  # @param date [DateTime, nil] дата
-  # @return [String] отформатированная дата
-  #
-  def format_date(date)
-    return t('admin.users.never') unless date.present?
-
-    l(date, format: :long)
   end
 end

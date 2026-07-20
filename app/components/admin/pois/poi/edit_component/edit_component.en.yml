@@ -1,0 +1,31 @@
+---
+en:
+  admin:
+    pois:
+      poi:
+        edit_component:
+          name: Name
+          slug: Slug
+          pick_location: Pick location on map
+          map_hint: Drag or click the map to set coordinates
+          description: Description
+          category: Category
+          status: Status
+          latitude: Latitude
+          longitude: Longitude
+          address: Address
+          city: City
+          country: Country
+          zip_code: ZIP Code
+          phone: Phone
+          website: Website
+          price_info: Price info
+          wheelchair_accessible: Wheelchair accessible
+          rating: Rating
+          opening_hours: Opening Hours
+          opening_hours_hint: 'OSM format: Mo-Fr 09:00-18:00'
+          osm_id: OSM ID
+          osm_id_hint: OpenStreetMap identifier (read-only)
+          category_fields: Category Fields
+          save: Save
+          cancel: Cancel

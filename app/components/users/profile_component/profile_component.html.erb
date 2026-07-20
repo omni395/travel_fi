@@ -117,7 +117,7 @@
       <!-- Edit Profile Button -->
       <% if can_edit_profile? %>
         <div class="mt-6">
-          <%= link_to t(".edit_profile"), edit_user_path(@user),
+          <%= link_to t(".edit_profile"), edit_user_path(id: @user),
               class: "btn-ui btn-ui--primary btn-ui--lg w-full block text-center" %>
         </div>
       <% end %>

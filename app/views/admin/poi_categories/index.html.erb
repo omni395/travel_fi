@@ -10,7 +10,7 @@
 # Использует StimulusReflex для обновления без перезагрузки
 # %>
 
-<div class="p-4" data-controller="admin--poi-categories">
+<div class="p-4" data-controller="admin--poi-categories admin--poi-categories--table-component">
   <%# Хлебные крошки %>
   <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
     { name: t("admin.poi_categories.index.title") }
@@ -27,5 +27,5 @@
       ) %>
 
   <%# Таблица категорий (вынесена в отдельный компонент для CableReady morph) %>
-  <%= render Admin::PoiCategory::TableComponent.new(categories: @categories, pagy: @pagy) %>
+  <%= render Admin::PoiCategories::TableComponent.new(categories: @categories, pagy: @pagy) %>
 </div>

@@ -1,0 +1,35 @@
+<%# Admin::PoiCategories::PoiCategory::AuditLogComponent - журнал аудита категории %>
+<div class="bg-white shadow rounded-lg p-6">
+  <h3 class="text-lg font-semibold text-gray-900 mb-4">
+    <i class="mdi mdi-history text-gray-500 mr-2"></i>
+    <%# Иконка: mdi-history %>
+    <%= t(".title") %>
+  </h3>
+
+  <% if versions.any? %>
+    <div class="space-y-3">
+      <% versions.each do |version| %>
+        <div class="flex items-start gap-3 text-sm">
+          <div class="shrink-0 mt-0.5">
+            <% if version.event == "create" %>
+              <i class="mdi mdi-plus-circle text-green-500"></i>
+            <% elsif version.event == "update" %>
+              <i class="mdi mdi-pencil text-teal-500"></i>
+            <% elsif version.event == "destroy" %>
+              <i class="mdi mdi-delete text-red-500"></i>
+            <% end %>
+          </div>
+          <div>
+            <span class="font-medium text-gray-900"><%= version.event.humanize %></span>
+            <span class="text-gray-500 ml-2">
+              <%= version.whodunnit.present? ? User.find_by(id: version.whodunnit)&.name || version.whodunnit : t(".system") %>
+            </span>
+            <span class="text-gray-400 ml-2"><%= render Ui::DateComponent.new(version.created_at) %></span>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-sm text-gray-400"><%= t(".no_versions") %></p>
+  <% end %>
+</div>

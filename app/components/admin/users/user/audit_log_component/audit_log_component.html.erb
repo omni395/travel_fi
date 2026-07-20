@@ -29,7 +29,7 @@
                   <%= event_text(version.event) %>
                 <% end %>
               </div>
-              <span class="text-xs text-gray-500" title="<%= l(version.created_at, format: :long) %>">
+              <span class="text-xs text-gray-500" title="<%= render Ui::DateComponent.new(version.created_at, format: :long) %>">
                 <%= time_ago_in_words(version.created_at) %> ago
               </span>
             </div>

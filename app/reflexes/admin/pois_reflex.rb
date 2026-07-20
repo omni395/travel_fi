@@ -28,7 +28,7 @@ class Admin::PoisReflex < ApplicationReflex
       current_user: current_user
     )
 
-    component = Admin::Poi::ShowComponent.new(poi: poi)
+    component = Admin::Pois::Poi::ShowComponent.new(poi: poi)
     html = ApplicationController.render(component, layout: false)
     morph "#poi-detail", html
 
@@ -59,7 +59,7 @@ class Admin::PoisReflex < ApplicationReflex
       current_user: current_user
     )
 
-    component = Admin::Poi::ShowComponent.new(poi: poi)
+    component = Admin::Pois::Poi::ShowComponent.new(poi: poi)
     html = ApplicationController.render(component, layout: false)
     morph "#poi-detail", html
 
@@ -107,8 +107,6 @@ class Admin::PoisReflex < ApplicationReflex
   # @param params [Hash] параметры { query:, status:, category_id:, page: }
   #
   def filter(params = {})
-    morph :nothing
-
     query = params[:query]
     status = params[:status]
     category_id = params[:category_id]

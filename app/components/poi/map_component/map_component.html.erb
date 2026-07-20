@@ -1,10 +1,29 @@
-<%# Poi::MapComponent - контейнер для OpenLayers карты с тултипом %>
+<%# Poi::MapComponent - контейнер для OpenLayers карты с тултипом и фильтрами %>
 <%# Иконка: mdi-map %>
 <%# data-controller устанавливается на родительском контейнере в index.html.erb %>
 <%# poi-map-features — скрытый контейнер данных для маркеров карты.
     Заполняется через PoiReflex#load_pois_in_bounds (CableReady morph).
     Содержит элементы с data-poi-id/data-poi-lat/data-poi-lng для _loadPois().
     НЕ зависит от DOM сайдбара. %>
-<div class="poi-map"></div>
-<div id="poi-map-features" class="hidden"></div>
+<div class="poi-map h-full"
+     <% if poi.present? %>
+     data-poi-single-lat="<%= poi.latitude %>"
+     data-poi-single-lng="<%= poi.longitude %>"
+     data-poi-interactive="<%= interactive %>"
+     <% end %>></div>
+<div id="poi-map-features" class="hidden">
+  <% if poi.present? %>
+  <div data-poi-id="<%= poi.id %>"
+       data-poi-lat="<%= poi.latitude %>"
+       data-poi-lng="<%= poi.longitude %>"
+       data-poi-name="<%= poi.localized_name %>"
+       data-poi-icon="<%= poi.poi_category&.icon || 'mdi-map-marker' %>"
+       data-poi-address="<%= [poi.address, poi.city].compact.join(', ') %>"></div>
+  <% end %>
+</div>
 <%= render Ui::TooltipComponent.new %>
+
+<%# Оверлей фильтров поверх карты (только md+) %>
+<% if categories.present? %>
+  <%= render Poi::FiltersComponent.new(categories: categories, variant: :overlay) %>
+<% end %>

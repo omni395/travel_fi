@@ -1,0 +1,6 @@
+en:
+  admin:
+    poi_categories:
+      row_component:
+        active: "Active"
+        inactive: "Inactive"

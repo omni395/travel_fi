@@ -74,7 +74,7 @@ namespace :seed do
         puts "\n--- #{category.localized_name} / #{city_name}: #{pois.size} точек ---"
 
         pois.each do |elem|
-          created = create_poi_from_osm(elem, category, seed_user, city_data[:country])
+          created = create_poi_from_osm(elem, category, seed_user, city_name, city_data[:country])
           if created
             total_created += 1
           else
@@ -138,7 +138,7 @@ namespace :seed do
     []
   end
 
-  def create_poi_from_osm(elem, category, user, country)
+  def create_poi_from_osm(elem, category, user, city_name, country)
     osm_id = elem["id"]
     tags = elem["tags"] || {}
     lat = elem["lat"]
@@ -160,7 +160,7 @@ namespace :seed do
       latitude: lat,
       longitude: lon,
       address: street.presence,
-      city: tags["addr:city"].presence,
+      city: tags["addr:city"].presence || city_name,
       country: country,
       zip_code: tags["addr:postcode"].presence,
       phone: tags["phone"].presence,

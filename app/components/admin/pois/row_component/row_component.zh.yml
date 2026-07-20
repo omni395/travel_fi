@@ -1,0 +1,10 @@
+zh:
+  admin:
+    pois:
+      row_component:
+        status:
+          pending: "待审核"
+          approved: "已通过"
+          rejected: "已拒绝"
+          archived: "已存档"
+        visit_hint: "点击查看详情"

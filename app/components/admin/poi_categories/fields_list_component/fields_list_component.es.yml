@@ -1,0 +1,13 @@
+---
+es:
+  admin:
+    poi_categories:
+      fields_list_component:
+        fields_title: Campos de categoría
+        no_fields: Sin campos definidos para esta categoría
+        position: Pos.
+        field_key: Clave
+        label: Etiqueta
+        field_type: Tipo
+        required: Obligatorio
+        active: Activo

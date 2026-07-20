@@ -82,7 +82,9 @@
 
         <%# Sign Up Button %>
         <div class="mb-4">
-          <%= form.submit t('devise.registrations.new.submit'), class: "btn-ui btn-ui--primary btn-ui--md w-full" %>
+          <%= render Ui::BtnComponent.new(color: :primary, size: :md, html: { type: "submit", class: "w-full" }) do %>
+            <%= t('devise.registrations.new.submit') %>
+          <% end %>
         </div>
       <% end %>
 

@@ -1,8 +1,5 @@
 // Entry point for admin build
-// CSS обрабатывается отдельным процессом @tailwindcss/cli --watch
-
-// Material Design Icons — локально через npm
-import "@mdi/font/css/materialdesignicons.min.css"
+// CSS (Tailwind, MDI, Components) грузится асинхронно через <link> в layout
 
 import "./controllers"
 import "./config"

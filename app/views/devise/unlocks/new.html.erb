@@ -31,7 +31,9 @@
 
         <%# Submit Button %>
         <div class="mb-4">
-          <%= form.submit t('devise.unlocks.new.submit', default: 'Resend unlock instructions'), class: "btn-ui btn-ui--primary btn-ui--md w-full" %>
+          <%= render Ui::BtnComponent.new(color: :primary, size: :md, html: { type: "submit", class: "w-full" }) do %>
+            <%= t('devise.unlocks.new.submit', default: 'Resend unlock instructions') %>
+          <% end %>
         </div>
       <% end %>
 

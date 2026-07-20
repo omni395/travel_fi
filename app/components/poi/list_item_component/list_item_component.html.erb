@@ -8,6 +8,7 @@
      data-poi-lng="<%= poi.longitude %>"
      data-poi-icon="<%= poi.poi_category&.icon %>"
      data-poi-category="<%= poi.poi_category&.localized_name %>"
+     data-poi-category-id="<%= poi.poi_category_id %>"
      data-poi-rating="<%= poi.rating&.to_f || 0 %>"
      data-action="click->poi--list-item-component#showDetail"
      data-poi--list-item-component-id-param="<%= poi.id %>"

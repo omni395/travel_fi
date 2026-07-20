@@ -31,7 +31,9 @@
 
         <%# Submit Button %>
         <div class="mb-4">
-          <%= form.submit t('devise.passwords.new.submit', default: 'Send Reset Instructions'), class: "btn-ui btn-ui--primary btn-ui--md w-full" %>
+          <%= render Ui::BtnComponent.new(color: :primary, size: :md, html: { type: "submit", class: "w-full" }) do %>
+            <%= t('devise.passwords.new.submit', default: 'Send Reset Instructions') %>
+          <% end %>
         </div>
       <% end %>
 

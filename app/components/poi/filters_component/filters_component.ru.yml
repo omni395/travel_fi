@@ -1,0 +1,9 @@
+ru:
+  poi:
+    filters_component:
+      search_placeholder: "Поиск POI..."
+      all_categories: "Все категории"
+      select_all: "Выбрать все"
+      deselect_all: "Снять все"
+      selected: "выбрано"
+      reset: "Сброс"

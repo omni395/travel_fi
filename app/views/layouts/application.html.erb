@@ -29,9 +29,12 @@
     <%= critical_css %>
 
     <%# === ASYNC CSS (загружаются без блокировки рендеринга) === %>
-    <%# Основной CSS: Tailwind + OpenLayers + MDI (через @import) %>
+    <%# Основной CSS: Tailwind %>
     <link rel="stylesheet" href="<%= asset_path("application.css") %>" media="print" onload="this.media='all'">
     <noscript><%= stylesheet_link_tag :app %></noscript>
+
+    <%# MDI иконки — CDN, асинхронно %>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" media="print" onload="this.media='all'">
 
     <%# Компонентный CSS (sidecar) %>
     <link rel="stylesheet" href="<%= asset_path("components.css") %>" media="print" onload="this.media='all'">
@@ -41,7 +44,7 @@
     <%= javascript_include_tag "application", type: "module" %>
   </head>
 
-  <body class="flex flex-col min-h-screen bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable">
+  <body class="flex flex-col min-h-screen bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable" data-current-user-id="<%= current_user&.id %>">
     <!-- Navbar Section -->
     <div class="flex-none">
       <%= render Ui::NavbarComponent.new(user: current_user) %>
@@ -68,5 +71,6 @@
       <% end %>
       <% flash.clear %>
     </div>
-  </body>
+
+    </body>
 </html>

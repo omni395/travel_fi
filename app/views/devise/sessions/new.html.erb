@@ -50,7 +50,9 @@
 
         <%# Sign In Button %>
         <div class="mb-4">
-          <%= form.submit t('devise.sessions.new.submit'), class: "btn-ui btn-ui--primary btn-ui--md w-full" %>
+          <%= render Ui::BtnComponent.new(color: :primary, size: :md, html: { type: "submit", class: "w-full" }) do %>
+            <%= t('devise.sessions.new.submit') %>
+          <% end %>
         </div>
       <% end %>
 

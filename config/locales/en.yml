@@ -12,7 +12,6 @@ en:
       few: "Show %{count} more"
       other: "Show %{count} more"
 
-
   locales:
     en: "English"
     ru: "Русский"
@@ -66,12 +65,31 @@ en:
           suspended: "Suspended"
           banned: "Banned"
           deleted: "Deleted"
+        statuses_full:
+          registered: "Registered"
+          pending_verification: "Pending Verification"
+          active: "Active"
+          suspended: "Suspended"
+          banned: "Banned"
+          deleted: "Deleted"
     errors:
       models:
         user:
           attributes:
             referral_code_input:
               not_found: "is invalid — no user with this code was found"
+        poi_category:
+          attributes:
+            slug:
+              format: "only lowercase letters, numbers and underscores"
+        poi_category_field:
+          attributes:
+            field_key:
+              format: "only lowercase letters, numbers and underscores"
+        poi:
+          attributes:
+            osm_id:
+              taken: "has already been taken"
 
   poi_service:
     errors:
@@ -105,6 +123,7 @@ en:
     email_changed: "Email Changed"
     name_changed: "Name Changed"
     oauth_login: "OAuth Login"
+    poi_updated: "POI %{name} was updated."
 
   settings:
     title: "Notification Settings"
@@ -116,27 +135,27 @@ en:
       email: "Email"
       push: "Push"
     field_types:
-      new_registration: "New Registration"
-      inactive_user: "Inactive User"
-      pending_verification: "Pending Verification"
-      verification_failed: "Verification Failed"
-      active_user: "Active User"
-      suspended_user: "Suspended User"
-      banned_user: "Banned User"
-      deleted_user: "Deleted User"
-      user_updated_by_admin: "Updated by Admin"
-      profile_updated: "Profile Updated"
+      new_registration: "New"
+      inactive_user: "Inactive"
+      pending_verification: "Pending"
+      verification_failed: "Failed"
+      active_user: "Active"
+      suspended_user: "Suspended"
+      banned_user: "Banned"
+      deleted_user: "Deleted"
+      user_updated_by_admin: "Updated"
+      profile_updated: "Updated"
     channels:
       notifications: "In-App"
       email: "Email"
       push: "Push"
-  reflexes:
-    user:
-      not_authorized: "You are not authorized to update this profile"
-      update_error: "An error occurred while updating your profile"
-      profile_updated: "Profile updated successfully!"
 
   admin:
+    poi_categories:
+      index:
+        title: "POI Categories"
+    layout:
+      loading: "Loading..."
     title: "Admin Panel"
     back_to_site: "Back to Site"
     profile: "Profile"
@@ -152,7 +171,7 @@ en:
     users:
       index:
         title: "Users"
-      never: "Never"
+      never: "—"
       system: "System"
       deleted_user: "Deleted User"
       null_value: "—"
@@ -161,20 +180,20 @@ en:
       initial_creation: "Account created"
       no_roles: "No roles assigned"
       details: "Details"
-      registered_at: "Registered At"
-      current_status: "Current Status"
+      registered_at: "Registered"
+      current_status: "Status"
       edit_title: "Editing User: %{name}"
-      back_to_list: "Back to List"
+      back_to_list: "Back"
       back_to_user: "Back to User"
       search: "Search"
-      search_placeholder: "Search by name or email"
-      all_statuses: "All Statuses"
+      search_placeholder: "Search..."
+      all_statuses: "All"
       reset: "Reset"
       create_success: "User successfully created"
       view: "View"
       sort_asc: "Sort ascending"
       sort_desc: "Sort descending"
-      last_sign_in_at: "Last Sign In"
+      last_sign_in_at: "Last Login"
       actions: "Actions"
       management: "Management"
       profile_info: "Profile Information"
@@ -218,6 +237,10 @@ en:
       moderator: "Moderator"
 
   reflexes:
+    user:
+      not_authorized: "You are not authorized to update this profile"
+      update_error: "An error occurred while updating your profile"
+      profile_updated: "Profile updated successfully!"
     admin:
       users:
         update_unauthorized: "You are not authorized to update this user"
@@ -242,28 +265,6 @@ en:
         select_detail_error: "An error occurred while selecting user"
         start_edit_error: "An error occurred while starting edit mode"
         operation_success: "Operation successful!"
-
-  common:
-    back: "Back"
-
-  activerecord:
-    errors:
-      models:
-        poi_category:
-          attributes:
-            slug:
-              format: "only lowercase letters, numbers and underscores"
-        poi_category_field:
-          attributes:
-            field_key:
-              format: "only lowercase letters, numbers and underscores"
-        poi:
-          attributes:
-            osm_id:
-              taken: "has already been taken"
-
-  reflexes:
-    admin:
       poi_categories:
         create_success: "Category created successfully"
         create_unauthorized: "You are not authorized to create categories"
@@ -301,8 +302,8 @@ en:
         reset_filters_error: "An error occurred while resetting filters"
         operation_success: "Operation successful!"
 
-  notifications:
-    poi_updated: "POI %{name} was updated."
+  common:
+    back: "Back"
 
   gamification:
     badges:
@@ -338,3 +339,7 @@ en:
       poi_photo_add: "Added a photo"
       comment_create: "Added a comment"
       poi_vote: "Voted for a point"
+
+  time:
+    formats:
+      short: "%d-%m-%y %H:%M"

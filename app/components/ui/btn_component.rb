@@ -50,6 +50,6 @@ class Ui::BtnComponent < ApplicationComponent
   # @return [Hash] атрибуты
   #
   def attrs
-    html.except(:class)
+    html.except(:class, :type)
   end
 end

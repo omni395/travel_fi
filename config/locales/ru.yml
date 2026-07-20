@@ -49,12 +49,31 @@ ru:
           suspended: "Заморожен"
           banned: "Забанен"
           deleted: "Удалён"
+        statuses_full:
+          registered: "Зарегистрирован"
+          pending_verification: "Ожидает верификации"
+          active: "Активен"
+          suspended: "Заморожен"
+          banned: "Забанен"
+          deleted: "Удалён"
     errors:
       models:
         user:
           attributes:
             referral_code_input:
               not_found: "недействителен — пользователь с таким кодом не найден"
+        poi_category:
+          attributes:
+            slug:
+              format: "только строчные буквы, цифры и подчеркивания"
+        poi_category_field:
+          attributes:
+            field_key:
+              format: "только строчные буквы, цифры и подчеркивания"
+        poi:
+          attributes:
+            osm_id:
+              taken: "уже используется"
 
   settings:
     title: "Настройки уведомлений"
@@ -66,16 +85,16 @@ ru:
       email: "Email"
       push: "Push"
     field_types:
-      new_registration: "Новая регистрация"
-      inactive_user: "Неактивный пользователь"
-      pending_verification: "Ожидание проверки"
-      verification_failed: "Проверка не пройдена"
-      active_user: "Активный пользователь"
-      suspended_user: "Заблокированный пользователь"
-      banned_user: "Забаненный пользователь"
-      deleted_user: "Удалённый пользователь"
-      user_updated_by_admin: "Обновлён администратором"
-      profile_updated: "Изменение профиля"
+      new_registration: "Новый"
+      inactive_user: "Неактивный"
+      pending_verification: "Ожидание"
+      verification_failed: "Провал"
+      active_user: "Активный"
+      suspended_user: "Заморожен"
+      banned_user: "Забанен"
+      deleted_user: "Удалён"
+      user_updated_by_admin: "Обновлён"
+      profile_updated: "Изменён"
     channels:
       notifications: "В приложении"
       email: "Email"
@@ -95,6 +114,11 @@ ru:
     oauth_login: "Вход через OAuth"
 
   admin:
+    poi_categories:
+      index:
+        title: "Категории POI"
+    layout:
+      loading: "Загрузка..."
     title: "Админ-панель"
     back_to_site: "Вернуться на сайт"
     profile: "Профиль"
@@ -110,7 +134,7 @@ ru:
     users:
       index:
         title: "Пользователи"
-      never: "Никогда"
+      never: "—"
       system: "Система"
       deleted_user: "Удаленный пользователь"
       null_value: "—"
@@ -120,19 +144,19 @@ ru:
       no_roles: "Роли не назначены"
       details: "Детали"
       registered_at: "Зарегистрирован"
-      current_status: "Текущий статус"
+      current_status: "Статус"
       edit_title: "Редактирование пользователя: %{name}"
-      back_to_list: "Назад к списку"
+      back_to_list: "Назад"
       back_to_user: "Назад к пользователю"
       search: "Поиск"
-      search_placeholder: "Поиск по имени или email"
-      all_statuses: "Все статусы"
+      search_placeholder: "Поиск..."
+      all_statuses: "Все"
       reset: "Сбросить"
       create_success: "Пользователь успешно создан"
       view: "Просмотр"
       sort_asc: "Сортировка по возрастанию"
       sort_desc: "Сортировка по убыванию"
-      last_sign_in_at: "Последний вход"
+      last_sign_in_at: "Вход"
       actions: "Действия"
       management: "Управление"
       profile_info: "Информация профиля"
@@ -174,22 +198,6 @@ ru:
     roles:
       admin: "Администратор"
       moderator: "Модератор"
-
-  activerecord:
-    errors:
-      models:
-        poi_category:
-          attributes:
-            slug:
-              format: "только строчные буквы, цифры и подчеркивания"
-        poi_category_field:
-          attributes:
-            field_key:
-              format: "только строчные буквы, цифры и подчеркивания"
-        poi:
-          attributes:
-            osm_id:
-              taken: "уже используется"
 
   reflexes:
     admin:
@@ -242,6 +250,10 @@ ru:
 
   notifications:
     poi_updated: "POI %{name} была обновлена."
+
+  time:
+    formats:
+      short: "%d.%m.%y %H:%M"
 
   gamification:
     badges:

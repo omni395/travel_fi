@@ -11,13 +11,15 @@
 #
 class Ui::PaginationComponent < ApplicationComponent
   # @param pagy [Pagy] объект пагинации
-  def initialize(pagy:)
+  # @param pagination_controller [String] Stimulus контроллер для обработки кликов
+  def initialize(pagy:, pagination_controller: "admin--users--table-component")
     @pagy = pagy
+    @pagination_controller = pagination_controller
   end
 
   private
  
-  attr_reader :pagy
+  attr_reader :pagy, :pagination_controller
 
   #
   # Генерирует массив для навигации по страницам

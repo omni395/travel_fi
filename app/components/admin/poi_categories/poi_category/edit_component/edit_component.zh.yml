@@ -1,0 +1,14 @@
+---
+zh:
+  admin:
+    poi_categories:
+      poi_category:
+        edit_component:
+          name: 名称
+          slug: 标识
+          icon: 图标
+          description: 描述
+          position: 位置
+          active: 启用
+          save: 保存
+          cancel: 取消

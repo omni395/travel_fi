@@ -1,0 +1,14 @@
+---
+ru:
+  admin:
+    poi_categories:
+      table_component:
+        position: Поз.
+        icon: Иконка
+        name: Название
+        slug: URL-идентификатор
+        fields_count: Поля
+        status: Статус
+        actions: Действия
+        active: Активна
+        inactive: Неактивна

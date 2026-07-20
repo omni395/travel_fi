@@ -67,7 +67,7 @@ class Poi::DetailComponent < ApplicationComponent
   # @return [String]
   #
   def form_url
-    edit_mode? ? poi_path(poi) : pois_path
+    edit_mode? ? poi_path(id: poi) : pois_path
   end
 
   #

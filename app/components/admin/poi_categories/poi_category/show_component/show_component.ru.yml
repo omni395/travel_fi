@@ -1,0 +1,13 @@
+---
+ru:
+  admin:
+    poi_categories:
+      poi_category:
+        show_component:
+          missing_translations: 'Отсутствуют переводы: %{locales}'
+          active: Активна
+          inactive: Неактивна
+          edit: Редактировать
+          description: Описание
+          position: Позиция
+          pois_count: Количество POI

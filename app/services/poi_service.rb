@@ -66,10 +66,13 @@ class PoiService
   def self.update(poi:, params:, current_user:)
     allowed = params.slice(:poi_category_id, :address, :city, :country,
                            :zip_code, :phone, :website, :wheelchair_accessible,
-                           :opening_hours, :price_info, :metadata)
+                           :opening_hours, :price_info, :metadata,
+                           :slug, :rating, :status)
     poi.assign_attributes(allowed)
     assign_localized_fields(poi, params)
-    poi.coordinates = parse_coordinates(params[:latitude], params[:longitude]) if params[:latitude] && params[:longitude]
+    if params[:latitude].present? && params[:longitude].present?
+      poi.coordinates = parse_coordinates(params[:latitude], params[:longitude])
+    end
     poi.save!
     poi
   rescue ActiveRecord::RecordInvalid => e
@@ -129,7 +132,7 @@ class PoiService
 
     result = pois.ransack(conditions).result
 
-    if sort_column.present? && %w[name status rating verification_count created_at updated_at].include?(sort_column)
+    if sort_column.present? && %w[name city status rating verification_count created_at updated_at].include?(sort_column)
       direction = sort_direction == 'asc' ? :asc : :desc
       result = result.order(sort_column => direction)
     else

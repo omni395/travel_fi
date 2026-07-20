@@ -1,5 +1,4 @@
 <%# frozen_string_literal: true %>
-
 <%#
 # app/components/admin/users/user/edit_component.html.erb - форма редактирования профиля
 #
@@ -16,18 +15,18 @@
 <%= render Ui::CardComponent.new do |card| %>
   <% card.with_body do %>
     <%= form_with model: user, url: admin_user_path(id: user), method: :patch,
-                  data: { controller: "users", action: "submit->users#handleSubmit" } do |f| %>
+                  data: { controller: "admin--users--user--edit-component", action: "submit->admin--users--user--edit-component#handleSubmit" } do |f| %>
 
       <%# Верхняя секция: аватар + поля + кнопки %>
       <div class="flex flex-col sm:flex-row items-start gap-8">
         <%# Аватар (кликабельный с camera badge) %>
-        <div class="relative flex-shrink-0" id="avatar-preview">
+        <div class="relative shrink-0" id="avatar-preview">
           <%= render Ui::AvatarComponent.new(user: user, size: :xl) %>
           <%= f.file_field :avatar,
                            id: 'user_avatar_input',
                            accept: 'image/png,image/jpeg,image/webp',
                            class: "hidden",
-                           data: { action: "change->users#previewAvatar", users_target: "avatarInput" } %>
+                           data: { action: "change->admin--users--user--edit-component#previewAvatar", "admin--users--user--edit-component_target" => "avatarInput" } %>
           <label for="user_avatar_input"
                  class="absolute top-0 right-0 w-7 h-7 rounded-full bg-primary text-white flex items-center justify-center cursor-pointer shadow-md hover:bg-primary/90 transition-colors">
             <!-- mdi: camera -->
@@ -42,7 +41,7 @@
                            value: user.name,
                            autocomplete: "name",
                            class: "field-input text-2xl font-bold text-gray-900 truncate",
-                           data: { users_target: "nameInput" } %>
+                           data: { "admin--users--user--edit-component_target" => "nameInput" } %>
 
           <%# Email %>
           <%= f.email_field :email,
@@ -53,22 +52,22 @@
           <%# Статус + роль в flex-row %>
           <div class="mt-4 flex flex-wrap items-center gap-3">
             <%# Статус (DropdownComponent) %>
-            <%= f.hidden_field :status, value: user.status, data: { users_target: "statusInput" } %>
-            <%= render Ui::DropdownComponent.new do |dd| %>
+            <%= f.hidden_field :status, value: user.status, data: { "admin--users--user--edit-component_target" => "statusInput" } %>
+            <%= render Ui::DropdownComponent.new(menu_classes: "bg-linear-to-br from-teal-600 to-sky-600 shadow-lg rounded-lg overflow-hidden") do |dd| %>
               <% dd.with_trigger do %>
-                <button type="button" data-dropdown-target="trigger" data-action="dropdown#toggle click@window->dropdown#hide" class="btn-ui btn-ui--primary btn-ui--sm">
-                  <span data-users-target="statusText"><%= status_text %></span>
+                <button type="button" data-action="ui--dropdown-component#toggle" class="btn-ui btn-ui--primary btn-ui--sm">
+                  <span data-admin--users--user--edit-component-target="statusText"><%= status_text %></span>
                   <!-- mdi: chevron-down -->
                   <i class="mdi mdi-chevron-down ml-1"></i>
                 </button>
               <% end %>
               <% dd.with_menu do %>
-                <div class="py-1 min-w-[160px]">
+                <div class="py-1 min-w-40">
                   <% status_options.each do |label, val| %>
                     <button type="button"
-                            data-action="click->users#selectStatus click->dropdown#toggle"
+                            data-action="click->admin--users--user--edit-component#selectStatus click->ui--dropdown-component#toggle"
                             data-value="<%= val %>"
-                            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                            class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10">
                       <%= label %>
                     </button>
                   <% end %>
@@ -77,22 +76,22 @@
             <% end %>
 
             <%# Роль (DropdownComponent) %>
-            <%= f.hidden_field :role_id, value: current_role_id, data: { users_target: "roleInput" } %>
-            <%= render Ui::DropdownComponent.new do |dd| %>
+            <%= f.hidden_field :role_id, value: current_role_id, data: { "admin--users--user--edit-component_target" => "roleInput" } %>
+            <%= render Ui::DropdownComponent.new(menu_classes: "bg-linear-to-br from-teal-600 to-sky-600 shadow-lg rounded-lg overflow-hidden") do |dd| %>
               <% dd.with_trigger do %>
-                <button type="button" data-dropdown-target="trigger" data-action="dropdown#toggle click@window->dropdown#hide" class="btn-ui btn-ui--primary btn-ui--sm">
-                  <span data-users-target="roleText"><%= current_role_name %></span>
+                <button type="button" data-action="ui--dropdown-component#toggle" class="btn-ui btn-ui--primary btn-ui--sm">
+                  <span data-admin--users--user--edit-component-target="roleText"><%= current_role_name %></span>
                   <!-- mdi: chevron-down -->
                   <i class="mdi mdi-chevron-down ml-1"></i>
                 </button>
               <% end %>
               <% dd.with_menu do %>
-                <div class="py-1 min-w-[160px]">
+                <div class="py-1 min-w-40">
                   <% role_options.each do |label, val| %>
                     <button type="button"
-                            data-action="click->users#selectRole click->dropdown#toggle"
+                            data-action="click->admin--users--user--edit-component#selectRole click->ui--dropdown-component#toggle"
                             data-value="<%= val %>"
-                            class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                            class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10">
                       <%= label %>
                     </button>
                   <% end %>
@@ -112,7 +111,7 @@
           <% end %>
           <%= f.submit t('.save'),
                        class: "btn-ui btn-ui--primary btn-ui--md",
-                       data: { users_target: "submitButton" } %>
+                       data: { "admin--users--user--edit-component_target" => "submitButton" } %>
         </div>
       </div>
 
@@ -121,22 +120,22 @@
 
       <div class="space-y-2">
         <span class="text-sm text-gray-400 flex items-center">
-          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 mr-1 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <%= t('.registered') %> <%= l(user.created_at, format: :short) %>
+          <span class="ml-1"><%= t('.registered') %> <%= render Ui::DateComponent.new(user.created_at) %></span>
         </span>
         <span class="text-sm text-gray-400 flex items-center">
-          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 mr-1 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <%= t('.updated') %> <%= l(user.updated_at, format: :short) %>
+          <span class="ml-1"><%= t('.updated') %> <%= render Ui::DateComponent.new(user.updated_at) %></span>
         </span>
         <span class="text-sm text-gray-400 flex items-center">
-          <svg class="w-4 h-4 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4 mr-1 inline shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
-          <%= t('.last_sign_in') %> <%= format_date(user.versions.where(event: 'login').last&.created_at) %>
+          <span class="ml-1"><%= t('.last_sign_in') %> <%= render Ui::DateComponent.new(user.versions.where(event: 'login').last&.created_at, fallback: t('admin.users.never')) %></span>
         </span>
       </div>
     <% end %>

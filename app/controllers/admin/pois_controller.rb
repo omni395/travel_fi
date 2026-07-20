@@ -24,17 +24,20 @@ class Admin::PoisController < Admin::BaseController
   # Отображает детальную страницу POI
   #
   def show
-    @poi = Poi.includes(:poi_category, :user).find(params[:id])
+    @poi = Poi.includes(:poi_category, :user).friendly.find(params[:id])
     authorize @poi, :show?
 
-    @versions = @poi.versions.order(created_at: :desc).limit(20)
+    @edit_mode = params[:edit] == 'true'
+    @categories = PoiCategory.active.by_position
+    @versions = @poi.versions.order(created_at: :desc)
+    @pagy_audit, @versions = pagy(@versions, limit: 10, page: params[:audit_page] || 1)
   end
 
   #
   # Обновляет POI
   #
   def update
-    @poi = Poi.find(params[:id])
+    @poi = Poi.friendly.find(params[:id])
     authorize @poi, :update?
 
     PoiService.update(
@@ -43,7 +46,7 @@ class Admin::PoisController < Admin::BaseController
       current_user: current_user
     )
 
-    redirect_to admin_poi_path(@poi), notice: t("admin.pois.update_success")
+    redirect_to admin_poi_path(id: @poi), notice: t("admin.pois.update_success")
   rescue PoiService::UpdateError => e
     flash.now[:alert] = e.message
     render :show, status: :unprocessable_entity
@@ -64,7 +67,11 @@ class Admin::PoisController < Admin::BaseController
       metadata: {},
       name: I18n.available_locales.map(&:to_s),
       description: I18n.available_locales.map(&:to_s)
-    )
+    ).tap do |p|
+      # Разрешаем name и description как хэш (JSONB)
+      p[:name] = params[:poi][:name] if params[:poi][:name].is_a?(ActionController::Parameters)
+      p[:description] = params[:poi][:description] if params[:poi][:description].is_a?(ActionController::Parameters)
+    end
   end
 
   #

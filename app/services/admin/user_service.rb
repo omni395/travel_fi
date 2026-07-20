@@ -130,7 +130,7 @@ class Admin::UserService
     @current_user = current_user
   end
 
-  private
+  public
 
   #
   # Выполняет обновление пользователя

@@ -1,0 +1,13 @@
+---
+en:
+  admin:
+    poi_categories:
+      poi_category:
+        show_component:
+          missing_translations: 'Missing translations: %{locales}'
+          active: Active
+          inactive: Inactive
+          edit: Edit
+          description: Description
+          position: Position
+          pois_count: POIs count

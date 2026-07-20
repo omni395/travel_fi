@@ -12,7 +12,7 @@
       <button type="button"
          class="btn-ui btn-ui--ghost btn-ui--sm min-w-8"
          aria-label="<%= t('.previous') %>"
-         data-action="click->admin--users--table-component#goToPage"
+         data-action="click-><%= pagination_controller %>#goToPage"
          data-page="<%= pagy.previous %>">
         <!-- mdi: chevron-left -->
         <span class="mdi mdi-chevron-left"></span>
@@ -32,7 +32,7 @@
         <% else %>
           <button type="button"
              class="btn-ui btn-ui--ghost btn-ui--sm min-w-8"
-             data-action="click->admin--users--table-component#goToPage"
+             data-action="click-><%= pagination_controller %>#goToPage"
              data-page="<%= item %>">
             <%= item %>
           </button>
@@ -47,7 +47,7 @@
       <button type="button"
          class="btn-ui btn-ui--ghost btn-ui--sm min-w-8"
          aria-label="<%= t('.next') %>"
-         data-action="click->admin--users--table-component#goToPage"
+         data-action="click-><%= pagination_controller %>#goToPage"
          data-page="<%= pagy.next %>">
         <!-- mdi: chevron-right -->
         <span class="mdi mdi-chevron-right"></span>

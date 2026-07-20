@@ -9,7 +9,6 @@
 # %>
 
 <div data-admin-users-list="true">
-  <% cache [users.maximum(:updated_at), users.count, I18n.locale, @sort_column, @sort_direction] do %>
   <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
@@ -78,6 +77,5 @@
   </div>
 
   <%# Пагинация (pagy) %>
-  <%= render ::Ui::PaginationComponent.new(pagy: pagy) if pagy %>
-  <% end %>
+  <%= render ::Ui::PaginationComponent.new(pagy: pagy, pagination_controller: "admin--users--table-component") if pagy %>
 </div>

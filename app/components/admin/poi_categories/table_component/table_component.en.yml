@@ -1,0 +1,14 @@
+---
+en:
+  admin:
+    poi_categories:
+      table_component:
+        position: Pos.
+        icon: Icon
+        name: Name
+        slug: Slug
+        fields_count: Fields
+        status: Status
+        actions: Actions
+        active: Active
+        inactive: Inactive
