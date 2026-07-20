@@ -2,11 +2,8 @@
   "name": "app",
   "private": true,
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.3.0",
     "chokidar": "^5.0.0",
-    "esbuild": "^0.28.0",
-    "esbuild-postcss": "^0.0.4",
-    "postcss": "^8.5.12"
+    "esbuild": "^0.28.0"
   },
   "scripts": {
     "build": "rm -rf app/assets/builds/* && node esbuild.config.mjs",
@@ -17,7 +14,6 @@
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
-    "@mdi/font": "^7.4.47",
     "@tailwindcss/cli": "^4.2.4",
     "cable_ready": "^5.0.6",
     "esbuild-rails": "^1.0.3",

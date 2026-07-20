@@ -1,0 +1,31 @@
+---
+ru:
+  admin:
+    pois:
+      poi:
+        edit_component:
+          name: Название
+          slug: URL-идентификатор
+          pick_location: Укажите место на карте
+          map_hint: Перетащите или кликните по карте для установки координат
+          description: Описание
+          category: Категория
+          status: Статус
+          latitude: Широта
+          longitude: Долгота
+          address: Адрес
+          city: Город
+          country: Страна
+          zip_code: Почтовый индекс
+          phone: Телефон
+          website: Веб-сайт
+          price_info: Информация о ценах
+          wheelchair_accessible: Доступно для инвалидных колясок
+          rating: Рейтинг
+          opening_hours: Часы работы
+          opening_hours_hint: 'Формат OSM: Пн-Пт 09:00-18:00'
+          osm_id: OSM ID
+          osm_id_hint: Идентификатор OpenStreetMap (только чтение)
+          category_fields: Поля категории
+          save: Сохранить
+          cancel: Отмена

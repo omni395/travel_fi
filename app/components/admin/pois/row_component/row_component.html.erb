@@ -1,0 +1,42 @@
+<%# frozen_string_literal: true %>
+<%#
+# Admin::Pois::RowComponent - строка таблицы POI (компактная)
+# Клик по строке → переход к деталям POI
+# %>
+<% cache [poi, poi.poi_category, I18n.locale] do %>
+  <tr class="hover:bg-gray-50 cursor-pointer"
+      data-action="click->admin--pois--table-component#visitPoi"
+      data-admin-poi-id="<%= poi.to_param %>">
+    <td class="px-2 py-1.5 whitespace-nowrap">
+      <div class="text-xs font-medium text-gray-900"><%= poi.localized_name %></div>
+      <% if poi.osm_id.present? %>
+        <div class="text-xs text-gray-400">OSM: <%= poi.osm_id %></div>
+      <% end %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <%= poi.poi_category.localized_name %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <%= poi.city || "-" %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <%= poi.user.name %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap">
+      <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full <%= status_badge_class(poi.status) %>">
+        <%= t(".status.#{poi.status}") %>
+      </span>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <% if poi.rating > 0 %>
+        <div class="flex items-center gap-1">
+          <i class="mdi mdi-star text-yellow-400 text-sm"></i>
+          <%# Иконка: mdi-star %>
+          <%= poi.rating %>
+        </div>
+      <% else %>
+        -
+      <% end %>
+    </td>
+  </tr>
+<% end %>

@@ -1,0 +1,303 @@
+<%# frozen_string_literal: true %>
+<%#
+# Admin::Pois::Poi::EditComponent - форма редактирования POI
+#
+# Использует Ui::CardComponent
+# Отправляет через Admin::PoisReflex#update
+#%>
+<%= render Ui::CardComponent.new do |card| %>
+  <% card.with_body do %>
+    <%= form_with model: poi, url: admin_poi_path(id: poi), method: :patch,
+                  data: { controller: "admin--pois--poi--edit-component",
+                          action: "submit->admin--pois--poi--edit-component#handleSubmit" } do |f| %>
+
+      <%# Name (локализованные поля) %>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          <!-- mdi: translate -->
+          <i class="mdi mdi-translate mr-1"></i>
+          <%= t(".name") %>
+        </label>
+        <div class="grid grid-cols-2 gap-3">
+          <% locales.each do |locale| %>
+            <div>
+              <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+              <%= text_field_tag "poi[name][#{locale}]", localized_value(:name, locale),
+                                 autocomplete: "off",
+                                 class: "field-input mt-1",
+                                 placeholder: t("locales.#{locale}") %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Slug %>
+      <div class="mb-6">
+        <%= f.label :slug, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+          <!-- mdi: link-variant -->
+          <i class="mdi mdi-link-variant mr-1"></i>
+          <%= t(".slug") %>
+        <% end %>
+        <%= f.text_field :slug, autocomplete: "off", class: "field-input" %>
+      </div>
+
+      <%# Description (локализованные) %>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          <!-- mdi: text-box-outline -->
+          <i class="mdi mdi-text-box-outline mr-1"></i>
+          <%= t(".description") %>
+        </label>
+        <div class="grid grid-cols-2 gap-3">
+          <% locales.each do |locale| %>
+            <div>
+              <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+              <%= text_area_tag "poi[description][#{locale}]", localized_value(:description, locale),
+                                rows: 2,
+                                autocomplete: "off",
+                                class: "field-input mt-1",
+                                placeholder: t("locales.#{locale}") %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Категория + статус %>
+      <div class="mb-6 grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :poi_category_id, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: shape-outline -->
+            <i class="mdi mdi-shape-outline mr-1"></i>
+            <%= t(".category") %>
+          <% end %>
+          <%= f.collection_select :poi_category_id, categories, :id, :localized_name,
+                                  {}, class: "field-input" %>
+        </div>
+        <div>
+          <%= f.label :status, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: flag-outline -->
+            <i class="mdi mdi-flag-outline mr-1"></i>
+            <%= t(".status") %>
+          <% end %>
+          <%= f.select :status, Poi.statuses.keys.map { |s| [t("admin.pois.poi.row_component.status.#{s}", default: s.humanize), s] },
+                       {}, class: "field-input" %>
+        </div>
+      </div>
+
+      <%# Координаты %>
+      <div class="mb-6 grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :latitude, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: latitude -->
+            <i class="mdi mdi-latitude mr-1"></i>
+            <%= t(".latitude") %>
+          <% end %>
+          <%= f.text_field :latitude, value: poi.latitude, autocomplete: "off", class: "field-input" %>
+        </div>
+        <div>
+          <%= f.label :longitude, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: longitude -->
+            <i class="mdi mdi-longitude mr-1"></i>
+            <%= t(".longitude") %>
+          <% end %>
+          <%= f.text_field :longitude, value: poi.longitude, autocomplete: "off", class: "field-input" %>
+        </div>
+      </div>
+
+      <%# Интерактивная карта для координат %>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          <!-- mdi: map -->
+          <i class="mdi mdi-map mr-1"></i>
+          <%= t(".pick_location") %>
+        </label>
+        <div class="h-72 rounded-lg overflow-hidden border border-gray-200">
+          <%= render Poi::MapComponent.new(poi: poi, interactive: true) %>
+        </div>
+        <p class="text-xs text-gray-400 mt-1"><%= t(".map_hint") %></p>
+      </div>
+
+      <%# Адресные поля %>
+      <div class="mb-6 grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :address, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: map-marker -->
+            <i class="mdi mdi-map-marker mr-1"></i>
+            <%= t(".address") %>
+          <% end %>
+          <%= f.text_field :address, autocomplete: "address-line1", class: "field-input" %>
+        </div>
+        <div>
+          <%= f.label :city, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: city -->
+            <i class="mdi mdi-city mr-1"></i>
+            <%= t(".city") %>
+          <% end %>
+          <%= f.text_field :city, autocomplete: "address-level2", class: "field-input" %>
+        </div>
+        <div>
+          <%= f.label :country, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: earth -->
+            <i class="mdi mdi-earth mr-1"></i>
+            <%= t(".country") %>
+          <% end %>
+          <%= f.text_field :country, autocomplete: "country-name", class: "field-input" %>
+        </div>
+        <div>
+          <%= f.label :zip_code, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: postal-code -->
+            <i class="mdi mdi-postal-code mr-1"></i>
+            <%= t(".zip_code") %>
+          <% end %>
+          <%= f.text_field :zip_code, autocomplete: "postal-code", class: "field-input" %>
+        </div>
+      </div>
+
+      <%# Контактные поля %>
+      <div class="mb-6 grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :phone, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: phone -->
+            <i class="mdi mdi-phone mr-1"></i>
+            <%= t(".phone") %>
+          <% end %>
+          <%= f.telephone_field :phone, autocomplete: "tel", class: "field-input" %>
+        </div>
+        <div>
+          <%= f.label :website, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: web -->
+            <i class="mdi mdi-web mr-1"></i>
+            <%= t(".website") %>
+          <% end %>
+          <%= f.url_field :website, autocomplete: "url", class: "field-input" %>
+        </div>
+      </div>
+
+      <%# Доп. поля: цена, рейтинг, доступность, часы работы %>
+      <div class="mb-6 grid grid-cols-2 gap-4">
+        <div>
+          <%= f.label :price_info, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: currency-usd -->
+            <i class="mdi mdi-currency-usd mr-1"></i>
+            <%= t(".price_info") %>
+          <% end %>
+          <%= f.text_field :price_info, autocomplete: "off", class: "field-input" %>
+        </div>
+        <div>
+          <%= f.label :rating, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: star -->
+            <i class="mdi mdi-star text-yellow-400 mr-1"></i>
+            <%# Иконка: mdi-star %>
+            <%= t(".rating") %>
+          <% end %>
+          <%= f.number_field :rating, step: 0.1, min: 0, max: 5, class: "field-input w-32" %>
+        </div>
+        <div class="flex items-center gap-2 mt-6">
+          <%= f.check_box :wheelchair_accessible, class: "toggle-input" %>
+          <%= f.label :wheelchair_accessible, t(".wheelchair_accessible"), class: "text-sm text-gray-700" %>
+        </div>
+        <div>
+          <%= f.label :opening_hours, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: clock-outline -->
+            <i class="mdi mdi-clock-outline mr-1"></i>
+            <%# Иконка: mdi-clock-outline %>
+            <%= t(".opening_hours") %>
+          <% end %>
+          <%= f.text_field :opening_hours,
+                           value: poi.opening_hours.is_a?(Hash) ? poi.opening_hours.to_json : poi.opening_hours,
+                           autocomplete: "off",
+                           class: "field-input",
+                           placeholder: t(".opening_hours_hint") %>
+        </div>
+      </div>
+
+      <%# OSM ID (readonly) %>
+      <% if poi.osm_id.present? %>
+        <div class="mb-6">
+          <%= f.label :osm_id, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: openstreetmap -->
+            <i class="mdi mdi-openstreetmap mr-1"></i>
+            <%# Иконка: mdi-openstreetmap %>
+            <%= t(".osm_id") %>
+          <% end %>
+          <%= f.text_field :osm_id, readonly: true, class: "field-input bg-gray-50 text-gray-500", value: poi.osm_id %>
+          <p class="text-xs text-gray-400 mt-1"><%= t(".osm_id_hint") %></p>
+        </div>
+      <% end %>
+
+      <%# Динамические поля категории (metadata) %>
+      <% if category_fields.any? %>
+        <div class="mb-6">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <!-- mdi: form-textbox -->
+            <i class="mdi mdi-form-textbox mr-1"></i>
+            <%# Иконка: mdi-form-textbox %>
+            <%= t(".category_fields") %>
+          </label>
+          <div class="space-y-4">
+            <% category_fields.each do |field| %>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">
+                  <%= field.localized_label %>
+                  <% if field.required %><span class="text-red-500">*</span><% end %>
+                </label>
+                <% case field.field_type %>
+                <% when 'string' %>
+                  <%= text_field_tag "poi[metadata][#{field.field_key}]", metadata_value(field),
+                       placeholder: field.localized_placeholder,
+                       autocomplete: "off",
+                       class: "field-input" %>
+                <% when 'text' %>
+                  <%= text_area_tag "poi[metadata][#{field.field_key}]", metadata_value(field),
+                       placeholder: field.localized_placeholder,
+                       class: "field-input", rows: 3 %>
+                <% when 'number' %>
+                  <%= number_field_tag "poi[metadata][#{field.field_key}]", metadata_value(field),
+                       class: "field-input w-32" %>
+                <% when 'boolean' %>
+                  <label class="flex items-center gap-2">
+                    <%= check_box_tag "poi[metadata][#{field.field_key}]", "1",
+                         metadata_value(field) == true || metadata_value(field) == "1",
+                         class: "toggle-input" %>
+                    <span class="text-sm text-gray-500"><%= field.hint %></span>
+                  </label>
+                <% when 'select' %>
+                  <%= select_tag "poi[metadata][#{field.field_key}]",
+                       options_for_select(field_options(field), metadata_value(field)),
+                       include_blank: true, class: "field-input" %>
+                <% when 'multiselect' %>
+                  <div class="space-y-1">
+                    <% (field.options['values'] || []).each do |opt| %>
+                      <label class="flex items-center gap-2 text-sm">
+                        <%= check_box_tag "poi[metadata][#{field.field_key}][]", opt,
+                             Array(metadata_value(field)).include?(opt),
+                             class: "rounded border-gray-300" %>
+                        <%= opt %>
+                      </label>
+                    <% end %>
+                  </div>
+                <% end %>
+                <% if field.localized_hint.present? %>
+                  <p class="text-xs text-gray-400 mt-1"><%= field.localized_hint %></p>
+                <% end %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <%# Кнопки %>
+      <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
+        <%= link_to admin_poi_path(id: poi),
+                    class: "btn-ui btn-ui--ghost btn-ui--md" do %>
+          <!-- mdi: close -->
+          <i class="mdi mdi-close"></i>
+          <%= t(".cancel") %>
+        <% end %>
+        <%= f.submit t(".save"),
+                     class: "btn-ui btn-ui--primary btn-ui--md",
+                     data: { "admin--pois--poi--edit-component_target" => "submitButton" } %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

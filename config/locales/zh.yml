@@ -26,12 +26,31 @@ zh:
           suspended: "已暂停"
           banned: "已封禁"
           deleted: "已删除"
+        statuses_full:
+          registered: "已注册"
+          pending_verification: "等待验证"
+          active: "活跃"
+          suspended: "已暂停"
+          banned: "已封禁"
+          deleted: "已删除"
     errors:
       models:
         user:
           attributes:
             referral_code_input:
               not_found: "无效 — 未找到使用此代码的用户"
+        poi_category:
+          attributes:
+            slug:
+              format: "仅允许小写字母、数字和下划线"
+        poi_category_field:
+          attributes:
+            field_key:
+              format: "仅允许小写字母、数字和下划线"
+        poi:
+          attributes:
+            osm_id:
+              taken: "已被使用"
 
   settings:
     title: "通知设置"
@@ -44,15 +63,15 @@ zh:
       push: "推送"
     field_types:
       new_registration: "新注册"
-      inactive_user: "非活跃用户"
+      inactive_user: "非活跃"
       pending_verification: "待验证"
-      verification_failed: "验证失败"
-      active_user: "活跃用户"
-      suspended_user: "已暂停用户"
-      banned_user: "已封禁用户"
-      deleted_user: "已删除用户"
-      user_updated_by_admin: "管理员更新"
-      profile_updated: "资料更新"
+      verification_failed: "失败"
+      active_user: "活跃"
+      suspended_user: "已暂停"
+      banned_user: "已封禁"
+      deleted_user: "已删除"
+      user_updated_by_admin: "已更新"
+      profile_updated: "已更新"
     channels:
       notifications: "应用内"
       email: "邮箱"
@@ -75,6 +94,11 @@ zh:
       oauth_login: "OAuth 登录"
 
   admin:
+    poi_categories:
+      index:
+        title: "POI 分类"
+    layout:
+      loading: "加载中..."
     title: "管理面板"
     back_to_site: "返回网站"
     profile: "资料"
@@ -90,7 +114,7 @@ zh:
     users:
       index:
         title: "用户"
-      never: "从未"
+      never: "—"
       system: "系统"
       deleted_user: "已删除用户"
       null_value: "—"
@@ -100,19 +124,19 @@ zh:
       no_roles: "未分配角色"
       details: "详情"
       registered_at: "注册时间"
-      current_status: "当前状态"
+      current_status: "状态"
       edit_title: "编辑用户： %{name}"
-      back_to_list: "返回列表"
+      back_to_list: "返回"
       back_to_user: "返回用户"
       search: "搜索"
-      search_placeholder: "按姓名或邮箱搜索"
-      all_statuses: "所有状态"
+      search_placeholder: "搜索..."
+      all_statuses: "所有"
       reset: "重置"
       create_success: "用户创建成功"
       view: "查看"
       sort_asc: "升序排序"
       sort_desc: "降序排序"
-      last_sign_in_at: "最后登录"
+      last_sign_in_at: "登录"
       actions: "操作"
       management: "管理"
       profile_info: "资料信息"
@@ -154,22 +178,6 @@ zh:
     roles:
       admin: "管理员"
       moderator: "版主"
-
-  activerecord:
-    errors:
-      models:
-        poi_category:
-          attributes:
-            slug:
-              format: "仅允许小写字母、数字和下划线"
-        poi_category_field:
-          attributes:
-            field_key:
-              format: "仅允许小写字母、数字和下划线"
-        poi:
-          attributes:
-            osm_id:
-              taken: "已被使用"
 
   reflexes:
     admin:

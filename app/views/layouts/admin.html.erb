@@ -31,13 +31,16 @@
     <link rel="stylesheet" href="<%= asset_path("application.css") %>" media="print" onload="this.media='all'">
     <noscript><%= stylesheet_link_tag :app %></noscript>
 
+    <%# MDI иконки — CDN, асинхронно %>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" media="print" onload="this.media='all'">
+
     <link rel="stylesheet" href="<%= asset_path("components.css") %>" media="print" onload="this.media='all'">
     <noscript><%= stylesheet_link_tag "components" %></noscript>
 
     <%= javascript_include_tag "admin", type: "module" %>
   </head>
 
-<body class="flex flex-col h-screen overflow-hidden bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable">
+<body class="flex flex-col h-screen overflow-hidden bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable admin-layout">
 
   <!-- 1. ХЕДЕР: Фиксированная высота 64px -->
   <header class="h-16 bg-white border-b shrink-0 relative z-70">
@@ -83,13 +86,26 @@
       </div>
     <% end %>
 
-    <main class="flex-1 overflow-y-auto p-4 md:p-8">
-      <%= yield %>
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+      <%# Спиннер загрузки (скрывается после загрузки контента) %>
+      <div data-admin-layout-target="spinner"
+           class="absolute inset-0 flex items-center justify-center bg-gray-50/80 z-50 transition-opacity duration-300">
+        <div class="flex flex-col items-center gap-3">
+          <!-- mdi: loading (spin animation) -->
+          <span class="mdi mdi-loading mdi-spin text-4xl text-teal-500"></span>
+          <span class="text-sm text-gray-400"><%= t('admin.layout.loading') %></span>
+        </div>
+      </div>
+
+      <%# Контент страницы (скрыт, пока спиннер виден) %>
+      <div data-admin-layout-target="content" class="opacity-0 transition-opacity duration-300">
+        <%= yield %>
+      </div>
     </main>
   </div>
 
   <!-- 3. Toast notifications: SSR flash + CableReady target -->
-  <div id="notifications" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+  <div id="notifications" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none">
     <% flash.each do |type, message| %>
       <% next if message.blank? %>
       <% toast_type = case type.to_s
@@ -104,5 +120,6 @@
     <% end %>
     <% flash.clear %>
   </div>
-</body>
+
+  </body>
 </html>

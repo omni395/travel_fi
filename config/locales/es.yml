@@ -26,12 +26,31 @@ es:
           suspended: "Suspendido"
           banned: "Prohibido"
           deleted: "Eliminado"
+        statuses_full:
+          registered: "Registrado"
+          pending_verification: "Pendiente de verificación"
+          active: "Activo"
+          suspended: "Suspendido"
+          banned: "Prohibido"
+          deleted: "Eliminado"
     errors:
       models:
         user:
           attributes:
             referral_code_input:
               not_found: "no es válido — no se encontró un usuario con este código"
+        poi_category:
+          attributes:
+            slug:
+              format: "solo minúsculas, números y guiones bajos"
+        poi_category_field:
+          attributes:
+            field_key:
+              format: "solo minúsculas, números y guiones bajos"
+        poi:
+          attributes:
+            osm_id:
+              taken: "ya está en uso"
 
   settings:
     title: "Configuración de Notificaciones"
@@ -43,16 +62,16 @@ es:
       email: "Email"
       push: "Push"
     field_types:
-      new_registration: "Nuevo Registro"
-      inactive_user: "Usuario Inactivo"
-      pending_verification: "Pendiente de Verificación"
-      verification_failed: "Verificación Fallida"
-      active_user: "Usuario Activo"
-      suspended_user: "Usuario Suspendido"
-      banned_user: "Usuario Prohibido"
-      deleted_user: "Usuario Eliminado"
-      user_updated_by_admin: "Actualizado por Admin"
-      profile_updated: "Perfil Actualizado"
+      new_registration: "Nuevo"
+      inactive_user: "Inactivo"
+      pending_verification: "Pendiente"
+      verification_failed: "Fallido"
+      active_user: "Activo"
+      suspended_user: "Suspendido"
+      banned_user: "Prohibido"
+      deleted_user: "Eliminado"
+      user_updated_by_admin: "Actualizado"
+      profile_updated: "Actualizado"
     channels:
       notifications: "En App"
       email: "Email"
@@ -73,6 +92,11 @@ es:
     oauth_login: "Inicio de sesión OAuth"
 
   admin:
+    poi_categories:
+      index:
+        title: "Categorías de POI"
+    layout:
+      loading: "Cargando..."
     title: "Panel de administración"
     back_to_site: "Volver al sitio"
     profile: "Perfil"
@@ -88,7 +112,7 @@ es:
     users:
       index:
         title: "Usuarios"
-      never: "Nunca"
+      never: "—"
       system: "Sistema"
       deleted_user: "Usuario eliminado"
       null_value: "—"
@@ -98,19 +122,19 @@ es:
       no_roles: "Sin roles asignados"
       details: "Detalles"
       registered_at: "Registrado el"
-      current_status: "Estado actual"
+      current_status: "Estado"
       edit_title: "Editando usuario: %{name}"
-      back_to_list: "Volver a la lista"
+      back_to_list: "Volver"
       back_to_user: "Volver al usuario"
       search: "Buscar"
-      search_placeholder: "Buscar por nombre o email"
-      all_statuses: "Todos los estados"
+      search_placeholder: "Buscar..."
+      all_statuses: "Todos"
       reset: "Restablecer"
       create_success: "Usuario creado exitosamente"
       view: "Ver"
       sort_asc: "Orden ascendente"
       sort_desc: "Orden descendente"
-      last_sign_in_at: "Último inicio"
+      last_sign_in_at: "Último"
       actions: "Acciones"
       management: "Gestión"
       profile_info: "Información del perfil"
@@ -152,22 +176,6 @@ es:
     roles:
       admin: "Administrador"
       moderator: "Moderador"
-
-  activerecord:
-    errors:
-      models:
-        poi_category:
-          attributes:
-            slug:
-              format: "solo minúsculas, números y guiones bajos"
-        poi_category_field:
-          attributes:
-            field_key:
-              format: "solo minúsculas, números y guiones bajos"
-        poi:
-          attributes:
-            osm_id:
-              taken: "ya está en uso"
 
   reflexes:
     admin:
@@ -218,6 +226,10 @@ es:
 
   notifications:
     poi_updated: "POI %{name} fue actualizada."
+
+  time:
+    formats:
+      short: "%d/%m/%y %H:%M"
 
   gamification:
     badges:

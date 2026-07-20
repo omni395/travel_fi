@@ -1,0 +1,115 @@
+<%# frozen_string_literal: true %>
+<%#
+# Admin::PoiCategories::PoiCategory::EditComponent - форма редактирования категории POI
+#
+# Использует Ui::CardComponent, Ui::BtnComponent
+# Отправляет через Reflex Admin::PoiCategoriesReflex#update
+# %>
+<%= render Ui::CardComponent.new do |card| %>
+  <% card.with_body do %>
+    <%= form_with model: category, url: admin_poi_category_path(id: category), method: :patch,
+                  data: { controller: "admin--poi-categories--poi-category--edit-component",
+                          action: "submit->admin--poi-categories--poi-category--edit-component#handleSubmit" } do |f| %>
+
+      <%# Name (локализованные поля) %>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          <!-- mdi: translate -->
+          <i class="mdi mdi-translate mr-1"></i>
+          <%= t(".name") %>
+        </label>
+        <div class="grid grid-cols-2 gap-3">
+          <% locales.each do |locale| %>
+            <div>
+              <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+              <%= text_field_tag "category[name][#{locale}]", localized_value(:name, locale),
+                                 autocomplete: "off",
+                                 class: "field-input mt-1",
+                                 placeholder: t("locales.#{locale}") %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Slug %>
+      <div class="mb-6">
+        <%= f.label :slug, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+          <!-- mdi: link-variant -->
+          <i class="mdi mdi-link-variant mr-1"></i>
+          <%= t(".slug") %>
+        <% end %>
+        <%= f.text_field :slug, autocomplete: "off", class: "field-input" %>
+      </div>
+
+      <%# Icon (MDI класс + превью) %>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          <!-- mdi: icon-picker -->
+          <i class="mdi mdi-icon-picker mr-1"></i>
+          <%= t(".icon") %>
+        </label>
+        <div class="flex items-center gap-3">
+          <span class="text-emerald-500 text-2xl">
+            <i class="mdi <%= category.icon.presence || 'mdi-map-marker' %>" data-admin--poi-categories--poi-category--edit-component-target="iconPreview"></i>
+          </span>
+          <%= f.text_field :icon,
+                           data: { action: "input->admin--poi-categories--poi-category--edit-component#previewIcon",
+                                   "admin--poi-categories--poi-category--edit-component_target" => "iconInput" },
+                           autocomplete: "off",
+                           placeholder: "mdi-icon-name",
+                           class: "field-input flex-1" %>
+        </div>
+      </div>
+
+      <%# Description (локализованные) %>
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          <!-- mdi: text-box-outline -->
+          <i class="mdi mdi-text-box-outline mr-1"></i>
+          <%= t(".description") %>
+        </label>
+        <div class="grid grid-cols-2 gap-3">
+          <% locales.each do |locale| %>
+            <div>
+              <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+              <%= text_area_tag "category[description][#{locale}]", localized_value(:description, locale),
+                                rows: 3,
+                                autocomplete: "off",
+                                class: "field-input mt-1",
+                                placeholder: t("locales.#{locale}") %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Position и Active %>
+      <div class="mb-6 flex items-center gap-8">
+        <div>
+          <%= f.label :position, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: order-numeric-asc -->
+            <i class="mdi mdi-order-numeric-asc mr-1"></i>
+            <%= t(".position") %>
+          <% end %>
+          <%= f.number_field :position, class: "field-input w-24" %>
+        </div>
+        <div class="flex items-center gap-2 mt-6">
+          <%= f.check_box :active, class: "toggle-input" %>
+          <%= f.label :active, t(".active"), class: "text-sm text-gray-700" %>
+        </div>
+      </div>
+
+      <%# Кнопки %>
+      <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
+        <%= link_to admin_poi_category_path(id: category),
+                    class: "btn-ui btn-ui--ghost btn-ui--md" do %>
+          <!-- mdi: close -->
+          <i class="mdi mdi-close"></i>
+          <%= t(".cancel") %>
+        <% end %>
+        <%= f.submit t(".save"),
+                     class: "btn-ui btn-ui--primary btn-ui--md",
+                     data: { "admin--poi-categories--poi-category--edit-component_target" => "submitButton" } %>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

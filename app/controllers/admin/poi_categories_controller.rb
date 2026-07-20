@@ -11,6 +11,9 @@
 class Admin::PoiCategoriesController < Admin::BaseController
   PER_PAGE = 20
 
+  # Pundit: policy_scope не нужен для create/update
+  skip_after_action :verify_policy_scoped, only: %i[create update]
+
   #
   # Отображает список категорий POI
   #
@@ -24,10 +27,13 @@ class Admin::PoiCategoriesController < Admin::BaseController
   # Отображает детальную страницу категории с полями
   #
   def show
-    @category = PoiCategory.find(params[:id])
+    @category = PoiCategory.friendly.find(params[:id])
     authorize @category, :show?
 
+    @edit_mode = params[:edit] == 'true'
     @fields = @category.poi_category_fields.by_position
+    @versions = @category.versions.order(created_at: :desc)
+    @pagy_audit, @versions = pagy(@versions, limit: 10, page: params[:audit_page] || 1)
   end
 
   #
@@ -41,7 +47,7 @@ class Admin::PoiCategoriesController < Admin::BaseController
       current_user: current_user
     )
 
-    redirect_to admin_poi_category_path(@category), notice: t("admin.poi_categories.create_success")
+    redirect_to admin_poi_category_path(id: @category), notice: t("admin.poi_categories.create_success")
   rescue PoiCategoryService::CreateError => e
     flash.now[:alert] = e.message
     render :new, status: :unprocessable_entity
@@ -51,7 +57,7 @@ class Admin::PoiCategoriesController < Admin::BaseController
   # Обновляет категорию POI
   #
   def update
-    @category = PoiCategory.find(params[:id])
+    @category = PoiCategory.friendly.find(params[:id])
     authorize @category, :update?
 
     PoiCategoryService.update(
@@ -60,7 +66,7 @@ class Admin::PoiCategoriesController < Admin::BaseController
       current_user: current_user
     )
 
-    redirect_to admin_poi_category_path(@category), notice: t("admin.poi_categories.update_success")
+    redirect_to admin_poi_category_path(id: @category), notice: t("admin.poi_categories.update_success")
   rescue PoiCategoryService::UpdateError => e
     flash.now[:alert] = e.message
     render :show, status: :unprocessable_entity

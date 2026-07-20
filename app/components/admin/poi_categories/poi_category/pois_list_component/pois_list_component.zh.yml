@@ -1,0 +1,13 @@
+---
+zh:
+  admin:
+    poi_categories:
+      poi_category:
+        pois_list_component:
+          title: 'POI (%{count})'
+          name: 名称
+          city: 城市
+          status: 状态
+          author: 作者
+          created: 创建时间
+          no_pois: 该分类暂无POI

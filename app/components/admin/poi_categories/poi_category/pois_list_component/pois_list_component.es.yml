@@ -1,0 +1,13 @@
+---
+es:
+  admin:
+    poi_categories:
+      poi_category:
+        pois_list_component:
+          title: 'POIs (%{count})'
+          name: Nombre
+          city: Ciudad
+          status: Estado
+          author: Autor
+          created: Creado
+          no_pois: Sin POI en esta categoría

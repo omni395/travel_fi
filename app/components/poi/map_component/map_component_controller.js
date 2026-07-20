@@ -1,4 +1,5 @@
 import ApplicationController from '../../../javascript/controllers/application_controller'
+import 'ol/ol.css'
 import Map from "ol/Map"
 import View from "ol/View"
 import TileLayer from "ol/layer/Tile"
@@ -10,11 +11,10 @@ import Feature from "ol/Feature"
 import Point from "ol/geom/Point"
 import Circle from "ol/geom/Circle"
 import { fromLonLat, toLonLat } from "ol/proj"
-import { Circle as CircleStyle, Fill, Stroke, Style, Text } from "ol/style"
-import { defaults as defaultControls } from "ol/control"
+import { Circle as CircleStyle, Fill, Stroke, Style, Text, Icon } from "ol/style"
+import { defaults as defaultControls, Control } from "ol/control"
 import { boundingExtent } from "ol/extent"
 import Overlay from "ol/Overlay"
-
 /**
  * Poi Map Component Controller
  * Иконка: mdi-map
@@ -26,6 +26,15 @@ import Overlay from "ol/Overlay"
  * - Клик по точке → модалка с деталями
  * - Загрузка POI в bounds через StimulusReflex
  * - afterReflex: обновление маркеров после загрузки списка
+ *
+ * Антифрод-механизм (через poiUserId):
+ *   В data-атрибуты POI записывается user_id владельца (data-poi-user-id).
+ *   Это НЕ используется для блокировки просмотра/навигации — тултип и детали
+ *   доступны ВСЕГДА для любой точки.
+ *   poiUserId применяется в Poi::DetailComponent для блокировки действий:
+ *   редактирование, лайки, комментарии — если расстояние от пользователя
+ *   до точки > 100м, И точка НЕ принадлежит пользователю. Это антифрод:
+ *   нельзя написать "я был там" про точку в Китае из Америки.
  *
  * Ссылка: https://openlayers.org/en/latest/examples/
  */
@@ -41,6 +50,30 @@ export default class extends ApplicationController {
   connect() {
     super.connect()
     console.log("[POI MAP] connect() — element ready")
+
+    // Single POI mode (админка: детали/редактирование)
+    const singleLat = parseFloat(this._mapElement.dataset.poiSingleLat)
+    const singleLng = parseFloat(this._mapElement.dataset.poiSingleLng)
+    const isInteractive = this._mapElement.dataset.poiInteractive === "true"
+
+    if (!isNaN(singleLat) && !isNaN(singleLng)) {
+      console.log(`[POI MAP] Single POI mode: ${singleLat}, ${singleLng}, interactive=${isInteractive}`)
+      this._map = null
+      this._vectorSource = null
+      this._userLayer = null
+      this._resizeObserver = null
+      this._rafPending = false
+      this._tooltipOverlay = null
+      this._hoveredFeatureId = null
+      this._initRetries = 0
+      this._currentUserId = parseInt(document.body.dataset.currentUserId) || null
+
+      // Инициализируем сразу без геолокации
+      this._initMapWithLocation(singleLat, singleLng, isInteractive)
+      return
+    }
+
+    // Стандартный режим (публичная карта с геолокацией)
     this._map = null
     this._vectorSource = null
     this._userLayer = null
@@ -51,7 +84,9 @@ export default class extends ApplicationController {
     this._hoveredFeatureId = null
     this._geolocationTimer = null
     this._initRetries = 0
-    document.addEventListener("poi:bounds-changed", this._onBoundsChanged.bind(this))
+    this._currentUserId = parseInt(document.body.dataset.currentUserId) || null
+    this._boundOnReloadFeatures = this._onReloadFeatures.bind(this)
+    document.addEventListener("poi:reload-features", this._boundOnReloadFeatures)
 
     // Force init через 10 секунд если геолокация не ответила
     this._forceInitTimer = setTimeout(() => {
@@ -66,7 +101,7 @@ export default class extends ApplicationController {
 
   disconnect() {
     super.disconnect()
-    document.removeEventListener("poi:bounds-changed", this._onBoundsChanged.bind(this))
+    document.removeEventListener("poi:reload-features", this._boundOnReloadFeatures)
     clearTimeout(this._geolocationTimer)
     clearTimeout(this._forceInitTimer)
     if (this._rafPending) {
@@ -78,6 +113,10 @@ export default class extends ApplicationController {
     }
     this._userLayer = null
     this._userLocation = null
+    if (this._userPinOverlay) {
+      this._map?.removeOverlay(this._userPinOverlay)
+      this._userPinOverlay = null
+    }
     this._resizeObserver?.disconnect()
   }
 
@@ -86,10 +125,19 @@ export default class extends ApplicationController {
    * Обновляем маркеры на карте из #poi-map-features
    */
   afterReflex(element, reflex) {
-    if (reflex.includes("PoiReflex#load_pois_in_bounds") || reflex.includes("PoiReflex#load_more_pois")) {
+    if (reflex.includes("PoiReflex#load_pois_in_bounds") || reflex.includes("PoiReflex#load_more_pois") || reflex.includes("PoiReflex#apply_filters") || reflex.includes("PoiReflex#reset_filters")) {
       console.log('[POI MAP] afterReflex: reloading POI features')
       this._loadPois()
     }
+  }
+
+  /**
+   * Обработчик события poi:reload-features от Poi::FiltersComponent
+   * Перезагружает маркеры после apply_filters / reset_filters
+   */
+  _onReloadFeatures() {
+    console.log('[POI MAP] _onReloadFeatures: reloading POI features')
+    this._loadPois()
   }
 
   // ============================================================
@@ -142,14 +190,6 @@ export default class extends ApplicationController {
     if (el) el.classList.add("hidden")
   }
 
-  /**
-   * Обработчик события poi:bounds-changed от карты.
-   * Вызывает Reflex для загрузки POI в видимых границах.
-   */
-  _onBoundsChanged(e) {
-    this.stimulate("PoiReflex#load_pois_in_bounds", e.detail)
-  }
-
   // ============================================================
   // ИНИЦИАЛИЗАЦИЯ КАРТЫ
   // ============================================================
@@ -191,6 +231,59 @@ export default class extends ApplicationController {
         }
       }
     })
+  }
+
+  /**
+   * Инициализация карты для одиночной POI (админка)
+   * Не использует геолокацию и кластеризацию.
+   * В interactive-режиме добавляет обработчики для обновления полей координат.
+   *
+   * @param {number} lat - широта
+   * @param {number} lng - долгота
+   * @param {boolean} interactive - режим редактирования
+   */
+  _initMapWithLocation(lat, lng, interactive = false) {
+    this._initMap(lat, lng)
+    this._loadPois()
+    this._hideLoader()
+
+    if (interactive) {
+      this._setupInteractiveMode()
+    }
+  }
+
+  /**
+   * Настраивает интерактивный режим (для формы редактирования):
+   * - Клик по карте → центрирование + обновление полей
+   * - Перемещение карты (moveend) → обновление полей lat/lng
+   */
+  _setupInteractiveMode() {
+    if (!this._map) return
+
+    // При каждом перемещении карты обновляем поля координат
+    this._map.on("moveend", () => {
+      const center = toLonLat(this._map.getView().getCenter())
+      this._updateCoordFields(center[1], center[0])
+    })
+
+    // Клик по карте → центрирование
+    this._map.on("click", (evt) => {
+      const coords = toLonLat(evt.coordinate)
+      this._map.getView().setCenter(fromLonLat([coords[0], coords[1]]))
+      this._updateCoordFields(coords[1], coords[0])
+    })
+  }
+
+  /**
+   * Обновляет поля lat/lng в форме редактирования
+   * @param {number} lat
+   * @param {number} lng
+   */
+  _updateCoordFields(lat, lng) {
+    const latField = document.getElementById("poi_latitude") || document.querySelector("[name='poi[latitude]']")
+    const lngField = document.getElementById("poi_longitude") || document.querySelector("[name='poi[longitude]']")
+    if (latField) latField.value = lat.toFixed(6)
+    if (lngField) lngField.value = lng.toFixed(6)
   }
 
   _initMap(lat, lng) {
@@ -274,6 +367,27 @@ export default class extends ApplicationController {
     this._map.on("pointermove", (e) => { this._handleMapHover(e) })
     this._map.on("click", (e) => { this._handleMapClick(e) })
 
+    // GPS кнопка (mdi-crosshairs-gps) в блоке zoom +/-
+    const zoomControls = el.querySelector(".ol-zoom") || document.querySelector(".ol-zoom")
+    if (zoomControls) {
+      const gpsBtn = document.createElement("button")
+      gpsBtn.type = "button"
+      gpsBtn.className = "ol-zoom-gps"
+      gpsBtn.title = "My location"
+      gpsBtn.innerHTML = '<span class="mdi mdi-crosshairs-gps text-[#0288D1]"></span>'
+      // mdi: crosshairs-gps
+      gpsBtn.addEventListener("click", () => {
+        if (this._userLocation) {
+          this._map.getView().animate({
+            center: fromLonLat([this._userLocation.lng, this._userLocation.lat]),
+            zoom: 17,
+            duration: 500
+          })
+        }
+      })
+      zoomControls.appendChild(gpsBtn)
+    }
+
     this._resizeObserver = new ResizeObserver(() => { this._map?.updateSize() })
     this._resizeObserver.observe(el)
   }
@@ -351,10 +465,9 @@ export default class extends ApplicationController {
       // Берем poiId с оригинальной фичи (Cluster source возвращает обёртку, у которой нет poiId)
       const sourceFeature = (features && features.length === 1) ? features[0] : feature
       const poiId = parseInt(sourceFeature.get("poiId"))
-      if (poiId) {
-        console.log(`[POI MAP] poi click — ${poiId}`)
-        document.dispatchEvent(new CustomEvent("poi:show-detail", { detail: { poiId } }))
-      }
+
+      console.log(`[POI MAP] poi click — ${poiId}`)
+      document.dispatchEvent(new CustomEvent("poi:show-detail", { detail: { poiId } }))
     }
   }
 
@@ -386,8 +499,10 @@ export default class extends ApplicationController {
       feature.set("poiName", item.dataset.poiName || "")
       feature.set("poiIcon", item.dataset.poiIcon || "mdi-map-marker")
       feature.set("poiCategory", item.dataset.poiCategory || "")
+      feature.set("poiCategoryId", parseInt(item.dataset.poiCategoryId) || null)
       feature.set("poiRating", parseFloat(item.dataset.poiRating) || 0)
       feature.set("poiAddress", item.dataset.poiAddress || "")
+      feature.set("poiUserId", parseInt(item.dataset.poiUserId) || null)
       features.push(feature)
     })
 
@@ -402,50 +517,34 @@ export default class extends ApplicationController {
     const sw = toLonLat([extent[0], extent[1]])
     const ne = toLonLat([extent[2], extent[3]])
     console.log(`[POI MAP] bounds: SW(${sw[1].toFixed(4)},${sw[0].toFixed(4)}) NE(${ne[1].toFixed(4)},${ne[0].toFixed(4)})`)
-    this.element.dispatchEvent(new CustomEvent("poi:bounds-changed", {
-      detail: { sw_lat: sw[1], sw_lng: sw[0], ne_lat: ne[1], ne_lng: ne[0] },
-      bubbles: true
-    }))
-  }
 
-  /**
-   * Фильтрует POI на карте по названию (из поиска FiltersComponent)
-   * Вызывается при вводе текста в строку поиска сайдбара
-   *
-   * @param {Event} event - input событие
-   */
-  filterPois(event) {
-    const query = (event.target.value || '').toLowerCase().trim()
-    if (!this._vectorSource) return
+    // Читаем текущее состояние фильтров из DOM (не из session)
+    const filtersEl = document.querySelector('[data-controller="poi--filters-component"]')
+    const categoryIds = filtersEl
+      ? Array.from(filtersEl.querySelectorAll('input[type="checkbox"][value]:checked')).map((cb) => parseInt(cb.value))
+      : []
+    const query = filtersEl?.querySelector('[data-poi--filters-component-target="searchInput"]')?.value?.trim() || ""
+    console.log(`[POI MAP] _loadPoisInBounds — filters:`, { categoryIds, query })
 
-    this._vectorSource.getFeatures().forEach(feature => {
-      const name = (feature.get('poiName') || '').toLowerCase()
-      const match = !query || name.includes(query)
-      feature.setStyle(match ? null : new Style({ image: null }))
-      // Если не совпадает — скрываем через пустой стиль
-      feature.set('_hidden', !match)
+    // Шлём bounds + фильтры одним рефлексом
+    this.stimulate("PoiReflex#load_pois_in_bounds", {
+      sw_lat: sw[1],
+      sw_lng: sw[0],
+      ne_lat: ne[1],
+      ne_lng: ne[0],
+      category_ids: categoryIds,
+      query
     })
 
-    // Перерисовываем кластеры
-    this._vectorSource.changed()
+    // Сохраняем bounds в data-атрибуты для poi--filters-component (для Apply/Reset)
+    this.element.dataset.swLat = sw[1]
+    this.element.dataset.swLng = sw[0]
+    this.element.dataset.neLat = ne[1]
+    this.element.dataset.neLng = ne[0]
   }
 
   /**
-   * Сбрасывает фильтр поиска POI на карте
-   */
-  resetFilter() {
-    if (!this._vectorSource) return
-    this._vectorSource.getFeatures().forEach(feature => {
-      feature.setStyle(null)
-      feature.set('_hidden', false)
-    })
-    this._vectorSource.changed()
-  }
-
-  /**
-   * Добавляет слой с местоположением пользователя на карту:
-   * - Пульсирующий круг радиуса 50м (полупрозрачный emerald)
-   * - Маркер-точка в центре (emerald-600 с белым ободком)
+   * Добавляет булавку пользователя на карту (mdi-pin, primary цвет #0288D1)
    *
    * Вызывается из _initWithCenter после инициализации карты
    *
@@ -455,46 +554,28 @@ export default class extends ApplicationController {
   _addUserLocation(lat, lng) {
     if (!this._map) return
 
-    // Удаляем старый слой пользователя (если был)
-    if (this._userLayer) {
-      this._map.removeLayer(this._userLayer)
+    // Удаляем старую булавку (если была)
+    if (this._userPinOverlay) {
+      this._map.removeOverlay(this._userPinOverlay)
     }
 
     const center = fromLonLat([lng, lat])
-    const source = new VectorSource({ features: [] })
 
-    // Круг 50 метров (в метрах проекции EPSG:3857)
-    const circleFeature = new Feature({
-      geometry: new Circle(center, 50)
+    // Булавка пользователя (HTML overlay с mdi-pin, primary blue #0288D1)
+    const pinEl = document.createElement("div")
+    pinEl.className = "flex items-center justify-center"
+    pinEl.innerHTML = '<span class="mdi mdi-pin text-[#0288D1] text-3xl leading-none"></span>'
+    // mdi: pin
+    this._userPinOverlay = new Overlay({
+      element: pinEl,
+      positioning: "bottom-center",
+      offset: [0, 0],
+      stopEvent: false
     })
-    circleFeature.setStyle(new Style({
-      stroke: new Stroke({ color: "#10b981", width: 2 }),
-      fill: new Fill({ color: "#10b981", opacity: 0.08 })
-    }))
-    source.addFeature(circleFeature)
+    this._userPinOverlay.setPosition(center)
+    this._map.addOverlay(this._userPinOverlay)
 
-    // Маркер пользователя (точка в центре круга)
-    const markerFeature = new Feature({
-      geometry: new Point(center)
-    })
-    markerFeature.setStyle(new Style({
-      image: new CircleStyle({
-        radius: 7,
-        fill: new Fill({ color: "#059669" }),
-        stroke: new Stroke({ color: "#ffffff", width: 3 })
-      })
-    }))
-    source.addFeature(markerFeature)
-
-    // Слой с zIndex ниже POI (POI layer на index 2)
-    this._userLayer = new VectorLayer({
-      source,
-      zIndex: 0,
-      className: "poi-user-location"
-    })
-    this._map.getLayers().insertAt(1, this._userLayer)
-
-    console.log(`[POI MAP] User location added at ${lat.toFixed(4)},${lng.toFixed(4)} with 50m radius`)
+    console.log(`[POI MAP] User pin added at ${lat.toFixed(4)},${lng.toFixed(4)}`)
   }
 
   sidebarPanOffset() {

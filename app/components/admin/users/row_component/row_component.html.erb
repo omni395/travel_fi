@@ -36,10 +36,10 @@
       </div>
     </td>
     <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
-      <%= l(user.created_at, format: :short) %>
+      <%= render Ui::DateComponent.new(user.created_at) %>
     </td>
     <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
-      <%= l(user.last_activity_at, format: :short) if user.last_activity_at %>
+      <%= render Ui::DateComponent.new(user.last_activity_at) if user.last_activity_at %>
     </td>
   </tr>
 <% end %>

@@ -11,3 +11,5 @@
     min-height: calc(100vh - 4rem);
   }
 }
+
+/* GPS кнопка наследует стили .ol-zoom button */

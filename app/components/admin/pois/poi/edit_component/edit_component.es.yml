@@ -1,0 +1,31 @@
+---
+es:
+  admin:
+    pois:
+      poi:
+        edit_component:
+          name: Nombre
+          slug: Slug
+          pick_location: Seleccione ubicación en el mapa
+          map_hint: Arrastre o haga clic en el mapa para establecer coordenadas
+          description: Descripción
+          category: Categoría
+          status: Estado
+          latitude: Latitud
+          longitude: Longitud
+          address: Dirección
+          city: Ciudad
+          country: País
+          zip_code: Código Postal
+          phone: Teléfono
+          website: Sitio web
+          price_info: Precios
+          wheelchair_accessible: Accesible silla de ruedas
+          rating: Valoración
+          opening_hours: Horario
+          opening_hours_hint: 'Formato OSM: Lu-Vie 09:00-18:00'
+          osm_id: ID OSM
+          osm_id_hint: Identificador de OpenStreetMap (sólo lectura)
+          category_fields: Campos de categoría
+          save: Guardar
+          cancel: Cancelar

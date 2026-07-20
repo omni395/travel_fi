@@ -5,22 +5,41 @@
 #
 # Отображает:
 # - Хлебные крошки
-# - Детальную информацию о категории
-# - Список полей категории
+# - Детальную информацию о категории (ShowComponent) или форму редактирования (EditComponent)
+# - Табы: Fields, POIs, Audit Log (через Ui::TabsComponent)
 # %>
 
-<div class="p-4">
+<div class="max-w-4xl mx-auto">
   <%# Хлебные крошки %>
   <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
     { name: t("admin.poi_categories.index.title"), path: admin_poi_categories_path },
     { name: @category.localized_name }
   ]) %>
 
-  <%# Детальная информация о категории %>
-  <%= render Admin::PoiCategory::ShowComponent.new(category: @category) %>
-
-  <%# Список полей категории %>
-  <div class="mt-6">
-    <%= render Admin::PoiCategory::FieldsListComponent.new(fields: @fields, category: @category) %>
+  <%# Детальная информация или форма редактирования %>
+  <div id="poi-category-detail">
+    <% if @edit_mode %>
+      <%= render Admin::PoiCategories::PoiCategory::EditComponent.new(category: @category) %>
+    <% else %>
+      <%= render Admin::PoiCategories::PoiCategory::ShowComponent.new(category: @category) %>
+    <% end %>
   </div>
+
+  <%# Табы: Fields, POIs, Audit Log (только в режиме просмотра) %>
+  <% unless @edit_mode %>
+    <% active_tab = params[:tab].presence || "fields" %>
+    <%= render Ui::TabsComponent.new(
+          tabs: [
+            { id: "fields",    name: t("admin.poi_categories.tabs.fields"),    icon: "mdi-form-textbox" },
+            { id: "pois",      name: t("admin.poi_categories.tabs.pois"),      icon: "mdi-map-marker-multiple" },
+            { id: "audit_log", name: t("admin.poi_categories.tabs.audit_log"), icon: "mdi-clipboard-text-search" }
+          ],
+          active_tab: active_tab,
+          panels: {
+            fields:    render(Admin::PoiCategories::FieldsListComponent.new(category: @category)),
+            pois:      render(Admin::PoiCategories::PoiCategory::PoisListComponent.new(category: @category)),
+            audit_log: render(Admin::PoiCategories::PoiCategory::AuditLogComponent.new(versions: @versions, pagy: @pagy_audit))
+          }
+        ) %>
+  <% end %>
 </div>

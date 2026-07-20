@@ -84,8 +84,6 @@ class Admin::UsersReflex < ApplicationReflex
   # @param params [Hash] параметры { query: String, status: String, page: Integer }
   #
   def filter(params = {})
-    morph :nothing
-
     query = params[:query]
     status = params[:status]
     page = (params[:page] || 1).to_i

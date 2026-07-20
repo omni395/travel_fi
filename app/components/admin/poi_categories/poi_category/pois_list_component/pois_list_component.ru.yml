@@ -1,0 +1,13 @@
+---
+ru:
+  admin:
+    poi_categories:
+      poi_category:
+        pois_list_component:
+          title: 'POI (%{count})'
+          name: Название
+          city: Город
+          status: Статус
+          author: Автор
+          created: Создано
+          no_pois: В этой категории нет POI

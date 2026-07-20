@@ -1,0 +1,10 @@
+en:
+  admin:
+    pois:
+      row_component:
+        status:
+          pending: "Pending"
+          approved: "Approved"
+          rejected: "Rejected"
+          archived: "Archived"
+        visit_hint: "Click to view details"

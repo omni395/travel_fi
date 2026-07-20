@@ -1,0 +1,6 @@
+zh:
+  admin:
+    poi_categories:
+      row_component:
+        active: "启用"
+        inactive: "停用"

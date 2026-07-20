@@ -1,0 +1,40 @@
+<%# frozen_string_literal: true %>
+<%#
+# Admin::PoiCategories::RowComponent - строка таблицы категорий POI (компактная)
+# Клик по строке → переход к деталям категории
+# %>
+<% cache [category, I18n.locale] do %>
+  <tr class="hover:bg-gray-50 cursor-pointer"
+      data-action="click->admin--poi-categories--table-component#visitCategory"
+      data-admin-poi-category-id="<%= category.to_param %>">
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <%= category.position %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <% if category.icon.present? %>
+        <i class="mdi <%= category.icon %> text-emerald-500 text-lg"></i>
+        <%# Иконка: динамическая из category.icon %>
+      <% end %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap">
+      <div class="text-xs font-medium text-gray-900"><%= category.localized_name %></div>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <code class="text-xs bg-gray-100 px-1 py-0.5 rounded"><%= category.slug %></code>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
+      <%= category.poi_category_fields.count %>
+    </td>
+    <td class="px-2 py-1.5 whitespace-nowrap">
+      <% if category.active %>
+        <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-green-100 text-green-800">
+          <%= t(".active") %>
+        </span>
+      <% else %>
+        <span class="px-1.5 inline-flex text-xs leading-4 font-semibold rounded-full bg-gray-100 text-gray-800">
+          <%= t(".inactive") %>
+        </span>
+      <% end %>
+    </td>
+  </tr>
+<% end %>

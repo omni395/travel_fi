@@ -121,16 +121,40 @@ class PoiReflex < ApplicationReflex
     # и вызывает undefined method ошибку в данной версии StimulusReflex.
     # Вместо этого: cable_ready.morph + inner_html + broadcast, morph :nothing в конце.
 
+    # Фильтры приходят из клиента (map_component_controller читает из DOM)
+    category_ids = Array(params[:category_ids]).map(&:to_i).select(&:positive?)
+    query = params[:query].to_s.strip.presence
+    Rails.logger.info("[POI REFLEX] load_pois_in_bounds — params: category_ids=#{category_ids.inspect}, query=#{query.inspect}")
+
     scope = Poi.approved.within_bounds(
       params[:sw_lat], params[:sw_lng],
       params[:ne_lat], params[:ne_lng]
     )
-    total = scope.count
-    pois = scope.includes(:poi_category).recent.limit(PER_PAGE)
+
+    if category_ids.present?
+      scope = scope.where(poi_category_id: category_ids)
+    end
+
+    if query.present?
+      q = "%#{Poi.sanitize_sql_like(query)}%"
+      scope = scope.where(
+        "EXISTS (SELECT 1 FROM jsonb_each_text(pois.name) WHERE value ILIKE :q) OR EXISTS (SELECT 1 FROM jsonb_each_text(pois.description) WHERE value ILIKE :q)",
+        q: q
+      )
+    end
+
+    # Все POI в bounds — для маркеров карты (без лимита, OL кластеризация)
+    pois_map = scope.includes(:poi_category)
+                   .order(nearest_first_sql)
+                   .to_a
+    total = pois_map.size
+
+    # Первая страница для списка сайдбара (с пагинацией PER_PAGE=25)
+    pois_list = pois_map.first(PER_PAGE)
 
     # 1. Список для сайдбара
     list_html = ApplicationController.render(
-      Poi::ListItemComponent.with_collection(pois), layout: false
+      Poi::ListItemComponent.with_collection(pois_list), layout: false
     )
     more_html = render_load_more(total, PER_PAGE, params)
     cable_ready.inner_html(
@@ -142,12 +166,14 @@ class PoiReflex < ApplicationReflex
     #    Рендерит элементы с data-poi-id/data-poi-lat/data-poi-lng
     #    + расширенные данные для тултипа при ховере
     #    Карта читает их через _loadPois() независимо от сайдбара
-    features_html = pois.map { |poi|
+    #    ВСЕ точки в bounds — кластеризация на клиенте
+    features_html = pois_map.map { |poi|
       lat = poi.latitude
       lng = poi.longitude
       name = poi.localized_name.to_s.gsub('"', '"').gsub("'", "'")
       icon = poi.poi_category&.icon || "mdi-map-marker"
       category = poi.poi_category&.localized_name.to_s.gsub('"', '"')
+      category_id = poi.poi_category_id
       address = [ poi.address, poi.city ].compact.join(", ").gsub('"', '"')
       rating = poi.rating&.to_f || 0
       %(<div data-poi-id="#{poi.id}"
@@ -156,15 +182,17 @@ class PoiReflex < ApplicationReflex
              data-poi-name="#{name}"
              data-poi-icon="#{icon}"
              data-poi-category="#{category}"
+             data-poi-category-id="#{category_id}"
              data-poi-rating="#{rating}"
-             data-poi-address="#{address}"></div>)
+             data-poi-address="#{address}"
+             data-poi-user-id="#{poi.user_id}"></div>)
     }.join("\n")
     cable_ready.inner_html(selector: "#poi-map-features", html: features_html)
 
     cable_ready.broadcast
     morph :nothing
 
-    Rails.logger.info("PoiReflex: Loaded #{pois.length}/#{total} POIs in bounds (first page)")
+    Rails.logger.info("PoiReflex: Loaded #{pois_map.length}/#{total} POIs in bounds (all for map, #{pois_list.length} in sidebar)")
   end
 
   #
@@ -180,13 +208,18 @@ class PoiReflex < ApplicationReflex
     )
     total = scope.count
     offset = params[:offset].to_i
-    pois = scope.includes(:poi_category).recent.offset(offset).limit(PER_PAGE)
+    pois = scope.includes(:poi_category)
+               .order(nearest_first_sql)
+               .offset(offset)
+               .limit(PER_PAGE)
 
     return unless pois.any?
 
+    # Вставляем новые POI ПЕРЕД контейнером кнопки "Load more"
+    # (кнопка остаётся внизу списка)
     cable_ready.insert_adjacent_html(
-      selector: "#poi-list",
-      position: "beforeend",
+      selector: "#poi-load-more",
+      position: "beforebegin",
       html: ApplicationController.render(
         Poi::ListItemComponent.with_collection(pois), layout: false
       )
@@ -203,6 +236,229 @@ class PoiReflex < ApplicationReflex
 
     Rails.logger.info("PoiReflex: Loaded #{pois.length} more POIs (offset #{offset}/#{total})")
   end
+
+  #
+  # Фильтрует POI по категориям через Ransack + границы карты
+  # Вызывается из poi--filters-component при изменении чекбокса категории
+  #
+  # @param params [Hash] { category_ids: Array<Integer> }
+  #   category_ids: пустой массив = показать все категории (сброс)
+  #
+  # Когда вызывается, bounds берутся из текущей сессии/состояния карты
+  # (карта не двигалась, поэтому bounds актуальны из предыдущего load_pois_in_bounds).
+  #
+  def filter_by_categories(params = {})
+    category_ids = Array(params[:category_ids]).map(&:to_i).select(&:positive?)
+
+    # bounds передаются из poi--filters-component (читает data-атрибуты с карты)
+    scope = Poi.approved.within_bounds(
+      params[:sw_lat], params[:sw_lng],
+      params[:ne_lat], params[:ne_lng]
+    )
+
+    if category_ids.any?
+      # Ransack: множественный фильтр по категориям (IN-запрос)
+      result = scope.ransack(poi_category_id_in: category_ids).result
+    else
+      result = scope
+    end
+
+    pois = result.includes(:poi_category)
+                .order(nearest_first_sql)
+                .to_a
+    total = pois.size
+
+    # Рендер списка для сайдбара (первая страница)
+    pois_list = pois.first(PER_PAGE)
+    list_html = ApplicationController.render(
+      Poi::ListItemComponent.with_collection(pois_list), layout: false
+    )
+    more_html = render_load_more(total, PER_PAGE, bounds)
+    cable_ready.inner_html(
+      selector: "#poi-list",
+      html: list_html + more_html.html_safe
+    )
+
+    # Рендер маркеров для карты
+    features_html = pois.map { |poi|
+      lat = poi.latitude
+      lng = poi.longitude
+      name = poi.localized_name.to_s.gsub('"', '"').gsub("'", "'")
+      icon = poi.poi_category&.icon || "mdi-map-marker"
+      category = poi.poi_category&.localized_name.to_s.gsub('"', '"')
+      category_id = poi.poi_category_id
+      address = [ poi.address, poi.city ].compact.join(", ").gsub('"', '"')
+      rating = poi.rating&.to_f || 0
+      %(<div data-poi-id="#{poi.id}"
+             data-poi-lat="#{lat}"
+             data-poi-lng="#{lng}"
+             data-poi-name="#{name}"
+             data-poi-icon="#{icon}"
+             data-poi-category="#{category}"
+             data-poi-category-id="#{category_id}"
+             data-poi-rating="#{rating}"
+             data-poi-address="#{address}"
+             data-poi-user-id="#{poi.user_id}"></div>)
+    }.join("\n")
+    cable_ready.inner_html(selector: "#poi-map-features", html: features_html)
+
+    cable_ready.broadcast
+    morph :nothing
+
+    Rails.logger.info("PoiReflex: Filtered #{pois.length}/#{total} POIs by categories #{category_ids.inspect}")
+  end
+
+  #
+  # Apply filters — сохраняет фильтры в сессии и перезагружает POI
+  # Вызывается из poi--filters-component при клике на Apply
+  #
+  # @param params [Hash] { query: String, category_ids: Array<Integer>, sw_lat:, sw_lng:, ne_lat:, ne_lng: }
+  #
+  def apply_filters(params = {})
+    query = params[:query].to_s.strip.presence
+    category_ids = Array(params[:category_ids]).map(&:to_i).select(&:positive?)
+    Rails.logger.info("[POI REFLEX] apply_filters — category_ids=#{category_ids.inspect}, query=#{query.inspect}")
+
+    scope = Poi.approved.within_bounds(
+      params[:sw_lat], params[:sw_lng],
+      params[:ne_lat], params[:ne_lng]
+    )
+
+    if category_ids.present?
+      scope = scope.where(poi_category_id: category_ids)
+    end
+
+    if query.present?
+      q = "%#{Poi.sanitize_sql_like(query)}%"
+      scope = scope.where(
+        "EXISTS (SELECT 1 FROM jsonb_each_text(pois.name) WHERE value ILIKE :q) OR EXISTS (SELECT 1 FROM jsonb_each_text(pois.description) WHERE value ILIKE :q)",
+        q: q
+      )
+    end
+
+    pois = scope.includes(:poi_category)
+                .order(nearest_first_sql)
+                .to_a
+    total = pois.size
+
+    # Рендер списка для сайдбара
+    pois_list = pois.first(PER_PAGE)
+    list_html = ApplicationController.render(
+      Poi::ListItemComponent.with_collection(pois_list), layout: false
+    )
+    more_html = render_load_more(total, PER_PAGE, params)
+    cable_ready.inner_html(
+      selector: "#poi-list",
+      html: list_html + more_html.html_safe
+    )
+
+    # Рендер маркеров для карты
+    features_html = pois.map { |poi|
+      lat = poi.latitude
+      lng = poi.longitude
+      name = poi.localized_name.to_s.gsub('"', '"').gsub("'", "'")
+      icon = poi.poi_category&.icon || "mdi-map-marker"
+      category = poi.poi_category&.localized_name.to_s.gsub('"', '"')
+      category_id = poi.poi_category_id
+      address = [ poi.address, poi.city ].compact.join(", ").gsub('"', '"')
+      rating = poi.rating&.to_f || 0
+      %(<div data-poi-id="#{poi.id}"
+             data-poi-lat="#{lat}"
+             data-poi-lng="#{lng}"
+             data-poi-name="#{name}"
+             data-poi-icon="#{icon}"
+             data-poi-category="#{category}"
+             data-poi-category-id="#{category_id}"
+             data-poi-rating="#{rating}"
+             data-poi-address="#{address}"
+             data-poi-user-id="#{poi.user_id}"></div>)
+    }.join("\n")
+    cable_ready.inner_html(selector: "#poi-map-features", html: features_html)
+
+    cable_ready.broadcast
+    morph :nothing
+
+    Rails.logger.info("PoiReflex: Applied filters #{filters.inspect}, got #{pois.length}/#{total} POIs")
+  end
+
+  #
+  # Reset filters — очищает фильтры в сессии и перезагружает все POI в bounds
+  # Вызывается из poi--filters-component при клике на Reset
+  #
+  # @param params [Hash] { sw_lat:, sw_lng:, ne_lat:, ne_lng: }
+  #
+  def reset_filters(params = {})
+    Rails.logger.info("[POI REFLEX] reset_filters — params: #{params.inspect}")
+
+    scope = Poi.approved.within_bounds(
+      params[:sw_lat], params[:sw_lng],
+      params[:ne_lat], params[:ne_lng]
+    )
+
+    pois = scope.includes(:poi_category)
+                .order(nearest_first_sql)
+                .to_a
+    total = pois.size
+
+    # Рендер списка
+    pois_list = pois.first(PER_PAGE)
+    list_html = ApplicationController.render(
+      Poi::ListItemComponent.with_collection(pois_list), layout: false
+    )
+    more_html = render_load_more(total, PER_PAGE, params)
+    cable_ready.inner_html(
+      selector: "#poi-list",
+      html: list_html + more_html.html_safe
+    )
+
+    # Рендер маркеров
+    features_html = pois.map { |poi|
+      lat = poi.latitude
+      lng = poi.longitude
+      name = poi.localized_name.to_s.gsub('"', '"').gsub("'", "'")
+      icon = poi.poi_category&.icon || "mdi-map-marker"
+      category = poi.poi_category&.localized_name.to_s.gsub('"', '"')
+      category_id = poi.poi_category_id
+      address = [ poi.address, poi.city ].compact.join(", ").gsub('"', '"')
+      rating = poi.rating&.to_f || 0
+      %(<div data-poi-id="#{poi.id}"
+             data-poi-lat="#{lat}"
+             data-poi-lng="#{lng}"
+             data-poi-name="#{name}"
+             data-poi-icon="#{icon}"
+             data-poi-category="#{category}"
+             data-poi-category-id="#{category_id}"
+             data-poi-rating="#{rating}"
+             data-poi-address="#{address}"
+             data-poi-user-id="#{poi.user_id}"></div>)
+    }.join("\n")
+    cable_ready.inner_html(selector: "#poi-map-features", html: features_html)
+
+    cable_ready.broadcast
+    morph :nothing
+
+    Rails.logger.info("PoiReflex: Reset filters, showing all #{pois.length}/#{total} POIs in bounds")
+  end
+
+  private
+
+  # SQL-фрагмент для сортировки POI по расстоянию от пользователя
+  # Если координаты не установлены — fallback на свежие (created_at DESC)
+  #
+  # @return [String] SQL ORDER BY
+  #
+  def nearest_first_sql
+    lat = session[:user_lat]
+    lng = session[:user_lng]
+    return "pois.created_at DESC" if lat.nil? || lng.nil?
+
+    Poi.sanitize_sql_array([
+      "ST_Distance(pois.coordinates::geography, ST_MakePoint(?, ?)::geography) ASC",
+      lng.to_f, lat.to_f
+    ])
+  end
+
+  public
 
   #
   # Рендерит секцию "Load more" для списка POI

@@ -1,0 +1,9 @@
+---
+zh:
+  admin:
+    pois:
+      poi:
+        audit_log_component:
+          title: 变更历史
+          system: 系统
+          no_versions: 暂无变更记录

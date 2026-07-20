@@ -1,0 +1,31 @@
+---
+zh:
+  admin:
+    pois:
+      poi:
+        edit_component:
+          name: 名称
+          slug: 标识
+          pick_location: 在地图上选择位置
+          map_hint: 拖动或点击地图以设置坐标
+          description: 描述
+          category: 分类
+          status: 状态
+          latitude: 纬度
+          longitude: 经度
+          address: 地址
+          city: 城市
+          country: 国家
+          zip_code: 邮政编码
+          phone: 电话
+          website: 网站
+          price_info: 价格信息
+          wheelchair_accessible: 轮椅通道
+          rating: 评分
+          opening_hours: 营业时间
+          opening_hours_hint: 'OSM格式: 周一-周五 09:00-18:00'
+          osm_id: OSM ID
+          osm_id_hint: OpenStreetMap标识符（只读）
+          category_fields: 分类字段
+          save: 保存
+          cancel: 取消

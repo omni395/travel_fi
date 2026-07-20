@@ -1,0 +1,33 @@
+---
+ru:
+  admin:
+    pois:
+      poi:
+        show_component:
+          missing_translations: 'Отсутствуют переводы: %{locales}'
+          edit: Редактировать
+          location: Расположение
+          details: Детали
+          description: Описание
+          address: Адрес
+          phone: Телефон
+          website: Веб-сайт
+          coordinates: Координаты
+          metadata: Метаданные
+          no_metadata: Нет метаданных
+          created_by: Создатель
+          created_at: Создано
+          verified_count: Подтверждено %{count} раз
+          slug: URL-идентификатор
+          osm_id: OSM ID
+          rating: Рейтинг
+          opening_hours: Часы работы
+          price_info: Информация о ценах
+          wheelchair_accessible: Доступно для инвалидных колясок
+          status:
+            pending: "Ожидание"
+            approved: "Одобрено"
+            rejected: "Отклонено"
+            archived: "Архив"
+          true: 'Да'
+          false: 'Нет'

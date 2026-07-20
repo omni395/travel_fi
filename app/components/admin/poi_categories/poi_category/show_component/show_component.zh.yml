@@ -1,0 +1,13 @@
+---
+zh:
+  admin:
+    poi_categories:
+      poi_category:
+        show_component:
+          missing_translations: '缺少翻译: %{locales}'
+          active: 启用
+          inactive: 停用
+          edit: 编辑
+          description: 描述
+          position: 位置
+          pois_count: POI数量

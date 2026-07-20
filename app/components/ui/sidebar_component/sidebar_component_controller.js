@@ -43,6 +43,31 @@ export default class extends ApplicationController {
       : "mdi mdi-chevron-double-left text-gray-500"
   }
 
+  // ============================================================
+  // ПАГИНАЦИЯ СПИСКА POI (вызов PoiReflex)
+  // ============================================================
+
+  /**
+   * Загружает следующую страницу POI в сайдбар.
+   * Вызывается с кнопки "Load more"
+   * (data-action="click->ui--sidebar-component#loadMore").
+   *
+   * Параметры берутся из data-атрибутов кнопки:
+   *   data-offset, data-sw-lat, data-sw-lng, data-ne-lat, data-ne-lng
+   */
+  loadMore(e) {
+    const btn = e.currentTarget
+    const offset = parseInt(btn.dataset.offset) || 0
+    const sw_lat = parseFloat(btn.dataset.swLat)
+    const sw_lng = parseFloat(btn.dataset.swLng)
+    const ne_lat = parseFloat(btn.dataset.neLat)
+    const ne_lng = parseFloat(btn.dataset.neLng)
+
+    if (!sw_lat || !sw_lng || !ne_lat || !ne_lng) return
+
+    this.stimulate("PoiReflex#load_more_pois", { offset, sw_lat, sw_lng, ne_lat, ne_lng })
+  }
+
   // Проверка мобильного устройства
   isMobile() {
     return window.matchMedia("(max-width: 767px)").matches

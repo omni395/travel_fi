@@ -1,0 +1,14 @@
+---
+en:
+  admin:
+    poi_categories:
+      poi_category:
+        edit_component:
+          name: Name
+          slug: Slug
+          icon: Icon
+          description: Description
+          position: Position
+          active: Active
+          save: Save
+          cancel: Cancel

@@ -1,0 +1,10 @@
+ru:
+  admin:
+    pois:
+      row_component:
+        status:
+          pending: "Ожидание"
+          approved: "Одобрено"
+          rejected: "Отклонено"
+          archived: "Архив"
+        visit_hint: "Нажмите для просмотра"

@@ -1,0 +1,14 @@
+---
+zh:
+  admin:
+    poi_categories:
+      table_component:
+        position: 位置
+        icon: 图标
+        name: 名称
+        slug: 标识
+        fields_count: 字段数
+        status: 状态
+        actions: 操作
+        active: 启用
+        inactive: 停用
