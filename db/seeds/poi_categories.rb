@@ -14,6 +14,7 @@ categories = [
     slug: "sim_esim",
     icon: "mdi-sim",
     description: { en: "Mobile operators and SIM card providers", ru: "Операторы мобильной связи и продавцы SIM-карт", es: "Operadores móviles y proveedores de tarjetas SIM", zh: "移动运营商和SIM卡提供商" },
+    osm_tags: ["shop=mobile_phone"],
     position: 1,
     fields: [
       { field_key: "operator_names", field_type: "multiselect",

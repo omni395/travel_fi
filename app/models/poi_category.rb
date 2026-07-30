@@ -58,6 +58,7 @@ class PoiCategory < ApplicationRecord
   def missing_translations
     I18n.available_locales.select do |locale|
       next true if name.is_a?(Hash) && name[locale.to_s].blank?
+      next true if description.blank?
       next true if description.is_a?(Hash) && description[locale.to_s].blank?
       false
     end
@@ -79,7 +80,7 @@ class PoiCategory < ApplicationRecord
   # @return [Array<String>] список разрешённых атрибутов
   #
   def self.ransackable_attributes(auth_object = nil)
-    %w[active created_at description icon id name position slug updated_at]
+    %w[active created_at description icon id name osm_tags osm_default_name position slug updated_at]
   end
 
   #

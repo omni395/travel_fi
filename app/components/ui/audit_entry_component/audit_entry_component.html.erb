@@ -1,0 +1,64 @@
+<%# Ui::AuditEntryComponent — запись аудита PaperTrail %>
+<%# Если version = nil — показывает пустой state %>
+<% if version_present? %>
+  <div class="flex items-start gap-3 py-3 border-b border-gray-100 last:border-b-0">
+    <%# Иконка события %>
+    <div class="flex-shrink-0 mt-0.5">
+      <span class="inline-flex items-center justify-center w-8 h-8 rounded-full <%= event_info[:color] %>">
+        <% if version.event == "create" %>
+          <i class="mdi mdi-plus-circle text-lg"></i>
+        <% elsif version.event == "update" %>
+          <i class="mdi mdi-pencil text-lg"></i>
+        <% elsif version.event == "destroy" %>
+          <i class="mdi mdi-delete text-lg"></i>
+        <% else %>
+          <i class="mdi mdi-history text-lg"></i>
+        <% end %>
+      </span>
+    </div>
+
+    <%# Основной контент %>
+    <div class="flex-1 min-w-0">
+      <%# Заголовок: тип события + имя пользователя %>
+      <div class="flex items-center gap-2 text-sm">
+        <span class="font-semibold <%= event_info[:color].split.first %>"><%= event_info[:label] %></span>
+        <span class="text-gray-400">by</span>
+        <span class="text-gray-700"><%= whodunnit_name %></span>
+        <span class="text-gray-400 text-xs ml-auto"><%= l(version.created_at, format: :short) %></span>
+      </div>
+
+      <%# Детали изменений (только для update) %>
+      <% if version.event == "update" && changes.any? %>
+        <div class="mt-2 space-y-1">
+          <% changes.each do |field, (old_val, new_val)| %>
+            <div class="text-xs">
+              <span class="font-medium text-gray-600"><%= field.humanize %>:</span>
+              <span class="text-gray-400 line-through"><%= format_value(old_val) %></span>
+              <i class="mdi mdi-arrow-right text-gray-300 mx-1"></i>
+              <span class="text-emerald-600"><%= format_value(new_val) %></span>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%# Для create: показать созданные поля %>
+      <% if version.event == "create" && changes.any? %>
+        <div class="mt-2 space-y-1">
+          <% changes.each do |field, (_, new_val)| %>
+            <div class="text-xs">
+              <span class="font-medium text-gray-600"><%= field.humanize %>:</span>
+              <span class="text-gray-800"><%= format_value(new_val) %></span>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% else %>
+  <div class="text-center py-6">
+    <i class="mdi mdi-history text-gray-300 text-3xl mb-2"></i>
+    <%# Иконка: mdi-history %>
+    <p class="text-sm text-gray-400"><%= t(".no_versions") %></p>
+    <p class="text-xs text-gray-300 mt-1"><%= t(".no_versions_hint") %></p>
+  </div>
+<% end %>

@@ -169,6 +169,10 @@ export default class extends ApplicationController {
     const lng = pos.coords.longitude
     console.log(`[POI MAP] Position: ${lat.toFixed(4)},${lng.toFixed(4)}`)
 
+    // Сохраняем координаты в data-атрибуты для доступа из FormComponent
+    this._mapElement.dataset.userLat = lat
+    this._mapElement.dataset.userLng = lng
+
     this._userLocation = { lat, lng }
     this.stimulate("PoiReflex#set_location", { lat, lng })
     this._initWithCenter(lat, lng)
@@ -217,11 +221,17 @@ export default class extends ApplicationController {
       try {
         this._initMap(lat, lng)
         this._loadPois()
-        this._loadPoisInBounds()
         if (this._userLocation) {
           this._addUserLocation(this._userLocation.lat, this._userLocation.lng)
         }
         this._hideLoader()
+
+        // Загружаем POI ТОЛЬКО после того, как карта отрендерилась
+        // Используем postrender вместо прямого вызова — гарантирует, что getSize() не undefined
+        this._map.once("postrender", () => {
+          this._loadPoisInBounds()
+        })
+
         console.log("[POI MAP] initialization complete")
       } catch (e) {
         console.error("[POI MAP] Init error:", e)
@@ -513,7 +523,13 @@ export default class extends ApplicationController {
 
   _loadPoisInBounds() {
     if (!this._map) return
-    const extent = this._map.getView().calculateExtent(this._map.getSize())
+    // Guard: карта может не иметь размера при первом рендере
+    const size = this._map.getSize()
+    if (!size || size[0] === undefined || size[1] === undefined) {
+      console.warn("[POI MAP] _loadPoisInBounds — map size not ready yet, skipping")
+      return
+    }
+    const extent = this._map.getView().calculateExtent(size)
     const sw = toLonLat([extent[0], extent[1]])
     const ne = toLonLat([extent[2], extent[3]])
     console.log(`[POI MAP] bounds: SW(${sw[1].toFixed(4)},${sw[0].toFixed(4)}) NE(${ne[1].toFixed(4)},${ne[0].toFixed(4)})`)
@@ -576,6 +592,14 @@ export default class extends ApplicationController {
     this._map.addOverlay(this._userPinOverlay)
 
     console.log(`[POI MAP] User pin added at ${lat.toFixed(4)},${lng.toFixed(4)}`)
+  }
+
+  /**
+   * Открывает форму добавления нового POI
+   * Диспатчит событие poi:open-modal, которое слушает Poi::FormComponent
+   */
+  openAddPoi() {
+    document.dispatchEvent(new CustomEvent("poi:open-modal"))
   }
 
   sidebarPanOffset() {

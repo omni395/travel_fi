@@ -10,4 +10,5 @@ es:
           status: Estado
           author: Autor
           created: Creado
-          no_pois: Sin POI en esta categoría
+          no_pois: No hay POIs en esta categoría
+          import_osm: Importar de OSM

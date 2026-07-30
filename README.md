@@ -300,6 +300,26 @@ Database-backed кэш для переиспользования результ�
 - `config/environments/development.rb` — SolidCache включён, fragment caching только при наличии `tmp/caching-dev.txt`
 - Для включения кэша в dev: `bin/rails dev:cache`
 
+### ReverseGeocodingService
+
+Сервис обратного геокодирования — определение страны, города и адреса по GPS-координатам.
+
+**API**: Nominatim (OpenStreetMap) — бесплатно, без ключа, лимит 1 запрос/секунду.
+
+**Использование:** При клике на карту в форме добавления POI → `ReverseGeocodingService.reverse_geocode(lat, lng)` → автозаполнение city/country/address.
+
+**Файл:** [`app/services/reverse_geocoding_service.rb`](app/services/reverse_geocoding_service.rb)
+
+### HuggingFaceService
+
+Сервис для AI-функций через Hugging Face Chat API.
+
+**Текущее использование:** Зарезервирован для будущей проверки комментариев на токсичность.
+
+**API**: `router.huggingface.co/v1/chat/completions` (OpenAI-совместимый), модель `openai/gpt-oss-120b:fastest`.
+
+**Файл:** [`app/services/hugging_face_service.rb`](app/services/hugging_face_service.rb)
+
 ### SolidQueueDashboard
 
 Сторонний инструмент для мониторинга и управления фоновыми задачами SolidQueue. Предоставляет веб-интерфейс для просмотра очередей, статусов задач и повторного запуска упавших задач.
@@ -410,3 +430,11 @@ PostgreSQL — основная БД приложения. PostGIS — расш�
 | **Notifications** | Noticed |
 | **CSS Framework** | Tailwind CSS, Stimulus-Components |
 | **Web3** | viem |
+
+
+
+
+
+
+
+

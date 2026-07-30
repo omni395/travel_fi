@@ -2,8 +2,9 @@ zh:
   poi:
     filters_component:
       search_placeholder: "搜索POI..."
-      all_categories: "全部分类"
+      all_categories: "所有类别"
       select_all: "全选"
       deselect_all: "取消全选"
       selected: "已选"
       reset: "重置"
+      filters_label: "筛选"

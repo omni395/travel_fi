@@ -24,7 +24,7 @@ class Admin::PoiCategoryFieldsReflex < ApplicationReflex
       current_user: current_user
     )
 
-    component = Admin::PoiCategory::FieldsListComponent.new(category: category)
+    component = Admin::PoiCategories::FieldsListComponent.new(category: category)
     html = ApplicationController.render(component, layout: false)
     morph "[data-poi-category-fields]", html
 
@@ -98,6 +98,28 @@ class Admin::PoiCategoryFieldsReflex < ApplicationReflex
   rescue StandardError => e
     Rails.logger.error("PoiCategoryField destroy error: #{e.class} #{e.message}")
     send_error(I18n.t("reflexes.admin.poi_category_fields.destroy_error"))
+  end
+
+  #
+  # Перемещает поле вверх/вниз по позиции
+  #
+  # @param params [Hash] { id: Integer, direction: "up" | "down" }
+  #
+  def reorder(field_id = nil, direction = nil)
+    field_id ||= element.dataset.fieldId || element.dataset.id
+    field = PoiCategoryField.find(field_id)
+    authorize_with_pundit!(field.poi_category, :update?)
+
+    PoiCategoryService.reorder_field(field: field, direction: direction || "up")
+
+    component = Admin::PoiCategories::FieldsListComponent.new(category: field.poi_category)
+    html = ApplicationController.render(component, layout: false)
+    morph "[data-poi-category-fields]", html
+  rescue Pundit::NotAuthorizedError => e
+    send_error(I18n.t("reflexes.admin.poi_category_fields.update_unauthorized"))
+  rescue StandardError => e
+    Rails.logger.error("PoiCategoryField reorder error: #{e.class} #{e.message}")
+    send_error(I18n.t("reflexes.admin.poi_category_fields.update_error"))
   end
 
   private

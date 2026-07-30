@@ -1,0 +1,170 @@
+<%# Poi::FormComponent - форма создания/редактирования POI %>
+<%# Row layout: Name+Category | Map | Address | City+Country+Zip | Phone+Website | Wheelchair | Description | Submit %>
+<%# Иконка: mdi-plus-circle / mdi-pencil %>
+<div data-controller="poi--form-component"
+     data-poi--form-component-initial-lat="<%= initial_lat %>"
+     data-poi--form-component-initial-lng="<%= initial_lng %>">
+  <%= form_with model: edit_mode? ? poi : Poi.new, url: form_url, method: form_method, local: true, class: "p-6" do |f| %>
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-lg font-semibold text-gray-900">
+        <% if edit_mode? %>
+          <i class="mdi mdi-pencil text-emerald-500 mr-2"></i>
+        <% else %>
+          <i class="mdi mdi-plus-circle text-emerald-500 mr-2"></i>
+        <% end %>
+        <%# Иконка: mdi-plus-circle / mdi-pencil %>
+        <%= edit_mode? ? t(".edit_title") : t(".new_title") %>
+      </h3>
+      <button type="button"
+              data-action="poi--form-component#close"
+              class="text-gray-400 hover:text-gray-600">
+        <i class="mdi mdi-close text-xl"></i>
+        <%# Иконка: mdi-close %>
+      </button>
+    </div>
+
+    <%# Row 1: Name + Category %>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <%= f.label :name, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+          <%= t(".name") %><sup class="text-red-500 ml-0.5">*</sup>
+        <% end %>
+        <%= f.text_field :name, required: true,
+              value: edit_mode? ? poi&.localized_name : nil,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
+              placeholder: t(".name_placeholder"),
+              autocomplete: "off" %>
+      </div>
+      <div>
+        <%= f.label :poi_category_id, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+          <%= t(".category") %><sup class="text-red-500 ml-0.5">*</sup>
+        <% end %>
+        <div data-poi--form-component-target="categoryDropdown">
+          <%= render Ui::DropdownComponent.new(position: "left", menu_classes: "w-full max-h-60 overflow-y-auto bg-white border border-gray-200") do |dropdown| %>
+            <% dropdown.with_trigger do %>
+              <button type="button" data-action="ui--dropdown-component#toggle"
+                      class="w-full flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-50 transition-colors text-left cursor-pointer focus:ring-emerald-500 focus:border-emerald-500">
+                <span class="mdi mdi-shape-outline text-gray-400 shrink-0"></span>
+                <span data-poi--form-component-target="categoryName" class="flex-1 truncate text-gray-700"><%= t(".category_prompt") %></span>
+                <span class="mdi mdi-chevron-down text-gray-400 shrink-0"></span>
+              </button>
+            <% end %>
+            <% dropdown.with_menu do %>
+              <% (categories || []).each do |cat| %>
+                <div class="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+                     data-action="click->poi--form-component#selectCategory"
+                     data-category-id="<%= cat.id %>"
+                     data-category-name="<%= cat.localized_name %>">
+                  <span class="w-5 h-5 flex items-center justify-center text-emerald-500">
+                    <i class="mdi <%= cat.icon || 'mdi-map-marker' %> text-sm"></i>
+                  </span>
+                  <span class="text-sm text-gray-700"><%= cat.localized_name %></span>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+        <%= f.hidden_field :poi_category_id, value: edit_mode? ? poi&.poi_category_id : nil,
+              data: { poi__form_component_target: "categoryId" } %>
+      </div>
+    </div>
+
+    <%# Динамические поля категории %>
+    <div data-poi--form-component-target="fieldsContainer" class="mb-4"></div>
+
+    <%# Row 2: Map %>
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-1"><%= t(".position") %></label>
+      <div data-poi--form-component-target="miniMap"
+           class="w-full h-64 rounded-lg border border-gray-300 overflow-hidden z-0"></div>
+      <p class="text-xs text-gray-400 mt-1"><%= t(".click_hint") %></p>
+    </div>
+
+    <%# Координаты под картой %>
+    <div class="mb-4 flex items-center gap-4 text-xs text-gray-500 font-mono">
+      <span><%= t(".lat") %>: <span data-poi--form-component-target="coordDisplayLat"><%= initial_lat.to_f.round(6) %></span></span>
+      <span><%= t(".lng") %>: <span data-poi--form-component-target="coordDisplayLng"><%= initial_lng.to_f.round(6) %></span></span>
+    </div>
+
+    <%= f.hidden_field :latitude, data: { poi__form_component_target: "latitude" }, value: initial_lat %>
+    <%= f.hidden_field :longitude, data: { poi__form_component_target: "longitude" }, value: initial_lng %>
+
+    <%# Row 3: Address %>
+    <div class="mb-4">
+      <%= f.label :address, t(".address"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :address,
+            value: edit_mode? ? poi&.address : nil,
+            class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
+            placeholder: t(".address_placeholder"),
+            autocomplete: "street-address" %>
+    </div>
+
+    <%# Row 4: City + Country + Zip %>
+    <div class="grid grid-cols-[1fr_1fr_100px] gap-4 mb-4">
+      <div>
+        <%= f.label :city, t(".city"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :city,
+              value: edit_mode? ? poi&.city : nil,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
+              autocomplete: "address-level2" %>
+      </div>
+      <div>
+        <%= f.label :country, t(".country"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :country,
+              value: edit_mode? ? poi&.country : nil,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
+              autocomplete: "country-name" %>
+      </div>
+      <div>
+        <%= f.label :zip_code, t(".zip_code"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :zip_code, maxlength: 5,
+              value: edit_mode? ? poi&.zip_code : nil,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
+              autocomplete: "postal-code" %>
+      </div>
+    </div>
+
+    <%# Row 5: Phone + Website %>
+    <div class="grid grid-cols-2 gap-4 mb-4">
+      <div>
+        <%= f.label :phone, t(".phone"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :phone,
+              value: edit_mode? ? poi&.phone : nil,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
+              autocomplete: "tel" %>
+      </div>
+      <div>
+        <%= f.label :website, t(".website"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :website,
+              value: edit_mode? ? poi&.website : nil,
+              class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
+              autocomplete: "url" %>
+      </div>
+    </div>
+
+    <%# Row 6: Wheelchair %>
+    <div class="mb-4 flex items-center gap-2">
+      <%= f.check_box :wheelchair_accessible,
+            checked: edit_mode? ? poi&.wheelchair_accessible : false,
+            class: "rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" %>
+      <%= f.label :wheelchair_accessible, t(".wheelchair"), class: "text-sm text-gray-700" %>
+    </div>
+
+    <%# Row 7: Description %>
+    <div class="mb-4">
+      <%= f.label :description, t(".description"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_area :description,
+            value: edit_mode? ? poi&.localized_description : nil,
+            rows: 3,
+            class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
+            placeholder: t(".description_placeholder"),
+            autocomplete: "off" %>
+    </div>
+
+    <%# Row 8: Submit %>
+    <div class="mt-6">
+      <%= f.submit edit_mode? ? t(".save") : t(".submit"),
+            class: "w-full px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

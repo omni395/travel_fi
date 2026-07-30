@@ -1,9 +1,0 @@
----
-ru:
-  admin:
-    pois:
-      poi:
-        audit_log_component:
-          title: История изменений
-          system: Система
-          no_versions: Изменений пока нет

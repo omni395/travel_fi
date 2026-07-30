@@ -95,8 +95,18 @@ es:
     poi_categories:
       index:
         title: "Categorías de POI"
+        add_category: "Añadir categoría"
+      new:
+        title: "Nueva categoría"
+    pois:
+      index:
+        title: "POIs"
+        add_poi: "Añadir POI"
+      new:
+        title: "Nuevo POI"
     layout:
       loading: "Cargando..."
+      solid_queue_dashboard: "SolidQueue"
     title: "Panel de administración"
     back_to_site: "Volver al sitio"
     profile: "Perfil"
@@ -186,6 +196,10 @@ es:
         update_success: "Categoría actualizada exitosamente"
         update_unauthorized: "No estás autorizado para actualizar esta categoría"
         update_error: "Error al actualizar la categoría"
+        import_started: "Importación OSM iniciada. Recibirás una notificación al completarse."
+        import_invalid_location: "Ubicación inválida: ciudad y bounding box son requeridos"
+        import_unauthorized: "No estás autorizado para importar POIs"
+        import_error: "Error al iniciar la importación"
         filter_unauthorized: "No estás autorizado para filtrar categorías"
         filter_error: "Error al filtrar categorías"
         operation_success: "¡Operación exitosa!"
@@ -199,6 +213,14 @@ es:
         destroy_success: "Campo eliminado exitosamente"
         destroy_unauthorized: "No estás autorizado para eliminar este campo"
         destroy_error: "Error al eliminar el campo"
+        operation_success: "¡Operación exitosa!"
+      pois:
+        create_success: "POI creado exitosamente"
+        create_unauthorized: "No estás autorizado para crear POIs"
+        create_error: "Error al crear el POI"
+        update_success: "POI actualizado exitosamente"
+        update_unauthorized: "No estás autorizado para actualizar este POI"
+        update_error: "Error al actualizar el POI"
         operation_success: "¡Operación exitosa!"
       pois:
         update_success: "POI actualizado exitosamente"
@@ -217,6 +239,8 @@ es:
         operation_success: "¡Operación exitosa!"
 
   pois:
+    title: "POIs"
+    no_location_toast: "Acceso a la ubicación denegado. Habilite los servicios de ubicación para añadir e interactuar con POIs cercanos."
     guest_warning: "Estás usando como invitado. Inicia sesión o regístrate para añadir y gestionar POIs."
     auth_required_title: "Inicio de sesión requerido"
     auth_required_message: "Inicie sesión o regístrese para ver información detallada sobre este lugar."

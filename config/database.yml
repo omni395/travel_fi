@@ -4,10 +4,9 @@ default: &default
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   username: <%= ENV.fetch("POSTGRES_USER") { 'user' } %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD") { 'password' } %>
-  # Для локальной разработки (без Docker): DATABASE_HOST=localhost
-  # Для запуска в контейнерах: DATABASE_HOST=postgres (или не указывать — дефолт postgres)
-  host: <%= ENV.fetch("DATABASE_HOST") { 'postgres' } %>
-  # host: <%= ENV.fetch("DATABASE_HOST") { 'localhost' } %>  # альтернатива для локального запуска
+  # Для локальной разработки: без DATABASE_HOST — localhost
+  # Для запуска в контейнерах: DATABASE_HOST=postgres
+  host: <%= ENV.fetch("DATABASE_HOST") { 'localhost' } %>
 
 development:
   primary:
@@ -19,14 +18,17 @@ development:
     <<: *default
     adapter: postgresql
     database: travel_fi_dev_queue
+    database_tasks: false
   cache:
     <<: *default
     adapter: postgresql
     database: travel_fi_dev_cache
+    database_tasks: false
   cable:
     <<: *default
     adapter: postgresql
     database: travel_fi_dev_cable
+    database_tasks: false
 
 test:
   primary:

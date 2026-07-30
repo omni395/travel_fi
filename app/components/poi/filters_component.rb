@@ -6,8 +6,9 @@
 # Содержит: поиск (live search) + мультиселект категорий (Ransack) + кнопка сброса
 #
 # Варианты отображения:
-#   :sidebar — внутри сайдбара, flex-col (2 строки: поиск + [категории|сброс])
-#   :overlay  — на карте, absolute top-4 right-4, flex-row (горизонтально)
+#   :sidebar   — внутри сайдбара, flex-col (2 строки: поиск + [категории|сброс])
+#   :overlay   — на карте, absolute top-4 right-4, flex-row (горизонтально)
+#   :dropdown  — кнопка-иконка, открывает дропдаун с фильтрами (в паре с кнопкой Add POI)
 #
 # Все категории выбраны по умолчанию.
 # Если ни одна категория не выбрана — фильтрация не применяется.
@@ -18,9 +19,12 @@
 # @example (карта, оверлей)
 #   <%= render Poi::FiltersComponent.new(categories: @categories, variant: :overlay) %>
 #
+# @example (дропдаун)
+#   <%= render Poi::FiltersComponent.new(categories: @categories, variant: :dropdown) %>
+#
 class Poi::FiltersComponent < ApplicationComponent
   # @param categories [ActiveRecord::Relation<PoiCategory>] список категорий
-  # @param variant [Symbol] :sidebar | :overlay
+  # @param variant [Symbol] :sidebar | :overlay | :dropdown
   def initialize(categories: [], variant: :sidebar)
     @categories = categories
     @variant = variant
@@ -47,17 +51,25 @@ class Poi::FiltersComponent < ApplicationComponent
   #
   # CSS-классы для layout (flex-direction)
   #
-  # :sidebar — flex-col (2 строки: поиск + [категории|сброс])
-  # :overlay — flex-row (горизонтально: [поиск] [категории] [сброс])
-  #
   # @return [String]
   #
   def layout_classes
     case variant
     when :overlay
       "flex flex-row items-center gap-1"
+    when :dropdown
+      "flex flex-row items-center gap-1"
     else
       "flex flex-col gap-1"
     end
+  end
+
+  #
+  # True если вариант :dropdown (фильтры скрыты под кнопку-иконку)
+  #
+  # @return [Boolean]
+  #
+  def dropdown_variant?
+    variant == :dropdown
   end
 end

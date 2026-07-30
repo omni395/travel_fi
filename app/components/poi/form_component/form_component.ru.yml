@@ -1,0 +1,25 @@
+ru:
+  poi:
+    form_component:
+      new_title: Добавить новую точку
+      edit_title: Редактировать точку
+      name: Название
+      name_placeholder: Введите название места
+      description: Описание
+      description_placeholder: Опишите это место (необязательно)
+      category: Категория
+      category_prompt: Выберите категорию...
+      position: Позиция
+      click_hint: Нажмите на карту чтобы установить маркер
+      lat: Широта
+      lng: Долгота
+      address: Адрес
+      address_placeholder: Улица, номер дома
+      city: Город
+      country: Страна
+      zip_code: Почтовый индекс
+      phone: Телефон
+      website: Веб-сайт
+      wheelchair: Доступно для инвалидных колясок
+      submit: Добавить POI
+      save: Сохранить

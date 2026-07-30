@@ -97,8 +97,18 @@ zh:
     poi_categories:
       index:
         title: "POI 分类"
+        add_category: "添加分类"
+      new:
+        title: "新类别"
+    pois:
+      index:
+        title: "POI"
+        add_poi: "添加POI"
+      new:
+        title: "新POI"
     layout:
       loading: "加载中..."
+      solid_queue_dashboard: "SolidQueue"
     title: "管理面板"
     back_to_site: "返回网站"
     profile: "资料"
@@ -188,6 +198,10 @@ zh:
         update_success: "分类更新成功"
         update_unauthorized: "您无权更新此分类"
         update_error: "更新分类时出错"
+        import_started: "OSM导入已启动。完成后您将收到通知。"
+        import_invalid_location: "无效位置：需要城市和边界框"
+        import_unauthorized: "您无权导入POI"
+        import_error: "启动导入时出错"
         filter_unauthorized: "您无权筛选分类"
         filter_error: "筛选分类时出错"
         operation_success: "操作成功！"
@@ -201,6 +215,14 @@ zh:
         destroy_success: "字段删除成功"
         destroy_unauthorized: "您无权删除此字段"
         destroy_error: "删除字段时出错"
+        operation_success: "操作成功！"
+      pois:
+        create_success: "POI创建成功"
+        create_unauthorized: "您无权创建POI"
+        create_error: "创建POI时出错"
+        update_success: "POI更新成功"
+        update_unauthorized: "您无权更新此POI"
+        update_error: "更新POI时出错"
         operation_success: "操作成功！"
       pois:
         update_success: "POI 更新成功"
@@ -219,6 +241,8 @@ zh:
         operation_success: "操作成功！"
 
   pois:
+    title: "兴趣点"
+    no_location_toast: "位置访问被拒绝。启用定位服务以添加和与附近的POI互动。"
     guest_warning: "您正在以访客身份使用。请登录或注册以添加和管理POI。"
     auth_required_title: "需要登录"
     auth_required_message: "请登录或注册以查看此地点的详细信息。"

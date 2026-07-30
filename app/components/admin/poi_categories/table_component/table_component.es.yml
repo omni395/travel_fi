@@ -3,12 +3,6 @@ es:
   admin:
     poi_categories:
       table_component:
-        position: Pos.
-        icon: Icono
         name: Nombre
-        slug: Slug
-        fields_count: Campos
+        pois: POIs
         status: Estado
-        actions: Acciones
-        active: Activo
-        inactive: Inactivo

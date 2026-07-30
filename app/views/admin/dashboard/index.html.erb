@@ -7,35 +7,9 @@
   { name: t("admin.dashboard.title") }
 ]) %>
 
-<div class="p-6">
-  <!-- Карточки статистики -->
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-    <%= render Admin::Dashboard::StatCardComponent.new(
-      title: t("admin.dashboard.total_users"),
-      count: @stats[:total],
-      icon: "mdi-account-group",
-      color: "blue"
-    ) %>
-
-    <%= render Admin::Dashboard::StatCardComponent.new(
-      title: t("admin.dashboard.active_users"),
-      count: @stats[:active],
-      icon: "mdi-account-check",
-      color: "green"
-    ) %>
-
-    <%= render Admin::Dashboard::StatCardComponent.new(
-      title: t("admin.dashboard.pending_users"),
-      count: @stats[:pending],
-      icon: "mdi-account-clock",
-      color: "amber"
-    ) %>
-
-    <%= render Admin::Dashboard::StatCardComponent.new(
-      title: t("admin.dashboard.restricted_users"),
-      count: @stats[:restricted],
-      icon: "mdi-account-remove",
-      color: "red"
-    ) %>
-  </div>
-</div>
+<%# Дашборд через Admin::DashboardComponent (включает статистику + пользователи + аудит) %>
+<%= render Admin::DashboardComponent.new(
+  stats: @stats,
+  recent_users: @recent_users,
+  recent_activities: @recent_activities
+) %>

@@ -1,0 +1,19 @@
+---
+es:
+  ui:
+    audit_entry_component:
+      created: "Creado"
+      updated: "Actualizado"
+      deleted: "Eliminado"
+      by: "por"
+      system: "Sistema"
+      no_versions: "Sin cambios registrados"
+      no_versions_hint: "Aún no hay cambios, la auditoría aparecerá aquí."
+      field_types:
+        field_key: "Clave"
+        field_type: "Tipo"
+        label: "Etiqueta"
+        position: "Posición"
+        required: "Obligatorio"
+        active: "Activo"
+        poi_category_id: "Categoría"

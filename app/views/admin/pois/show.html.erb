@@ -38,7 +38,7 @@
           panels: {
             details:   render(Admin::Pois::Poi::ShowComponent.new(poi: @poi)),
             map:       render(Poi::MapComponent.new(poi: @poi)),
-            audit_log: render(Admin::Pois::Poi::AuditLogComponent.new(versions: @versions, pagy: @pagy_audit))
+            audit_log: (@versions.any? ? capture { @versions.each { |v| concat render(Ui::AuditEntryComponent.new(version: v)) } } : render(Ui::AuditEntryComponent.new(version: nil)))
           }
         ) %>
   <% end %>

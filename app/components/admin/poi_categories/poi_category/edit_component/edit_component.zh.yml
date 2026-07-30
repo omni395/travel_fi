@@ -8,7 +8,12 @@ zh:
           slug: 标识
           icon: 图标
           description: 描述
-          position: 位置
+          id: ID
           active: 启用
           save: 保存
           cancel: 取消
+          osm_settings: "OSM导入设置"
+          osm_tags_label: "OpenStreetMap标签"
+          osm_tags_hint: "输入标签，用逗号分隔。例如：amenity=toilets, amenity=shower"
+          osm_default_name_label: "默认名称（当OSM缺少name时）"
+          osm_default_name_hint: "当POI在OpenStreetMap中没有'name'标签时使用"

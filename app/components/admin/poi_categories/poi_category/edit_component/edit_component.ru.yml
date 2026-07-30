@@ -8,7 +8,12 @@ ru:
           slug: URL-идентификатор
           icon: Иконка
           description: Описание
-          position: Позиция
+          id: ID
           active: Активна
           save: Сохранить
           cancel: Отмена
+          osm_settings: "Настройки импорта из OSM"
+          osm_tags_label: "Теги OpenStreetMap"
+          osm_tags_hint: "Введите теги через запятую. Пример: amenity=toilets, amenity=shower"
+          osm_default_name_label: "Название по умолчанию (когда нет name в OSM)"
+          osm_default_name_hint: "Используется когда точка не имеет тега name в OpenStreetMap"

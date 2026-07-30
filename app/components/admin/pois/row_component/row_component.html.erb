@@ -13,6 +13,16 @@
         <div class="text-xs text-gray-400">OSM: <%= poi.osm_id %></div>
       <% end %>
     </td>
+    <td class="px-2 py-1.5 whitespace-nowrap">
+      <% if poi.missing_translations? %>
+        <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+          <i class="mdi mdi-translate text-xs"></i>
+          <%# Иконка: mdi-translate %>
+          <%= t(".missing_translations") %>
+        </span>
+      <% end %>
+      <div class="text-xs font-medium text-gray-900"><%= poi.localized_name %></div>
+    </td>
     <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-500">
       <%= poi.poi_category.localized_name %>
     </td>

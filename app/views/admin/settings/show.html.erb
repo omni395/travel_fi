@@ -8,28 +8,27 @@
 # Использует StimulusReflex для автосохранения при переключении
 # %>
 
-<div class="p-6">
+<div class="p-6 space-y-8">
   <%# Хлебные крошки %>
   <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
     { name: t("admin.dashboard.title"), path: admin_root_path },
     { name: t("admin.settings.title") }
   ]) %>
 
+  <%# Настройки уведомлений %>
   <div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <!-- Шапка таблицы -->
-    <div class="flex items-center justify-between px-6 py-4 bg-linear-to-br from-primary to-secondary text-white font-semibold text-sm">
+    <div class="flex items-center justify-between px-6 py-4 bg-linear-to-br from-emerald-500 to-teal-600 text-white font-semibold text-sm">
       <span class="w-1/3"><%= t('settings.columns.event_type') %></span>
       <div class="flex items-center space-x-6">
-        <%# MDI: bell-ring %>
+        <%# Иконка: mdi-bell-ring %>
         <span class="flex items-center space-x-2"><i class="mdi mdi-bell-ring text-lg"></i> <span><%= t('settings.columns.in_app') %></span></span>
-        <%# MDI: email %>
+        <%# Иконка: mdi-email %>
         <span class="flex items-center space-x-2"><i class="mdi mdi-email text-lg"></i> <span><%= t('settings.columns.email') %></span></span>
-        <%# MDI: cellphone-wireless %>
+        <%# Иконка: mdi-cellphone-wireless %>
         <span class="flex items-center space-x-2"><i class="mdi mdi-cellphone-wireless text-lg"></i> <span><%= t('settings.columns.push') %></span></span>
       </div>
     </div>
 
-    <!-- Строки настроек (все типы для админа) -->
     <div class="px-6 divide-y divide-gray-100">
       <% %w[
         new_registration active_user inactive_user
@@ -38,6 +37,28 @@
         user_updated_by_admin profile_updated
       ].each do |event_type| %>
         <%= render Settings::FieldComponent.new(setting: @setting, event_type: event_type) %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Audit trail для Settings %>
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <div class="px-6 py-4 bg-linear-to-br from-teal-500 to-emerald-600">
+      <h2 class="text-lg font-semibold text-white flex items-center gap-2">
+        <i class="mdi mdi-history"></i>
+        <span><%= t('admin.settings.title') %> — <%= t('admin.dashboard.title') %></span>
+      </h2>
+    </div>
+    <div class="divide-y divide-gray-100">
+      <% if @versions&.any? %>
+        <% @versions.each do |version| %>
+          <%= render Ui::AuditEntryComponent.new(version: version) %>
+        <% end %>
+      <% else %>
+        <div class="text-center py-8">
+          <i class="mdi mdi-inbox-outline text-4xl text-gray-300 mb-2"></i>
+          <p class="text-sm text-gray-400"><%= t('settings.columns.event_type') %></p>
+        </div>
       <% end %>
     </div>
   </div>

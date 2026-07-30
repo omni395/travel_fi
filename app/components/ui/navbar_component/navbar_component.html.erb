@@ -1,7 +1,7 @@
 <!-- Navbar Component: Сине-зеленый градиентный navbar -->
 <nav class="navbar-component shadow-lg" data-controller="ui--navbar-component">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between h-16">
+    <div class="flex items-center justify-between h-16 relative z-50">
       <div class="flex items-center">
         <%# Гамбургер-меню (только мобильные) %>
         <div class="md:hidden">
@@ -117,7 +117,7 @@
               </button>
             <% end %>
             <% dropdown.with_menu do %>
-              <div class="w-48 navbar-component__dropdown bg-linear-to-br from-teal-600 to-sky-600 shadow-lg">
+              <div class="w-48 navbar-component__dropdown bg-linear-to-br from-teal-600 to-sky-600">
                 <div class="py-1">
                   <% if helpers.policy(@user).admin_panel_access? %>
                     <%= link_to t(".admin_panel"), admin_root_path(locale: I18n.locale), class: "block px-4 py-2 text-sm text-white hover:bg-white/10", data: { action: "ui--dropdown-component#toggle" } %>
@@ -125,11 +125,13 @@
                   <%= link_to t(".profile"), user_path(@user, locale: I18n.locale), class: "block px-4 py-2 text-sm text-white hover:bg-white/10", data: { action: "ui--dropdown-component#toggle" } %>
                   <%= link_to t(".settings"), user_settings_path(@user, locale: I18n.locale), class: "block px-4 py-2 text-sm text-white hover:bg-white/10", data: { action: "ui--dropdown-component#toggle" } %>
                   <div class="border-t border-white/30 my-2"></div>
-                  <button type="button" data-action="click->ui--confirm-dialog-component#show click->ui--dropdown-component#toggle" class="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10">
+                  <%= button_to destroy_user_session_path, method: :delete,
+                        data: { turbo: false },
+                        class: "block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10" do %>
                     <%# MDI: logout %>
                     <i class="mdi mdi-logout mr-2"></i>
                     <%= t(".logout") %>
-                  </button>
+                  <% end %>
                 </div>
               </div>
             <% end %>
@@ -143,7 +145,7 @@
             </button>
           <% end %>
           <% dropdown.with_menu do %>
-            <div class="whitespace-nowrap navbar-component__dropdown bg-linear-to-br from-teal-600 to-sky-600 shadow-lg">
+            <div class="whitespace-nowrap navbar-component__dropdown bg-linear-to-br from-teal-600 to-sky-600">
               <div class="py-1">
                 <% language_items.each do |item| %>
                   <%= link_to item[:label], item[:path], class: "block px-4 py-2 text-sm text-white hover:bg-white/10", data: { action: "ui--dropdown-component#toggle" } %>

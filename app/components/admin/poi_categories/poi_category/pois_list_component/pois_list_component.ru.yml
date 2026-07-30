@@ -9,5 +9,6 @@ ru:
           city: Город
           status: Статус
           author: Автор
-          created: Создано
-          no_pois: В этой категории нет POI
+          created: Создан
+          no_pois: Нет POI в этой категории
+          import_osm: Импорт из OSM

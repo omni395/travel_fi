@@ -8,7 +8,12 @@ en:
           slug: Slug
           icon: Icon
           description: Description
-          position: Position
+          id: ID
           active: Active
           save: Save
           cancel: Cancel
+          osm_settings: "OSM Import Settings"
+          osm_tags_label: "OpenStreetMap Tags"
+          osm_tags_hint: "Enter tags separated by commas. Example: amenity=toilets, amenity=shower"
+          osm_default_name_label: "Default Name (when OSM name is missing)"
+          osm_default_name_hint: "Used when a POI has no 'name' tag in OpenStreetMap"

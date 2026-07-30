@@ -7,7 +7,9 @@
 #%>
 <%= render Ui::CardComponent.new do |card| %>
   <% card.with_body do %>
-    <%= form_with model: poi, url: admin_poi_path(id: poi), method: :patch,
+    <%= form_with model: poi,
+                  url: poi.persisted? ? admin_poi_path(id: poi) : admin_pois_path,
+                  method: poi.persisted? ? :patch : :post,
                   data: { controller: "admin--pois--poi--edit-component",
                           action: "submit->admin--pois--poi--edit-component#handleSubmit" } do |f| %>
 
@@ -288,7 +290,7 @@
 
       <%# Кнопки %>
       <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
-        <%= link_to admin_poi_path(id: poi),
+        <%= link_to poi.persisted? ? admin_poi_path(id: poi) : admin_pois_path,
                     class: "btn-ui btn-ui--ghost btn-ui--md" do %>
           <!-- mdi: close -->
           <i class="mdi mdi-close"></i>

@@ -1,0 +1,18 @@
+---
+zh:
+  admin:
+    poi_categories:
+      poi_category:
+        osm_import_component:
+          title: 从OpenStreetMap导入
+          no_osm_tags_warning: "此类别未配置OSM标签。请前往编辑页面添加标签。"
+          select_city: 选择城市
+          choose_city: 选择一个城市...
+          custom_location: 自定义位置
+          city_name: 城市名称
+          country: 国家
+          cancel: 取消
+          import: 导入
+          close: 关闭
+          fetching: 正在从OpenStreetMap获取数据...
+          of: / 

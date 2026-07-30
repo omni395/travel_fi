@@ -8,11 +8,13 @@ application.register('admin--dashboard--stat-card-component', () => import('../.
 
 application.register('admin--dashboard-component', () => import('../../components/admin/dashboard_component/dashboard_component_controller.js'))
 
+application.register('admin--poi-categories--field-form-component', () => import('../../components/admin/poi_categories/field_form_component/field_form_component_controller.js'))
+
 application.register('admin--poi-categories--fields-list-component', () => import('../../components/admin/poi_categories/fields_list_component/fields_list_component_controller.js'))
 
-application.register('admin--poi-categories--poi-category--audit-log-component', () => import('../../components/admin/poi_categories/poi_category/audit_log_component/audit_log_component_controller.js'))
-
 application.register('admin--poi-categories--poi-category--edit-component', () => import('../../components/admin/poi_categories/poi_category/edit_component/edit_component_controller.js'))
+
+application.register('admin--poi-categories--poi-category--osm-import-component', () => import('../../components/admin/poi_categories/poi_category/osm_import_component/osm_import_component_controller.js'))
 
 application.register('admin--poi-categories--poi-category--pois-list-component', () => import('../../components/admin/poi_categories/poi_category/pois_list_component/pois_list_component_controller.js'))
 
@@ -21,8 +23,6 @@ application.register('admin--poi-categories--poi-category--show-component', () =
 application.register('admin--poi-categories--row-component', () => import('../../components/admin/poi_categories/row_component/row_component_controller.js'))
 
 application.register('admin--poi-categories--table-component', () => import('../../components/admin/poi_categories/table_component/table_component_controller.js'))
-
-application.register('admin--pois--poi--audit-log-component', () => import('../../components/admin/pois/poi/audit_log_component/audit_log_component_controller.js'))
 
 application.register('admin--pois--poi--edit-component', () => import('../../components/admin/pois/poi/edit_component/edit_component_controller.js'))
 
@@ -38,8 +38,6 @@ application.register('admin--users--table-component', () => import('../../compon
 
 application.register('admin--users--user--activity-component', () => import('../../components/admin/users/user/activity_component/activity_component_controller.js'))
 
-application.register('admin--users--user--audit-log-component', () => import('../../components/admin/users/user/audit_log_component/audit_log_component_controller.js'))
-
 application.register('admin--users--user--edit-component', () => import('../../components/admin/users/user/edit_component/edit_component_controller.js'))
 
 application.register('admin--users--user--show-component', () => import('../../components/admin/users/user/show_component/show_component_controller.js'))
@@ -50,11 +48,15 @@ application.register('poi--detail-component', () => import('../../components/poi
 
 application.register('poi--filters-component', () => import('../../components/poi/filters_component/filters_component_controller.js'))
 
+application.register('poi--form-component', () => import('../../components/poi/form_component/form_component_controller.js'))
+
 application.register('poi--list-item-component', () => import('../../components/poi/list_item_component/list_item_component_controller.js'))
 
 application.register('poi--map-component', () => import('../../components/poi/map_component/map_component_controller.js'))
 
 application.register('settings--field-component', () => import('../../components/settings/field_component/field_component_controller.js'))
+
+application.register('ui--audit-entry-component', () => import('../../components/ui/audit_entry_component/audit_entry_component_controller.js'))
 
 application.register('ui--avatar-component', () => import('../../components/ui/avatar_component/avatar_component_controller.js'))
 

@@ -8,7 +8,12 @@ es:
           slug: Slug
           icon: Icono
           description: Descripción
-          position: Posición
+          id: ID
           active: Activo
           save: Guardar
           cancel: Cancelar
+          osm_settings: "Configuración de importación OSM"
+          osm_tags_label: "Etiquetas de OpenStreetMap"
+          osm_tags_hint: "Ingrese etiquetas separadas por comas. Ej: amenity=toilets, amenity=shower"
+          osm_default_name_label: "Nombre por defecto (sin name en OSM)"
+          osm_default_name_hint: "Usado cuando un POI no tiene etiqueta 'name' en OpenStreetMap"

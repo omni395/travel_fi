@@ -11,8 +11,8 @@
 class Admin::PoiCategoriesController < Admin::BaseController
   PER_PAGE = 20
 
-  # Pundit: policy_scope не нужен для create/update
-  skip_after_action :verify_policy_scoped, only: %i[create update]
+  # Pundit: policy_scope не нужен для create/update/new
+  skip_after_action :verify_policy_scoped, only: %i[create update new]
 
   #
   # Отображает список категорий POI
@@ -21,6 +21,15 @@ class Admin::PoiCategoriesController < Admin::BaseController
     authorize PoiCategory, :index?
 
     @pagy, @categories = pagy(filtered_categories, limit: PER_PAGE)
+  end
+
+  #
+  # Отображает форму создания новой категории
+  #
+  def new
+    authorize PoiCategory, :create?
+
+    @category = PoiCategory.new
   end
 
   #

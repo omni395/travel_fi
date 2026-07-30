@@ -37,7 +37,7 @@
         panels: {
           activity:  render(Admin::Users::User::ActivityComponent.new(user: @user)),
           wallet:    render(Admin::Users::User::WalletComponent.new(user: @user)),
-          audit_log: render(Admin::Users::User::AuditLogComponent.new(versions: @versions, pagy: @pagy_audit))
+          audit_log: (@versions.any? ? capture { @versions.each { |v| concat render(Ui::AuditEntryComponent.new(version: v)) } } : render(Ui::AuditEntryComponent.new(version: nil)))
         }
       ) %>
 </div>

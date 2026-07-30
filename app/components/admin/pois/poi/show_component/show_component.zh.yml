@@ -6,7 +6,6 @@ zh:
         show_component:
           missing_translations: '缺少翻译: %{locales}'
           edit: 编辑
-          location: 位置
           details: 详情
           description: 描述
           address: 地址
@@ -18,12 +17,9 @@ zh:
           created_by: 创建者
           created_at: 创建时间
           verified_count: 已验证 %{count} 次
-          slug: 标识
-          osm_id: OSM ID
           rating: 评分
           opening_hours: 营业时间
           price_info: 价格信息
-          wheelchair_accessible: 轮椅通道
           status:
             pending: "待审核"
             approved: "已通过"

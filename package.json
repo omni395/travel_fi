@@ -9,17 +9,17 @@
     "build": "rm -rf app/assets/builds/* && node esbuild.config.mjs",
     "build:watch": "rm -rf app/assets/builds/* && node esbuild.config.mjs --watch",
     "build:css": "rm -f app/assets/builds/application.css && npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css",
-    "build:css:watch": "npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css --watch",
+    "build:css:watch": "npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css --watch=always",
     "discover:controllers": "node scripts/discover_components.js"
   },
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
-    "@tailwindcss/cli": "^4.2.4",
+    "@tailwindcss/cli": "^4.3.3",
     "cable_ready": "^5.0.6",
     "esbuild-rails": "^1.0.3",
     "ol": "^10.9.0",
     "stimulus_reflex": "^3.5.5",
-    "tailwindcss": "^4.2.4",
+    "tailwindcss": "^4.3.3",
     "viem": "^2.48.4"
   }
 }

@@ -7,9 +7,8 @@ gem "rails", "~> 8.1.3"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
-gem "pg", "~> 1.1"
-# Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
+gem 'pg', '>= 1.5.9' # Use the Puma web server [https://github.com/puma/puma]
 
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
@@ -103,6 +102,5 @@ gem "chartkick"           # Удобная визуализация данных
 gem "groupdate"           # Группировка данных по времени (дням, неделям)
 
 gem "twilio-ruby"         # WhatsApp-бот и уведомления
-gem "hugging-face"        # Интеграция с Hugging Face API для AI возможностей
 
 gem "dotenv-rails"        # Загрузка переменных окружения из .env файла (для локальной разработки)

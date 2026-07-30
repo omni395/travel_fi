@@ -1,0 +1,19 @@
+---
+zh:
+  ui:
+    audit_entry_component:
+      created: "创建"
+      updated: "更新"
+      deleted: "删除"
+      by: "操作人"
+      system: "系统"
+      no_versions: "暂无更改记录"
+      no_versions_hint: "暂无更改，审计将显示在此处。"
+      field_types:
+        field_key: "键名"
+        field_type: "类型"
+        label: "标签"
+        position: "位置"
+        required: "必填"
+        active: "启用"
+        poi_category_id: "分类"

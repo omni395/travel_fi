@@ -2,9 +2,8 @@ en:
   admin:
     pois:
       row_component:
-        status:
-          pending: "Pending"
-          approved: "Approved"
-          rejected: "Rejected"
-          archived: "Archived"
-        visit_hint: "Click to view details"
+        missing_translations: Missing translations
+        status_pending: Pending
+        status_approved: Approved
+        status_rejected: Rejected
+        status_archived: Archived

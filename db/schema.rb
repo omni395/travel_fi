@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_05_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_22_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
@@ -86,9 +86,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_000000) do
     t.jsonb "description", default: {}
     t.string "icon"
     t.jsonb "name", default: {}, null: false
+    t.jsonb "osm_default_name", default: {}
+    t.jsonb "osm_tags", default: []
     t.integer "position", default: 0
     t.string "slug", null: false
     t.datetime "updated_at", null: false
+    t.index ["osm_tags"], name: "index_poi_categories_on_osm_tags", using: :gin
     t.index ["position"], name: "index_poi_categories_on_position"
     t.index ["slug"], name: "index_poi_categories_on_slug", unique: true
   end
@@ -128,6 +131,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_000000) do
     t.string "price_info"
     t.decimal "rating", precision: 3, scale: 2, default: "0.0"
     t.string "slug", null: false
+    t.string "source", default: "manual", null: false
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.bigint "user_id", null: false
@@ -140,6 +144,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_000000) do
     t.index ["osm_id"], name: "index_pois_on_osm_id", unique: true, where: "(osm_id IS NOT NULL)"
     t.index ["poi_category_id"], name: "index_pois_on_poi_category_id"
     t.index ["slug"], name: "index_pois_on_slug", unique: true
+    t.index ["source"], name: "index_pois_on_source"
     t.index ["status", "poi_category_id"], name: "index_pois_on_status_and_poi_category_id"
     t.index ["status"], name: "index_pois_on_status"
     t.index ["user_id"], name: "index_pois_on_user_id"

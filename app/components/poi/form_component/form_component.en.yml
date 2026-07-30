@@ -1,0 +1,25 @@
+en:
+  poi:
+    form_component:
+      new_title: Add New Point of Interest
+      edit_title: Edit Point of Interest
+      name: Name
+      name_placeholder: Enter the name of this place
+      description: Description
+      description_placeholder: Describe this place (optional)
+      category: Category
+      category_prompt: Select a category...
+      position: Position
+      click_hint: Click on the map to place the marker
+      lat: Lat
+      lng: Lng
+      address: Address
+      address_placeholder: Street, building number
+      city: City
+      country: Country
+      zip_code: Postal code
+      phone: Phone
+      website: Website
+      wheelchair: Wheelchair accessible
+      submit: Add POI
+      save: Save

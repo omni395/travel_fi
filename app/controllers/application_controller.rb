@@ -14,6 +14,7 @@ class ApplicationController < ActionController::Base
   before_action :set_locale
   before_action :configure_permitted_parameters, if: :devise_controller?
   before_action :set_current_request
+  before_action :set_paper_trail_whodunnit
 
   # Authenticate user for most actions (skip for Devise controllers and home page)
   before_action :authenticate_user!, unless: -> { devise_controller? || home_controller? }
@@ -40,6 +41,14 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  #
+  # Устанавливает whodunnit для PaperTrail — кто делает изменения
+  # Без этого все версии в аудите будут показывать "System"
+  #
+  def set_paper_trail_whodunnit
+    PaperTrail.request.whodunnit = current_user&.id
+  end
 
   def set_locale
     locale = params[:locale]&.to_sym || I18n.default_locale

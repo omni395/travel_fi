@@ -34,4 +34,14 @@ class Admin::PoiCategories::PoiCategory::EditComponent < ApplicationComponent
     val = category.public_send(field)
     val.is_a?(Hash) ? val[locale].to_s : val.to_s
   end
+
+  #
+  # Возвращает список OSM-тегов как строку через запятую
+  #
+  # @return [String]
+  #
+  def osm_tags_string
+    tags = category.osm_tags
+    tags.is_a?(Array) ? tags.join(", ") : tags.to_s
+  end
 end

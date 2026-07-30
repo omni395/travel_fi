@@ -2,3 +2,4 @@
 en:
   poi:
     map_component:
+      add_poi: "Add POI"

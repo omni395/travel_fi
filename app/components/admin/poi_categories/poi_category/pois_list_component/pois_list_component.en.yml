@@ -11,3 +11,4 @@ en:
           author: Author
           created: Created
           no_pois: No POIs in this category
+          import_osm: Import from OSM

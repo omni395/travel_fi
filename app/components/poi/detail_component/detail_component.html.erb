@@ -1,127 +1,271 @@
-<%# Poi::DetailComponent - модалка создания/редактирования и просмотра POI %>
-<%# Иконка: mdi-plus-circle / mdi-pencil / mdi-information-outline %>
+<%# Poi::DetailComponent - просмотр POI (табы: информация + комментарии) %>
+<%# Иконка: mdi-information-outline / mdi-comment-text-outline %>
 <div data-controller="poi--detail-component"
-     data-poi--detail-component-target="overlay"
-     data-poi--detail-component-initial-lat="<%= initial_lat %>"
-     data-poi--detail-component-initial-lng="<%= initial_lng %>"
-     class="fixed inset-0 z-50 hidden"
-     data-action="keydown.esc->poi--detail-component#close">
-  <div class="absolute inset-0 bg-black/50" data-action="click->poi--detail-component#close"></div>
-  <div class="absolute inset-0 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+     data-poi--detail-component-poi-id="<%= poi.id %>"
+     data-poi-detail-component-poi-id="<%= poi.id %>"
+     class="p-6">
+  <%# Скрытые данные POI для мини-карты %>
+  <div data-poi-id="<%= poi.id %>"
+       data-poi-lat="<%= poi.latitude %>"
+       data-poi-lng="<%= poi.longitude %>"
+       class="hidden"></div>
 
-      <%# Детальный просмотр POI (рендерится через StimulusReflex + CableReady) %>
-      <div id="poi-detail-modal-content" class="hidden">
-        <div id="poi-detail-modal-body"></div>
+  <%# Header с названием и кнопкой закрытия %>
+  <div class="flex items-start justify-between mb-4">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-1">
+        <% if poi.poi_category&.icon.present? %>
+          <i class="mdi <%= poi.poi_category.icon %> text-emerald-500 text-lg"></i>
+          <%# Иконка: динамическая из poi_category.icon %>
+        <% else %>
+          <i class="mdi mdi-map-marker text-emerald-500 text-lg"></i>
+          <%# Иконка: mdi-map-marker %>
+        <% end %>
+        <span class="text-xs font-medium text-gray-500 uppercase tracking-wider"><%= poi.poi_category&.localized_name %></span>
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium <%= status_badge_class %>">
+          <%= t(".status.#{poi.status}") %>
+        </span>
       </div>
+      <h2 class="text-xl font-bold text-gray-900 truncate"><%= poi.localized_name %></h2>
+    </div>
+    <div class="flex items-center gap-2 shrink-0 ml-4">
+      <% if can_edit? %>
+        <button type="button"
+                data-action="click->poi--detail-component#editPoi"
+                class="inline-flex items-center px-2 py-1 text-xs font-medium text-emerald-700 bg-emerald-50 rounded-md hover:bg-emerald-100 transition-colors">
+          <i class="mdi mdi-pencil text-sm mr-1"></i>
+          <%# Иконка: mdi-pencil %>
+          <%= t(".edit") %>
+        </button>
+      <% end %>
+      <button type="button"
+              data-action="click->poi--detail-component#close"
+              class="text-gray-400 hover:text-gray-600">
+        <i class="mdi mdi-close text-xl"></i>
+        <%# Иконка: mdi-close %>
+      </button>
+    </div>
+  </div>
 
-      <%# Форма создания/редактирования POI %>
-      <div id="poi-form-content">
-        <%= form_with model: edit_mode? ? poi : Poi.new, url: form_url, method: form_method, local: true, class: "p-6" do |f| %>
-          <div class="flex items-center justify-between mb-6">
-            <h3 class="text-lg font-semibold text-gray-900">
-              <% if edit_mode? %>
-                <i class="mdi mdi-pencil text-emerald-500 mr-2"></i>
-              <% else %>
-                <i class="mdi mdi-plus-circle text-emerald-500 mr-2"></i>
-              <% end %>
-              <%# Иконка: mdi-plus-circle / mdi-pencil %>
-              <%= edit_mode? ? t(".edit_title") : t(".new_title") %>
-            </h3>
-            <button type="button"
-                    data-action="poi--detail-component#close"
-                    class="text-gray-400 hover:text-gray-600">
-              <i class="mdi mdi-close text-xl"></i>
-              <%# Иконка: mdi-close %>
-            </button>
+  <%# Табы: Info / Comments %>
+  <div data-controller="ui--tabs-component"
+       data-ui--tabs-component-active-tab-value="info">
+    <%# Навигация табов %>
+    <nav class="flex gap-1 mb-4 border-b border-gray-200">
+      <button type="button"
+              class="px-4 py-2.5 text-sm font-semibold border-b-2 border-emerald-500 text-emerald-600 transition-colors"
+              data-ui--tabs-component-target="tab"
+              data-action="click->ui--tabs-component#switch"
+              data-tab="info">
+        <i class="mdi mdi-information-outline mr-1"></i>
+        <%# Иконка: mdi-information-outline %>
+        <%= t(".tab_info") %>
+      </button>
+      <button type="button"
+              class="px-4 py-2.5 text-sm font-semibold border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors"
+              data-ui--tabs-component-target="tab"
+              data-action="click->ui--tabs-component#switch"
+              data-tab="comments">
+        <i class="mdi mdi-comment-text-outline mr-1"></i>
+        <%# Иконка: mdi-comment-text-outline %>
+        <%= t(".tab_comments") %>
+        <% if comments.any? %>
+          <span class="ml-1 px-1.5 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full"><%= comments.count %></span>
+        <% end %>
+      </button>
+    </nav>
+
+    <%# Panel: Info %>
+    <div data-ui--tabs-component-target="panel" data-tab="info" class="space-y-4">
+      <%# Рейтинг + верификация %>
+      <div class="flex items-center gap-4 text-sm">
+        <% if poi.rating > 0 %>
+          <div class="flex items-center gap-1">
+            <i class="mdi mdi-star text-yellow-400 text-sm"></i>
+            <%# Иконка: mdi-star %>
+            <span class="font-medium text-gray-900"><%= poi.rating %></span>
           </div>
-
-          <%# Название %>
-          <div class="mb-4">
-            <%= f.label :name, t(".name"), class: "block text-sm font-medium text-gray-700 mb-1" %>
-            <%= f.text_field :name, required: true,
-                  value: edit_mode? ? poi&.localized_name : nil,
-                  class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
-                  placeholder: t(".name_placeholder"),
-                  autocomplete: "off" %>
-          </div>
-
-          <%# Категория %>
-          <div class="mb-4">
-            <%= f.label :poi_category_id, t(".category"), class: "block text-sm font-medium text-gray-700 mb-1" %>
-            <%= f.collection_select :poi_category_id, categories || [], :id, :localized_name,
-                  { prompt: t(".category_prompt"), selected: edit_mode? ? poi&.poi_category_id : nil },
-                  class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500" %>
-          </div>
-
-          <%# Динамические поля категории %>
-          <div data-poi--detail-component-target="fieldsContainer" class="mb-4"></div>
-
-          <%# OpenLayers мини-карта с маркером (h-64 = 256px) %>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-1"><%= t(".position") %></label>
-            <div data-poi--detail-component-target="miniMap"
-                 class="w-full h-64 rounded-lg border border-gray-300 overflow-hidden z-0"></div>
-            <p class="text-xs text-gray-400 mt-1"><%= t(".drag_hint") %></p>
-          </div>
-
-          <%# Координаты (hidden, обновляются при перетаскивании маркера) %>
-          <%= f.hidden_field :latitude, data: { poi__detail_component_target: "latitude" }, value: initial_lat %>
-          <%= f.hidden_field :longitude, data: { poi__detail_component_target: "longitude" }, value: initial_lng %>
-
-          <%# Адрес %>
-          <div class="mb-4">
-            <%= f.label :address, t(".address"), class: "block text-sm font-medium text-gray-700 mb-1" %>
-            <%= f.text_field :address,
-                  value: edit_mode? ? poi&.address : nil,
-                  class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
-                  placeholder: t(".address_placeholder"),
-                  autocomplete: "street-address" %>
-          </div>
-
-          <%# Город %>
-          <div class="mb-4">
-            <%= f.label :city, t(".city"), class: "block text-sm font-medium text-gray-700 mb-1" %>
-            <%= f.text_field :city,
-                  value: edit_mode? ? poi&.city : nil,
-                  class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
-                  autocomplete: "address-level2" %>
-          </div>
-
-          <%# Телефон %>
-          <div class="mb-4">
-            <%= f.label :phone, t(".phone"), class: "block text-sm font-medium text-gray-700 mb-1" %>
-            <%= f.text_field :phone,
-                  value: edit_mode? ? poi&.phone : nil,
-                  class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
-                  autocomplete: "tel" %>
-          </div>
-
-          <%# Сайт %>
-          <div class="mb-4">
-            <%= f.label :website, t(".website"), class: "block text-sm font-medium text-gray-700 mb-1" %>
-            <%= f.text_field :website,
-                  value: edit_mode? ? poi&.website : nil,
-                  class: "w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500",
-                  autocomplete: "url" %>
-          </div>
-
-          <%# Доступность %>
-          <div class="mb-4 flex items-center gap-2">
-            <%= f.check_box :wheelchair_accessible,
-                  checked: edit_mode? ? poi&.wheelchair_accessible : false,
-                  class: "rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" %>
-            <%= f.label :wheelchair_accessible, t(".wheelchair"), class: "text-sm text-gray-700" %>
-          </div>
-
-          <%# Кнопка %>
-          <div class="mt-6">
-            <%= f.submit edit_mode? ? t(".save") : t(".submit"),
-                  class: "w-full px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors" %>
+        <% end %>
+        <% if poi.verification_count > 0 %>
+          <div class="flex items-center gap-1 text-gray-500">
+            <i class="mdi mdi-check-circle text-emerald-500 text-sm"></i>
+            <%# Иконка: mdi-check-circle %>
+            <span><%= t(".verified_count", count: poi.verification_count) %></span>
           </div>
         <% end %>
       </div>
 
+      <%# Адрес %>
+      <% if poi.address.present? || poi.city.present? %>
+        <div class="flex items-start gap-2 text-sm text-gray-600">
+          <i class="mdi mdi-map-marker text-gray-400 mt-0.5"></i>
+          <%# Иконка: mdi-map-marker %>
+          <span><%= [poi.address, poi.city, poi.country].compact.join(", ") %></span>
+        </div>
+      <% end %>
+
+      <%# Контакты %>
+      <div class="grid grid-cols-2 gap-3">
+        <% if poi.phone.present? %>
+          <div class="flex items-center gap-2 text-sm">
+            <i class="mdi mdi-phone text-gray-400"></i>
+            <%# Иконка: mdi-phone %>
+            <a href="tel:<%= poi.phone %>" class="text-emerald-600 hover:text-emerald-800"><%= poi.phone %></a>
+          </div>
+        <% end %>
+        <% if poi.website.present? %>
+          <div class="flex items-center gap-2 text-sm">
+            <i class="mdi mdi-web text-gray-400"></i>
+            <%# Иконка: mdi-web %>
+            <a href="<%= poi.website %>" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-800 truncate"><%= poi.website %></a>
+          </div>
+        <% end %>
+        <% if poi.wheelchair_accessible %>
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <i class="mdi mdi-wheelchair text-gray-400"></i>
+            <%# Иконка: mdi-wheelchair %>
+            <%= t(".wheelchair_accessible") %>
+          </div>
+        <% end %>
+        <% if poi.price_info.present? %>
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <i class="mdi mdi-currency-usd text-gray-400"></i>
+            <%# Иконка: mdi-currency-usd %>
+            <%= poi.price_info %>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Описание %>
+      <% if poi.localized_description.present? %>
+        <div>
+          <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"><%= t(".description") %></h4>
+          <p class="text-sm text-gray-700"><%= poi.localized_description %></p>
+        </div>
+      <% end %>
+
+      <%# Opening hours %>
+      <% if poi.opening_hours.present? %>
+        <div>
+          <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"><%= t(".opening_hours") %></h4>
+          <p class="text-sm text-gray-700">
+            <%= poi.opening_hours.is_a?(Hash) ? poi.opening_hours.to_json : poi.opening_hours %>
+          </p>
+        </div>
+      <% end %>
+
+      <%# Метаданные %>
+      <% if metadata_fields.any? %>
+        <div>
+          <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2"><%= t(".characteristics") %></h4>
+          <dl class="grid grid-cols-2 gap-2">
+            <% metadata_fields.each do |field| %>
+              <div class="text-sm">
+                <dt class="text-xs text-gray-400"><%= field[:label] %></dt>
+                <dd class="text-gray-900">
+                  <% if field[:value].is_a?(Array) %>
+                    <%= field[:value].join(", ") %>
+                  <% elsif [true, false].include?(field[:value]) %>
+                    <%= field[:value] ? t(".true") : t(".false") %>
+                  <% else %>
+                    <%= field[:value] %>
+                  <% end %>
+                </dd>
+              </div>
+            <% end %>
+          </dl>
+        </div>
+      <% end %>
+
+      <%# Мини-карта %>
+      <div>
+        <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2"><%= t(".location") %></h4>
+        <div data-poi--detail-component-target="viewMap"
+             class="w-full h-48 rounded-lg border border-gray-200 overflow-hidden">
+        </div>
+        <p class="text-xs text-gray-400 mt-1"><%= poi.latitude %>, <%= poi.longitude %></p>
+      </div>
+
+      <%# Автор и дата %>
+      <div class="pt-3 border-t border-gray-100">
+        <p class="text-xs text-gray-400">
+          <%= t(".added_by", name: poi.user&.name || t(".unknown")) %> ·
+          <%= l poi.created_at, format: :long %>
+        </p>
+      </div>
+    </div>
+
+    <%# Panel: Comments %>
+    <div data-ui--tabs-component-target="panel" data-tab="comments" class="hidden space-y-4">
+      <%# Список комментариев (inline, без partials) %>
+      <div data-poi--detail-component-target="commentsList" class="space-y-3">
+        <% if root_comments.any? %>
+          <% root_comments.each do |comment| %>
+            <div class="bg-gray-50 rounded-lg p-3">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <span class="text-xs font-medium text-emerald-700"><%= comment.user.name.first.upcase %></span>
+                </div>
+                <span class="text-sm font-medium text-gray-900"><%= comment.user.name %></span>
+                <span class="text-xs text-gray-400"><%= l comment.created_at, format: :short %></span>
+              </div>
+              <p class="text-sm text-gray-700 ml-8"><%= comment.body %></p>
+              <%# Ответы (1 уровень вложенности) %>
+              <% replies_for(comment).each do |reply| %>
+                <div class="ml-8 mt-2 pl-3 border-l-2 border-emerald-200">
+                  <div class="flex items-center gap-2 mb-1">
+                    <div class="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center">
+                      <span class="text-[10px] font-medium text-emerald-700"><%= reply.user.name.first.upcase %></span>
+                    </div>
+                    <span class="text-sm font-medium text-gray-900"><%= reply.user.name %></span>
+                    <span class="text-xs text-gray-400"><%= l reply.created_at, format: :short %></span>
+                  </div>
+                  <p class="text-sm text-gray-700"><%= reply.body %></p>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        <% else %>
+          <div class="text-center py-8 text-gray-400">
+            <i class="mdi mdi-comment-text-outline text-3xl mb-2"></i>
+            <%# Иконка: mdi-comment-text-outline %>
+            <p class="text-sm"><%= t(".no_comments") %></p>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Форма добавления комментария %>
+      <% if user_signed_in? %>
+        <% if can_comment? %>
+          <div class="border-t border-gray-100 pt-4">
+            <%= form_with url: "#", local: false, data: { action: "submit->poi--detail-component#submitComment" }, class: "flex gap-3" do |f| %>
+              <%= f.text_area :body,
+                    data: { poi__detail_component_target: "commentInput" },
+                    placeholder: t(".comment_placeholder"),
+                    rows: 2,
+                    autocomplete: "off",
+                    class: "flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500 resize-none",
+                    required: true %>
+              <%= f.submit t(".send"),
+                    class: "self-end px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors shrink-0" %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="border-t border-gray-100 pt-4">
+            <p class="text-xs text-amber-600 flex items-center gap-1">
+              <i class="mdi mdi-map-marker-radius text-sm"></i>
+              <%# Иконка: mdi-map-marker-radius %>
+              <%= t(".proximity_hint") %>
+            </p>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="border-t border-gray-100 pt-4 text-center">
+          <p class="text-sm text-gray-500">
+            <%= link_to t(".login_to_comment"), new_user_session_path, class: "text-emerald-600 hover:text-emerald-800 font-medium" %>
+          </p>
+        </div>
+      <% end %>
     </div>
   </div>
 </div>

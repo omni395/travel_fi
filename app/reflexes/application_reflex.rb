@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class ApplicationReflex < StimulusReflex::Reflex
+  include Rails.application.routes.url_helpers
   include Pundit::Authorization
   include Pagy::Method
 
@@ -37,7 +38,7 @@ class ApplicationReflex < StimulusReflex::Reflex
   end
 
   #
-  # Проверяет расстояние между пользователем и POI (50м лимит)
+  # Проверяет расстояние между пользователем и POI (100м лимит)
   # Админы/модераторы — без проверки
   #
   # При нарушении рендерит Ui::ConfirmDialogComponent с предупреждением
