@@ -117,8 +117,18 @@ ru:
     poi_categories:
       index:
         title: "Категории POI"
+        add_category: "Добавить категорию"
+      new:
+        title: "Новая категория"
+    pois:
+      index:
+        title: "POI"
+        add_poi: "Добавить POI"
+      new:
+        title: "Новый POI"
     layout:
       loading: "Загрузка..."
+      solid_queue_dashboard: "SolidQueue"
     title: "Админ-панель"
     back_to_site: "Вернуться на сайт"
     profile: "Профиль"
@@ -208,6 +218,10 @@ ru:
         update_success: "Категория успешно обновлена"
         update_unauthorized: "У вас нет прав для обновления этой категории"
         update_error: "Ошибка при обновлении категории"
+        import_started: "Импорт из OSM запущен. Вы получите уведомление о завершении."
+        import_invalid_location: "Неверная локация: укажите город и bounding box"
+        import_unauthorized: "У вас нет прав для импорта POI"
+        import_error: "Ошибка при запуске импорта"
         filter_unauthorized: "У вас нет прав для фильтрации категорий"
         filter_error: "Ошибка при фильтрации категорий"
         operation_success: "Операция выполнена успешно!"
@@ -223,6 +237,9 @@ ru:
         destroy_error: "Ошибка при удалении поля"
         operation_success: "Операция выполнена успешно!"
       pois:
+        create_success: "POI успешно создана"
+        create_unauthorized: "У вас нет прав для создания POI"
+        create_error: "Ошибка при создании POI"
         update_success: "POI успешно обновлена"
         update_unauthorized: "У вас нет прав для обновления этой POI"
         update_error: "Ошибка при обновлении POI"
@@ -239,6 +256,8 @@ ru:
         operation_success: "Операция выполнена успешно!"
 
   pois:
+    title: "Точки интереса"
+    no_location_toast: "Доступ к геолокации запрещён. Включите службы геолокации, чтобы добавлять и взаимодействовать с ближайшими POI."
     guest_warning: "Вы используете режим гостя. Войдите или зарегистрируйтесь, чтобы добавлять и управлять POI."
     auth_required_title: "Требуется вход"
     auth_required_message: "Пожалуйста, войдите или зарегистрируйтесь, чтобы просмотреть подробную информацию об этом месте."

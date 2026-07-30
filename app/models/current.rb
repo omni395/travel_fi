@@ -10,4 +10,6 @@ class Current < ActiveSupport::CurrentAttributes
   attribute :request
   attribute :user
   attribute :admin_context
+  attribute :user_lat
+  attribute :user_lng
 end

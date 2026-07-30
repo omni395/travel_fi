@@ -20,7 +20,8 @@ namespace :seed do
     "Dubai"       => { bbox: [ 25.2, 55.2, 25.3, 55.4 ],           country: "UAE" },
     "Sydney"      => { bbox: [ -33.9, 151.1, -33.8, 151.3 ],       country: "Australia" },
     "Singapore"   => { bbox: [ 1.2, 103.6, 1.5, 104.0 ],           country: "Singapore" },
-    "Istanbul"    => { bbox: [ 41.0, 28.9, 41.1, 29.1 ],           country: "Turkey" }
+    "Istanbul"    => { bbox: [ 41.0, 28.9, 41.1, 29.1 ],           country: "Turkey" },
+    "Kryvyi Rih"  => { bbox: [ 47.8, 33.2, 48.1, 33.7 ],           country: "Ukraine" }
   }.freeze
 
   CATEGORY_MAPPING = {

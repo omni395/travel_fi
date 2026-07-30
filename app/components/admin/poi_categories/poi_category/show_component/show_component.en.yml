@@ -8,6 +8,5 @@ en:
           active: Active
           inactive: Inactive
           edit: Edit
-          description: Description
           position: Position
           pois_count: POIs count

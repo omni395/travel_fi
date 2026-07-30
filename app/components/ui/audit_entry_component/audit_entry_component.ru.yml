@@ -1,0 +1,19 @@
+---
+ru:
+  ui:
+    audit_entry_component:
+      created: "Создано"
+      updated: "Изменено"
+      deleted: "Удалено"
+      by: "кем"
+      system: "Система"
+      no_versions: "Изменений пока нет"
+      no_versions_hint: "Изменений пока нет, аудит появится здесь."
+      field_types:
+        field_key: "Ключ"
+        field_type: "Тип"
+        label: "Метка"
+        position: "Позиция"
+        required: "Обязательное"
+        active: "Активно"
+        poi_category_id: "Категория"

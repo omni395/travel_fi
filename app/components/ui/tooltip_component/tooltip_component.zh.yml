@@ -2,6 +2,5 @@ zh:
   ui:
     tooltip_component:
       loading: "加载中..."
-      category: "类别"
+      category: "分类"
       address: "地址"
-      photo: "照片"

@@ -1,0 +1,19 @@
+---
+en:
+  ui:
+    audit_entry_component:
+      created: "Created"
+      updated: "Updated"
+      deleted: "Deleted"
+      by: "by"
+      system: "System"
+      field_types:
+        field_key: "Key"
+        field_type: "Type"
+        label: "Label"
+        position: "Position"
+        required: "Required"
+        active: "Active"
+        poi_category_id: "Category"
+      no_versions: "No changes recorded yet"
+      no_versions_hint: "No changes recorded yet, audit will appear here."

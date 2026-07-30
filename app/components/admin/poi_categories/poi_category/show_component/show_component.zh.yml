@@ -8,6 +8,5 @@ zh:
           active: 启用
           inactive: 停用
           edit: 编辑
-          description: 描述
           position: 位置
           pois_count: POI数量

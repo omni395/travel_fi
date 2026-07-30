@@ -37,6 +37,7 @@ class Poi < ApplicationRecord
   # Ассоциации
   belongs_to :poi_category
   belongs_to :user
+  has_many :poi_comments, dependent: :destroy
 
   # Enum для статусов
   enum :status, {
@@ -44,6 +45,12 @@ class Poi < ApplicationRecord
     approved: 1,
     rejected: 2,
     archived: 3
+  }, validate: true
+
+  # Enum для источника: OSM или ручное создание
+  enum :source, {
+    manual: "manual",
+    osm: "osm"
   }, validate: true
 
   # Валидации
@@ -57,6 +64,11 @@ class Poi < ApplicationRecord
   scope :approved, -> { where(status: :approved) }
   scope :pending, -> { where(status: :pending) }
   scope :recent, -> { order(created_at: :desc) }
+
+  # Скоуп: видимые на карте (approved + только из активных категорий)
+  scope :visible, -> {
+    joins(:poi_category).where(status: :approved, poi_categories: { active: true })
+  }
 
   # PostGIS: POI в радиусе N метров от точки
   scope :within_meters, ->(lat, lng, meters) {
@@ -195,7 +207,7 @@ class Poi < ApplicationRecord
   # @return [Array<String>]
   #
   def self.ransackable_attributes(auth_object = nil)
-    %w[name description city country status rating verification_count created_at updated_at]
+    %w[name description city country status source rating verification_count created_at updated_at]
   end
 
   #

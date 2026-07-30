@@ -8,6 +8,5 @@ es:
           active: Activo
           inactive: Inactivo
           edit: Editar
-          description: Descripción
           position: Posición
           pois_count: Cantidad de POI

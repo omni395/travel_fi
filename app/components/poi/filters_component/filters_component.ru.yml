@@ -7,3 +7,4 @@ ru:
       deselect_all: "Снять все"
       selected: "выбрано"
       reset: "Сброс"
+      filters_label: "Фильтры"

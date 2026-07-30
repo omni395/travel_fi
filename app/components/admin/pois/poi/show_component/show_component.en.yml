@@ -6,7 +6,6 @@ en:
         show_component:
           missing_translations: 'Missing translations: %{locales}'
           edit: Edit
-          location: Location
           details: Details
           description: Description
           address: Address
@@ -18,12 +17,9 @@ en:
           created_by: Created by
           created_at: Created at
           verified_count: Verified %{count} times
-          slug: Slug
-          osm_id: OSM ID
           rating: Rating
           opening_hours: Opening Hours
           price_info: Price info
-          wheelchair_accessible: Wheelchair Accessible
           status:
             pending: "Pending"
             approved: "Approved"

@@ -10,20 +10,29 @@
 # Использует StimulusReflex для обновления без перезагрузки
 # %>
 
-<div class="p-4" data-controller="admin--poi-categories admin--poi-categories--table-component">
-  <%# Хлебные крошки %>
-  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
-    { name: t("admin.poi_categories.index.title") }
-  ]) %>
+<div class="p-4" data-controller="admin--poi-categories--table-component">
+  <%# Хлебные крошки + кнопка добавления %>
+  <div class="flex items-center justify-between mb-4">
+    <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+      { name: t("admin.poi_categories.index.title") }
+    ]) %>
+    <%= link_to new_admin_poi_category_path, class: "btn-ui btn-ui--primary btn-ui--md" do %>
+      <!-- mdi: plus -->
+      <i class="mdi mdi-plus"></i>
+      <%= t("admin.poi_categories.index.add_category") %>
+    <% end %>
+  </div>
 
-  <%# Фильтры и поиск %>
+  <%# Фильтры и поиск (категории: поиск + статус active/inactive) %>
   <%= render ::Ui::FiltersComponent.new(
         search_query: @search_query,
         status_filter: @status_filter,
-        search_controller: "admin--poi-categories",
-        search_action: "input->admin--poi-categories#filter",
-        filter_action: "change->admin--poi-categories#filter",
-        reset_action: "admin--poi-categories#resetFilters"
+        statuses: %w[active inactive],
+        status_model: :poi_category,
+        search_controller: "admin--poi-categories--table-component",
+        search_action: "input->admin--poi-categories--table-component#filter",
+        filter_action: "change->admin--poi-categories--table-component#filter",
+        reset_action: "admin--poi-categories--table-component#resetFilters"
       ) %>
 
   <%# Таблица категорий (вынесена в отдельный компонент для CableReady morph) %>

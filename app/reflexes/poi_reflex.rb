@@ -50,7 +50,7 @@ class PoiReflex < ApplicationReflex
   def show_detail_modal(poi_id)
     # Гости — показываем ConfirmDialog с предложением войти
     unless current_user
-      login_url = Rails.application.routes.url_helpers.new_user_session_path(return_to: request.original_url)
+      login_url = new_user_session_path(return_to: request.original_url)
       dialog = ApplicationController.render(Ui::ConfirmDialogComponent.new(
         title: I18n.t("pois.auth_required_title"),
         message: I18n.t("pois.auth_required_message"),
@@ -75,11 +75,17 @@ class PoiReflex < ApplicationReflex
     poi = Poi.includes(:poi_category, :user).find(poi_id)
     authorize_with_pundit!(poi, :show?)
 
-    html = ApplicationController.render(Poi::DetailComponent.new(poi: poi, current_user: current_user))
+    comments = PoiComment.where(poi_id: poi.id).includes(:user).recent
+    html = ApplicationController.render(Poi::DetailComponent.new(
+      poi: poi,
+      current_user: current_user,
+      comments: comments,
+      user_lat: session[:user_lat],
+      user_lng: session[:user_lng]
+    ))
 
     cable_ready.inner_html(selector: "#poi-detail-modal-body", html: html)
     cable_ready.add_css_class(selector: "#poi-form-content", name: "hidden")
-    cable_ready.remove_css_class(selector: "#poi-detail-modal-content", name: "hidden")
     cable_ready.remove_css_class(selector: "[data-poi--detail-component-target='overlay']", name: "hidden")
     cable_ready.broadcast
     morph :nothing
@@ -100,6 +106,8 @@ class PoiReflex < ApplicationReflex
   def set_location(params = {})
     session[:user_lat] = params[:lat].to_f
     session[:user_lng] = params[:lng].to_f
+    Current.user_lat = session[:user_lat]
+    Current.user_lng = session[:user_lng]
 
     morph :nothing
 
@@ -378,7 +386,7 @@ class PoiReflex < ApplicationReflex
     cable_ready.broadcast
     morph :nothing
 
-    Rails.logger.info("PoiReflex: Applied filters #{filters.inspect}, got #{pois.length}/#{total} POIs")
+    Rails.logger.info("PoiReflex: Applied filters (query=#{query.inspect}, category_ids=#{category_ids.inspect}), got #{pois.length}/#{total} POIs")
   end
 
   #
@@ -531,8 +539,8 @@ class PoiReflex < ApplicationReflex
     # Проверка расстояния (антифрод/спам)
     return unless check_proximity!(poi)
 
-    # Рендерим форму редактирования
-    html = ApplicationController.render(Poi::DetailComponent.new(
+    # Рендерим форму редактирования через Poi::FormComponent
+    html = ApplicationController.render(Poi::FormComponent.new(
       poi: poi,
       current_user: current_user,
       categories: PoiCategory.active.by_position,
@@ -541,8 +549,6 @@ class PoiReflex < ApplicationReflex
     ))
 
     cable_ready.inner_html(selector: "#poi-detail-modal-body", html: html)
-    cable_ready.add_css_class(selector: "#poi-detail-modal-content", name: "hidden")
-    cable_ready.remove_css_class(selector: "#poi-form-content", name: "hidden")
     cable_ready.remove_css_class(selector: "[data-poi--detail-component-target='overlay']", name: "hidden")
     cable_ready.broadcast
     morph :nothing
@@ -552,5 +558,114 @@ class PoiReflex < ApplicationReflex
     Rails.logger.error("PoiReflex: POI not found for edit - #{e.message}")
   rescue Pundit::NotAuthorizedError
     Rails.logger.warn("PoiReflex: Not authorized to edit POI #{poi_id}")
+  end
+
+  #
+  # Создаёт комментарий к POI
+  # Вызывается из poi--detail-component#submitComment
+  #
+  # @param params [Hash] { poi_id: Integer, body: String }
+  #
+  def create_comment(params = {})
+    poi = Poi.find(params[:poi_id])
+
+    # Устанавливаем координаты пользователя для proximity check в политике
+    Current.user_lat = session[:user_lat]
+    Current.user_lng = session[:user_lng]
+
+    authorize_with_pundit!(PoiComment.new(poi: poi, user: current_user), :create?)
+
+    comment = PoiService.create_comment(
+      poi: poi,
+      user: current_user,
+      body: params[:body]
+    )
+
+    # Рендерим обновлённый список комментариев
+    comments = PoiComment.where(poi_id: poi.id).includes(:user).recent
+    detail_html = ApplicationController.render(Poi::DetailComponent.new(
+      poi: poi,
+      current_user: current_user,
+      comments: comments,
+      user_lat: session[:user_lat],
+      user_lng: session[:user_lng]
+    ))
+
+    cable_ready.inner_html(selector: "#poi-detail-modal-body", html: detail_html)
+    cable_ready.broadcast
+    morph :nothing
+
+    Rails.logger.info("PoiReflex: Created comment ##{comment.id} for POI #{poi.id}")
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("PoiReflex: POI not found for comment - #{e.message}")
+  rescue Pundit::NotAuthorizedError
+    Rails.logger.warn("PoiReflex: Not authorized to comment on POI #{params[:poi_id]}")
+  rescue PoiService::CreateError => e
+    Rails.logger.error("PoiReflex: Comment creation failed - #{e.message}")
+  end
+
+  #
+  # Reverse geocoding через Nominatim (ReverseGeocodingService)
+  # Вызывается из poi--form-component#_reverseGeocode
+  # Заполняет поля city/country/address в форме через CableReady
+  #
+  # @param params [Hash] { lat: Float, lng: Float }
+  #
+  def reverse_geocode(params = {})
+    lat = params[:lat].to_f
+    lng = params[:lng].to_f
+
+    if lat == 0.0 || lng == 0.0
+      morph :nothing
+      return
+    end
+
+    result = ReverseGeocodingService.reverse_geocode(lat: lat, lng: lng)
+
+    unless result
+      morph :nothing
+      return
+    end
+
+    # Заполняем поля через CableReady
+    if result[:country].present?
+      cable_ready.set_attribute(
+        selector: "[name='poi[country]']",
+        name: "value",
+        value: result[:country]
+      )
+    end
+
+    if result[:city].present?
+      cable_ready.set_attribute(
+        selector: "[name='poi[city]']",
+        name: "value",
+        value: result[:city]
+      )
+    end
+
+    if result[:address].present?
+      cable_ready.set_attribute(
+        selector: "[name='poi[address]']",
+        name: "value",
+        value: result[:address]
+      )
+    end
+
+    if result[:zip_code].present?
+      cable_ready.set_attribute(
+        selector: "[name='poi[zip_code]']",
+        name: "value",
+        value: result[:zip_code]
+      )
+    end
+
+    cable_ready.broadcast
+    morph :nothing
+
+    Rails.logger.info "PoiReflex: reverse_geocode(#{lat}, #{lng}) -> #{result.inspect}"
+  rescue StandardError => e
+    Rails.logger.warn "PoiReflex: reverse_geocode error: #{e.message}"
+    morph :nothing
   end
 end

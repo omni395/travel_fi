@@ -7,5 +7,5 @@
 
 web: bin/rails server -b 0.0.0.0 -p 3000
 js: node esbuild.config.mjs --watch
-css: npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css --watch --verbose
+css: npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css --watch=always --verbose
 jobs: bin/jobs

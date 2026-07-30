@@ -1,10 +1,26 @@
 <%# Admin::PoiCategories::PoiCategory::PoisListComponent - список POI категории %>
-<div class="bg-white shadow rounded-lg p-6">
-  <h3 class="text-lg font-semibold text-gray-900 mb-4">
-    <i class="mdi mdi-map-marker-multiple text-gray-500 mr-2"></i>
-    <%# Иконка: mdi-map-marker-multiple %>
-    <%= t(".title", count: category.pois.count) %>
-  </h3>
+<div data-controller="admin--poi-categories--poi-category--pois-list-component"
+     class="bg-white shadow rounded-lg p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h3 class="text-lg font-semibold text-gray-900">
+      <i class="mdi mdi-map-marker-multiple text-gray-500 mr-2"></i>
+      <%# Иконка: mdi-map-marker-multiple %>
+      <%= t(".title", count: category.pois.count) %>
+    </h3>
+
+    <%# Кнопка импорта из OSM %>
+    <%= render Ui::BtnComponent.new(
+          color: :primary,
+          size: :sm,
+          html: {
+            data: { action: "click->admin--poi-categories--poi-category--pois-list-component#openOsmImport" }
+          }
+        ) do %>
+      <!-- mdi: cloud-download -->
+      <i class="mdi mdi-cloud-download"></i>
+      <%= t(".import_osm") %>
+    <% end %>
+  </div>
 
   <% if pois.any? %>
     <div class="overflow-x-auto">
@@ -21,7 +37,7 @@
         <tbody class="bg-white divide-y divide-gray-200">
           <% pois.each do |poi| %>
             <tr class="hover:bg-gray-50 cursor-pointer"
-                onclick="window.location.href='<%= admin_poi_path(id: poi) %>'">
+                onclick="window.location.href='<%= j(admin_poi_path(id: poi)) %>'">
               <td class="px-4 py-3 text-sm text-gray-900"><%= poi.localized_name %></td>
               <td class="px-4 py-3 text-sm text-gray-500"><%= poi.city || "-" %></td>
               <td class="px-4 py-3 text-sm">

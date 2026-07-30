@@ -1,26 +1,24 @@
 <%# UI::TooltipComponent - тултип для карты (OL Overlay) %>
 <%# Иконка: mdi-map-marker (заменяется динамически из poi_category.icon) %>
-<div id="ui-tooltip" class="ui-tooltip hidden">
-  <!-- Левая колонка: информация -->
-  <div class="tooltip-info">
-    <!-- Категория (иконка + название) -->
-    <div class="tooltip-category">
-      <i class="tooltip-category-icon mdi mdi-map-marker text-emerald-500"></i>
-      <span class="tooltip-category-name"><%= t(".category") %></span>
+<div id="ui-tooltip"
+     class="hidden pointer-events-none z-[1000] max-w-[280px] bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+     style="box-shadow: 0 8px 24px rgba(0,0,0,0.18);">
+  <%# Стрелка вниз (CSS-псевдоэлемент через inline fallback) %>
+  <div class="p-3 flex flex-col gap-0.5 min-w-0">
+    <%# Категория (иконка + название) %>
+    <div class="flex items-center gap-1">
+      <i class="tooltip-category-icon mdi mdi-map-marker text-emerald-500 text-sm"></i>
+      <span class="tooltip-category-name text-[10px] font-medium text-gray-500 uppercase tracking-wider"><%= t(".category") %></span>
     </div>
-    <!-- Название POI -->
-    <div class="tooltip-name"><%= t(".loading") %></div>
-    <!-- Рейтинг -->
-    <div class="tooltip-rating hidden">
+    <%# Название POI %>
+    <div class="tooltip-name text-sm font-semibold text-gray-900 leading-tight break-words"><%= t(".loading") %></div>
+    <%# Рейтинг %>
+    <div class="tooltip-rating hidden flex items-center gap-0.5 mt-0.5">
       <i class="mdi mdi-star text-yellow-400 text-xs"></i>
       <%# Иконка: mdi-star %>
-      <span class="tooltip-rating-value"></span>
+      <span class="tooltip-rating-value text-[11px] text-gray-500 font-medium"></span>
     </div>
-    <!-- Адрес -->
-    <div class="tooltip-address hidden"><%= t(".address") %></div>
-  </div>
-  <!-- Правая колонка: фото (или no-image) -->
-  <div class="tooltip-image">
-    <img class="tooltip-img" src="" alt="<%= t(".photo") %>" onerror="this.style.display='none'">
+    <%# Адрес %>
+    <div class="tooltip-address hidden text-[10px] text-gray-400 truncate mt-px"><%= t(".address") %></div>
   </div>
 </div>

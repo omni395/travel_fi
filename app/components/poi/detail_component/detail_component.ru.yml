@@ -1,42 +1,29 @@
----
 ru:
   poi:
     detail_component:
       tab_info: Информация
       tab_comments: Комментарии
-      tab_photos: Фото
+      edit: Редактировать
       status_pending: Ожидает
       status_approved: Одобрено
       status_rejected: Отклонено
-      status_archived: В архиве
+      status_archived: Архив
       wheelchair_accessible: Доступно для инвалидных колясок
       characteristics: Характеристики
+      description: Описание
+      opening_hours: Часы работы
+      location: Расположение
       added_by: Добавлено %{name}
+      unknown: Неизвестно
       verified_count:
         one: Подтверждено %{count} раз
         few: Подтверждено %{count} раза
         many: Подтверждено %{count} раз
         other: Подтверждено %{count} раз
-      comments_placeholder: Комментарии скоро появятся
-      photos_placeholder: Фотографии скоро появятся
-      edit_button: Редактировать
-      new_title: Добавить новую точку интереса
-      edit_title: Редактировать точку интереса
-      name: Название
-      name_placeholder: Введите название места
-      category: Категория
-      category_prompt: Выберите категорию...
-      position: Расположение
-      drag_hint: Перетащите маркер чтобы указать точное положение (макс. 50м)
-      address: Адрес
-      address_placeholder: Улица, номер дома
-      city: Город
-      phone: Телефон
-      website: Веб-сайт
-      wheelchair: Доступно для инвалидных колясок
-      submit: Добавить POI
-      save: Сохранить
-      proximity_warning_title: Слишком далеко
-      proximity_warning_message: Вы должны находиться в радиусе 50 метров от этой точки чтобы взаимодействовать с ней.
-      no_location_title: Требуется местоположение
-      no_location_message: Включите службы геолокации для взаимодействия с точками интереса.
+      no_comments: Нет комментариев. Будьте первым!
+      comment_placeholder: Напишите комментарий...
+      send: Отправить
+      login_to_comment: Войдите, чтобы комментировать
+      proximity_hint: Вы должны находиться рядом с этой точкой, чтобы комментировать
+      true: "Да"
+      false: "Нет"

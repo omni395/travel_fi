@@ -1,0 +1,17 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/admin/pois/new.html.erb - создание нового POI
+#
+# Отображает:
+# - Хлебные крошки
+# - Форму создания POI (EditComponent с пустым POI)
+# %>
+<div class="max-w-4xl mx-auto">
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.pois.index.title"), path: admin_pois_path },
+    { name: t("admin.pois.new.title") }
+  ]) %>
+
+  <%= render Admin::Pois::Poi::EditComponent.new(poi: Poi.new, categories: @categories) %>
+</div>

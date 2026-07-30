@@ -18,7 +18,7 @@ class PoiCategoryService
   # @raise [CreateError] если произойдет ошибка валидации
   #
   def self.create(params:, current_user:)
-    category = PoiCategory.new(params.slice(:name, :slug, :icon, :description, :position, :active))
+    category = PoiCategory.new(permitted_params(params))
     category.save!
     category
   rescue ActiveRecord::RecordInvalid => e
@@ -35,7 +35,7 @@ class PoiCategoryService
   # @raise [UpdateError] если произойдет ошибка валидации
   #
   def self.update(category:, params:, current_user:)
-    category.update!(params.slice(:name, :slug, :icon, :description, :position, :active))
+    category.update!(permitted_params(params))
     category
   rescue ActiveRecord::RecordInvalid => e
     raise UpdateError, e.message
@@ -90,6 +90,28 @@ class PoiCategoryService
   end
 
   #
+  # Перемещает поле вверх или вниз по позиции
+  #
+  # @param field [PoiCategoryField] поле
+  # @param direction [String] "up" или "down"
+  #
+  def self.reorder_field(field:, direction:)
+    category = field.poi_category
+    fields = category.poi_category_fields.by_position.to_a
+    idx = fields.index { |f| f.id == field.id }
+    return unless idx
+
+    swap_idx = direction == "up" ? idx - 1 : idx + 1
+    return if swap_idx < 0 || swap_idx >= fields.size
+
+    current_pos = fields[idx].position
+    target_pos = fields[swap_idx].position
+
+    PoiCategoryField.where(id: fields[idx].id).update_all(position: target_pos)
+    PoiCategoryField.where(id: fields[swap_idx].id).update_all(position: current_pos)
+  end
+
+  #
   # Ищет категории по запросу через Ransack
   #
   # @param query [String, nil] поисковый запрос
@@ -105,6 +127,32 @@ class PoiCategoryService
 
     result = categories.ransack(conditions).result
     result.order(position: :asc)
+  end
+
+  private
+
+  #
+  # Фильтрует и преобразует параметры категории
+  # osm_tags: строка → массив (разделение по запятой)
+  #
+  # @param params [Hash]
+  # @return [Hash]
+  #
+  def self.permitted_params(params)
+    result = params.slice(:name, :slug, :icon, :description, :position, :active, :osm_default_name)
+
+    # Парсим osm_tags: строка "amenity=toilets, amenity=shower" → ["amenity=toilets", "amenity=shower"]
+    if params[:osm_tags].present?
+      result[:osm_tags] = if params[:osm_tags].is_a?(String)
+                            params[:osm_tags].split(",").map(&:strip).reject(&:blank?)
+                          elsif params[:osm_tags].is_a?(Array)
+                            params[:osm_tags].map(&:strip).reject(&:blank?)
+                          else
+                            params[:osm_tags]
+                          end
+    end
+
+    result
   end
 
   # Custom exceptions

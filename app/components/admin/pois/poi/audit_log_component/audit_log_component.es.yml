@@ -1,9 +1,0 @@
----
-es:
-  admin:
-    pois:
-      poi:
-        audit_log_component:
-          title: Historial de cambios
-          system: Sistema
-          no_versions: Sin cambios registrados

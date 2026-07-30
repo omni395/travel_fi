@@ -1,0 +1,18 @@
+---
+ru:
+  admin:
+    poi_categories:
+      poi_category:
+        osm_import_component:
+          title: Импорт из OpenStreetMap
+          no_osm_tags_warning: "OSM-теги не настроены для этой категории. Перейдите в режим редактирования чтобы добавить теги."
+          select_city: Выберите город
+          choose_city: Выберите город...
+          custom_location: Свой вариант
+          city_name: Название города
+          country: Страна
+          cancel: Отмена
+          import: Загрузить
+          close: Закрыть
+          fetching: Получение данных из OpenStreetMap...
+          of: из

@@ -1,5 +1,6 @@
 en:
   pois:
+    title: "POIs"
     loading_location: "Determining your location..."
     no_location_title: "Location unavailable"
     no_location_description: "Enable location services in your browser settings to see points of interest near you."
@@ -154,8 +155,18 @@ en:
     poi_categories:
       index:
         title: "POI Categories"
+        add_category: "Add Category"
+      new:
+        title: "New Category"
+    pois:
+      index:
+        title: "POIs"
+        add_poi: "Add POI"
+      new:
+        title: "New POI"
     layout:
       loading: "Loading..."
+      solid_queue_dashboard: "SolidQueue"
     title: "Admin Panel"
     back_to_site: "Back to Site"
     profile: "Profile"
@@ -272,6 +283,10 @@ en:
         update_success: "Category updated successfully"
         update_unauthorized: "You are not authorized to update this category"
         update_error: "An error occurred while updating the category"
+        import_started: "OSM import started. You'll be notified when complete."
+        import_invalid_location: "Invalid location: city and bounding box are required"
+        import_unauthorized: "You are not authorized to import POIs"
+        import_error: "An error occurred while starting the import"
         filter_unauthorized: "You are not authorized to filter categories"
         filter_error: "An error occurred while filtering categories"
         operation_success: "Operation successful!"
@@ -287,6 +302,9 @@ en:
         destroy_error: "An error occurred while deleting the field"
         operation_success: "Operation successful!"
       pois:
+        create_success: "POI created successfully"
+        create_unauthorized: "You are not authorized to create POIs"
+        create_error: "An error occurred while creating the POI"
         update_success: "POI updated successfully"
         update_unauthorized: "You are not authorized to update this POI"
         update_error: "An error occurred while updating the POI"

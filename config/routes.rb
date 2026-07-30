@@ -13,7 +13,7 @@ Rails.application.routes.draw do
 
   # SolidQueue Dashboard — мониторинг очередей (без локали)
   authenticate :user, ->(user) { user.has_role?(:admin) } do
-    mount SolidQueueDashboard::Engine, at: "/solid-queue"
+    mount SolidQueueDashboard::Engine, at: "/solid-queue", as: :solid_queue_dashboard
   end
 
   # Devise omniauth БЕЗ локали (колбэки Google OAuth)
@@ -44,10 +44,10 @@ Rails.application.routes.draw do
       resources :users, only: [:index, :show, :update]
 
       # Управление категориями POI
-      resources :poi_categories, only: [:index, :show, :create, :update]
+      resources :poi_categories, only: [:index, :show, :new, :create, :update]
 
       # Управление POI
-      resources :pois, only: [:index, :show, :update]
+      resources :pois, only: [:index, :show, :new, :create, :update]
     end
 
     # User-facing POI routes - карта и список POI

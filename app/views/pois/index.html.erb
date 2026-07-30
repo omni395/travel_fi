@@ -9,16 +9,9 @@
     <div class="flex items-center justify-between">
       <h2 class="text-md font-semibold text-gray-900">
         <i class="mdi mdi-map-marker-multiple text-emerald-500 mr-0.5"></i>
-        POIs
+        <%# Иконка: mdi-map-marker-multiple %>
+        <%= t("pois.title") %>
       </h2>
-      <% if user_signed_in? %>
-        <button type="button"
-                data-action="click->poi--detail-component#open"
-                class="inline-flex items-center px-2 py-1.5 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors">
-          <i class="mdi mdi-plus mr-1"></i>
-          Add POI
-        </button>
-      <% end %>
     </div>
   </div>
   <div id="poi-list" data-ui--sidebar-component-target="list" class="divide-y divide-gray-100">
@@ -29,14 +22,12 @@
   </div>
 <% end %>
 
-
-  <%# Карта (показывается всегда, с маркером или без) %>
+  <%# Карта %>
   <div class="flex-1 min-h-0 relative">
     <%= render Poi::MapComponent.new(categories: @categories) %>
   </div>
 
-  <%# Спиннер загрузки (скрывается после инициализации карты) %>
-  <%# Иконка: mdi-map-search %>
+  <%# Спиннер загрузки %>
   <div id="poi-loading"
        class="absolute inset-0 flex items-center justify-center bg-white z-50"
        style="top: 4rem;">
@@ -48,7 +39,30 @@
   </div>
 </div>
 
-<%= render Poi::DetailComponent.new(categories: @categories, user_lat: @user_lat, user_lng: @user_lng) %>
+<%# Единая модалка для просмотра и формы POI %>
+<div id="poi-detail-overlay"
+     data-controller="poi--detail-component"
+     data-poi--detail-component-target="overlay"
+     class="fixed inset-0 z-50 hidden"
+     data-action="keydown.esc->poi--detail-component#close">
+  <div class="absolute inset-0 bg-black/50" data-action="click->poi--detail-component#close"></div>
+  <div class="absolute inset-0 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div id="poi-detail-modal-body">
+        <%# Сюда рендерится Poi::DetailComponent (view) через Reflex %>
+      </div>
+
+      <div id="poi-form-content" class="hidden">
+        <%# Сюда рендерится Poi::FormComponent (form) через Reflex %>
+        <%= render Poi::FormComponent.new(
+              categories: @categories,
+              user_lat: @user_lat,
+              user_lng: @user_lng
+            ) %>
+      </div>
+    </div>
+  </div>
+</div>
 
 <%# Контейнер для ConfirmDialog аутентификации (для гостей) %>
 <div id="poi-auth-dialog" class="hidden"></div>

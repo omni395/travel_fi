@@ -7,9 +7,13 @@
 # %>
 <%= render Ui::CardComponent.new do |card| %>
   <% card.with_body do %>
-    <%= form_with model: category, url: admin_poi_category_path(id: category), method: :patch,
+    <%= form_with model: category,
+                  url: category.persisted? ? admin_poi_category_path(id: category) : admin_poi_categories_path,
+                  method: category.persisted? ? :patch : :post,
                   data: { controller: "admin--poi-categories--poi-category--edit-component",
-                          action: "submit->admin--poi-categories--poi-category--edit-component#handleSubmit" } do |f| %>
+                          action: "submit->admin--poi-categories--poi-category--edit-component#handleSubmit",
+                          reflex_serialize_form: false,
+                          id: category.persisted? ? category.id : nil } do |f| %>
 
       <%# Name (локализованные поля) %>
       <div class="mb-6">
@@ -30,6 +34,11 @@
           <% end %>
         </div>
       </div>
+
+      <%# ID (hidden) — для create/update в Reflex %>
+      <% if category.persisted? %>
+        <%= f.hidden_field :id %>
+      <% end %>
 
       <%# Slug %>
       <div class="mb-6">
@@ -82,15 +91,15 @@
         </div>
       </div>
 
-      <%# Position и Active %>
+      <%# ID (read-only) и Active %>
       <div class="mb-6 flex items-center gap-8">
         <div>
-          <%= f.label :position, class: "block text-sm font-medium text-gray-700 mb-1" do %>
-            <!-- mdi: order-numeric-asc -->
-            <i class="mdi mdi-order-numeric-asc mr-1"></i>
-            <%= t(".position") %>
-          <% end %>
-          <%= f.number_field :position, class: "field-input w-24" %>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <!-- mdi: identifier -->
+            <i class="mdi mdi-identifier mr-1"></i>
+            <%= t(".id") %>
+          </label>
+          <p class="text-sm text-gray-900 py-2 px-3 bg-gray-50 rounded-md border border-gray-200"><%= category.id %></p>
         </div>
         <div class="flex items-center gap-2 mt-6">
           <%= f.check_box :active, class: "toggle-input" %>
@@ -98,9 +107,53 @@
         </div>
       </div>
 
+      <%# --- OSM Import Settings --- %>
+      <div class="mb-6 pt-4 border-t border-gray-200">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-3">
+          <!-- mdi: cloud-download -->
+          <i class="mdi mdi-cloud-download mr-1"></i>
+          <%= t(".osm_settings") %>
+        </h3>
+
+        <%# OSM Tags %>
+        <div class="mb-4">
+          <%= label_tag "category[osm_tags]", class: "block text-sm font-medium text-gray-700 mb-1" do %>
+            <!-- mdi: tag-text-outline -->
+            <i class="mdi mdi-tag-text-outline mr-1"></i>
+            <%= t(".osm_tags_label") %>
+          <% end %>
+          <%= text_field_tag "category[osm_tags]", osm_tags_string,
+                             autocomplete: "off",
+                             placeholder: "amenity=toilets, amenity=shower",
+                             class: "field-input w-full" %>
+          <p class="mt-1 text-xs text-gray-500"><%= t(".osm_tags_hint") %></p>
+        </div>
+
+        <%# OSM Default Name %>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <!-- mdi: translate -->
+            <i class="mdi mdi-translate mr-1"></i>
+            <%= t(".osm_default_name_label") %>
+          </label>
+          <div class="grid grid-cols-2 gap-3">
+            <% locales.each do |locale| %>
+              <div>
+                <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+                <%= text_field_tag "category[osm_default_name][#{locale}]", localized_value(:osm_default_name, locale),
+                                   autocomplete: "off",
+                                   class: "field-input mt-1",
+                                   placeholder: t("locales.#{locale}") %>
+              </div>
+            <% end %>
+          </div>
+          <p class="mt-1 text-xs text-gray-500"><%= t(".osm_default_name_hint") %></p>
+        </div>
+      </div>
+
       <%# Кнопки %>
       <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
-        <%= link_to admin_poi_category_path(id: category),
+        <%= link_to category.persisted? ? admin_poi_category_path(id: category) : admin_poi_categories_path,
                     class: "btn-ui btn-ui--ghost btn-ui--md" do %>
           <!-- mdi: close -->
           <i class="mdi mdi-close"></i>

@@ -6,96 +6,207 @@
 # Чекбоксы и текст — только UI, без сервера до Apply.
 # Фильтры сохраняются в session, применяются при движении карты.
 #
+# Варианты:
+#   :sidebar — внутри сайдбара, flex-col
+#   :overlay — поверх карты, flex-row
+#   :dropdown — кнопка-иконка, открывает дропдаун с фильтрами
+#
 # Иконки: mdi-magnify, mdi-filter-variant, mdi-chevron-down, mdi-filter-remove, mdi-check
 %>
-<div data-controller="poi--filters-component"
-     data-all-label="<%= t('.all_categories') %>"
-     data-selected-label="<%= t('.selected') %>"
-     data-select-all-label="<%= t('.select_all') %>"
-     data-deselect-all-label="<%= t('.deselect_all') %>"
-     class="<%= container_classes %> bg-white rounded-xl shadow border border-gray-200 p-1.5
-            <%= layout_classes %>">
-
-  <%# Поле поиска %>
-  <div class="relative flex-1 min-w-0">
-    <!-- mdi: magnify -->
-    <span class="mdi mdi-magnify absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm"></span>
-    <input type="text"
-           data-poi--filters-component-target="searchInput"
-           placeholder="<%= t('.search_placeholder') %>"
-           autocomplete="off"
-           class="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-sm
-                  focus:border-emerald-500 focus:ring-emerald-500
-                  placeholder:text-gray-400">
-  </div>
-
-  <%# Категории + Apply + сброс %>
-  <div class="flex items-center gap-1 md:gap-1.5">
-
-    <%# Мультиселект категорий %>
-    <div class="flex-1 min-w-0">
-    <%= render Ui::DropdownComponent.new(menu_classes: "w-56 max-h-60 overflow-y-auto py-0.5 bg-white rounded-lg shadow-lg") do |dropdown| %>
-      <% dropdown.with_trigger do %>
-        <button type="button"
-                data-action="ui--dropdown-component#toggle"
-                class="w-full flex items-center gap-1 px-2 py-1.5 border border-gray-300 rounded-lg text-sm
-                       bg-white hover:bg-gray-50 transition-colors text-left cursor-pointer">
-          <!-- mdi: filter-variant -->
-          <span class="mdi mdi-filter-variant text-gray-400 shrink-0 text-sm"></span>
-          <span data-poi--filters-component-target="summary"
-                class="flex-1 truncate text-gray-600 text-xs"><%= t('.all_categories') %></span>
-          <!-- mdi: chevron-down -->
-          <span class="mdi mdi-chevron-down text-gray-400 shrink-0 text-sm"></span>
-        </button>
-      <% end %>
-      <% dropdown.with_menu do %>
-        <%# Select All / Deselect All — ссылка, не чекбокс %>
-        <div class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 hover:bg-emerald-50 cursor-pointer"
-             data-action="click->poi--filters-component#toggleAll">
-          <span data-poi--filters-component-target="selectAllText"
-                class="text-sm font-medium text-emerald-600"><%= t('.select_all') %></span>
-        </div>
-        <%# Категории %>
-        <% categories.each do |cat| %>
-          <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 cursor-pointer">
-            <input type="checkbox"
-                   value="<%= cat.id %>"
-                   checked
-                   data-action="change->poi--filters-component#onCategoryChange"
-                   class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500">
-            <span class="text-sm text-gray-700"><%= cat.localized_name %></span>
-          </label>
-        <% end %>
-      <% end %>
+<% if dropdown_variant? %>
+  <%# Вариант :dropdown — фильтры скрыты под кнопку с иконкой %>
+  <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "w-80 p-2 bg-white border border-gray-200") do |dropdown| %>
+    <% dropdown.with_trigger do %>
+      <button type="button"
+              data-action="ui--dropdown-component#toggle"
+              data-controller="ui--tooltip-component"
+              data-ui--tooltip-component-content-value="<%= t('.filters_label') %>"
+              class="inline-flex items-center justify-center w-9 h-9 bg-white rounded-lg shadow border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer"
+              title="<%= t('.filters_label') %>">
+        <!-- mdi: filter-variant -->
+        <span class="mdi mdi-filter-variant text-gray-600 text-lg"></span>
+      </button>
     <% end %>
+    <% dropdown.with_menu do %>
+      <div data-controller="poi--filters-component"
+           data-all-label="<%= t('.all_categories') %>"
+           data-selected-label="<%= t('.selected') %>"
+           data-select-all-label="<%= t('.select_all') %>"
+           data-deselect-all-label="<%= t('.deselect_all') %>"
+           class="<%= layout_classes %>">
+
+        <%# Поле поиска %>
+        <div class="relative flex-1 min-w-0">
+          <!-- mdi: magnify -->
+          <span class="mdi mdi-magnify absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm"></span>
+          <input type="text"
+                 data-poi--filters-component-target="searchInput"
+                 placeholder="<%= t('.search_placeholder') %>"
+                 autocomplete="off"
+                 class="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-sm
+                        focus:border-emerald-500 focus:ring-emerald-500
+                        placeholder:text-gray-400">
+        </div>
+
+        <%# Категории + Apply + сброс %>
+        <div class="flex items-center gap-1 mt-1">
+          <%# Мультиселект категорий %>
+          <div class="flex-1 min-w-0">
+          <%= render Ui::DropdownComponent.new(menu_classes: "w-56 max-h-60 overflow-y-auto bg-white") do |inner_dropdown| %>
+            <% inner_dropdown.with_trigger do %>
+              <button type="button"
+                      data-action="ui--dropdown-component#toggle"
+                      class="w-full flex items-center gap-1 px-2 py-1.5 border border-gray-300 rounded-lg text-sm
+                             bg-white hover:bg-gray-50 transition-colors text-left cursor-pointer">
+                <!-- mdi: filter-variant -->
+                <span class="mdi mdi-filter-variant text-gray-400 shrink-0 text-sm"></span>
+                <span data-poi--filters-component-target="summary"
+                      class="flex-1 truncate text-gray-600 text-xs"><%= t('.all_categories') %></span>
+                <!-- mdi: chevron-down -->
+                <span class="mdi mdi-chevron-down text-gray-400 shrink-0 text-sm"></span>
+              </button>
+            <% end %>
+            <% inner_dropdown.with_menu do %>
+              <%# Select All / Deselect All %>
+              <div class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 hover:bg-emerald-50 cursor-pointer"
+                   data-action="click->poi--filters-component#toggleAll">
+                <span data-poi--filters-component-target="selectAllText"
+                      class="text-sm font-medium text-emerald-600"><%= t('.select_all') %></span>
+              </div>
+              <% categories.each do |cat| %>
+                <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 cursor-pointer">
+                  <input type="checkbox"
+                         value="<%= cat.id %>"
+                         checked
+                         data-action="change->poi--filters-component#onCategoryChange"
+                         class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500">
+                  <span class="text-sm text-gray-700"><%= cat.localized_name %></span>
+                </label>
+              <% end %>
+            <% end %>
+          <% end %>
+          </div>
+
+          <%# Apply %>
+          <%= render Ui::BtnComponent.new(
+                color: :primary,
+                size: :sm,
+                html: {
+                  data: {
+                    action: "click->poi--filters-component#applyFilters",
+                    poi_filters_component_target: "applyBtn"
+                  }
+                }
+              ) do %>
+            <!-- mdi: check -->
+            <span class="mdi mdi-check"></span>
+          <% end %>
+
+          <%# Reset %>
+          <%= render Ui::BtnComponent.new(
+                color: :ghost,
+                size: :sm,
+                html: {
+                  data: { action: "click->poi--filters-component#resetFilters" }
+                }
+              ) do %>
+            <!-- mdi: filter-remove -->
+            <span class="mdi mdi-filter-remove"></span>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+<% else %>
+  <%# Варианты :sidebar и :overlay (существующая логика) %>
+  <div data-controller="poi--filters-component"
+       data-all-label="<%= t('.all_categories') %>"
+       data-selected-label="<%= t('.selected') %>"
+       data-select-all-label="<%= t('.select_all') %>"
+       data-deselect-all-label="<%= t('.deselect_all') %>"
+       class="<%= container_classes %> bg-white rounded-xl shadow border border-gray-200 p-1.5
+              <%= layout_classes %>">
+
+    <%# Поле поиска %>
+    <div class="relative flex-1 min-w-0">
+      <!-- mdi: magnify -->
+      <span class="mdi mdi-magnify absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm"></span>
+      <input type="text"
+             data-poi--filters-component-target="searchInput"
+             placeholder="<%= t('.search_placeholder') %>"
+             autocomplete="off"
+             class="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-sm
+                    focus:border-emerald-500 focus:ring-emerald-500
+                    placeholder:text-gray-400">
     </div>
 
-    <%# Кнопка Apply (Ui::BtnComponent) %>
-    <%= render Ui::BtnComponent.new(
-          color: :primary,
-          size: :sm,
-          html: {
-            data: {
-              action: "click->poi--filters-component#applyFilters",
-              poi_filters_component_target: "applyBtn"
+    <%# Категории + Apply + сброс %>
+    <div class="flex items-center gap-1 md:gap-1.5">
+
+      <%# Мультиселект категорий %>
+      <div class="flex-1 min-w-0">
+      <%= render Ui::DropdownComponent.new(menu_classes: "w-56 max-h-60 overflow-y-auto bg-white") do |inner_dropdown| %>
+        <% inner_dropdown.with_trigger do %>
+          <button type="button"
+                  data-action="ui--dropdown-component#toggle"
+                  class="w-full flex items-center gap-1 px-2 py-1.5 border border-gray-300 rounded-lg text-sm
+                         bg-white hover:bg-gray-50 transition-colors text-left cursor-pointer">
+            <!-- mdi: filter-variant -->
+            <span class="mdi mdi-filter-variant text-gray-400 shrink-0 text-sm"></span>
+            <span data-poi--filters-component-target="summary"
+                  class="flex-1 truncate text-gray-600 text-xs"><%= t('.all_categories') %></span>
+            <!-- mdi: chevron-down -->
+            <span class="mdi mdi-chevron-down text-gray-400 shrink-0 text-sm"></span>
+          </button>
+        <% end %>
+        <% inner_dropdown.with_menu do %>
+          <%# Select All / Deselect All %>
+          <div class="flex items-center gap-2 px-3 py-1.5 border-b border-gray-100 hover:bg-emerald-50 cursor-pointer"
+               data-action="click->poi--filters-component#toggleAll">
+            <span data-poi--filters-component-target="selectAllText"
+                  class="text-sm font-medium text-emerald-600"><%= t('.select_all') %></span>
+          </div>
+          <% categories.each do |cat| %>
+            <label class="flex items-center gap-2 px-3 py-1.5 hover:bg-emerald-50 cursor-pointer">
+              <input type="checkbox"
+                     value="<%= cat.id %>"
+                     checked
+                     data-action="change->poi--filters-component#onCategoryChange"
+                     class="rounded border-gray-300 text-emerald-500 focus:ring-emerald-500">
+              <span class="text-sm text-gray-700"><%= cat.localized_name %></span>
+            </label>
+          <% end %>
+        <% end %>
+      <% end %>
+      </div>
+
+      <%# Apply %>
+      <%= render Ui::BtnComponent.new(
+            color: :primary,
+            size: :sm,
+            html: {
+              data: {
+                action: "click->poi--filters-component#applyFilters",
+                poi_filters_component_target: "applyBtn"
+              }
             }
-          }
-        ) do %>
-      <!-- mdi: check -->
-      <span class="mdi mdi-check"></span>
-    <% end %>
+          ) do %>
+        <!-- mdi: check -->
+        <span class="mdi mdi-check"></span>
+      <% end %>
 
-    <%# Кнопка сброса %>
-    <%= render Ui::BtnComponent.new(
-          color: :ghost,
-          size: :sm,
-          html: {
-            data: { action: "click->poi--filters-component#resetFilters" }
-          }
-        ) do %>
-      <!-- mdi: filter-remove -->
-      <span class="mdi mdi-filter-remove"></span>
-    <% end %>
+      <%# Reset %>
+      <%= render Ui::BtnComponent.new(
+            color: :ghost,
+            size: :sm,
+            html: {
+              data: { action: "click->poi--filters-component#resetFilters" }
+            }
+          ) do %>
+        <!-- mdi: filter-remove -->
+        <span class="mdi mdi-filter-remove"></span>
+      <% end %>
 
+    </div>
   </div>
-</div>
+<% end %>

@@ -7,3 +7,4 @@ es:
       deselect_all: "Deseleccionar todo"
       selected: "seleccionado"
       reset: "Restablecer"
+      filters_label: "Filtros"

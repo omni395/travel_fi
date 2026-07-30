@@ -43,6 +43,34 @@ class Admin::PoisReflex < ApplicationReflex
   end
 
   #
+  # Создаёт новый POI
+  #
+  # @param params [Hash] параметры POI
+  #
+  def create(params = {})
+    morph :nothing
+
+    authorize_with_pundit!(Poi, :create?)
+
+    poi = PoiService.create(
+      params: params,
+      current_user: current_user
+    )
+
+    cable_ready.redirect_to(url: admin_poi_path(id: poi))
+    cable_ready.broadcast
+
+    send_success(I18n.t("reflexes.admin.pois.create_success"))
+  rescue Pundit::NotAuthorizedError => e
+    send_error(I18n.t("reflexes.admin.pois.create_unauthorized"))
+  rescue PoiService::CreateError => e
+    send_error(e.message)
+  rescue StandardError => e
+    Rails.logger.error("Poi create error: #{e.class} #{e.message}")
+    send_error(I18n.t("reflexes.admin.pois.create_error"))
+  end
+
+  #
   # Изменяет статус POI (модерация)
   #
   # @param params [Hash] параметры { id: Integer, status: String }

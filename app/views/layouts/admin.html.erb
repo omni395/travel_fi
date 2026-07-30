@@ -73,6 +73,11 @@
           <i class="mdi mdi-map-marker-multiple text-xl mr-3 shrink-0"></i>
           <span class="text-sm whitespace-nowrap">POIs</span>
         <% end %>
+        <%= link_to solid_queue_dashboard.root_path, target: "_blank", rel: "noopener", class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+          <%# MDI: tray-full %>
+          <i class="mdi mdi-tray-full text-xl mr-3 shrink-0"></i>
+          <span class="text-sm whitespace-nowrap"><%= t("admin.layout.solid_queue_dashboard") %></span>
+        <% end %>
         <%= link_to admin_settings_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
           <i class="mdi mdi-cog text-xl mr-3 shrink-0"></i>
           <span class="text-sm whitespace-nowrap">Settings</span>

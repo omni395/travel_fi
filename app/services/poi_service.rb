@@ -10,7 +10,61 @@
 # 4. Геопоиск (nearby)
 #
 class PoiService
-  MAX_INTERACTION_METERS = 50
+  MAX_INTERACTION_METERS = 100
+
+  # ---
+  # Комментарии
+  # ---
+
+  #
+  # Создаёт комментарий к POI
+  #
+  # @param poi [Poi] объект POI
+  # @param user [User] автор комментария
+  # @param body [String] текст комментария
+  # @param parent_id [Integer, nil] ID родительского комментария (опционально)
+  # @return [PoiComment]
+  # @raise [CreateError] если ошибка валидации
+  #
+  def self.create_comment(poi:, user:, body:, parent_id: nil)
+    comment = PoiComment.new(
+      poi: poi,
+      user: user,
+      body: body,
+      parent_id: parent_id
+    )
+    comment.save!
+    comment
+  rescue ActiveRecord::RecordInvalid => e
+    raise CreateError, e.message
+  end
+
+  #
+  # Обновляет комментарий
+  #
+  # @param comment [PoiComment] комментарий
+  # @param body [String] новый текст
+  # @return [PoiComment]
+  # @raise [UpdateError] если ошибка валидации
+  #
+  def self.update_comment(comment:, body:)
+    comment.update!(body: body)
+    comment
+  rescue ActiveRecord::RecordInvalid => e
+    raise UpdateError, e.message
+  end
+
+  #
+  # Удаляет комментарий
+  #
+  # @param comment [PoiComment] комментарий
+  # @raise [DestroyError] если ошибка
+  #
+  def self.destroy_comment(comment:)
+    comment.destroy!
+  rescue ActiveRecord::RecordNotDestroyed => e
+    raise DestroyError, e.message
+  end
 
   #
   # Проверяет расстояние между пользователем и точкой через PostGIS
@@ -152,7 +206,7 @@ class PoiService
   # @return [ActiveRecord::Relation] POI в радиусе
   #
   def self.nearby(lat:, lng:, radius_km: 10, category_id: nil)
-    pois = Poi.approved.nearby(lat, lng, radius_km)
+    pois = Poi.visible.nearby(lat, lng, radius_km)
     pois = pois.by_category(category_id) if category_id.present?
     pois.order(created_at: :desc)
   end

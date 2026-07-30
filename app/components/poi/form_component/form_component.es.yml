@@ -1,0 +1,25 @@
+es:
+  poi:
+    form_component:
+      new_title: Añadir nuevo punto de interés
+      edit_title: Editar punto de interés
+      name: Nombre
+      name_placeholder: Ingrese el nombre del lugar
+      description: Descripción
+      description_placeholder: Describe este lugar (opcional)
+      category: Categoría
+      category_prompt: Seleccione una categoría...
+      position: Posición
+      click_hint: Haga clic en el mapa para colocar el marcador
+      lat: Lat
+      lng: Lng
+      address: Dirección
+      address_placeholder: Calle, número
+      city: Ciudad
+      country: País
+      zip_code: Código postal
+      phone: Teléfono
+      website: Sitio web
+      wheelchair: Accesible para silla de ruedas
+      submit: Añadir POI
+      save: Guardar

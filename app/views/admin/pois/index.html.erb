@@ -10,20 +10,29 @@
 # Использует StimulusReflex для обновления без перезагрузки
 # %>
 
-<div class="p-4" data-controller="admin--pois admin--pois--table-component">
-  <%# Хлебные крошки %>
-  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
-    { name: t("admin.pois.index.title") }
-  ]) %>
+<div class="p-4" data-controller="admin--pois--table-component">
+  <%# Хлебные крошки + кнопка добавления %>
+  <div class="flex items-center justify-between mb-4">
+    <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+      { name: t("admin.pois.index.title") }
+    ]) %>
+    <%= link_to new_admin_poi_path, class: "btn-ui btn-ui--primary btn-ui--md" do %>
+      <!-- mdi: plus -->
+      <i class="mdi mdi-plus"></i>
+      <%= t("admin.pois.index.add_poi") %>
+    <% end %>
+  </div>
 
-  <%# Фильтры и поиск %>
+  <%# Фильтры и поиск (POI: поиск + статусы POI) %>
   <%= render ::Ui::FiltersComponent.new(
         search_query: @search_query,
         status_filter: @status_filter,
-        search_controller: "admin--pois",
-        search_action: "input->admin--pois#filter",
-        filter_action: "change->admin--pois#filter",
-        reset_action: "admin--pois#resetFilters"
+        statuses: %w[pending approved rejected archived],
+        status_model: :poi,
+        search_controller: "admin--pois--table-component",
+        search_action: "input->admin--pois--table-component#filter",
+        filter_action: "change->admin--pois--table-component#filter",
+        reset_action: "admin--pois--table-component#resetFilters"
       ) %>
 
   <%# Таблица POI (вынесена в отдельный компонент для CableReady morph) %>

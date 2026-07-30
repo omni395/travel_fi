@@ -1,0 +1,18 @@
+---
+en:
+  admin:
+    poi_categories:
+      poi_category:
+        osm_import_component:
+          title: Import from OpenStreetMap
+          no_osm_tags_warning: "OSM tags are not configured for this category. Go to Edit to add tags before importing."
+          select_city: Select city
+          choose_city: Choose a city...
+          custom_location: Custom location
+          city_name: City name
+          country: Country
+          cancel: Cancel
+          import: Import
+          close: Close
+          fetching: Fetching data from OpenStreetMap...
+          of: of

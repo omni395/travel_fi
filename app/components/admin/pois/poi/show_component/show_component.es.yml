@@ -6,7 +6,6 @@ es:
         show_component:
           missing_translations: 'Traducciones faltantes: %{locales}'
           edit: Editar
-          location: Ubicación
           details: Detalles
           description: Descripción
           address: Dirección
@@ -18,12 +17,9 @@ es:
           created_by: Creado por
           created_at: Creado el
           verified_count: Verificado %{count} veces
-          slug: Slug
-          osm_id: ID OSM
           rating: Valoración
           opening_hours: Horario
           price_info: Precios
-          wheelchair_accessible: Accesible silla de ruedas
           status:
             pending: "Pendiente"
             approved: "Aprobado"
