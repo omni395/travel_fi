@@ -21,5 +21,9 @@ es:
       phone: Teléfono
       website: Sitio web
       wheelchair: Accesible para silla de ruedas
+      photos: Fotos
+      photos_hint: Sube varias fotos (JPEG, PNG, WebP). La primera foto será la portada.
+      photo_alt: Foto del POI
+      remove_photo: Eliminar foto
       submit: Añadir POI
       save: Guardar

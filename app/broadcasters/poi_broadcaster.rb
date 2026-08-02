@@ -30,9 +30,13 @@ class PoiBroadcaster
   #
   # Выполняет broadcast обновления
   #
+  # ВАЖНО: рендер может упасть с Warden error (Devise без request в SolidQueue).
+  # Каждый рендер обёрнут в rescue, broadcast вызывается в любом случае.
+  #
   def broadcast
-    # Рендерим обновленный компонент карточки POI (элемент списка)
+    # Рендерим компоненты (могут упасть — возвращаем пустую строку)
     card_html = render_poi_list_item_component
+    toast_html = render_toast
 
     # 1. Обновление элемента POI в списке сайдбара
     cable_ready[UserChannel].morph(
@@ -40,19 +44,32 @@ class PoiBroadcaster
       html: card_html
     )
 
-    # 2. Toast-уведомление
-    toast_html = ApplicationController.renderer.render(Ui::ToastComponent.new(
-      message: I18n.t("notifications.poi_updated", name: poi.name)
-    ))
+    # 2. Toast-уведомление (если удалось отрендерить)
+    if toast_html.present?
+      cable_ready[UserChannel].insert_adjacent_html(
+        selector: "#notifications",
+        position: "beforeend",
+        html: toast_html
+      )
+    end
 
-    cable_ready[UserChannel].insert_adjacent_html(
-      selector: "#notifications",
-      position: "beforeend",
-      html: toast_html
+    # 3. Лента аудита POI для админов (AdminChannel)
+    audit_html = render_audit_component
+    if audit_html.present?
+      cable_ready["AdminChannel"].morph(
+        selector: "[data-audit-log]",
+        html: audit_html
+      )
+    end
+
+    # 4. Триггерим перезагрузку маркеров на карте — ВСЕГДА
+    cable_ready["UserChannel"].dispatch_event(
+      name: "poi:reload-features"
     )
 
-    # Применяем изменения
+    # Применяем изменения — ВСЕГДА
     cable_ready[UserChannel].broadcast
+    cable_ready["AdminChannel"].broadcast
 
     Rails.logger.info("PoiBroadcaster: Sent update for POI #{poi.id} (#{poi.name})")
   rescue StandardError => e
@@ -63,6 +80,7 @@ class PoiBroadcaster
 
   #
   # Рендерит компонент Poi::ListItemComponent
+  # Может упасть с Warden error в SolidQueue — возвращает пустую строку
   #
   # @return [String] HTML строка компонента
   #
@@ -71,6 +89,44 @@ class PoiBroadcaster
     ApplicationController.renderer.render(component)
   rescue StandardError => e
     Rails.logger.error("Failed to render Poi::ListItemComponent: #{e.class} #{e.message}")
+    ""
+  end
+
+  #
+  # Рендерит Toast-уведомление
+  # Может упасть с Warden error в SolidQueue — возвращает пустую строку
+  #
+  # @return [String] HTML строка тоста
+  #
+  def render_toast
+    ApplicationController.renderer.render(Ui::ToastComponent.new(
+      message: I18n.t("notifications.poi_updated", name: poi.name)
+    ))
+  rescue StandardError => e
+    Rails.logger.error("Failed to render toast: #{e.class} #{e.message}")
+    ""
+  end
+
+  #
+  # Рендерит ленту аудита POI (версии PaperTrail) для админки.
+  # Может упасть с Warden error в SolidQueue — возвращает пустую строку.
+  #
+  # @return [String] HTML ленты аудита
+  #
+  def render_audit_component
+    versions = poi.versions.order(created_at: :desc).limit(10)
+
+    html = +""
+    if versions.any?
+      versions.each do |v|
+        html << ApplicationController.render(Ui::AuditEntryComponent.new(version: v), layout: false)
+      end
+    else
+      html << ApplicationController.render(Ui::AuditEntryComponent.new(version: nil), layout: false)
+    end
+    html
+  rescue StandardError => e
+    Rails.logger.error("Failed to render POI audit: #{e.class} #{e.message}")
     ""
   end
 end

@@ -60,7 +60,7 @@ class Admin::DashboardReflex < ApplicationReflex
   # Обновляет только изменившиеся элементы
   #
   def morph_dashboard
-    cable_ready[current_user.to_gid_param].morph(
+    cable_ready["user_#{current_user.id}"].morph(
       selector: "[data-admin--dashboard]",
       html: render_dashboard_component
     ).broadcast

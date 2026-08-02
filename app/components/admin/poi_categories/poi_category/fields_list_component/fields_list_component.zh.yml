@@ -1,0 +1,17 @@
+---
+zh:
+  admin:
+    poi_categories:
+      poi_category:
+        fields_list_component:
+          fields_title: 分类字段
+          fields_hint: "定义用户在添加或编辑此类别的POI时需要填写的自定义字段。例如：运营商名称、营业时间、付款方式。"
+          no_fields: 该分类暂无定义字段
+          position: 位置
+          field_key: 键名
+          label: 标签
+          field_type: 类型
+          required: 必填
+          active: 启用
+          add_field: 添加字段
+          reorder: 排序

@@ -6,7 +6,7 @@
 # Ответственность:
 # 1. Валидирует входные параметры
 # 2. Обновляет поля пользователя (name)
-# 3. Обрабатывает загрузку аватара через ImageTransformService
+# 3. Обрабатывает загрузку аватара через PhotoService
 # 4. Сохраняет в БД (триггерит after_commit → Broadcaster)
 #
 # Использование:
@@ -118,7 +118,7 @@ class UserService
       require "open-uri"
       io = URI.parse(image_url).open(read_timeout: 5)
 
-      processed = ImageTransformService.process(
+      processed = PhotoService.process(
         io,
         filename: "avatar_oauth_#{user.id}.webp",
         max_size: 300.kilobytes,
@@ -207,15 +207,15 @@ class UserService
 
   #
   # Обрабатывает загрузку и оптимизацию аватара
-  # Использует ImageTransformService для resize, compress, webp conversion
+  # Использует PhotoService для resize, compress, webp conversion
   #
   def process_avatar!
     avatar = params[:avatar]
     return unless avatar
 
     begin
-      # Обрабатываем через ImageTransformService
-      processed_image = ImageTransformService.process(
+      # Обрабатываем через PhotoService
+      processed_image = PhotoService.process(
         avatar,
         filename: "avatar_#{user.id}.webp",
         max_dimension: 512,

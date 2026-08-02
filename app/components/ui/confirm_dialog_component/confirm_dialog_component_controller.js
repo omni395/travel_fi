@@ -57,36 +57,40 @@ export default class extends Controller {
     event?.preventDefault()
 
     const url = this.confirmUrlValue
-    if (!url) return
+    if (url) {
+      const method = this.confirmMethodValue.toUpperCase()
 
-    const method = this.confirmMethodValue.toUpperCase()
+      if (method === "GET") {
+        window.location.href = url
+      } else {
+        // Для не-GET методов создаём форму и сабмитим
+        const form = document.createElement("form")
+        form.method = "POST"
+        form.action = url
+        form.style.display = "none"
 
-    if (method === "GET") {
-      window.location.href = url
-    } else {
-      // Для не-GET методов создаём форму и сабмитим
-      const form = document.createElement("form")
-      form.method = "POST"
-      form.action = url
-      form.style.display = "none"
+        const csrfToken = document.querySelector("[name='csrf-token']")?.content
+        if (csrfToken) {
+          const csrfInput = document.createElement("input")
+          csrfInput.type = "hidden"
+          csrfInput.name = "_csrf_token"
+          csrfInput.value = csrfToken
+          form.appendChild(csrfInput)
+        }
 
-      const csrfToken = document.querySelector("[name='csrf-token']")?.content
-      if (csrfToken) {
-        const csrfInput = document.createElement("input")
-        csrfInput.type = "hidden"
-        csrfInput.name = "_csrf_token"
-        csrfInput.value = csrfToken
-        form.appendChild(csrfInput)
+        const methodInput = document.createElement("input")
+        methodInput.type = "hidden"
+        methodInput.name = "_method"
+        methodInput.value = method
+        form.appendChild(methodInput)
+
+        document.body.appendChild(form)
+        form.submit()
       }
-
-      const methodInput = document.createElement("input")
-      methodInput.type = "hidden"
-      methodInput.name = "_method"
-      methodInput.value = method
-      form.appendChild(methodInput)
-
-      document.body.appendChild(form)
-      form.submit()
+    } else {
+      // Режим без confirm_url: диалог используется как подтверждение перед кастомным
+      // действием (например Reflex-вызовом). Оповещаем внешний обработчик и закрываемся.
+      this.element.dispatchEvent(new CustomEvent("confirmDialogConfirmed", { bubbles: true, detail: {} }))
     }
 
     this.hide()

@@ -1,0 +1,29 @@
+---
+en:
+  admin:
+    poi_categories:
+      poi_category:
+        field_form_component:
+          title: Add Field
+          edit_title: Edit Field
+          save: Save
+          delete: Delete
+          delete_confirm_title: Delete Field
+          delete_confirm_message: Are you sure you want to delete this field? This action cannot be undone.
+          label: Label
+          required: Required
+          active: Active
+          cancel: Cancel
+          create: Create
+          placeholder: Placeholder
+          hint: Hint
+          options: Options
+          options_placeholder: "key;en;ru;es;zh"
+          options_hint: "Each line: key;en;ru;es;zh (labels optional)"
+          field_types:
+            string: String
+            text: Text
+            number: Number
+            boolean: Yes/No
+            select: Select
+            multiselect: Multi Select

@@ -21,5 +21,9 @@ en:
       phone: Phone
       website: Website
       wheelchair: Wheelchair accessible
+      photos: Photos
+      photos_hint: Upload several photos (JPEG, PNG, WebP). The first photo becomes the cover.
+      photo_alt: POI photo
+      remove_photo: Remove photo
       submit: Add POI
       save: Save

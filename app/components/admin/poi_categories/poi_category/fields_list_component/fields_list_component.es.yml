@@ -1,0 +1,17 @@
+---
+es:
+  admin:
+    poi_categories:
+      poi_category:
+        fields_list_component:
+          fields_title: Campos de categoría
+          fields_hint: "Defina campos personalizados que los usuarios completen al agregar o editar un POI en esta categoría. Por ejemplo: nombre del operador, horario, métodos de pago."
+          no_fields: Sin campos definidos para esta categoría
+          position: Pos.
+          field_key: Clave
+          label: Etiqueta
+          field_type: Tipo
+          required: Obligatorio
+          active: Activo
+          add_field: Añadir campo
+          reorder: Reordenar

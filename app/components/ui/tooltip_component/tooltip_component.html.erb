@@ -1,24 +1,35 @@
-<%# UI::TooltipComponent - тултип для карты (OL Overlay) %>
-<%# Иконка: mdi-map-marker (заменяется динамически из poi_category.icon) %>
+<%# UI::TooltipComponent - тултип-попап при ховере на маркер карты (OL Overlay) %>
+<%# Двухколоночная мини-карточка: фото слева на всю высоту, текст справа построчно %>
+<%# Иконки: mdi-map-marker (динамически из poi_category.icon), mdi-star (рейтинг) %>
 <div id="ui-tooltip"
-     class="hidden pointer-events-none z-[1000] max-w-[280px] bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+     class="ui-tooltip hidden pointer-events-none z-[1000] w-[300px] bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
      style="box-shadow: 0 8px 24px rgba(0,0,0,0.18);">
-  <%# Стрелка вниз (CSS-псевдоэлемент через inline fallback) %>
-  <div class="p-3 flex flex-col gap-0.5 min-w-0">
-    <%# Категория (иконка + название) %>
-    <div class="flex items-center gap-1">
-      <i class="tooltip-category-icon mdi mdi-map-marker text-emerald-500 text-sm"></i>
-      <span class="tooltip-category-name text-[10px] font-medium text-gray-500 uppercase tracking-wider"><%= t(".category") %></span>
+  <div class="ui-tooltip__inner flex min-h-0">
+    <%# Фото (обложка POI) — левая колонка на всю высоту %>
+    <div class="ui-tooltip__media w-24 shrink-0">
+      <img class="ui-tooltip__img w-full h-full object-cover"
+           src="<%= asset_path('no-image.png') %>"
+           data-fallback="<%= asset_path('no-image.png') %>"
+           alt="<%= t('.photo_alt') %>">
     </div>
-    <%# Название POI %>
-    <div class="tooltip-name text-sm font-semibold text-gray-900 leading-tight break-words"><%= t(".loading") %></div>
-    <%# Рейтинг %>
-    <div class="tooltip-rating hidden flex items-center gap-0.5 mt-0.5">
-      <i class="mdi mdi-star text-yellow-400 text-xs"></i>
-      <%# Иконка: mdi-star %>
-      <span class="tooltip-rating-value text-[11px] text-gray-500 font-medium"></span>
+
+    <%# Текстовая колонка: категория / название / рейтинг / адрес построчно %>
+    <div class="ui-tooltip__content flex-1 min-w-0 p-2.5 flex flex-col gap-0.5">
+      <%# Категория (иконка + название) %>
+      <div class="flex items-center gap-1">
+        <i class="ui-tooltip__category-icon mdi mdi-map-marker text-emerald-500 text-sm"></i>
+        <span class="ui-tooltip__category-name text-[10px] font-medium text-gray-500 uppercase tracking-wider"><%= t(".category") %></span>
+      </div>
+      <%# Название POI %>
+      <div class="ui-tooltip__name text-sm font-semibold text-gray-900 leading-tight break-words"><%= t(".loading") %></div>
+      <%# Рейтинг %>
+      <div class="ui-tooltip__rating hidden flex items-center gap-0.5 mt-0.5">
+        <i class="mdi mdi-star text-yellow-400 text-xs"></i>
+        <%# Иконка: mdi-star %>
+        <span class="ui-tooltip__rating-value text-[11px] text-gray-500 font-medium"></span>
+      </div>
+      <%# Адрес %>
+      <div class="ui-tooltip__address hidden text-[10px] text-gray-400 truncate mt-px"><%= t(".address") %></div>
     </div>
-    <%# Адрес %>
-    <div class="tooltip-address hidden text-[10px] text-gray-400 truncate mt-px"><%= t(".address") %></div>
   </div>
 </div>

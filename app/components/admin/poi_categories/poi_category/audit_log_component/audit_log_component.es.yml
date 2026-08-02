@@ -1,0 +1,7 @@
+---
+es:
+  admin:
+    poi_categories:
+      poi_category:
+        audit_log_component:
+          title: Registro de auditoría

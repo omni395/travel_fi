@@ -3,8 +3,7 @@
 # Admin::PoiCategories::RowComponent - строка таблицы категорий POI
 # Колонки: ID | Icon | Name | POIs | Status(MDI+tooltip)
 # %>
-<% cache [category, I18n.locale] do %>
-  <tr class="hover:bg-gray-50 cursor-pointer"
+<tr class="hover:bg-gray-50 cursor-pointer"
       data-action="click->admin--poi-categories--table-component#visitCategory"
       data-admin-poi-category-id="<%= category.to_param %>">
     <%# ID %>
@@ -36,5 +35,4 @@
         <%# Иконка: mdi-close-circle %>
       <% end %>
     </td>
-  </tr>
-<% end %>
+</tr>

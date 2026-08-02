@@ -1,0 +1,7 @@
+---
+en:
+  admin:
+    poi_categories:
+      poi_category:
+        audit_log_component:
+          title: Audit Log

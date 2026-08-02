@@ -15,7 +15,12 @@
 <%= render Ui::CardComponent.new do |card| %>
   <% card.with_body do %>
     <%= form_with model: user, url: admin_user_path(id: user), method: :patch,
-                  data: { controller: "admin--users--user--edit-component", action: "submit->admin--users--user--edit-component#handleSubmit" } do |f| %>
+                  data: { controller: "admin--users--user--edit-component",
+                          action: "submit->admin--users--user--edit-component#handleSubmit",
+                          "reflex-serialize-form" => "true" } do |f| %>
+
+      <%# Скрытый id для передачи user[id] через FormData в Reflex (см. edit_component_controller.js#handleSubmit) %>
+      <%= f.hidden_field :id %>
 
       <%# Верхняя секция: аватар + поля + кнопки %>
       <div class="flex flex-col sm:flex-row items-start gap-8">

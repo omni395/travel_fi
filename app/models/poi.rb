@@ -39,6 +39,12 @@ class Poi < ApplicationRecord
   belongs_to :user
   has_many :poi_comments, dependent: :destroy
 
+  # Галерея фотографий POI (ActiveStorage)
+  # Первый attachment — обложка (cover) для тултипа и деталей.
+  # Фото НЕ трекаются PaperTrail напрямую: PoiPhotoService фиксирует
+  # изменение галереи через poi.touch (создаёт версию обновления).
+  has_many_attached :photos
+
   # Enum для статусов
   enum :status, {
     pending: 0,
@@ -54,7 +60,8 @@ class Poi < ApplicationRecord
   }, validate: true
 
   # Валидации
-  validates :name, presence: true, length: { minimum: 2, maximum: 200 }
+  validates :name, presence: true
+  validate :validate_name_value_length
   validates :coordinates, presence: true
   validates :slug, presence: true, uniqueness: true
   validates :rating, numericality: { greater_than_or_equal_to: 0, less_than_or_equal_to: 5 }, allow_nil: true
@@ -183,6 +190,28 @@ class Poi < ApplicationRecord
   end
 
   private
+
+  #
+  # Кастомная валидация длины name для JSONB поля
+  #
+  # name может быть Hash ({"en": "Name", "ru": "Имя"}) или String.
+  # Стандартный length validator считает ключи Hash, а не длину строки.
+  # Проверяем длину самого длинного значения в Hash, или длину строки.
+  #
+  def validate_name_value_length
+    return if name.blank?
+
+    max_len = if name.is_a?(Hash)
+                name.values.select { |v| v.is_a?(String) }.map(&:length).max || 0
+              elsif name.is_a?(String)
+                name.length
+              else
+                return
+              end
+
+    errors.add(:name, :too_short, count: 2) if max_len < 2
+    errors.add(:name, :too_long, count: 200) if max_len > 200
+  end
 
   #
   # Парсит координату из WKT строки вида "POINT (lng lat)"

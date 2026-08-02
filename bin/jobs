@@ -3,4 +3,22 @@
 require_relative "../config/environment"
 require "solid_queue/cli"
 
+# ROADMAP (Known Tech Debt — "CableReady из SolidQueue worker"): инициализация
+# ActionCable PubSub (SolidCable) в worker, чтобы cable_ready.broadcast из
+# SolidQueue worker доходил до клиентов. Без этого broadcast из bin/jobs
+# писался в solid_cable_messages, но не доставлялся (ActionCable PubSub
+# не инициализирован — SolidQueue не запускает ActionCable middleware).
+#
+# ВАЖНО:
+# 1. Ключ adapter — СТРОКОВЫЙ: ActionCable::Server::Configuration#pubsub_adapter
+#    делает cable.fetch("adapter") { "redis" }. Символьный ключ :adapter не
+#    находится → дефолт "redis" → Redis::CannotConnectError (в проекте zero-Redis).
+# 2. Передаём только adapter: SolidCable::SubscriptionAdapter#initialize принимает
+#    произвольные аргументы, а подключение к cable-БД SolidCable настраивает сам
+#    через SolidCable.connects_to (из cable.yml). SolidCable-адаптер НЕ использует
+#    Redis — broadcast пишет через SolidCable::Message.broadcast в Postgres.
+ActionCable.server.config.cable = { "adapter" => "solid_cable" }
+ActionCable.server.config.logger = Rails.logger
+ActionCable.server.pubsub
+
 SolidQueue::Cli.start(ARGV)

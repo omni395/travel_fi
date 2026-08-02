@@ -4,4 +4,4 @@ en:
       loading: "Loading..."
       category: "Category"
       address: "Address"
-      photo: "Photo"
+      photo_alt: "POI placeholder photo"

@@ -428,34 +428,41 @@ export default class extends ApplicationController {
       return
     }
 
-    const poiId = feature.get("poiId")
+    // Cluster-обёртка не хранит properties — берём оригинальную фичу (как в _handleMapClick)
+    const sourceFeature = (features && features.length === 1) ? features[0] : feature
+
+    const poiId = sourceFeature.get("poiId")
     if (poiId === this._hoveredFeatureId && !el.classList.contains("hidden")) {
       this._map.getTargetElement().style.cursor = "pointer"
       return
     }
     this._hoveredFeatureId = poiId
 
-    const iconEl = el.querySelector(".tooltip-category-icon")
-    const categoryEl = el.querySelector(".tooltip-category-name")
-    const nameEl = el.querySelector(".tooltip-name")
-    const ratingEl = el.querySelector(".tooltip-rating")
-    const ratingValEl = el.querySelector(".tooltip-rating-value")
-    const addressEl = el.querySelector(".tooltip-address")
+    const imgEl = el.querySelector(".ui-tooltip__img")
+    const iconEl = el.querySelector(".ui-tooltip__category-icon")
+    const categoryEl = el.querySelector(".ui-tooltip__category-name")
+    const nameEl = el.querySelector(".ui-tooltip__name")
+    const ratingEl = el.querySelector(".ui-tooltip__rating")
+    const ratingValEl = el.querySelector(".ui-tooltip__rating-value")
+    const addressEl = el.querySelector(".ui-tooltip__address")
 
-    const poiIcon = feature.get("poiIcon") || "mdi-map-marker"
-    const poiName = feature.get("poiName") || ""
-    const poiCategory = feature.get("poiCategory") || ""
-    const poiRating = feature.get("poiRating") || 0
-    const poiAddress = feature.get("poiAddress") || ""
+    const poiIcon = sourceFeature.get("poiIcon") || "mdi-map-marker"
+    const poiName = sourceFeature.get("poiName") || ""
+    const poiCategory = sourceFeature.get("poiCategory") || ""
+    const poiRating = sourceFeature.get("poiRating") || 0
+    const poiAddress = sourceFeature.get("poiAddress") || ""
+    const poiPhoto = sourceFeature.get("poiPhoto") || ""
 
-    if (iconEl) iconEl.className = `tooltip-category-icon mdi ${poiIcon} text-emerald-500`
+    // Фото: если есть cover — подставляем URL, иначе оставляем fallback no-image.png
+    if (imgEl) imgEl.src = poiPhoto || imgEl.dataset.fallback
+    if (iconEl) iconEl.className = `ui-tooltip__category-icon mdi ${poiIcon} text-emerald-500 text-sm`
     if (categoryEl) categoryEl.textContent = poiCategory
     if (nameEl) nameEl.textContent = poiName
     if (ratingValEl) ratingValEl.textContent = poiRating > 0 ? poiRating.toFixed(1) : ""
     if (ratingEl) ratingEl.classList.toggle("hidden", poiRating <= 0)
     if (addressEl) { addressEl.textContent = poiAddress; addressEl.classList.toggle("hidden", !poiAddress) }
 
-    const geometry = feature.getGeometry()
+    const geometry = sourceFeature.getGeometry()
     if (geometry) this._tooltipOverlay.setPosition(geometry.getCoordinates())
     el.classList.remove("hidden")
     this._map.getTargetElement().style.cursor = "pointer"
@@ -513,6 +520,8 @@ export default class extends ApplicationController {
       feature.set("poiRating", parseFloat(item.dataset.poiRating) || 0)
       feature.set("poiAddress", item.dataset.poiAddress || "")
       feature.set("poiUserId", parseInt(item.dataset.poiUserId) || null)
+      feature.set("poiSlug", item.dataset.poiSlug || "")
+      feature.set("poiPhoto", item.dataset.poiPhoto || "")
       features.push(feature)
     })
 

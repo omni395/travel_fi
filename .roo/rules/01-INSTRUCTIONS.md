@@ -74,6 +74,18 @@ app/components/
 - Общение строго на РУССКОМ языке.
 - **ЗАПРЕЩЕН `prevent_refresh!`**: этот метод НЕ СУЩЕСТВУЕТ в используемой версии StimulusReflex.
 - **`morph :nothing`**: Используй ТОЛЬКО если метод не делает других `morph` вызовов. Если метод делает `morph "selector"`, `morph :nothing` НЕ нужен — selector morph отменяет полный перерендер автоматически. Двойной `morph` (:nothing + selector) вызывает ошибку `nothing morph type has already been set`.
+- **Зарезервированные ключи StimulusReflex**: `id`, `params`, `selectors`, `morph`, `attrs`, `flash`, `event`, `permanent_attribute_name` — НЕЛЬЗЯ передавать как top-level ключи объекта-аргумента в `this.stimulate("Reflex#method", obj)` (объект станет опциями, `args` придет пустым → `RecordNotFound: ... without an ID`). Используй неймспейсные ключи (`field_id`, `poi_category_id`) или `{ params: {...} }`. Из распарсенных FormData обязательно удаляй `id` (`delete params.id`).
+- **Reflex не рендерит DOM**: методы, меняющие состояние (create/update/destroy), делают `morph :nothing` и вызывают Service. Селекторный морф в Reflex — только для чтения (пагинация/фильтры). Обновление UI после сохранения — только через Broadcaster (`VersionObserverJob` → CableReady), иначе гонки двух морфов одного селектора.
+- **Broadcaster — только `inner_html`**: НЕ используй CableReady `morph` для обновления зон из Broadcaster — падает на `undefined.dispatchEvent` (`parent.children[idx]`). Используй `inner_html` по селектору-обёртке.
+- **Рендер вложенных ViewComponent из фонового job**: в компонентах, которые рендерит Broadcaster (SolidQueue worker), вложенные ViewComponent рендери ТОЛЬКО через `<%= render %>` (шаблон) или `helpers.render` (метод компонента) — view_context. Запрещён вложенный `ApplicationController.render` — падает в контексте job, зона молча не отправляется. Per-entry устойчивость — через `rescue` в методе компонента (см. `AuditLogComponent#render_entries_html`).
+- **Broadcast из worker (bin/jobs)**: инициализируй ActionCable PubSub до `SolidQueue::Cli.start`: `ActionCable.server.config.cable = { "adapter" => "solid_cable" }` (СТРОКОВЫЙ ключ — `cable.fetch("adapter") { "redis" }`; символьный `:adapter` → Redis), затем `ActionCable.server.pubsub`.
+- **pagy() в Broadcaster**: в SolidQueue worker нет `request` → `NameError: request`, зона с пагинацией не отправляется (симптом: show/fields работают, POIs/Audit нет). Добавь mock `def request; @request ||= ActionDispatch::Request.new({}); end`.
+- **Чекбоксы (Rails check_box)**: hidden(value=0)+checkbox с одним `name`. В JS — `input[name='...'][type='checkbox']`, иначе false не сохраняется.
+- **Единый паттерн админ-сущности** — см. README «🗂 Единый паттерн админ-сущности» (компоненты Index/Show+табы/Edit, Reflex, Service, Broadcaster, AdminChannel, VersionObserverJob, Ui::AuditEntryComponent).
+- **Контейнер-цель отдельно от содержимого**: селектор цели (`[data-...]`) — на обёртке в шаблоне страницы, корень компонента — БЕЗ этого селектора (иначе `inner_html` создаёт вложенность).
+- **Нормализация params**: параметры из JS приходят со строковыми ключами. В Reflex обязательно `deep_symbolize_keys(params)` (метод в `ApplicationReflex`) перед передачей в Service, иначе `params.slice(:attr)` вернёт пустой хэш.
+- **Аудит**: используй `update!`/`save!` (создают PaperTrail-версии → Broadcast). `update_all` НЕ создаёт версии и НЕ триггерит Broadcast — недопустим для данных с аудитом (в т.ч. реордер позиций).
+- **Клиент CableReady**: применяй операции по одной (`forEach` + `try/catch`), пропуская морфы на отсутствующие в DOM селекторы.
 
 ## 6. РАБОТА С LSP И ЛИНТЕРАМИ (Ruby, Stimulus, Herb)
 - **Источники правды:** Ты обязан исправлять ВСЕ ошибки и предупреждения от `ruby-lsp`, `stimulus-lsp` и `Herb Linter`.

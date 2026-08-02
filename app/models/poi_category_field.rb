@@ -20,6 +20,9 @@ class PoiCategoryField < ApplicationRecord
   # Скопы
   scope :by_position, -> { order(position: :asc) }
 
+  # Скоуп: активные (включённые) поля категории
+  scope :active, -> { where(active: true) }
+
   # Валидации
   validates :field_key, presence: true, uniqueness: { scope: :poi_category_id }
   validates :field_type, presence: true, inclusion: {

@@ -72,8 +72,16 @@ class VersionObserverJob < ApplicationJob
     # 2. Пользовательские бродкасты и уведомления (Live Update для клиента)
     return if version.event == 'destroy' || user.nil?
 
-    # Живое обновление интерфейса для самого пользователя
-    UserBroadcaster.call(user: user)
+    # Определяем, инициировано ли изменение администратором.
+    # Контекст берём из version.whodunnit: Current.admin_context thread-local
+    # не переживает переход в SolidQueue worker и потому здесь недоступен.
+    admin_initiated = version.whodunnit.present? &&
+                      User.find_by(id: version.whodunnit)&.has_role?(:admin)
+
+    # Живое обновление личного профиля (user_N канал) — только для изменений,
+    # инициированных самим пользователем. Админ-правка чужого профиля обновляет
+    # строку в админке (AdminChannel, см. Admin::UserBroadcaster выше), а не личный профиль.
+    UserBroadcaster.call(user: user) unless admin_initiated
 
     # 3. Уведомления (Noticed)
     recipients = User.with_role(:admin).to_a
@@ -81,9 +89,8 @@ class VersionObserverJob < ApplicationJob
 
     event_type = if version.event == 'create'
                    'new_registration'
-                 elsif version.whodunnit.present?
-                   whodunnit_user = User.find_by(id: version.whodunnit)
-                   whodunnit_user&.has_role?(:admin) ? 'user_updated_by_admin' : 'user_updated_by_user'
+                 elsif admin_initiated
+                   'user_updated_by_admin'
                  else
                    'user_updated_by_user'
                  end

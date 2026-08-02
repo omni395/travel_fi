@@ -13,14 +13,16 @@ export default class extends ApplicationController {
     event.preventDefault()
     const formData = new FormData(event.target)
     const params = {
-      id: formData.get('user[id]') || this.element.querySelector('[data-admin-user-id]')?.dataset.adminUserId,
+      // id передаём неймспейсным ключом user_id: top-level `id` поглощается
+      // getReflexOptions() в StimulusReflex 3.5.x как объект опций (args придёт пустым)
+      user_id: formData.get('user[id]') || this.element.querySelector('[data-admin-user-id]')?.dataset.adminUserId,
       name: formData.get('user[name]'),
       email: formData.get('user[email]'),
       status: formData.get('user[status]'),
       role_id: formData.get('user[role_id]')
     }
 
-    this.stimulusReflex("Admin::UsersReflex#update", params)
+    this.stimulate("Admin::UsersReflex#update", params)
   }
 
   /**

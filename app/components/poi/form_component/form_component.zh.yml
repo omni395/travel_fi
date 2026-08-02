@@ -21,5 +21,9 @@ zh:
       phone: 电话
       website: 网站
       wheelchair: 无障碍通道
+      photos: 照片
+      photos_hint: 上传多张照片（JPEG、PNG、WebP）。第一张照片将成为封面。
+      photo_alt: POI 照片
+      remove_photo: 删除照片
       submit: 添加POI
       save: 保存

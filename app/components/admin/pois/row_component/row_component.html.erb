@@ -3,8 +3,7 @@
 # Admin::Pois::RowComponent - строка таблицы POI (компактная)
 # Клик по строке → переход к деталям POI
 # %>
-<% cache [poi, poi.poi_category, I18n.locale] do %>
-  <tr class="hover:bg-gray-50 cursor-pointer"
+<tr class="hover:bg-gray-50 cursor-pointer"
       data-action="click->admin--pois--table-component#visitPoi"
       data-admin-poi-id="<%= poi.to_param %>">
     <td class="px-2 py-1.5 whitespace-nowrap">
@@ -48,5 +47,4 @@
         -
       <% end %>
     </td>
-  </tr>
-<% end %>
+</tr>

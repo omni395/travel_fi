@@ -1,0 +1,7 @@
+---
+zh:
+  admin:
+    poi_categories:
+      poi_category:
+        audit_log_component:
+          title: 审计日志

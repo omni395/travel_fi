@@ -100,7 +100,13 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   end
 
   #
-  # Запускает фоновый импорт POI из OpenStreetMap для категории
+  # Запускает импорт POI из OpenStreetMap для категории
+  #
+  # Выполняется синхронно в Reflex (через открытый WebSocket), т.к. CableReady
+  # из SolidQueue worker'a не гарантирует доставку через SolidCable (см. ROADMAP.md
+  # — "Известные архитектурные долги").
+  #
+  # Прогресс отправляется через OsmImportBroadcaster напрямую в UserChannel.
   #
   # @param params [Hash] { category_id:, location: { city:, country:, bbox: } }
   #
@@ -119,14 +125,18 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
     location = location.symbolize_keys
     loc = { city: location[:city], country: location[:country], bbox: location[:bbox] }
 
-    # Получаем элементы из Overpass
+    # Этап 1: Получаем элементы из Overpass API
     elements = OsmImportService.fetch_elements(category: category, location: loc, user: current_user)
     total = elements.size
 
-    # Отправляем прогресс: найдено N элементов
-    OsmImportBroadcaster.progress(user: current_user, total: total, processed: 0)
+    # Считаем, сколько из найденных элементов уже есть в БД (по osm_id)
+    fetched_osm_ids = elements.map { |e| e["id"] }.compact
+    existing_ids = Poi.where(osm_id: fetched_osm_ids, poi_category_id: category.id).count
 
-    # Обрабатываем элементы с прогрессом
+    # Отправляем прогресс: найдено N элементов, M уже в БД, обработано 0
+    OsmImportBroadcaster.progress(user: current_user, total: total, processed: 0, already_in_db: existing_ids)
+
+    # Этап 2: Обрабатываем элементы с прогрессом
     stats = OsmImportService.process_elements(
       elements: elements,
       category: category,
@@ -136,22 +146,8 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       OsmImportBroadcaster.progress(user: current_user, total: total, processed: processed)
     end
 
-    # Отправляем результат через Broadcaster
+    # Отправляем результат + обновляем UI категории + триггерим перезагрузку карты
     OsmImportBroadcaster.call(user: current_user, stats: stats, category: category)
-
-    # Дублируем ивент через Reflex'овый cable_ready — гарантированная доставка с ответом StimulusReflex
-    cable_ready["AdminChannel"].dispatch_event(
-      name: "osmImportComplete",
-      detail: {
-        category_id: category.id,
-        category_name: category.localized_name,
-        created: stats[:created],
-        skipped_duplicate: stats[:skipped_duplicate],
-        skipped_modified: stats[:skipped_modified],
-        errors: stats[:errors]
-      }
-    )
-    cable_ready.broadcast
 
     Rails.logger.info "[OsmImport] complete for category##{category.id} (#{category.slug}): " \
                       "#{stats[:created]} created, #{stats[:skipped_duplicate]} duplicate, " \
@@ -163,26 +159,70 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
     send_error(I18n.t("reflexes.admin.poi_categories.import_error"))
   end
 
-  private
+  #
+  # Пагинация списка POI категории (вкладка POIs)
+  # Не меняет БД — только рендерит панель для выбранной страницы
+  #
+  # @param params [Hash] { category_id:, pois_page: }
+  #
+  def pois_page(params = {})
+    morph :nothing
+    normalized = deep_symbolize_keys(params)
+
+    category = PoiCategory.friendly.find(normalized[:category_id] || element.dataset.poiCategoryId)
+    authorize_with_pundit!(category, :show?)
+
+    pagy, pois = pagy(
+      category.pois.includes(:user).order(created_at: :desc),
+      limit: 10,
+      page: (normalized[:pois_page] || 1).to_i
+    )
+    html = ApplicationController.render(
+      Admin::PoiCategories::PoiCategory::PoisListComponent.new(category: category, pagy: pagy, pois: pois),
+      layout: false
+    )
+
+    cable_ready["AdminChannel"].inner_html(selector: "[data-poi-category-pois]", html: html)
+    cable_ready["AdminChannel"].broadcast
+  rescue Pundit::NotAuthorizedError => e
+    send_error(I18n.t("reflexes.admin.poi_categories.filter_unauthorized"))
+  rescue StandardError => e
+    Rails.logger.error("PoiCategory pois_page error: #{e.class} #{e.message}")
+    send_error(I18n.t("reflexes.admin.poi_categories.filter_error"))
+  end
 
   #
-  # Рекурсивно преобразует строковые ключи хэша в символьные.
-  # Необходимо для совместимости params из JS (строковые ключи)
-  # с сервисным слоем, где используются символьные ключи (slice, dig).
+  # Пагинация ленты аудита категории (вкладка Audit Log)
+  # Не меняет БД — только рендерит панель для выбранной страницы
   #
-  # @param obj [Hash, Array, Object] данные для нормализации
-  # @return [Hash, Array, Object] нормализованные данные
+  # @param params [Hash] { category_id:, audit_page: }
   #
-  def deep_symbolize_keys(obj)
-    case obj
-    when Hash
-      obj.each_with_object({}) { |(k, v), h| h[k.to_sym] = deep_symbolize_keys(v) }
-    when Array
-      obj.map { |v| deep_symbolize_keys(v) }
-    else
-      obj
-    end
+  def audit_page(params = {})
+    morph :nothing
+    normalized = deep_symbolize_keys(params)
+
+    category = PoiCategory.friendly.find(normalized[:category_id] || element.dataset.poiCategoryId)
+    authorize_with_pundit!(category, :show?)
+
+    versions = PoiCategoryService.audit_versions(category: category).order(created_at: :desc)
+    pagy, versions = pagy(versions, limit: 10, page: (normalized[:audit_page] || 1).to_i)
+
+    # Единый рендер с Broadcaster — панель аудита через AuditLogComponent
+    html = ApplicationController.render(
+      Admin::PoiCategories::PoiCategory::AuditLogComponent.new(category: category, versions: versions, pagy: pagy),
+      layout: false
+    )
+
+    cable_ready["AdminChannel"].inner_html(selector: "[data-audit-log]", html: html)
+    cable_ready["AdminChannel"].broadcast
+  rescue Pundit::NotAuthorizedError => e
+    send_error(I18n.t("reflexes.admin.poi_categories.filter_unauthorized"))
+  rescue StandardError => e
+    Rails.logger.error("PoiCategory audit_page error: #{e.class} #{e.message}")
+    send_error(I18n.t("reflexes.admin.poi_categories.filter_error"))
   end
+
+  private
 
   #
   # Рендерит таблицу категорий (для morph)
@@ -192,7 +232,7 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   # @return [String] HTML компонента таблицы
   #
   def render_categories_table(categories, pagy = nil)
-    component = Admin::PoiCategory::TableComponent.new(categories: categories, pagy: pagy)
+    component = Admin::PoiCategories::TableComponent.new(categories: categories, pagy: pagy)
     ApplicationController.render(component, layout: false)
   end
 
@@ -204,7 +244,7 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   def send_error(message)
     return unless current_user
 
-    cable_ready[current_user.to_gid_param].dispatch_event(
+    cable_ready["user_#{current_user.id}"].dispatch_event(
       name: "adminPoiCategoriesError",
       detail: { message: message }
     )
@@ -219,7 +259,7 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   def send_success(message = nil)
     return unless current_user
 
-    cable_ready[current_user.to_gid_param].dispatch_event(
+    cable_ready["user_#{current_user.id}"].dispatch_event(
       name: "adminPoiCategoriesSuccess",
       detail: { message: message || I18n.t("reflexes.admin.poi_categories.operation_success") }
     )

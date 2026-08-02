@@ -46,13 +46,16 @@ export default class extends ApplicationController {
 
     const formData = new FormData(event.target)
     const params = {
-      name: formData.get('user[name]'),
-      email: formData.get('user[email]'),
-      status: formData.get('user[status]'),
-      role_id: formData.get('user[role_id]')
+      // id берём из data-user-id на форме: top-level `id` поглощается
+      // getReflexOptions() в StimulusReflex 3.5.x как объект опций (args придёт пустым)
+      user_id: this.element.dataset.userId,
+      name: formData.get('user[name]') || formData.get('name'),
+      email: formData.get('user[email]') || formData.get('email'),
+      status: formData.get('user[status]') || formData.get('status'),
+      role_id: formData.get('user[role_id]') || formData.get('role_id')
     }
 
-    this.stimulusReflex("Admin::UsersReflex#update", params)
+    this.stimulate("Admin::UsersReflex#update", params)
   }
 
   /**

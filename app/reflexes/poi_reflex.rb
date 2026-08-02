@@ -134,7 +134,7 @@ class PoiReflex < ApplicationReflex
     query = params[:query].to_s.strip.presence
     Rails.logger.info("[POI REFLEX] load_pois_in_bounds — params: category_ids=#{category_ids.inspect}, query=#{query.inspect}")
 
-    scope = Poi.approved.within_bounds(
+    scope = Poi.visible.within_bounds(
       params[:sw_lat], params[:sw_lng],
       params[:ne_lat], params[:ne_lng]
     )
@@ -175,26 +175,7 @@ class PoiReflex < ApplicationReflex
     #    + расширенные данные для тултипа при ховере
     #    Карта читает их через _loadPois() независимо от сайдбара
     #    ВСЕ точки в bounds — кластеризация на клиенте
-    features_html = pois_map.map { |poi|
-      lat = poi.latitude
-      lng = poi.longitude
-      name = poi.localized_name.to_s.gsub('"', '"').gsub("'", "'")
-      icon = poi.poi_category&.icon || "mdi-map-marker"
-      category = poi.poi_category&.localized_name.to_s.gsub('"', '"')
-      category_id = poi.poi_category_id
-      address = [ poi.address, poi.city ].compact.join(", ").gsub('"', '"')
-      rating = poi.rating&.to_f || 0
-      %(<div data-poi-id="#{poi.id}"
-             data-poi-lat="#{lat}"
-             data-poi-lng="#{lng}"
-             data-poi-name="#{name}"
-             data-poi-icon="#{icon}"
-             data-poi-category="#{category}"
-             data-poi-category-id="#{category_id}"
-             data-poi-rating="#{rating}"
-             data-poi-address="#{address}"
-             data-poi-user-id="#{poi.user_id}"></div>)
-    }.join("\n")
+    features_html = pois_map.map { |poi| feature_html(poi) }.join("\n")
     cable_ready.inner_html(selector: "#poi-map-features", html: features_html)
 
     cable_ready.broadcast
@@ -210,7 +191,7 @@ class PoiReflex < ApplicationReflex
   # @param params [Hash] { sw_lat:, sw_lng:, ne_lat:, ne_lng:, offset: Integer }
   #
   def load_more_pois(params = {})
-    scope = Poi.approved.within_bounds(
+    scope = Poi.visible.within_bounds(
       params[:sw_lat], params[:sw_lng],
       params[:ne_lat], params[:ne_lng]
     )
@@ -288,26 +269,7 @@ class PoiReflex < ApplicationReflex
     )
 
     # Рендер маркеров для карты
-    features_html = pois.map { |poi|
-      lat = poi.latitude
-      lng = poi.longitude
-      name = poi.localized_name.to_s.gsub('"', '"').gsub("'", "'")
-      icon = poi.poi_category&.icon || "mdi-map-marker"
-      category = poi.poi_category&.localized_name.to_s.gsub('"', '"')
-      category_id = poi.poi_category_id
-      address = [ poi.address, poi.city ].compact.join(", ").gsub('"', '"')
-      rating = poi.rating&.to_f || 0
-      %(<div data-poi-id="#{poi.id}"
-             data-poi-lat="#{lat}"
-             data-poi-lng="#{lng}"
-             data-poi-name="#{name}"
-             data-poi-icon="#{icon}"
-             data-poi-category="#{category}"
-             data-poi-category-id="#{category_id}"
-             data-poi-rating="#{rating}"
-             data-poi-address="#{address}"
-             data-poi-user-id="#{poi.user_id}"></div>)
-    }.join("\n")
+    features_html = pois.map { |poi| feature_html(poi) }.join("\n")
     cable_ready.inner_html(selector: "#poi-map-features", html: features_html)
 
     cable_ready.broadcast
@@ -361,26 +323,7 @@ class PoiReflex < ApplicationReflex
     )
 
     # Рендер маркеров для карты
-    features_html = pois.map { |poi|
-      lat = poi.latitude
-      lng = poi.longitude
-      name = poi.localized_name.to_s.gsub('"', '"').gsub("'", "'")
-      icon = poi.poi_category&.icon || "mdi-map-marker"
-      category = poi.poi_category&.localized_name.to_s.gsub('"', '"')
-      category_id = poi.poi_category_id
-      address = [ poi.address, poi.city ].compact.join(", ").gsub('"', '"')
-      rating = poi.rating&.to_f || 0
-      %(<div data-poi-id="#{poi.id}"
-             data-poi-lat="#{lat}"
-             data-poi-lng="#{lng}"
-             data-poi-name="#{name}"
-             data-poi-icon="#{icon}"
-             data-poi-category="#{category}"
-             data-poi-category-id="#{category_id}"
-             data-poi-rating="#{rating}"
-             data-poi-address="#{address}"
-             data-poi-user-id="#{poi.user_id}"></div>)
-    }.join("\n")
+    features_html = pois.map { |poi| feature_html(poi) }.join("\n")
     cable_ready.inner_html(selector: "#poi-map-features", html: features_html)
 
     cable_ready.broadcast
@@ -420,26 +363,7 @@ class PoiReflex < ApplicationReflex
     )
 
     # Рендер маркеров
-    features_html = pois.map { |poi|
-      lat = poi.latitude
-      lng = poi.longitude
-      name = poi.localized_name.to_s.gsub('"', '"').gsub("'", "'")
-      icon = poi.poi_category&.icon || "mdi-map-marker"
-      category = poi.poi_category&.localized_name.to_s.gsub('"', '"')
-      category_id = poi.poi_category_id
-      address = [ poi.address, poi.city ].compact.join(", ").gsub('"', '"')
-      rating = poi.rating&.to_f || 0
-      %(<div data-poi-id="#{poi.id}"
-             data-poi-lat="#{lat}"
-             data-poi-lng="#{lng}"
-             data-poi-name="#{name}"
-             data-poi-icon="#{icon}"
-             data-poi-category="#{category}"
-             data-poi-category-id="#{category_id}"
-             data-poi-rating="#{rating}"
-             data-poi-address="#{address}"
-             data-poi-user-id="#{poi.user_id}"></div>)
-    }.join("\n")
+    features_html = pois.map { |poi| feature_html(poi) }.join("\n")
     cable_ready.inner_html(selector: "#poi-map-features", html: features_html)
 
     cable_ready.broadcast
@@ -464,6 +388,31 @@ class PoiReflex < ApplicationReflex
       "ST_Distance(pois.coordinates::geography, ST_MakePoint(?, ?)::geography) ASC",
       lng.to_f, lat.to_f
     ])
+  end
+
+  #
+  # Собирает HTML data-элемента фичи карты из PoiService.map_feature_data.
+  # Значения экранируются (ERB::Util.html_escape) для безопасной вставки в атрибуты.
+  #
+  # @param poi [Poi] объект POI
+  # @return [String] HTML <div> с data-атрибутами (id/lat/lng/name/icon/category/rating/address/user_id/slug/photo)
+  #
+  def feature_html(poi)
+    data = PoiService.map_feature_data(poi)
+    escape = ->(v) { ERB::Util.html_escape(v.to_s) }
+
+    %(<div data-poi-id="#{escape.call(data[:id])}"
+           data-poi-lat="#{escape.call(data[:lat])}"
+           data-poi-lng="#{escape.call(data[:lng])}"
+           data-poi-name="#{escape.call(data[:name])}"
+           data-poi-icon="#{escape.call(data[:icon])}"
+           data-poi-category="#{escape.call(data[:category])}"
+           data-poi-category-id="#{escape.call(data[:category_id])}"
+           data-poi-rating="#{escape.call(data[:rating])}"
+           data-poi-address="#{escape.call(data[:address])}"
+           data-poi-user-id="#{escape.call(data[:user_id])}"
+           data-poi-slug="#{escape.call(data[:slug])}"
+           data-poi-photo="#{escape.call(data[:photo])}"></div>)
   end
 
   public

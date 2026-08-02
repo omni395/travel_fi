@@ -169,14 +169,14 @@ class Users::RegistrationsController < Devise::RegistrationsController
   end
 
   def process_avatar_before_update
-    # Если в параметрах есть аватар, обработаем его через ImageTransformService
+    # Если в параметрах есть аватар, обработаем его через PhotoService
     return unless update_params[:avatar].present?
 
     avatar_file = update_params[:avatar]
 
     begin
       # Обработаем изображение: конвертируем в webp и сжимаем до 100 KB
-      processed = ImageTransformService.process(
+      processed = PhotoService.process(
         avatar_file,
         filename: "avatar_#{current_user.id}",
         format: 'webp'
@@ -196,14 +196,14 @@ class Users::RegistrationsController < Devise::RegistrationsController
   end
 
   def process_avatar_before_save
-    # Если в параметрах есть аватар, обработаем его через ImageTransformService
+    # Если в параметрах есть аватар, обработаем его через PhotoService
     return unless sign_up_params[:avatar].present?
 
     avatar_file = sign_up_params[:avatar]
 
     begin
       # Обработаем изображение: конвертируем в webp и сжимаем до 100 KB
-      processed = ImageTransformService.process(
+      processed = PhotoService.process(
         avatar_file,
         filename: "avatar_#{sign_up_params[:email].split('@').first}",
         format: "webp"

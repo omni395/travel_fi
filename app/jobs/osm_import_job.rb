@@ -31,12 +31,19 @@ class OsmImportJob < ApplicationJob
       return
     end
 
+    # Этап 0: Сигнал "импорт запущен" — переключаем UI на спиннер
+    OsmImportBroadcaster.started(user: user, category: category)
+
     # Этап 1: Получаем элементы из Overpass
     elements = OsmImportService.fetch_elements(category: category, location: location, user: user)
     total = elements.size
 
-    # Отправляем прогресс: найдено N элементов, обработано 0
-    OsmImportBroadcaster.progress(user: user, total: total, processed: 0)
+    # Считаем, сколько из найденных элементов уже есть в БД (по osm_id)
+    fetched_osm_ids = elements.map { |e| e["id"] }.compact
+    existing_ids = Poi.where(osm_id: fetched_osm_ids, poi_category_id: category.id).count
+
+    # Отправляем прогресс: найдено N элементов, M уже в БД, обработано 0
+    OsmImportBroadcaster.progress(user: user, total: total, processed: 0, already_in_db: existing_ids)
 
     # Этап 2: Обрабатываем элементы с прогрессом
     stats = OsmImportService.process_elements(

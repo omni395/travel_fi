@@ -8,9 +8,12 @@ class ApplicationReflex < StimulusReflex::Reflex
   # ActionCable connection использует current_user as identified_by
   delegate :current_user, to: :connection
 
-  # Устанавливаем текущего пользователя для Pundit и локаль из URL
+  # Устанавливаем текущего пользователя для Pundit, whodunnit для PaperTrail и локаль из URL
+  # PaperTrail.request.whodunnit — иначе все версии, созданные через Reflex
+  # (например, изменения PoiCategoryField), попадают в аудит без автора ("System")
   before_reflex do
     Current.user = current_user
+    PaperTrail.request.whodunnit = current_user&.id
     I18n.locale = params[:locale]&.to_sym || I18n.default_locale
   end
 
@@ -100,6 +103,27 @@ class ApplicationReflex < StimulusReflex::Reflex
     )
     cable_ready.broadcast
     morph :nothing
+  end
+
+  private
+
+  #
+  # Рекурсивно преобразует строковые ключи хэша в символьные.
+  # Необходимо для совместимости params из JS (строковые ключи)
+  # с сервисным слоем, где используются символьные ключи (slice, dig).
+  #
+  # @param obj [Hash, Array, Object] данные для нормализации
+  # @return [Hash, Array, Object] нормализованные данные
+  #
+  def deep_symbolize_keys(obj)
+    case obj
+    when Hash
+      obj.each_with_object({}) { |(k, v), h| h[k.to_sym] = deep_symbolize_keys(v) }
+    when Array
+      obj.map { |v| deep_symbolize_keys(v) }
+    else
+      obj
+    end
   end
 end
 

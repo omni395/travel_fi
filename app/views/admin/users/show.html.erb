@@ -37,7 +37,13 @@
         panels: {
           activity:  render(Admin::Users::User::ActivityComponent.new(user: @user)),
           wallet:    render(Admin::Users::User::WalletComponent.new(user: @user)),
-          audit_log: (@versions.any? ? capture { @versions.each { |v| concat render(Ui::AuditEntryComponent.new(version: v)) } } : render(Ui::AuditEntryComponent.new(version: nil)))
+          audit_log: content_tag(:div, data: { audit_log: true }) do
+            if @versions.any?
+              @versions.each { |v| concat render(Ui::AuditEntryComponent.new(version: v)) }
+            else
+              concat render(Ui::AuditEntryComponent.new(version: nil))
+            end
+          end
         }
       ) %>
 </div>

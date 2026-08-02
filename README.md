@@ -1,6 +1,8 @@
 # Travel Fi - Architecture & System Design
 
-Travel Fi — Rails 8.1 приложение для туристических услуг с DeFi функциональностью с ERC-20 токеном. Архитектура построена на WebSocket-first подходе с асинхронными обновлениями через ActionCable и кэшированием состояния в БД через SolidQueue и SolidCache.
+Travel Fi — Rails 8.1 приложение для туристических услуг с DeFi функциональностью с ERC-20 токеном. Архитектура построена на WebSocket-first подходе с асинхронными обновлениями через ActionCable, фоновыми задачами через SolidQueue и кэш-инфраструктурой SolidCache (кэширование в коде временно на период разработки отключено).
+
+Возможно при согласовании запустить сервер через ngrok тобы увидеть как это работет вживую.
 
 ## 🎯 Project Vision
 
@@ -78,6 +80,13 @@ Travel Fi — Rails 8.1 приложение для туристических �
 - DAO для управления категориями и политиками
 - Affiliate для крупных провайдеров (хостелы, отели, сервисы)
 
+---
+
+### 🔐 Web3 & Onboarding (Custodial / Embedded Wallet)
+
+**Автоматическое создание кошелька:** При успешной регистрации пользователя сервис фоново генерирует скрытый (embedded/custodial) кошелек на базе `viem`.
+**Zero-Friction UX:** Обычные пользователи не взаимодействуют со сложным интерфейсом Web3 (сид-фразы, расширения Metamask) на начальном этапе — вся логика списания/начисления токенов происходит бесшовно.
+**DeFi-интеграция:** На созданный кошелек автоматически зачисляются токены за активность (добавление POI, верификация, отзывы), которые в дальнейшем можно использовать для доступа к премиум-функциям.
 
 ---
 
@@ -167,7 +176,7 @@ WebSocket отправляет Reflex действие (RPC вызов)
     ↓
 Reflex Class (app/reflexes/):
   ├─ Находит current_user через Connection
-  ├─ prevent_refresh! (отмена стандартного морфинга всей страницы)
+  ├─ morph :nothing (отмена стандартного морфинга всей страницы; prevent_refresh! не существует)
   └─ Вызывает Service слой
     ↓
 Service Layer (app/services/):
@@ -193,6 +202,81 @@ DOM обновляется (Инициатор — мгновенно, оста�
 
 **Важно**: Модели НЕ содержат логики рассылок. Весь жизненный цикл изменений после сохранения в БД управляется через `VersionObserverJob`.
 
+### ✅ Практические правила интеграции (проверено, обязательны к соблюдению)
+
+**StimulusReflex — зарезервированные ключи аргументов.**
+`id`, `params`, `selectors`, `morph`, `attrs`, `flash`, `event`, `permanent_attribute_name` — зарезервированные опции StimulusReflex. Если объект-аргумент в `this.stimulate("Reflex#method", obj)` содержит такой ключ, он трактуется как опции, а `args` приходит пустым (на сервере `RecordNotFound: Couldn't find ... without an ID`). Передавай неймспейсные ключи: `{ field_id: ... }`, `{ poi_category_id: ... }`, либо явно `{ params: { id: ... } }`. Внутри формы удаляй зарезервированный `id` из распарсенных данных (`delete params.id`) перед стимуляцией.
+
+**Reflex не рендерит DOM после сохранения.**
+Методы, меняющие состояние (create/update/destroy), вызывают Service и делают `morph :nothing`. Селекторный морф в Reflex допустим только для операций чтения (пагинация, фильтры). Обновление UI после сохранения выполняет ТОЛЬКО Broadcaster через `VersionObserverJob`. Это исключает гонки двух морфов одного селектора.
+
+**Broadcaster использует `inner_html`, а не `morph`.**
+CableReady `morph` внутри операции вызывает `after(parent ? parent.children[idx] : document.documentElement)`; если целевой элемент вне актуального `parent.children` — `undefined.dispatchEvent` (TypeError в консоли). `inner_html` безопасен (хук на сам элемент, нет `parent.children[idx]`). Для обновления зон из Broadcaster используй `inner_html`.
+
+**Контейнер-цель отдельно от содержимого.**
+Селектор цели (`[data-...]`) размещай на обёртке в шаблоне страницы, а НЕ на корне компонента. Если корень компонента несёт тот же селектор, что и цель `inner_html` — возникает вложенность. Пример: панель `fields` → обёртка `<div data-poi-category-fields>` в `show.html.erb`, корень `FieldsListComponent` — без этого атрибута.
+
+**Нормализация параметров из JS.**
+Параметры из `stimulate` приходят со строковыми ключами. В Reflex перед передачей в Service выполняй `deep_symbolize_keys(params)` (метод есть в `ApplicationReflex`). Иначе `params.slice(:attr)` вернёт пустой хэш и данные не сохранятся.
+
+**Аудит и массовые обновления.**
+Используй `update!`/`save!` (создают PaperTrail-версии → триггерят Broadcast). `update_all` пропускает колбэки и НЕ создаёт версии — только для операций, не требующих аудита (например, транзитные правки позиций реордера запрещены — только `update!`).
+
+**Клиентская обработка CableReady.**
+В `received` применяй операции по одной (`forEach` + `try/catch`), пропуская морфы на отсутствующие в текущем DOM селекторы. Одна упавшая операция не должна ронять весь пак.
+
+**Рендер вложенных ViewComponent в Broadcaster (SolidQueue worker).**
+Компоненты, которые Broadcaster рендерит из фонового job, обязаны рендерить вложенные ViewComponent через стандартный `<%= render Component %>` (в шаблоне) или `helpers.render` (в Ruby-методе компонента) — через текущий view_context. Запрещено использовать вложенный `ApplicationController.render` внутри такого компонента: class-level render в контексте job падает, зона возвращает пустую строку и `inner_html` не отправляется. Симптом: часть зон обновляется (fields/POIs — обычный render), а зона на таком рендере — нет (audit). Пример: `AuditLogComponent#render_entries_html` рендерит записи через `helpers.render(Ui::AuditEntryComponent...)` с per-entry `rescue`.
+
+**Broadcast из SolidQueue worker (bin/jobs) — инициализация ActionCable PubSub.**
+`cable_ready.broadcast` из worker доходит до клиента только если ActionCable PubSub инициализирован. В [`bin/jobs`](bin/jobs) перед `SolidQueue::Cli.start`:
+```ruby
+ActionCable.server.config.cable = { "adapter" => "solid_cable" }
+ActionCable.server.config.logger = Rails.logger
+ActionCable.server.pubsub
+```
+Ключ `"adapter"` — ОБЯЗАТЕЛЬНО строковый: `ActionCable::Server::Configuration#pubsub_adapter` делает `cable.fetch("adapter") { "redis" }`; символьный `:adapter` → дефолт `"redis"` → `Redis::CannotConnectError` (проект zero-Redis). SolidCable-адаптер Redis не использует: `broadcast` пишет через `SolidCable::Message.broadcast` (INSERT в Postgres `travel_fi_dev_cable`), подключение к cable-БД SolidCable делает сам (`SolidCable.connects_to`).
+
+**pagy() в Broadcaster (SolidQueue worker).**
+`Pagy::Method#pagy` вызывает `self.request` (`options[:request] ||= request`); в worker `request` отсутствует → `NameError: request`, зона с пагинацией не отправляется (симптом: show/fields обновляются, POIs/Audit — нет). Добавь в Broadcaster mock: `def request; @request ||= ActionDispatch::Request.new({}); end` (Pagy затем заменяет его на `Pagy::Request`).
+
+## 🗂 Единый паттерн админ-сущности (для быстрого расширения админки)
+
+Одна админ-сущность (User, Poi, Setting, PoiCategory…) реализуется по единому шаблону. Соблюдай его, чтобы «хоп-хоп» добавлять новые.
+
+### 1. Компоненты (Sidecar, полный набор: rb + html.erb + css + controller.js + 4 yml)
+- **Index**: `Admin/<entity>/TableComponent` + `RowComponent` (в корне `app/components/admin/<entity>/`).
+- **Show**: `Admin/<entity>/<entity>/ShowComponent` + для КАЖДОГО таба отдельный компонент внутри `.../<entity>/` (например `FieldsListComponent`, `PoisListComponent`, `AuditLogComponent`, `ActivityComponent`).
+- **Edit**: `Admin/<entity>/<entity>/EditComponent`.
+- Контейнер-цель (`[data-...]`) — на обёртке в `show.html.erb`, корень компонента без неё.
+
+### 2. Reflex (`app/reflexes/admin/<entity>_reflex.rb`)
+- `create` / `update` / `destroy` — `morph :nothing` → `deep_symbolize_keys(params)` → `authorize_with_pundit!` → Service → `send_success`/`send_error` (dispatch_event в `user_#{id}`).
+- `filter` / `<entity>_page` (пагинация) — чтение, рендер через `ApplicationController.render(Component)` + `inner_html` + `broadcast`.
+
+### 3. Service (`app/services/<entity>_service.rb`)
+- `create` / `update` / `destroy` — `Model.save!` в транзакции; `update!`, НЕ `update_all` (аудит).
+- `audit_versions(entity:)` — версии сущности + связанных (для удалённых — через `object`), безопасный `parse_version_object`.
+
+### 4. Broadcaster (`app/broadcasters/<entity>_broadcaster.rb`)
+- `include CableReady::Broadcaster`, `include Pagy::Method` (+ mock `request` для pagy).
+- `broadcast` — рендер зон по одной (`inner_html` по селектору-обёртке), каждая зона в `rescue` (одна упавшая не роняет пак).
+- Вложенные ViewComponent из job — только через `<%= render %>`/`helpers.render` (НЕ вложенный `ApplicationController.render`).
+- Результат отправляется в `cable_ready["AdminChannel"]` → `.broadcast`.
+
+### 5. Канал
+`AdminChannel` (`app/channels/admin_channel.rb`) — подписка `admin` ИЛИ `moderator` (moderator имеет права на edit в политиках).
+
+### 6. VersionObserverJob (`app/jobs/version_observer_job.rb`)
+- Для каждого `item_type` — ветка `handle_<model>_update(version)` → `XxxBroadcaster.call(<entity>: version.item || version.reify)`.
+
+### 7. Живой аудит (лента)
+- Единый `Ui::AuditEntryComponent` для всех сущностей: `changes` фильтрует «пусто→пусто» (`blank_value?`), `format_value`/`format_hash` — читаемый JSONB (Label → `en: ..., ru: ...`; Options → ключи), `field_key_from_version` fallback на `version.object` (видно имя поля при реордере).
+- Панель таба аудита — компонент с собственным Stimulus-контроллером на корне (пагинация работает: контроллер-предок), `goToPage` → Reflex `<entity>_page`.
+
+### 8. Формы (чекбоксы!)
+Rails `check_box` генерирует пару инпутов с одним `name` (hidden `value="0"` + checkbox). В JS всегда выбирай `input[name='...'][type='checkbox']`, иначе читается hidden (`checked=false`) и в БД всегда пишется `false`. Пример: `form.querySelector("[name='poi_category_field[required]'][type='checkbox']")`.
+
 ## 📡 Система подписок (ActionCable Channels)
 
 Каждый пользователь подписан на свой канал в ActionCable. Нет отправки данных через JSON в ответе контроллера — **всё отправляется через WebSocket**.
@@ -202,12 +286,16 @@ DOM обновляется (Инициатор — мгновенно, оста�
 1. **Пользователь заходит** → ActionCable создаёт соединение WebSocket
 2. **Браузер подписывается** на личный канал (для своего ID пользователя)
 3. **Сервер слушает** этот канал для broadcast операций
-4. **Когда происходит действие** → Model.after_commit отправляет broadcast
+4. **Когда происходит действие** → PaperTrail-версия (`after_commit`) → `VersionObserverJob` → Broadcaster отправляет broadcast
 5. **Только подписанные браузеры** получают обновление
 
 
-**Пользователь 1** (ID 100) подписан на личный канал, **Пользователь 2** (ID 200) на свой личный канал, **Пользователь N** (ID N) подписан на свой личный канал.
-**Администратор** это тоже обычный пользователь с ролью администратор или модератор через rolify. Администраторы и модераторы подписаны только на свои личные каналы, как и все остальные пользователи. Все обновления и уведомления отправляются через индивидуальные каналы пользователей.
+**Пользователь 1** (ID 100) подписан на личный канал `user_100`, **Пользователь 2** (ID 200) на `user_200`, **Пользователь N** (ID N) на `user_N`.
+
+**Админ-панель** использует два канала:
+- `UserChannel` (`user_<id>`) — персональные обновления/уведомления пользователя (включая админов/модераторов как обычных пользователей).
+- `AdminChannel` — админ-обновления (поля категорий, лента аудита, статистика и т.д.); подписка для ролей `admin` И `moderator` (moderator имеет права на редактирование категорий в Pundit-политиках).
+Админ-обновления (live) шлются в `AdminChannel` (см. единый паттерн админ-сущности).
 
 ### 🛠 Универсальный алгоритм обработки события (Любая модель)
 **Пользователь совершает действие в интерфейсе:**
@@ -222,7 +310,7 @@ DOM обновляется (Инициатор — мгновенно, оста�
  - Paper Trail фиксирует состояние объекта в таблице версий (аудит).
  - Данные фиксируются в PostgreSQL.
  - after_commit — финальная точка, гарантирующая успех транзакции.
-8. Model.after_commit вызывает специализированный Broadcaster для данной модели:
+8. `PaperTrail::Version` (`after_commit :broadcast_changes`) ставит `VersionObserverJob`, который вызывает специализированный Broadcaster для данной модели:
  - Broadcaster определяет список получателей обновления на основе их ролей и настроек.
  - Broadcaster создает системные уведомления через Noticed.
  - Broadcaster формирует набор команд CableReady для точечного обновления интерфейса.
@@ -271,30 +359,14 @@ Database-backed очередь для фоновых работ (альтерн�
 
 ### SolidCache
 
-Database-backed кэш для переиспользования результатов (альтернатива Redis). Результаты долгих вычислений сохраняются в БД.
+Database-backed кэш (альтернатива Redis). Инфраструктура установлена и настроена (`config/cache.yml`, `:solid_cache_store` в environments), но в настоящее время **кэширование в коде отключено** — фрагментный и низкоуровневый кэш удалены, чтобы исключить stale-данные при broadcast-морфах (см. ROADMAP → «Точечное кэширование»).
 
-**Назначение**: Model кэширует результаты: список путешествий в регионе, расчёт цены, поиск похожих объектов. При изменении данных кэш инвалидируется.
+**Когда вернуть кэш (точечно):**
+- Статичные части ShowComponent — ключ `[category, I18n.locale]` (инвалидируется автоматически по `updated_at` категории)
+- Агрегаты (`pois.count`) — ключ ОБЯЗАТЕЛЬНО с зависимостью от коллекции POI, например `[category, category.pois, I18n.locale]`
+- НЕ кэшировать: формы (OsmImportComponent), блоки со счётчиками/списками POI без ключа по коллекции
 
-#### Стратегии кэширования в проекте
-
-**1. Fragment Caching (Russian Doll)**
-- `Admin::Users::TableComponent` — ключ: `[users.maximum(:updated_at), users.count, I18n.locale]`
-- `Admin::Users::RowComponent` — ключ: `[user, user.roles.maximum(:updated_at), I18n.locale]`
-- `Admin::Users::DetailComponent` — ключ: `[user, user.versions.maximum(:created_at), I18n.locale]`
-- `NavbarComponent` — ключ: `[user_signed_in? ? current_user.id : 'guest', I18n.locale]`
-- `Admin::SidebarComponent` — ключ: `[user_signed_in? ? current_user.id : 'guest', I18n.locale]`
-
-**2. Query Caching**
-- `Role.all` — кэшируется в `Admin::UsersReflex#render_edit_form` с `expires_in: 1.hour`
-- `Admin::UserService.search_users` — кэшируется по ключу `search_users/<query>/<status>/<User.maximum(:updated_at)>` с `expires_in: 5.minutes`
-
-**3. Инвалидация**
-- Fragment caching инвалидируется автоматически при изменении `updated_at` модели
-- Query caching использует `User.maximum(:updated_at)` в ключе — при любом изменении пользователя ключ меняется
-- `Role.all` имеет TTL 1 час (роли меняются редко)
-- `search_users` имеет TTL 5 минут (компромисс между свежестью и производительностью)
-
-**4. Конфигурация**
+**Конфигурация:**
 - `config/cache.yml` — 256MB, namespace по env
 - `config/environments/production.rb` — `config.cache_store = :solid_cache_store`, `perform_caching = true`
 - `config/environments/development.rb` — SolidCache включён, fragment caching только при наличии `tmp/caching-dev.txt`
@@ -310,15 +382,20 @@ Database-backed кэш для переиспользования результ�
 
 **Файл:** [`app/services/reverse_geocoding_service.rb`](app/services/reverse_geocoding_service.rb)
 
-### HuggingFaceService
+### AI-сервисы (платные LLM API)
 
-Сервис для AI-функций через Hugging Face Chat API.
+Решение: использовать **прямые API платных ИИ** (OpenAI и OpenAI-совместимые endpoint'ы) вместо бесплатных/self-hosted моделей. HuggingFace отклонено, сервис удалён.
 
-**Текущее использование:** Зарезервирован для будущей проверки комментариев на токсичность.
+**Провайдеры (OpenAI-совместимые):** OpenAI, DeepSeek (`api.deepseek.com`, модели `deepseek-chat`/`deepseek-reasoner`), иные совместимые endpoint'ы. Переключение — через конфиг, без правок бизнес-кода.
 
-**API**: `router.huggingface.co/v1/chat/completions` (OpenAI-совместимый), модель `openai/gpt-oss-120b:fastest`.
+**Архитектура:** единый `AiService` (клиент API, промпты, ключи, лимиты — одна точка). Бизнес-сервисы вызывают его как шаг валидации/обработки, не содержат HTTP-логику.
 
-**Файл:** [`app/services/hugging_face_service.rb`](app/services/hugging_face_service.rb)
+**Планируемое использование:**
+- `AiService.check_toxicity(text)` — проверка токсичности комментариев (вызывается из сервиса комментариев перед сохранением)
+- `AiService.translate_missing_keys` — автозаполнение пропущенных ключей переводов в админке
+- AI-рекомендации (Premium)
+
+**Реализация:** TODO — создать `AiService` (обёртка над OpenAI-совместимым API), API-ключ через `ENV`.
 
 ### SolidQueueDashboard
 
@@ -350,7 +427,7 @@ Database-backed адаптер для ActionCable. WebSocket сообщения 
 
 ### Gamification (собственная система)
 
-Кастомная система геймификации, заменившая гем Merit. Единая таблица `gamifications` хранит все события: начисление баллов и выдачу бейджей.
+Кастомная система геймификации. Единая таблица `gamifications` хранит все события: начисление баллов и выдачу бейджей.
 
 **Архитектура:**
 - **Модель `Gamification`** — `belongs_to :user`, поля: `event_type` (score/badge), `value` (баллы или badge_id), `action_key`, `log`
@@ -424,7 +501,7 @@ PostgreSQL — основная БД приложения. PostGIS — расш�
 | **Realtime** | ActionCable, SolidCable, CableReady |
 | **Background Jobs** | SolidQueue |
 | **Job Dashboard** | SolidQueueDashboard |
-| **Caching** | SolidCache |
+| **Caching** | SolidCache (инфраструктура; кэширование в коде временно отключено) |
 | **Search & Filtering** | Ransack |
 | **Gamification** | Gamification (собственная) |
 | **Notifications** | Noticed |

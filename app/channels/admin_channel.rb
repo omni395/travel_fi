@@ -10,21 +10,23 @@
 # - Обновлений данных пользователя (при редактировании админом или пользователем)
 #
 # Подписка:
-#   - Только пользователи с ролью :admin
+#   - Пользователи с ролью :admin или :moderator
+#     (moderator имеет право редактировать категории через PoiCategoryPolicy#update?,
+#      поэтому должен получать live-обновления админ-панели)
 #   - Канал имеет фиксированное имя: "AdminChannel"
 #
 class AdminChannel < ApplicationCable::Channel
   #
-  # Подписывает администратора на общий канал админки
-  # Проверяет аутентификацию и наличие роли admin
+  # Подписывает администратора/модератора на общий канал админки
+  # Проверяет аутентификацию и наличие роли admin/moderator
   #
   def subscribed
     return reject unless current_user
-    return reject unless current_user.has_role?(:admin)
+    return reject unless current_user.has_role?(:admin) || current_user.has_role?(:moderator)
 
     stream_from "AdminChannel"
 
-    Rails.logger.info("AdminChannel: Admin #{current_user.id} subscribed to AdminChannel")
+    Rails.logger.info("AdminChannel: Admin/Moderator #{current_user.id} subscribed to AdminChannel")
   rescue StandardError => e
     Rails.logger.error("AdminChannel subscription error: #{e.class} #{e.message}")
     reject

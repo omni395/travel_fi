@@ -1,0 +1,20 @@
+<%# Admin::PoiCategories::PoiCategory::AuditLogComponent — лента аудита категории %>
+<%# Контейнер-цель [data-audit-log] находится на обёртке в show.html.erb (без вложенности inner_html) %>
+<div data-controller="admin--poi-categories--poi-category--audit-log-component"
+     data-admin--poi-categories--poi-category--audit-log-component-audit-category-id-value="<%= category.to_param %>">
+  <% if versions_present? %>
+    <div class="divide-y divide-gray-100">
+      <%# Per-entry рендер через view_context (helpers.render): не ломает broadcast из job %>
+      <%= render_entries_html %>
+    </div>
+  <% else %>
+    <%= render Ui::AuditEntryComponent.new(version: nil) %>
+  <% end %>
+
+  <% if pagination_present? %>
+    <%= render Ui::PaginationComponent.new(
+          pagy: pagy,
+          pagination_controller: "admin--poi-categories--poi-category--audit-log-component"
+        ) %>
+  <% end %>
+</div>

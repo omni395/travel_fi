@@ -87,6 +87,16 @@ class Poi::DetailComponent < ApplicationComponent
   end
 
   #
+  # URL cover-фото POI (MEDIUM вариант) или fallback no-image.png.
+  # Единый источник данных с тултипом карты — PhotoService.
+  #
+  # @return [String] URL изображения
+  #
+  def cover_photo_url
+    PhotoService.cover_photo_url(poi, variant: PhotoService::MEDIUM) || PhotoService.fallback_url
+  end
+
+  #
   # Может ли текущий пользователь редактировать POI?
   #
   # @return [Boolean]

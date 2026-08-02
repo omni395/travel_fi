@@ -3,6 +3,7 @@ zh:
     detail_component:
       tab_info: 信息
       tab_comments: 评论
+      photo_alt: POI 照片
       edit: 编辑
       status_pending: 待审核
       status_approved: 已通过

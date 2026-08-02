@@ -17,8 +17,6 @@ class Admin::PoisReflex < ApplicationReflex
   # @param params [Hash] параметры POI
   #
   def update(params = {})
-    morph :nothing
-
     poi = Poi.find(params[:id] || element.dataset.id)
     authorize_with_pundit!(poi, :update?)
 
@@ -76,8 +74,6 @@ class Admin::PoisReflex < ApplicationReflex
   # @param params [Hash] параметры { id: Integer, status: String }
   #
   def change_status(params = {})
-    morph :nothing
-
     poi = Poi.find(params[:id] || element.dataset.id)
     authorize_with_pundit!(poi, :moderate?)
 
@@ -164,8 +160,6 @@ class Admin::PoisReflex < ApplicationReflex
   # @param params [Hash] параметры { column:, query:, status:, category_id: }
   #
   def sort(params = {})
-    morph :nothing
-
     column = params[:column]
     query = params[:query]
     status = params[:status]
@@ -200,8 +194,6 @@ class Admin::PoisReflex < ApplicationReflex
   # Сбрасывает фильтры POI
   #
   def reset_filters
-    morph :nothing
-
     authorize_with_pundit!(Poi, :index?)
 
     session.delete(:admin_pois_sort_column)
@@ -228,7 +220,7 @@ class Admin::PoisReflex < ApplicationReflex
   # @return [String] HTML компонента таблицы
   #
   def render_pois_table(pois, pagy = nil)
-    component = Admin::Poi::TableComponent.new(pois: pois, pagy: pagy)
+    component = Admin::Pois::TableComponent.new(pois: pois, pagy: pagy)
     ApplicationController.render(component, layout: false)
   end
 
@@ -240,7 +232,7 @@ class Admin::PoisReflex < ApplicationReflex
   def send_error(message)
     return unless current_user
 
-    cable_ready[current_user.to_gid_param].dispatch_event(
+    cable_ready["user_#{current_user.id}"].dispatch_event(
       name: "adminPoisError",
       detail: { message: message }
     )
@@ -255,7 +247,7 @@ class Admin::PoisReflex < ApplicationReflex
   def send_success(message = nil)
     return unless current_user
 
-    cable_ready[current_user.to_gid_param].dispatch_event(
+    cable_ready["user_#{current_user.id}"].dispatch_event(
       name: "adminPoisSuccess",
       detail: { message: message || I18n.t("reflexes.admin.pois.operation_success") }
     )

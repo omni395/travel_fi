@@ -7,6 +7,8 @@ zh:
       deleted: "删除"
       by: "操作人"
       system: "系统"
+      field: "字段"
+      field_label: "字段: %{key}"
       no_versions: "暂无更改记录"
       no_versions_hint: "暂无更改，审计将显示在此处。"
       field_types:

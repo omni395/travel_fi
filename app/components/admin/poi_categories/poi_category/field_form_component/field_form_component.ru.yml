@@ -1,0 +1,29 @@
+---
+ru:
+  admin:
+    poi_categories:
+      poi_category:
+        field_form_component:
+          title: Добавить поле
+          edit_title: Редактировать поле
+          save: Сохранить
+          delete: Удалить
+          delete_confirm_title: Удаление поля
+          delete_confirm_message: Вы уверены, что хотите удалить это поле? Действие необратимо.
+          label: Метка
+          required: Обязательное
+          active: Активно
+          cancel: Отмена
+          create: Создать
+          placeholder: Плейсхолдер
+          hint: Подсказка
+          options: Варианты
+          options_placeholder: "ключ;en;ru;es;zh"
+          options_hint: "Каждая строка: ключ;en;ru;es;zh (переводы необязательны)"
+          field_types:
+            string: Строка
+            text: Текст
+            number: Число
+            boolean: Да/Нет
+            select: Выбор
+            multiselect: Множественный выбор

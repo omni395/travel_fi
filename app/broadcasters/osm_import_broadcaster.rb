@@ -4,11 +4,22 @@
 # OsmImportBroadcaster — отправляет прогресс и результаты импорта OSM через WebSocket
 #
 # Ответственность:
-# 1. progress — отправляет промежуточный прогресс импорта (total/processed)
-# 2. call — отправляет финальный результат импорта + обновляет UI
+# 1. started — отправляет сигнал о старте импорта (переключение UI на спиннер)
+# 2. progress — отправляет промежуточный прогресс импорта (total/processed/already_in_db)
+# 3. call — отправляет финальный результат импорта + обновляет UI + триггерит перезагрузку карты
 #
 class OsmImportBroadcaster
   include CableReady::Broadcaster
+
+  #
+  # Отправляет сигнал о старте импорта (переключение UI на панель прогресса)
+  #
+  # @param user [User] админ, инициировавший импорт
+  # @param category [PoiCategory] категория импорта
+  #
+  def self.started(user:, category:)
+    new(user: user).send_started(category: category)
+  end
 
   #
   # Отправляет промежуточный прогресс импорта
@@ -16,9 +27,10 @@ class OsmImportBroadcaster
   # @param user [User] админ, инициировавший импорт
   # @param total [Integer] общее количество элементов из OSM
   # @param processed [Integer] сколько обработано
+  # @param already_in_db [Integer] сколько из found уже есть в БД (для первого прогресса)
   #
-  def self.progress(user:, total:, processed:)
-    new(user: user).progress(total: total, processed: processed)
+  def self.progress(user:, total:, processed:, already_in_db: nil)
+    new(user: user).progress(total: total, processed: processed, already_in_db: already_in_db)
   end
 
   #
@@ -39,21 +51,56 @@ class OsmImportBroadcaster
   end
 
   #
-  # Отправляет промежуточный прогресс через dispatch_event
+  # Отправляет сигнал о старте импорта
+  # Вызывается из OsmImportJob перед fetch_elements
   #
-  def progress(total:, processed:)
+  def send_started(category:)
     cable_ready["user_#{user.id}"].dispatch_event(
-      name: "osmImportProgress",
-      detail: { total: total, processed: processed }
+      name: "osmImportStarted",
+      detail: {
+        category_id: category.id,
+        category_name: category.localized_name
+      }
     )
     cable_ready.broadcast
+  rescue StandardError => e
+    Rails.logger.error "OsmImportBroadcaster#started error: #{e.class} #{e.message}"
+  end
+
+  #
+  # Отправляет промежуточный прогресс через dispatch_event
+  #
+  # @param total [Integer] общее количество элементов из OSM
+  # @param processed [Integer] сколько обработано
+  # @param already_in_db [Integer, nil] сколько уже есть в БД (только для processed=0)
+  #
+  def progress(total:, processed:, already_in_db: nil)
+    cable_ready["user_#{user.id}"].dispatch_event(
+      name: "osmImportProgress",
+      detail: {
+        total: total,
+        processed: processed,
+        already_in_db: already_in_db
+      }
+    )
+    cable_ready.broadcast
+    Rails.logger.info "[TRACE] OsmImportBroadcaster#progress sent: #{processed}/#{total} already_in_db=#{already_in_db}"
+  rescue StandardError => e
+    Rails.logger.error "[TRACE] OsmImportBroadcaster#progress error: #{e.class} #{e.message}"
   end
 
   #
   # Выполняет broadcast финального результата импорта
   #
+  # ВАЖНО: dispatch_event отправляется ДО рендера компонента, т.к.
+  # ApplicationController.render может упасть с Warden error вне
+  # веб-контекста (VersionObserverJob в SolidQueue worker'е).
+  # Если упадёт — osmImportComplete уже ушёл клиенту.
+  #
   def broadcast(stats:, category:)
-    # Отправляем событие с результатами импорта в UserChannel пользователя
+    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast START: stats=#{stats.inspect}"
+
+    # 1. Отправляем событие с результатами импорта — НЕМЕДЛЕННО
     cable_ready["user_#{user.id}"].dispatch_event(
       name: "osmImportComplete",
       detail: {
@@ -65,19 +112,34 @@ class OsmImportBroadcaster
         errors: stats[:errors]
       }
     )
+    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: osmImportComplete queued for user_#{user.id}"
 
-    # Обновляем UI (счётчик POI) — отправляем в AdminChannel для всех админов
-    component = Admin::PoiCategories::PoiCategory::ShowComponent.new(category: category.reload)
-    html = ApplicationController.render(component, layout: false)
-    cable_ready["AdminChannel"].morph(
-      selector: "[data-admin-poi-category-id='#{category.id}']",
-      html: html
+    # 2. Триггерим перезагрузку маркеров на карте — тоже немедленно
+    cable_ready["UserChannel"].dispatch_event(
+      name: "poi:reload-features"
     )
+    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: poi:reload-features queued for UserChannel"
 
+    # Отправляем эти события сразу (гарантированная доставка)
     cable_ready.broadcast
+    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: first broadcast done"
 
-    Rails.logger.info "OsmImportBroadcaster: sent result to user##{user.id} for category##{category.id}"
+    # 3. Обновляем UI категории (счётчик POI) — отдельно, может упасть
+    begin
+      component = Admin::PoiCategories::PoiCategory::ShowComponent.new(category: category.reload)
+      html = ApplicationController.render(component, layout: false)
+      cable_ready["AdminChannel"].morph(
+        selector: "[data-admin-poi-category-id='#{category.id}']",
+        html: html
+      )
+      cable_ready.broadcast
+      Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: AdminChannel morph done"
+    rescue StandardError => e
+      Rails.logger.warn "[TRACE] OsmImportBroadcaster: AdminChannel morph skipped: #{e.class} #{e.message}"
+    end
+
+    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: sent result to user##{user.id} for category##{category.id}"
   rescue StandardError => e
-    Rails.logger.error "OsmImportBroadcaster error: #{e.class} #{e.message}"
+    Rails.logger.error "[TRACE] OsmImportBroadcaster error: #{e.class} #{e.message}"
   end
 end

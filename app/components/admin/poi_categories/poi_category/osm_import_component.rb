@@ -34,11 +34,15 @@ class Admin::PoiCategories::PoiCategory::OsmImportComponent < ApplicationCompone
 
   #
   # Массив городов для JS citiesValue
+  # Каждый город дополняется poi_count — сколько POI этой категории уже есть в его bbox
   #
-  # @return [Hash] { "City" => { bbox: [...], country: "..." } }
+  # @return [Hash] { "City" => { bbox: [...], country: "...", poi_count: Integer } }
   #
   def cities_data
-    CITIES
+    CITIES.transform_values do |data|
+      count = category.pois.within_bounds(*data[:bbox]).count
+      data.merge(poi_count: count)
+    end
   end
 
   #

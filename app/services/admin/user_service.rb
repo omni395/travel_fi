@@ -89,9 +89,6 @@ class Admin::UserService
   #
   # Ищет пользователей по запросу и статусу через Ransack
   #
-  # Результат кэшируется на 5 минут по ключу search_users/<query>/<status>/<sort>.
-  # Инвалидация происходит при изменении любого пользователя (updated_at).
-  #
   # @param query [String, nil] поисковый запрос (имя или email)
   # @param status [String, nil] статус для фильтрации
   # @param sort_column [String, nil] колонка для сортировки
@@ -99,34 +96,31 @@ class Admin::UserService
   # @return [ActiveRecord::Relation] отфильтрованные пользователи
   #
   def self.search_users(query: nil, status: nil, sort_column: nil, sort_direction: nil)
-    cache_key = "search_users/#{query}/#{status}/#{sort_column}/#{sort_direction}/#{User.maximum(:updated_at)}"
+    users = User.includes(:roles).where.not(status: "deleted")
 
-    Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-      users = User.includes(:roles).where.not(status: 'deleted')
+    conditions = {}
+    conditions[:status_eq] = status if status.present?
+    conditions[:name_or_email_cont] = query if query.present?
 
-      conditions = {}
-      conditions[:status_eq] = status if status.present?
-      conditions[:name_or_email_cont] = query if query.present?
+    result = users.ransack(conditions).result
 
-      result = users.ransack(conditions).result
-
-      # Применяем сортировку
-      if sort_column.present? && %w[name email status created_at updated_at].include?(sort_column)
-        direction = sort_direction == 'asc' ? :asc : :desc
-        result = result.order(sort_column => direction)
-      else
-        result = result.order(created_at: :desc)
-      end
-
-      result
+    # Применяем сортировку
+    if sort_column.present? && %w[name email status created_at updated_at].include?(sort_column)
+      direction = sort_direction == "asc" ? :asc : :desc
+      result = result.order(sort_column => direction)
+    else
+      result = result.order(created_at: :desc)
     end
+
+    result
   end
 
   attr_reader :user, :params, :current_user
 
   def initialize(user:, params: {}, current_user:)
     @user = user
-    @params = params.slice(:name, :email, :status)
+    # role_id включён: update_user_roles! читает params[:role_id]
+    @params = params.slice(:name, :email, :status, :role_id)
     @current_user = current_user
   end
 
@@ -140,9 +134,6 @@ class Admin::UserService
     update_user_fields!
     update_user_roles!
 
-    # Устанавливаем контекст админки для broadcast_update
-    Current.admin_context = true
-
     save_user!
 
     user
@@ -150,9 +141,6 @@ class Admin::UserService
     raise UpdateError, "Failed to save user: #{e.message}"
   rescue StandardError => e
     raise UpdateError, "An error occurred: #{e.message}"
-  ensure
-    # Сбрасываем контекст админки
-    Current.admin_context = nil
   end
 
   #
@@ -163,9 +151,6 @@ class Admin::UserService
     validate_status!
     validate_status_transition!
 
-    # Устанавливаем контекст админки для broadcast_update
-    Current.admin_context = true
-
     change_status!
 
     user
@@ -173,9 +158,6 @@ class Admin::UserService
     raise StatusError, "Failed to change status: #{e.message}"
   rescue StandardError => e
     raise StatusError, "An error occurred: #{e.message}"
-  ensure
-    # Сбрасываем контекст админки
-    Current.admin_context = nil
   end
 
   #
@@ -187,17 +169,11 @@ class Admin::UserService
     validate_role_action!
     validate_user_for_role!
 
-    # Устанавливаем контекст админки для broadcast_update
-    Current.admin_context = true
-
     execute_role_action!
 
     user
   rescue StandardError => e
     raise RoleError, "An error occurred: #{e.message}"
-  ensure
-    # Сбрасываем контекст админки
-    Current.admin_context = nil
   end
 
   #
@@ -207,17 +183,11 @@ class Admin::UserService
     validate_user_for_destroy!
     validate_deletion!
 
-    # Устанавливаем контекст админки для broadcast_update
-    Current.admin_context = true
-
     destroy_user!
 
     user
   rescue StandardError => e
     raise DestroyError, "An error occurred: #{e.message}"
-  ensure
-    # Сбрасываем контекст админки
-    Current.admin_context = nil
   end
 
   #
@@ -301,12 +271,12 @@ class Admin::UserService
   #
   def validate_status_transition!
     # Нельзя менять статус удаленному пользователю
-    if user.status == 'deleted'
+    if user.status == "deleted"
       raise StatusError, "Cannot change status of deleted user"
     end
 
     # Нельзя менять статус самому себе (кроме активации)
-    if user == current_user && @status != 'active'
+    if user == current_user && @status != "active"
       raise StatusError, "Cannot change your own status"
     end
   end
@@ -327,7 +297,7 @@ class Admin::UserService
   # Валидирует действие с ролью
   #
   def validate_role_action!
-    unless [:add, :remove].include?(@action)
+    unless [ :add, :remove ].include?(@action)
       raise RoleError, "Invalid action: #{@action}"
     end
   end
@@ -337,7 +307,7 @@ class Admin::UserService
   #
   def validate_user_for_role!
     # Нельзя менять роли удаленному пользователю
-    if user.status == 'deleted'
+    if user.status == "deleted"
       raise RoleError, "Cannot change roles of deleted user"
     end
 
@@ -393,7 +363,7 @@ class Admin::UserService
     end
 
     # Нельзя удалять уже удаленного пользователя
-    if user.status == 'deleted'
+    if user.status == "deleted"
       raise DestroyError, "User is already deleted"
     end
   end
@@ -411,7 +381,7 @@ class Admin::UserService
   # Выполняет мягкое удаление пользователя
   #
   def destroy_user!
-    user.status = 'deleted'
+    user.status = "deleted"
 
     unless user.save
       errors_text = user.errors.full_messages.join(", ")
