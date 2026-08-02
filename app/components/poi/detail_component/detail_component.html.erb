@@ -77,6 +77,13 @@
 
     <%# Panel: Info %>
     <div data-ui--tabs-component-target="panel" data-tab="info" class="space-y-4">
+      <%# Обложка POI (cover-фото галереи, fallback no-image.png) %>
+      <div class="w-full h-48 rounded-lg overflow-hidden border border-gray-200">
+        <img src="<%= cover_photo_url %>"
+             alt="<%= t('.photo_alt') %>"
+             class="w-full h-full object-cover">
+      </div>
+
       <%# Рейтинг + верификация %>
       <div class="flex items-center gap-4 text-sm">
         <% if poi.rating > 0 %>

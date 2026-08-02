@@ -31,8 +31,18 @@ export default class extends ApplicationController {
     "customFields", "customCity", "customCountry",
     "customSouth", "customWest", "customNorth", "customEast",
     "importBtn", "progressBar", "progressStatusText",
-    "progressProcessed", "progressTotal", "closeBtn"
+    "progressCounter", "progressSpinner", "closeBtn"
   ]
+
+  /**
+   * Безопасно обновляет текст progressCounter.
+   * Если target отсутствует (старый кэш шаблона) — не падает, пишет в консоль.
+   */
+  #setProgressText(text) {
+    if (this.hasProgressCounterTarget) {
+      this.progressCounterTarget.textContent = text
+    }
+  }
 
   static values = {
     cities: { type: Object, default: {} }
@@ -41,6 +51,9 @@ export default class extends ApplicationController {
   #selectedCity = null
   #selectedBbox = null
   #selectedCountry = ""
+  #currentProgress = 0
+  #isImporting = false
+  #boundStarted = null
   #boundProgress = null
   #boundComplete = null
 
@@ -54,8 +67,10 @@ export default class extends ApplicationController {
 
   /**
    * Закрывает диалог и сбрасывает все панели
+   * Заблокировано пока идёт импорт (#isImporting === true)
    */
   close() {
+    if (this.#isImporting) return
     this.overlayTarget.classList.add("hidden")
     this.#resetState()
   }
@@ -120,6 +135,9 @@ export default class extends ApplicationController {
 
   /**
    * Запускает импорт через StimulusReflex
+   * Reflex выполняет синхронный импорт (OsmImportService напрямую).
+   * Прогресс приходит через dispatch_event от OsmImportBroadcaster.
+   * Кнопка Close блокируется до завершения.
    */
   startImport() {
     const { city, country, bbox } = this.#getLocation()
@@ -130,13 +148,20 @@ export default class extends ApplicationController {
       return
     }
 
-    // Переключаем UI на панель прогресса
+    // Блокируем кнопку Close до завершения импорта
+    this.closeBtnTarget.disabled = true
+    this.closeBtnTarget.title = "Wait for import to complete"
+
+    // Переключаем UI на панель прогресса (спиннер)
     this.locationPanelTarget.classList.add("hidden")
     this.progressPanelTarget.classList.remove("hidden")
     this.progressStatusTextTarget.textContent = this.progressStatusTextTarget.dataset.fetchingText || "Fetching data from OpenStreetMap..."
     this.progressBarTarget.style.width = "0%"
-    this.progressProcessedTarget.textContent = "0"
-    this.progressTotalTarget.textContent = "0"
+    this.#setProgressText("0 of 0 (0%)")
+
+    // Блокируем все кнопки закрытия до завершения импорта
+    this.#currentProgress = 0
+    this.#isImporting = true
 
     const element = this.overlayTarget
     const categoryId = element.closest("[data-admin-poi-category-id]")?.dataset.adminPoiCategoryId
@@ -148,39 +173,75 @@ export default class extends ApplicationController {
   }
 
   /**
-   * Обработчик события osmImportProgress от Broadcaster
-   * Обновляет прогресс-бар и счётчики
+   * Обработчик события osmImportStarted
    */
-  osmImportProgress(event) {
-    const { total, processed } = event.detail
-    this.progressProcessedTarget.textContent = String(processed)
-    this.progressTotalTarget.textContent = String(total)
-
-    if (total > 0) {
-      const percent = Math.min(Math.round((processed / total) * 100), 100)
-      this.progressBarTarget.style.width = `${percent}%`
-    }
-
+  osmImportStarted(event) {
+    console.log('[OSM IMPORT] ⏳ osmImportStarted received', event.detail)
+    this.#currentProgress = 0
     this.progressStatusTextTarget.textContent =
-      this.progressStatusTextTarget.dataset.importingText || "Importing..."
+      this.progressStatusTextTarget.dataset.fetchingText || "Fetching data from OpenStreetMap..."
+    this.progressBarTarget.style.width = "0%"
+    this.#setProgressText("0 of 0 (0%)")
   }
 
   /**
-   * Обработчик события osmImportComplete от Broadcaster
-   * Показывает финальную статистику
+   * Обработчик события osmImportProgress
+   * Обновляет UI только если новое processed БОЛЬШЕ предыдущего.
+   * SolidCable может доставлять события вразнобой (polling 5s),
+   * поэтому старые события не должны перезатирать новые.
+   * ВНИМАНИЕ: CableReady конвертирует snake_case в camelCase в detail
+   */
+  osmImportProgress(event) {
+    const detail = event.detail
+    const total = detail.total
+    const processed = detail.processed
+    const alreadyInDb = detail.alreadyInDb  // CableReady: already_in_db → alreadyInDb
+    const percent = total > 0 ? Math.min(Math.round((processed / total) * 100), 100) : 0
+    console.log(`[OSM IMPORT] 📊 progress: ${processed}/${total} (${percent}%), alreadyInDb: ${alreadyInDb}`)
+
+    // Игнорируем строго старые события (<, не <=, чтобы обработать повторы)
+    if (this.#currentProgress !== undefined && processed < this.#currentProgress) {
+      console.log(`[OSM IMPORT] ⏭️ skip stale progress: ${processed} < ${this.#currentProgress}`)
+      return
+    }
+    this.#currentProgress = processed
+
+    this.#setProgressText(`${processed} of ${total} (${percent}%)`)
+    this.progressBarTarget.style.width = `${percent}%`
+
+    if (processed === 0 && alreadyInDb !== null && alreadyInDb !== undefined) {
+      const toImport = total - alreadyInDb
+      this.progressStatusTextTarget.textContent =
+        `OSM returned ${total} elements, ${alreadyInDb} already in DB, ${toImport} will be imported`
+    } else {
+      this.progressStatusTextTarget.textContent =
+        this.progressStatusTextTarget.dataset.importingText || "Importing..."
+    }
+  }
+
+  /**
+   * Обработчик события osmImportComplete
    */
   osmImportComplete(event) {
-    const detail = event.detail
-    const total = detail.created + detail.skipped_duplicate + detail.skipped_modified + detail.errors
+    const detail = event.detail  // CableReady: snake_case → camelCase
+    const total = detail.created + (detail.skippedDuplicate || 0) + (detail.skippedModified || 0) + detail.errors
+    console.log(`[OSM IMPORT] ✅ osmImportComplete received`, detail)
 
     this.progressBarTarget.style.width = "100%"
-    this.progressProcessedTarget.textContent = String(total)
-    this.progressTotalTarget.textContent = String(total)
+    this.#setProgressText(`${total} of ${total} (100%)`)
     this.progressStatusTextTarget.textContent =
-      `\u2705 Created: ${detail.created}, Skipped: ${detail.skipped_duplicate + detail.skipped_modified}, Errors: ${detail.errors}`
+      `\u2705 Created: ${detail.created}, Skipped: ${(detail.skippedDuplicate || 0) + (detail.skippedModified || 0)}, Errors: ${detail.errors}`
     this.progressStatusTextTarget.classList.remove("text-emerald-600")
     this.progressStatusTextTarget.classList.add("text-emerald-700")
-    this.closeBtnTarget.classList.remove("hidden")
+
+    // Прячем спиннер, показываем зелёную галочку (в статусе)
+    if (this.hasProgressSpinnerTarget) {
+      this.progressSpinnerTarget.classList.add("hidden")
+    }
+
+    this.#isImporting = false
+    this.closeBtnTarget.disabled = false
+    this.closeBtnTarget.title = ""
   }
 
   /**
@@ -225,6 +286,7 @@ export default class extends ApplicationController {
     this.progressStatusTextTarget.classList.remove("text-red-600", "text-emerald-700")
     this.progressStatusTextTarget.classList.add("text-emerald-600")
     this.progressStatusTextTarget.textContent = this.progressStatusTextTarget.dataset.fetchingText || "Fetching data from OpenStreetMap..."
+    if (this.hasProgressSpinnerTarget) this.progressSpinnerTarget.classList.remove("hidden")
     this.closeBtnTarget.classList.add("hidden")
     this.importBtnTarget.disabled = true
     // Сброс полей ручного ввода
@@ -238,6 +300,8 @@ export default class extends ApplicationController {
     this.importBtnTarget.disabled = true
     this.#boundProgress = this.osmImportProgress.bind(this)
     this.#boundComplete = this.osmImportComplete.bind(this)
+    this.#boundStarted = this.osmImportStarted.bind(this)
+    document.addEventListener("osmImportStarted", this.#boundStarted)
     document.addEventListener("osmImportProgress", this.#boundProgress)
     document.addEventListener("osmImportComplete", this.#boundComplete)
 
@@ -249,6 +313,7 @@ export default class extends ApplicationController {
   }
 
   disconnect() {
+    document.removeEventListener("osmImportStarted", this.#boundStarted)
     document.removeEventListener("osmImportProgress", this.#boundProgress)
     document.removeEventListener("osmImportComplete", this.#boundComplete)
   }

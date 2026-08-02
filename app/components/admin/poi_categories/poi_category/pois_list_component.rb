@@ -8,20 +8,18 @@
 # @param category [PoiCategory] категория POI
 #
 class Admin::PoiCategories::PoiCategory::PoisListComponent < ApplicationComponent
-  def initialize(category:)
+  #
+  # @param category [PoiCategory] категория POI
+  # @param pagy [Pagy] объект пагинации Pagy
+  # @param pois [ActiveRecord::Relation<Poi>] POI текущей страницы
+  #
+  def initialize(category:, pagy:, pois:)
     @category = category
+    @pagy = pagy
+    @pois = pois
   end
 
   private
 
-  attr_reader :category
-
-  #
-  # POI данной категории, отсортированные по дате создания
-  #
-  # @return [ActiveRecord::Relation<Poi>]
-  #
-  def pois
-    category.pois.includes(:user).order(created_at: :desc).limit(50)
-  end
+  attr_reader :category, :pagy, :pois
 end

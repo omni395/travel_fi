@@ -4,3 +4,4 @@ es:
       loading: "Cargando..."
       category: "Categoría"
       address: "Dirección"
+      photo_alt: "Foto de marcador de posición del POI"

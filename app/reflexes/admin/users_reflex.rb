@@ -15,12 +15,12 @@ class Admin::UsersReflex < ApplicationReflex
   # Обновляет данные пользователя через WebSocket
   # Вызывается из формы редактирования (EditComponent)
   #
-  # @param params [Hash] параметры { name:, email:, status:, role_id: }
+  # @param params [Hash] параметры { user_id:, name:, email:, status:, role_id: }
   #
   def update(params = {})
-    morph :nothing
-
-    user = User.friendly.find(params[:id] || element.dataset.id)
+    # Нормализуем строковые ключи из JS в символьные для Service слоя
+    params = deep_symbolize_keys(params)
+    user = User.friendly.find(params[:user_id] || element.dataset.id)
     authorize_with_pundit!(user, :update?)
 
     Admin::UserService.update(
@@ -29,10 +29,14 @@ class Admin::UsersReflex < ApplicationReflex
       current_user: current_user
     )
 
-    # После успешного обновления морфим профиль
-    component = Admin::Users::User::ShowComponent.new(user: user)
-    html = ApplicationController.render(component, layout: false)
-    morph "#user-profile", html
+    # Метод меняет состояние: DOM не морфим вручную.
+    # UI обновляет цепочка PaperTrail -> VersionObserverJob -> Broadcaster (AdminChannel).
+    morph :nothing
+
+    # Уводим инициатора с edit-страницы (?edit=true) на show-страницу пользователя.
+    # Редирект применяется только к текущему подключению (как в #destroy).
+    cable_ready.redirect_to(url: admin_user_path(id: user))
+    cable_ready.broadcast
 
     send_success(I18n.t("admin.users.update_success"))
   rescue Pundit::NotAuthorizedError => e
@@ -116,8 +120,6 @@ class Admin::UsersReflex < ApplicationReflex
   # @param params [Hash] параметры { column: String, query: String, status: String }
   #
   def sort(params = {})
-    morph :nothing
-
     column = params[:column]
     query = params[:query]
     status = params[:status]
@@ -157,8 +159,6 @@ class Admin::UsersReflex < ApplicationReflex
   # Обновляет список пользователей без перезагрузки страницы
   #
   def reset_filters
-    morph :nothing
-
     authorize_with_pundit!(User, :index?)
 
     # Сбрасываем сортировку в сессии
@@ -203,7 +203,7 @@ class Admin::UsersReflex < ApplicationReflex
   def send_error(message)
     return unless current_user
 
-    cable_ready[current_user.to_gid_param].dispatch_event(
+    cable_ready["user_#{current_user.id}"].dispatch_event(
       name: "adminUsersError",
       detail: { message: message }
     )
@@ -218,7 +218,7 @@ class Admin::UsersReflex < ApplicationReflex
   def send_success(message = nil)
     return unless current_user
 
-    cable_ready[current_user.to_gid_param].dispatch_event(
+    cable_ready["user_#{current_user.id}"].dispatch_event(
       name: "adminUsersSuccess",
       detail: { message: message || I18n.t("reflexes.admin.users.operation_success") }
     )

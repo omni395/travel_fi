@@ -42,7 +42,7 @@
 - [x] [`ContractService`](app/services/contract_service.rb) — 26 методов смарт-контрактов
 - [x] [`OsmImportService`](app/services/osm_import_service.rb) — импорт из OSM (Overpass API)
 - [x] [`ReverseGeocodingService`](app/services/reverse_geocoding_service.rb) — Nominatim
-- [x] [`HuggingFaceService`](app/services/hugging_face_service.rb) — AI-геокодинг (заглушка toxicity_check)
+- [x] `PaidAiService` (TODO) — прямые API платных ИИ (HuggingFaceService удалён)
 - [x] [`ImageTransformService`](app/services/image_transform_service.rb) — WebP сжатие
 - [x] [`VersionObserverJob`](app/jobs/version_observer_job.rb) — Database-Triggered Workflow
 - [x] [`UserActivityService`](app/services/user_activity_service.rb) — лента активности
@@ -64,7 +64,7 @@
 - [x] **Users/***: ProfileComponent, FormComponent
 - [x] **Settings/***: FieldComponent
 - [x] **Admin**: Dashboard (статистика), PoiCategories (CRUD + audit), Pois (CRUD + audit), Users (CRUD + audit + wallet)
-- [x] **AuditLogComponent** — для User, Poi, PoiCategory (полный diff изменений)
+- [x] **Аудит**: единая запись [`Ui::AuditEntryComponent`](app/components/ui/audit_entry_component.rb) (event/whodunnit/diff, empty state, фильтр «пусто→пусто», читаемый JSONB) + панель таба аудита (компонент со своим Stimulus-контроллером для пагинации, например `Admin::PoiCategories::PoiCategory::AuditLogComponent`); рендер из job через `helpers.render` + per-entry rescue
 
 ### Смарт-контракты (Solidity, deployed testnet)
 
@@ -85,25 +85,16 @@
 
 *Мелкие доработки и баги*
 
-### AuditLogComponent — ✅ унификация через Ui::AuditEntryComponent
+### Исправление табов - ПЕРЕПРОВЕРИТЬ!!!!
 
-AuditLogComponent удалён как отдельный враппер. Всё работает через [`Ui::AuditEntryComponent`](app/components/ui/audit_entry_component.rb):
-- Показывает запись аудита (event, whodunnit, date, diff)
-- Показывает пустой state (mdi-history + "No changes recorded yet" + hint) когда version = nil
-- Используется во всех 3 show-вьюхах (User, Poi, PoiCategory)
+- [ ] Исправить работу вкладок [`Ui::TabsComponent`](app/components/ui/tabs_component/) — переключение и рендер содержимого активной вкладки
+- [ ] Проверить табы в профиле пользователя админки (активность/аудит) — активная вкладка должна переключаться и подгружать своё содержимое live
 
-- [x] 3 враппера (`admin/*/audit_log_component`) удалены — заменены на прямой рендер `Ui::AuditEntryComponent`
-- [x] Ui::AuditEntryComponent — добавлен empty state + YAML ключи (4 локали)
-- [x] Dashboard — audit-лента добавлена через `Admin::DashboardComponent` (recent_activities)
-- [x] Settings — audit-лента добавлена (Setting имеет `has_paper_trail`, версии выводятся)
-- [x] JS-заглушки и lazy-регистрации удалены
-- [x] `last_event_date` перенесён в `ApplicationComponent`
+### POI: загрузка из админки в категорию - ВАЖНО!!!!!
 
-### POI: загрузка из админки в категорию
-
-- [ ] Исправить импорт POI из OSM через админку — сейчас привязка к категории ломается
+- [ ] Исправить импорт POI из OSM через админку — сейчас привязка к категории ломается - точки загружаются, но вкладка с пои не обновляется по мере добавления точек или при зкрытии страницы.
 - [ ] После импорта POI должны появляться на карте (сейчас visible scope фильтрует по `poi_categories.active`, проверить что категория активна)
-- [ ] Добавить индикатор прогресса импорта (OsmImportJob уже есть, но UI обратной связи нет)
+- [х] Добавить индикатор прогресса импорта (OsmImportJob уже есть, но UI обратной связи нет)
 
 ### POI: добавление на карте и через админку
 
@@ -124,9 +115,9 @@ AuditLogComponent удалён как отдельный враппер. Всё 
 
 ### Админка пользователей: баг сохранения
 
-- [ ] [`Admin::UsersReflex`](app/reflexes/admin/users_reflex.rb) — при сохранении профиля пользователя в админке возникает ошибка валидации или PaperTrail конфликт
-- [ ] Проверить [`Admin::UserService#execute_update`](app/services/admin/user_service.rb:138) — `Current.admin_context` устанавливается, но не проверяется в broadcaster'ах
-- [ ] После сохранения пользователя — список в админке должен обновиться live (сейчас Admin::UserBroadcaster шлёт в UserChannel, а не в AdminChannel)
+- [x] [`Admin::UsersReflex`](app/reflexes/admin/users_reflex.rb) — при сохранении профиля пользователя в админке возникает ошибка валидации или PaperTrail конфликт
+- [x] Проверить [`Admin::UserService#execute_update`](app/services/admin/user_service.rb:138) — `Current.admin_context` устанавливается, но не проверяется в broadcaster'ах
+- [x] После сохранения пользователя — список в админке должен обновиться live (сейчас Admin::UserBroadcaster шлёт в UserChannel, а не в AdminChannel)
 
 ### Reflex: live-обновление при изменении пользователя
 
@@ -134,7 +125,7 @@ AuditLogComponent удалён как отдельный враппер. Всё 
 - [ ] Причина: все broadcasters шлют в `UserChannel`, но AdminChannel не используется. Нужно разделить стримы — админские события в AdminChannel
 - [ ] [`UserBroadcaster`](app/broadcasters/user_broadcaster.rb) — проверить что `cable_ready[UserChannel].morph` отрабатывает для всех окон пользователя
 
-### Смарт-контракт: газ за счёт платформы
+### Смарт-контракт: газ за счёт платформы - ВАЖНО!!!!
 
 - [ ] Сейчас `eth_sendRawTransaction` требует подписанную транзакцию с клиента. Нужно перейти на модель, где мы платим за газ
 - [ ] Вариант A: Серверный кошелёк (hot wallet) с ETH балансом — подписываем транзакции на сервере через `eth_signTransaction` / приватный ключ в `ENV`
@@ -142,8 +133,9 @@ AuditLogComponent удалён как отдельный враппер. Всё 
 - [ ] Реализовать `ContractService.send_transaction_sponsored(…)` — сервер подписывает и отправляет
 - [ ] Админка: просмотр баланса hot wallet, пополнение, логи газа
 
-### Скрытый кошелёк при регистрации
+### Скрытый кошелёк при регистрации - ВАЖНО!!!!
 
+- [х] Интеграция библиотеки `viem` для взаимодействия с EVM-сетями.
 - [ ] При смене статуса пользователя на `active` (после полной регистрации: email confirmed + Google OAuth + referral) — создать скрытый (custodial) кошелёк
 - [ ] Архитектура: `Admin::WalletService.create_hidden_wallet(user)` — генерирует ключи (или через HSM/KMS), сохраняет зашифрованный приватный ключ в `Wallet` модели
 - [ ] Модель `Wallet` расширить: `user_id, address, encrypted_private_key, chain_id, created_at`
@@ -152,7 +144,8 @@ AuditLogComponent удалён как отдельный враппер. Всё 
 
 ### Telegram Mini App + TON cross-chain
 
-- [ ] Telegram Mini App (WebApp) — вход через Telegram OAuth, регистрация без пароля
+- [ ] Telegram Mini App (WebApp) — продумать систему регистрации. интегрировать с сууществующей структурой.
+- [ ] Продумать систему регистрации через телеграмм с созданием пользователя в БД.
 - [ ] TON кошелёк при регистрации (Tonhub/ Tonkeeper) — создаётся скрытый кошелёк или пользователь подключает свой
 - [ ] Cross-chain swap TFT (ERC-20) ↔ TON Jetton — через bridge контракт (Lock/Mint или Atomic Swap)
 - [ ] Архитектура: наш TravelFiToken (ERC-20) → Lock-контракт на EVM → Relayer → Mint TFT-Jetton на TON → Telegram кошелёк
@@ -189,11 +182,20 @@ AuditLogComponent удалён как отдельный враппер. Всё 
 - [ ] Расширенные фильтры (Premium-only): рейтинг, расстояние, динамические поля
 - [ ] Ограничения OSRM маршрутов: Free (7/нед), Starter/Pro/Unlimited за TFT
 - [ ] Ограничения импорта OSM: Free (1 город/день), Day Pass, Week Pass, Pro
-- [ ] AI-рекомендации (Premium): платный LLM (не HuggingFace)
+- [ ] AI-рекомендации (Premium): платный LLM (прямые API платных ИИ, HuggingFace отклонено)
 - [ ] Offline-экспорт GPX/CSV: Free (5 POI), Premium (весь регион)
 - [ ] Приоритетная верификация за TFT
 - [ ] Pundit scope для фильтрации по подписке
 - [ ] Сжигание TFT (burn) за премиум-действия
+
+### AI-инфраструктура (единый AiService)
+
+Решение: **единый `AiService`** (прямые API платных ИИ, OpenAI-совместимый endpoint) вместо HuggingFace. Все AI-сценарии идут через один сервис — клиент API, промпты, ключи, лимиты в одной точке. Бизнес-сервисы (комментарии, админка) вызывают его как шаг валидации/обработки, не содержат HTTP-логику.
+
+- [ ] `AiService.check_toxicity(text)` — проверка токсичности комментариев (вызывается из сервиса комментариев перед сохранением)
+- [ ] `AiService.translate_missing_keys` — автозаполнение пропущенных ключей переводов в админке (автоматизация заполнения пустых локалей для POI/категорий)
+- [ ] API-ключ через `ENV`, провайдер-агностичная обёртка (смена провайдера — правка одного файла). Провайдеры: OpenAI, DeepSeek (`api.deepseek.com`), иные OpenAI-совместимые
+- [ ] AI-рекомендации (Premium) — см. раздел Premium
 
 ### Web3 интеграция (WalletConnect / MetaMask)
 
@@ -210,6 +212,14 @@ EIP-1193 провайдер (клиент) + ContractService (сервер)
 - [ ] Админка: просмотр балансов и статуса контрактов
 - [ ] Покупка стикеров/иконок за TFT
 - [ ] Донаты создателям POI
+
+### ContractService: детект изменений через БД-снимки
+
+[`ContractService.detect_changes_for_contract`](app/services/contract_service.rb:857) использует `Rails.cache` как хранилище предыдущего состояния контракта (TTL 2 часа). Это архитектурно неверно: кэш эфемерен и сбрасывается — после простоя > 2 часов все поля ложно считаются changed. Нужно заменить на БД-снимки.
+
+- [ ] Модель `ContractSnapshot` (contract_type, data jsonb, created_at) + миграция
+- [ ] `detect_changes_for_contract`: читать последний снимок → сравнить → записать новый (вместо `Rails.cache.read/write`)
+- [ ] Инвалидация/ротация старых снимков (keep last N)
 
 ### Рекламная система (Ad Network)
 
@@ -273,6 +283,7 @@ OSRM сервер (Docker) + PostGIS маршрут + OpenLayers
 
 ### Производительность
 
+- [ ] **Точечное кэширование (вернуть после стабилизации)**: кэш убран из кода, чтобы исключить stale-данные при broadcast-морфах. Возвращать точечно: статичные части ShowComponent — ключ `[category, I18n.locale]` (инвалидация по `updated_at` категории); агрегаты `pois.count` — ключ ОБЯЗАТЕЛЬНО с зависимостью от коллекции POI `[category, category.pois, I18n.locale]`; НЕ кэшировать формы (OsmImportComponent) и блоки со счётчиками POI без ключа по коллекции
 - [ ] Кэширование тайлов карты (tile caching)
 - [ ] Оптимизация PostGIS запросов (explain analyze, индексы)
 - [ ] WebSocket масштабирование (SolidCable clustering)
@@ -305,3 +316,19 @@ OSRM сервер (Docker) + PostGIS маршрут + OpenLayers
 | TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton на TON для Telegram экосистемы |
 | SolidQueue вместо Sidekiq | Zero Redis |
 | PWA + Telegram Mini App | Вместо нативных приложений — охват, бюджет, гранты TON Foundation |
+
+## Известные архитектурные долги (Tech Debt)
+
+### CableReady из SolidQueue worker (cross-process broadcast) — ✅ РЕШЕНО
+
+**Проблема:** broadcast из `bin/jobs` не гарантированно доставлялся клиенту (ActionCable PubSub не инициализирован в worker — SolidQueue не запускает ActionCable middleware).
+
+**Решение (применено в [`bin/jobs`](bin/jobs)):** инициализация ActionCable PubSub до старта SolidQueue Supervisor:
+```ruby
+ActionCable.server.config.cable = { "adapter" => "solid_cable" }
+ActionCable.server.config.logger = Rails.logger
+ActionCable.server.pubsub
+```
+- Ключ `"adapter"` — СТРОКОВЫЙ: `ActionCable::Server::Configuration#pubsub_adapter` делает `cable.fetch("adapter") { "redis" }`; символьный `:adapter` → дефолт `"redis"` → `Redis::CannotConnectError` (проект zero-Redis).
+- SolidCable-адаптер Redis не использует: `broadcast` → `SolidCable::Message.broadcast` (INSERT в Postgres `travel_fi_dev_cable`); подключение к cable-БД SolidCable настраивает сам.
+- Сопутствующее: `pagy()` в Broadcaster из worker падает на `NameError: request` → в Broadcaster добавлен mock `ActionDispatch::Request` (аналог того, что Reflex получает от StimulusReflex).

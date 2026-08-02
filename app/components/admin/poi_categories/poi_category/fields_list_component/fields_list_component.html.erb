@@ -1,6 +1,7 @@
-<%# Admin::PoiCategories::FieldsListComponent - список полей категории POI + форма создания %>
-<div data-poi-category-fields
-     data-controller="admin--poi-categories--fields-list-component">
+<%# Admin::PoiCategories::PoiCategory::FieldsListComponent - список полей категории POI + форма создания %>
+<%# Контейнер [data-poi-category-fields] вынесен в обёртку show.html.erb,
+    чтобы inner_html от Broadcaster не создавал вложенность (см. CableReady). %>
+<div data-controller="admin--poi-categories--poi-category--fields-list-component">
   <div class="bg-white shadow rounded-lg p-6 mt-6">
     <div class="flex items-center justify-between mb-2">
       <h2 class="text-lg font-semibold text-gray-900">
@@ -8,7 +9,7 @@
         <i class="mdi mdi-format-list-bulleted text-emerald-500 mr-2"></i>
         <%= t(".fields_title") %>
       </h2>
-      <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { data: { action: "click->admin--poi-categories--fields-list-component#openForm" } }) do %>
+      <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { data: { action: "click->admin--poi-categories--poi-category--fields-list-component#openForm" } }) do %>
         <%# MDI: plus-circle %>
         <i class="mdi mdi-plus-circle mr-1"></i>
         <%= t(".add_field") %>
@@ -37,9 +38,9 @@
           <tbody class="bg-white divide-y divide-gray-200">
             <% fields.each_with_index do |field, idx| %>
               <% is_first = idx.zero? %>
-              <% is_last = idx == fields.length - 1 %>
+              <% is_last = last_field?(field) %>
               <tr class="hover:bg-gray-50 cursor-pointer"
-                  data-action="click->admin--poi-categories--fields-list-component#editField"
+                  data-action="click->admin--poi-categories--poi-category--fields-list-component#editField"
                   data-field-id="<%= field.id %>"
                   data-field-json="<%= {
                     id: field.id,
@@ -49,12 +50,15 @@
                     required: field.required,
                     active: field.active,
                     label: field.label,
+                    placeholder: field.placeholder,
+                    hint: field.hint,
+                    options: field.options,
                     poi_category_id: field.poi_category_id
                   }.to_json %>">
                 <%# Reorder (первая колонка) %>
                 <td class="px-2 py-3 text-sm text-center whitespace-nowrap">
                   <button type="button"
-                          data-action="click->admin--poi-categories--fields-list-component#moveUp"
+                          data-action="click->admin--poi-categories--poi-category--fields-list-component#moveUp"
                           data-field-id="<%= field.id %>"
                           class="inline-flex items-center justify-center p-0.5 transition-colors <%= is_first ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-emerald-600' %>"
                     <% if is_first %> disabled <% end %>>
@@ -62,7 +66,7 @@
                     <i class="mdi mdi-arrow-up-bold text-lg"></i>
                   </button>
                   <button type="button"
-                          data-action="click->admin--poi-categories--fields-list-component#moveDown"
+                          data-action="click->admin--poi-categories--poi-category--fields-list-component#moveDown"
                           data-field-id="<%= field.id %>"
                           class="inline-flex items-center justify-center p-0.5 transition-colors <%= is_last ? 'text-gray-300 cursor-not-allowed' : 'text-gray-500 hover:text-emerald-600' %>"
                     <% if is_last %> disabled <% end %>>
@@ -116,4 +120,4 @@
 </div>
 
 <%# Диалог создания поля %>
-<%= render Admin::PoiCategories::FieldFormComponent.new(category: category) %>
+<%= render Admin::PoiCategories::PoiCategory::FieldFormComponent.new(category: category) %>

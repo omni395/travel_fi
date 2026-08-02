@@ -41,8 +41,16 @@ class Admin::PoiCategoriesController < Admin::BaseController
 
     @edit_mode = params[:edit] == 'true'
     @fields = @category.poi_category_fields.by_position
-    @versions = @category.versions.order(created_at: :desc)
+    # Аудити категории и её полей (PoiCategoryField) — единая лента изменений
+    @versions = PoiCategoryService.audit_versions(category: @category).order(created_at: :desc)
     @pagy_audit, @versions = pagy(@versions, limit: 10, page: params[:audit_page] || 1)
+
+    # POI категории с пагинацией (вкладка POIs)
+    @pagy_pois, @pois = pagy(
+      @category.pois.includes(:user).order(created_at: :desc),
+      limit: 10,
+      page: params[:pois_page] || 1
+    )
   end
 
   #

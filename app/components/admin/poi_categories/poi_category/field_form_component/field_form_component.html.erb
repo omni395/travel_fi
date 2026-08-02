@@ -1,0 +1,209 @@
+<%# Admin::PoiCategories::PoiCategory::FieldFormComponent — диалог создания/редактирования поля категории %>
+<div data-controller="admin--poi-categories--poi-category--field-form-component"
+     class="field-form-component"
+     data-title="<%= t(".title") %>"
+     data-edit-title="<%= t(".edit_title") %>"
+     data-save="<%= t(".save") %>"
+     data-create="<%= t(".create") %>"
+     data-delete="<%= t(".delete") %>">
+
+  <%# Затемнённый оверлей (скрыт по умолчанию) %>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden"
+       data-admin--poi-categories--poi-category--field-form-component-target="overlay">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 p-6">
+      <%# Заголовок %>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900"
+            data-admin--poi-categories--poi-category--field-form-component-target="titleEl">
+          <%# Иконка: mdi-plus-circle (create) / mdi-pencil (edit) — класс переключается в JS %>
+          <i class="mdi mdi-plus-circle text-emerald-500 mr-2"
+             data-admin--poi-categories--poi-category--field-form-component-target="titleIcon"></i>
+          <span data-admin--poi-categories--poi-category--field-form-component-target="titleText"><%= t(".title") %></span>
+        </h3>
+        <%= render Ui::BtnComponent.new(color: :ghost, size: :sm, html: { data: { action: "click->admin--poi-categories--poi-category--field-form-component#close" } }) do %>
+          <%# MDI: close %>
+          <i class="mdi mdi-close text-xl"></i>
+        <% end %>
+      </div>
+
+      <%# Форма создания/редактирования поля %>
+      <%= form_with model: form_field, url: "#",
+                    data: { action: "submit->admin--poi-categories--poi-category--field-form-component#handleSubmit" } do |f| %>
+        <%= f.hidden_field :poi_category_id, value: category.id %>
+        <%= f.hidden_field :id, value: edit_mode? ? form_field.id : "" %>
+        <%= hidden_field_tag :_edit_mode, edit_mode? ? "1" : "0" %>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <%# Field Key %>
+          <div>
+            <%= f.label :field_key, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.text_field :field_key, autocomplete: "off",
+                             class: "field-input w-full",
+                             placeholder: "e.g., operator_name" %>
+          </div>
+
+          <%# Field Type %>
+          <div>
+            <%= f.label :field_type, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= render Ui::DropdownComponent.new(menu_classes: "z-[60] bg-white border border-gray-200") do |dropdown| %>
+              <% dropdown.with_trigger do %>
+                <button type="button"
+                        data-action="ui--dropdown-component#toggle"
+                        class="field-input w-full text-left flex items-center justify-between">
+                  <span data-admin--poi-categories--poi-category--field-form-component-target="typeTrigger"><%= field_type_options.find { |_, v| v == form_field.field_type }&.first || field_type_options.first&.first %></span>
+                  <%# MDI: chevron-down %>
+                  <i class="mdi mdi-chevron-down text-gray-400"></i>
+                </button>
+              <% end %>
+              <% dropdown.with_menu do %>
+                <div class="py-1 max-h-60 overflow-y-auto">
+                  <% field_type_options.each do |label, value| %>
+                    <button type="button"
+                            class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                            data-action="ui--dropdown-component#toggle click->admin--poi-categories--poi-category--field-form-component#selectType"
+                            data-field-type="<%= value %>">
+                      <%= label %>
+                    </button>
+                  <% end %>
+                </div>
+              <% end %>
+            <% end %>
+            <%= f.hidden_field :field_type, value: form_field.field_type.presence || field_type_options.first&.last,
+                               data: { "admin--poi-categories--poi-category--field-form-component-target": "typeInput" } %>
+          </div>
+
+          <%# Position (readonly) %>
+          <div>
+            <%= f.label :position, class: "block text-sm font-medium text-gray-700 mb-1" %>
+            <%= f.number_field :position, value: edit_mode? ? form_field.position : next_position,
+                               readonly: true,
+                               class: "field-input w-full bg-gray-50 text-gray-500 cursor-not-allowed" %>
+          </div>
+
+          <%# Checkboxes %>
+          <div class="flex items-end gap-4 pb-1">
+            <label class="flex items-center gap-2">
+              <%= f.check_box :required, checked: edit_mode? ? form_field.required : false, class: "toggle-input" %>
+              <span class="text-sm text-gray-700"><%= t(".required") %></span>
+            </label>
+            <label class="flex items-center gap-2">
+              <%= f.check_box :active, checked: edit_mode? ? form_field.active : true, class: "toggle-input" %>
+              <span class="text-sm text-gray-700"><%= t(".active") %></span>
+            </label>
+          </div>
+        </div>
+
+        <%# Label (2 строки: en/ru + es/zh) %>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <%# MDI: translate %>
+            <i class="mdi mdi-translate mr-1"></i>
+            <%= t(".label") %>
+          </label>
+          <div class="grid grid-cols-2 gap-3 mb-2">
+            <% %w[en ru].each do |locale| %>
+              <div>
+                <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+                <%= text_field_tag "poi_category_field[label][#{locale}]", form_field.label&.dig(locale),
+                                   autocomplete: "off",
+                                   class: "field-input mt-1 w-full",
+                                   placeholder: locale.upcase %>
+              </div>
+            <% end %>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <% %w[es zh].each do |locale| %>
+              <div>
+                <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+                <%= text_field_tag "poi_category_field[label][#{locale}]", form_field.label&.dig(locale),
+                                   autocomplete: "off",
+                                   class: "field-input mt-1 w-full",
+                                   placeholder: locale.upcase %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Placeholder (4 локали) %>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            <%# MDI: text-box-outline %>
+            <i class="mdi mdi-text-box-outline mr-1"></i>
+            <%= t(".placeholder") %>
+          </label>
+          <div class="grid grid-cols-2 gap-3">
+            <% %w[en ru es zh].each do |locale| %>
+              <div>
+                <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+                <%= text_field_tag "poi_category_field[placeholder][#{locale}]", form_field.placeholder&.dig(locale),
+                                   autocomplete: "off",
+                                   class: "field-input mt-1 w-full",
+                                   placeholder: locale.upcase %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <%# Hint %>
+        <div class="mb-4">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <%# MDI: help-circle-outline %>
+            <i class="mdi mdi-help-circle-outline mr-1"></i>
+            <%= t(".hint") %>
+          </label>
+          <%= text_field_tag "poi_category_field[hint]", form_field.hint,
+                             autocomplete: "off",
+                             class: "field-input w-full" %>
+        </div>
+
+        <%# Options (только для select/multiselect) %>
+        <div class="mb-4 hidden"
+             data-admin--poi-categories--poi-category--field-form-component-target="optionsSection">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            <%# MDI: format-list-bulleted %>
+            <i class="mdi mdi-format-list-bulleted mr-1"></i>
+            <%= t(".options") %>
+          </label>
+          <%= text_area_tag "poi_category_field[options_raw]", options_editor_text(form_field),
+                            rows: 4,
+                            class: "field-input w-full",
+                            placeholder: t(".options_placeholder") %>
+          <p class="text-xs text-gray-400 mt-1"><%= t(".options_hint") %></p>
+        </div>
+
+        <%# Кнопки: Delete слева (только в режиме редактирования), Cancel/Save справа %>
+        <div class="flex justify-between items-center pt-4 border-t border-gray-200">
+          <div class="hidden"
+               data-admin--poi-categories--poi-category--field-form-component-target="deleteBtn">
+            <%= render Ui::BtnComponent.new(color: :danger, size: :sm, html: { data: { action: "click->admin--poi-categories--poi-category--field-form-component#requestDelete" } }) do %>
+              <%# MDI: delete %>
+              <i class="mdi mdi-delete mr-1"></i>
+              <%= t(".delete") %>
+            <% end %>
+          </div>
+          <div class="flex gap-2">
+            <%= render Ui::BtnComponent.new(color: :ghost, size: :sm, html: { data: { action: "click->admin--poi-categories--poi-category--field-form-component#close" } }) do %>
+              <%= t(".cancel") %>
+            <% end %>
+            <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { type: "submit", data: { "admin--poi-categories--poi-category--field-form-component-target": "submitBtn" } }) do %>
+              <%# MDI: content-save %>
+              <i class="mdi mdi-content-save mr-1"></i>
+              <span data-admin--poi-categories--poi-category--field-form-component-target="submitText"><%= t(".create") %></span>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <%# Диалог подтверждения удаления поля (confirm_url: nil — действие выполняет Reflex) %>
+      <%= render Ui::ConfirmDialogComponent.new(
+        title: t(".delete_confirm_title"),
+        message: t(".delete_confirm_message"),
+        confirm_text: t(".delete"),
+        cancel_text: t(".cancel"),
+        confirm_variant: :danger,
+        confirm_url: nil,
+        confirm_method: :get
+      ) %>
+    </div>
+  </div>
+</div>

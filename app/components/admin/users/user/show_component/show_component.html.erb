@@ -8,8 +8,7 @@
 # Использует Ui::CardComponent, Ui::AvatarComponent, Ui::BadgeComponent, Ui::BtnComponent.
 # %>
 
-<% cache [user, I18n.locale] do %>
-  <%= render Ui::CardComponent.new do |card| %>
+<%= render Ui::CardComponent.new do |card| %>
     <% card.with_body do %>
       <%# Верхняя секция: аватар + имя + кнопки %>
       <div class="flex flex-col sm:flex-row items-start gap-8">
@@ -89,6 +88,5 @@
           <span class="ml-1"><%= t('.last_sign_in') %> <%= render Ui::DateComponent.new(ApplicationComponent.last_event_date(user, 'login'), fallback: t('admin.users.never')) %></span>
         </span>
       </div>
-    <% end %>
   <% end %>
 <% end %>

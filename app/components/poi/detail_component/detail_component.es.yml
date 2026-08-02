@@ -3,6 +3,7 @@ es:
     detail_component:
       tab_info: Información
       tab_comments: Comentarios
+      photo_alt: Foto del POI
       edit: Editar
       status_pending: Pendiente
       status_approved: Aprobado

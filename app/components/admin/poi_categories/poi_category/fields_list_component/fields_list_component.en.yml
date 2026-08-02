@@ -1,0 +1,17 @@
+---
+en:
+  admin:
+    poi_categories:
+      poi_category:
+        fields_list_component:
+          fields_title: Category Fields
+          fields_hint: "Define custom data fields that users fill in when adding or editing a POI in this category. For example: operator name, working hours, payment methods."
+          no_fields: No fields defined for this category
+          position: Pos.
+          field_key: Key
+          label: Label
+          field_type: Type
+          required: Required
+          active: Active
+          add_field: Add Field
+          reorder: Reorder

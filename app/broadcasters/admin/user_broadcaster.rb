@@ -85,6 +85,15 @@ class Admin::UserBroadcaster
       html: render_user_row_component(user)
     )
 
+    # Обновляем ленту аудита пользователя (если админ на его show-странице)
+    audit_html = render_audit_component(user)
+    if audit_html.present?
+      cable_ready["AdminChannel"].morph(
+        selector: "[data-audit-log]",
+        html: audit_html
+      )
+    end
+
     # Отправляем уведомление об успехе
     cable_ready["AdminChannel"].dispatch_event(
       name: "adminUserUpdateSuccess",
@@ -256,5 +265,29 @@ class Admin::UserBroadcaster
       roles_html,
       class: 'flex flex-wrap gap-1'
     )
+  end
+
+  #
+  # Рендерит ленту аудита пользователя (версии PaperTrail) для админки.
+  # Может упасть с Warden error в SolidQueue — возвращает пустую строку.
+  #
+  # @param user [User] пользователь для рендеринга
+  # @return [String] HTML ленты аудита
+  #
+  def render_audit_component(user)
+    versions = user.versions.order(created_at: :desc).limit(10)
+
+    html = +""
+    if versions.any?
+      versions.each do |v|
+        html << ApplicationController.render(Ui::AuditEntryComponent.new(version: v), layout: false)
+      end
+    else
+      html << ApplicationController.render(Ui::AuditEntryComponent.new(version: nil), layout: false)
+    end
+    html
+  rescue StandardError => e
+    Rails.logger.error("Failed to render user audit: #{e.class} #{e.message}")
+    ""
   end
 end

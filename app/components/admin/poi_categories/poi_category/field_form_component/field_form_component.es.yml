@@ -1,0 +1,29 @@
+---
+es:
+  admin:
+    poi_categories:
+      poi_category:
+        field_form_component:
+          title: Añadir campo
+          edit_title: Editar campo
+          save: Guardar
+          delete: Eliminar
+          delete_confirm_title: Eliminar campo
+          delete_confirm_message: ¿Estás seguro de que deseas eliminar este campo? Esta acción no se puede deshacer.
+          label: Etiqueta
+          required: Obligatorio
+          active: Activo
+          cancel: Cancelar
+          create: Crear
+          placeholder: Marcador de posición
+          hint: Pista
+          options: Opciones
+          options_placeholder: "clave;en;ru;es;zh"
+          options_hint: "Cada línea: clave;en;ru;es;zh (etiquetas opcionales)"
+          field_types:
+            string: Texto
+            text: Texto largo
+            number: Número
+            boolean: Sí/No
+            select: Selección
+            multiselect: Selección múltiple

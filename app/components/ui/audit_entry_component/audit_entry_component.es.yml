@@ -7,6 +7,8 @@ es:
       deleted: "Eliminado"
       by: "por"
       system: "Sistema"
+      field: "Campo"
+      field_label: "Campo: %{key}"
       no_versions: "Sin cambios registrados"
       no_versions_hint: "Aún no hay cambios, la auditoría aparecerá aquí."
       field_types:

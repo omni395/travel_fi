@@ -53,7 +53,7 @@
             <% end %>
             <% dropdown.with_menu do %>
               <div class="py-1 max-h-60 overflow-y-auto">
-                <% CITIES.each do |name, data| %>
+                <% cities_data.each do |name, data| %>
                   <button type="button"
                           class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
                           data-action="ui--dropdown-component#toggle click->admin--poi-categories--poi-category--osm-import-component#selectCity"
@@ -61,6 +61,7 @@
                           data-bbox="<%= data[:bbox].to_json %>"
                           data-country="<%= data[:country] %>">
                     <%= name %>, <%= data[:country] %>
+                    <span class="text-gray-400 ml-1">(<%= data[:poi_count] %>)</span>
                   </button>
                 <% end %>
               </div>
@@ -146,10 +147,11 @@
       <%# --- Прогресс импорта (показывается после старта) --- %>
       <div class="hidden space-y-4"
            data-admin--poi-categories--poi-category--osm-import-component-target="progressPanel">
-        <%# Спиннер + статус %>
+        <%# Статус импорта (над прогресс-баром) — сводка по OSM/БД %>
         <div class="flex items-center gap-3 text-sm text-emerald-600">
           <!-- mdi: loading (анимация спиннера) -->
-          <i class="mdi mdi-loading mdi-spin text-xl"></i>
+          <i class="mdi mdi-loading mdi-spin text-xl"
+             data-admin--poi-categories--poi-category--osm-import-component-target="progressSpinner"></i>
           <span data-admin--poi-categories--poi-category--osm-import-component-target="progressStatusText"><%= t(".fetching") %></span>
         </div>
 
@@ -160,10 +162,10 @@
                  style="width: 0%"
                  data-admin--poi-categories--poi-category--osm-import-component-target="progressBar"></div>
           </div>
-          <div class="flex justify-between text-xs text-gray-500 mt-1">
-            <span data-admin--poi-categories--poi-category--osm-import-component-target="progressProcessed">0</span>
-            <span><%= t(".of") %></span>
-            <span data-admin--poi-categories--poi-category--osm-import-component-target="progressTotal">0</span>
+          <%# ПОД прогресс-баром: X of Y (Z%) по центру %>
+          <div class="text-xs text-gray-500 mt-1 text-center"
+               data-admin--poi-categories--poi-category--osm-import-component-target="progressCounter">
+            0 of 0 (0%)
           </div>
         </div>
 

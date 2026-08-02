@@ -4,8 +4,7 @@
      data-controller="admin--poi-categories--poi-category--show-component"
      data-admin-poi-category-id="<%= category.to_param %>">
 
-  <% cache [category, I18n.locale] do %>
-    <%= render Ui::CardComponent.new do |card| %>
+  <%= render Ui::CardComponent.new do |card| %>
       <% card.with_body do %>
         <%# Алерт о незаполненных переводах %>
         <% if missing_translations? %>
@@ -98,6 +97,5 @@
         <%# Диалог импорта из OSM %>
         <%= render Admin::PoiCategories::PoiCategory::OsmImportComponent.new(category: category) %>
       <% end %>
-    <% end %>
   <% end %>
 </div>

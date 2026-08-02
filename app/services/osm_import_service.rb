@@ -199,9 +199,15 @@ class OsmImportService
       return { status: :created }
     end
 
-    name = tags["name"] || tags["operator"] || default_name_for_category
+    name = tags["name"].presence || tags["operator"].presence || default_name_for_category
+    # Если имя всё ещё короче 2 символов — фолбечим на дефолтное название
+    if name.length < 2
+      fallback = default_name_for_category
+      name = fallback.length >= 2 ? fallback : "Unnamed (#{osm_id})"
+    end
+
     name_hash = { I18n.locale.to_s => name }
-    street = [tags["addr:street"], tags["addr:housenumber"]].compact.join(" ")
+    street = [ tags["addr:street"], tags["addr:housenumber"] ].compact.join(" ")
 
     PoiService.create(
       params: {
@@ -239,8 +245,14 @@ class OsmImportService
   #
   def modified_by_user?(poi)
     return true if poi.verification_count > 0
-    return true if poi.poi_comments.exists?
     return true if poi.updated_at > poi.created_at + 5.seconds
+
+    # Проверка комментариев — если таблицы нет, считаем что изменений не было
+    begin
+      return true if poi.poi_comments.exists?
+    rescue ActiveRecord::StatementInvalid
+      # Таблица poi_comments может отсутствовать (миграция не накачена)
+    end
 
     false
   end
@@ -249,7 +261,12 @@ class OsmImportService
   # Обновляет существующую OSM-точку свежими данными
   #
   def update_existing_poi(poi, elem, tags)
-    name = tags["name"] || tags["operator"] || default_name_for_category
+    name = tags["name"].presence || tags["operator"].presence || default_name_for_category
+    if name.length < 2
+      fallback = default_name_for_category
+      name = fallback.length >= 2 ? fallback : "Unnamed (#{poi.osm_id || elem['id']})"
+    end
+
     name_hash = poi.name.is_a?(Hash) ? poi.name.merge(I18n.locale.to_s => name) : { I18n.locale.to_s => name }
 
     PoiService.update(
@@ -258,7 +275,7 @@ class OsmImportService
         name: name_hash,
         latitude: elem["lat"],
         longitude: elem["lon"],
-        address: [tags["addr:street"], tags["addr:housenumber"]].compact.join(" ").presence || poi.address,
+        address: [ tags["addr:street"], tags["addr:housenumber"] ].compact.join(" ").presence || poi.address,
         phone: tags["phone"].presence || poi.phone,
         website: tags["website"].presence || poi.website,
         opening_hours: tags["opening_hours"] ? { osm: tags["opening_hours"] } : poi.opening_hours

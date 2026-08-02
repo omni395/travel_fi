@@ -22,6 +22,10 @@
       <%# Заголовок: тип события + имя пользователя %>
       <div class="flex items-center gap-2 text-sm">
         <span class="font-semibold <%= event_info[:color].split.first %>"><%= event_info[:label] %></span>
+        <%# Бейдж с именем поля для версий PoiCategoryField %>
+        <% if item_label.present? %>
+          <span class="text-xs font-medium text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full"><%= item_label %></span>
+        <% end %>
         <span class="text-gray-400">by</span>
         <span class="text-gray-700"><%= whodunnit_name %></span>
         <span class="text-gray-400 text-xs ml-auto"><%= l(version.created_at, format: :short) %></span>

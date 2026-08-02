@@ -3,6 +3,7 @@ ru:
     detail_component:
       tab_info: Информация
       tab_comments: Комментарии
+      photo_alt: Фото точки
       edit: Редактировать
       status_pending: Ожидает
       status_approved: Одобрено

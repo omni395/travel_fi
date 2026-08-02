@@ -14,19 +14,15 @@ module ApplicationHelper
 
   #
   # Возвращает inline critical CSS для текущей страницы
-  # Кэшируется в SolidCache для каждого controller#action
   #
-  # Для заполнения кэша нужен Rake-таск с headless Chrome/Puppeteer,
+  # Для генерации нужен Rake-таск с headless Chrome/Puppeteer,
   # который генерирует above-the-fold CSS для каждой страницы.
   # Пока — заглушка, возвращает пустой тег <style>.
   #
-  # @return [ActiveSupport::SafeBuffer] inline <style> тег
+  # @return [ActiveSupport::SafeBuffer, nil] inline <style> тег или nil
   #
   def critical_css
-    key = "critical_css/#{controller_name}/#{action_name}"
-    css = Rails.cache.fetch(key, expires_in: 1.day) do
-      "" # TODO: добавить генерацию через Puppeteer/Playwright
-    end
+    css = "" # TODO: добавить генерацию через Puppeteer/Playwright
     content_tag(:style, css.html_safe) if css.present?
   end
 end

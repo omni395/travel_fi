@@ -40,6 +40,23 @@ class ApplicationController < ActionController::Base
     current_user
   end
 
+  #
+  # Безопасный warden для рендера из SolidQueue
+  #
+  # При рендере ViewComponents через ApplicationController.renderer из
+  # background job'а (VersionObserverJob → Broadcaster) нет request.env['warden'],
+  # Devise падает с "could not find Warden::Proxy".
+  #
+  def warden
+    request.env['warden'] || begin
+      mock = Object.new
+      mock.define_singleton_method(:user) { |*| nil }
+      mock.define_singleton_method(:authenticate) { |*| nil }
+      mock.define_singleton_method(:authenticated?) { |*| false }
+      mock
+    end
+  end
+
   private
 
   #

@@ -31,7 +31,8 @@ export default class extends ApplicationController {
     "categoryDropdown", "categoryName", "categoryId",
     "fieldsContainer",
     "latitude", "longitude", "miniMap",
-    "coordDisplayLat", "coordDisplayLng"
+    "coordDisplayLat", "coordDisplayLng",
+    "photosInput", "photosPreview", "removePhotosInput"
   ]
 
   static MAX_RADIUS_METERS = 100
@@ -428,5 +429,55 @@ export default class extends ApplicationController {
     })
 
     wrapper.appendChild(select)
+  }
+
+  // ============================================================
+  // ФОТО (галерея)
+  // ============================================================
+
+  /**
+   * Показывает превью выбранных файлов в контейнере photosPreview.
+   * Вызывается при change на file_field :photos.
+   *
+   * @param {Event} event - событие change
+   */
+  previewPhotos(event) {
+    const files = event.target.files
+    if (!files || !files.length) return
+    const container = this.photosPreviewTarget
+
+    Array.from(files).forEach((file) => {
+      const url = URL.createObjectURL(file)
+      const wrapper = document.createElement("div")
+      wrapper.className = "relative w-20 h-20 rounded-md overflow-hidden border border-gray-200 group"
+      const img = document.createElement("img")
+      img.src = url
+      img.alt = file.name
+      img.className = "w-full h-full object-cover"
+      wrapper.appendChild(img)
+      container.appendChild(wrapper)
+    })
+  }
+
+  /**
+   * Помечает существующее фото на удаление: добавляет hidden-input
+   * poi[remove_photos][] и скрывает его превью.
+   * Вызывается по кнопке удаления у существующего фото (edit mode).
+   *
+   * @param {Event} event - событие click
+   */
+  removeExistingPhoto(event) {
+    const btn = event.currentTarget
+    const id = btn.dataset.photoId
+    if (!id) return
+
+    const input = document.createElement("input")
+    input.type = "hidden"
+    input.name = "poi[remove_photos][]"
+    input.value = id
+    this.removePhotosInputTarget.appendChild(input)
+
+    const wrapper = btn.closest(".group")
+    if (wrapper) wrapper.classList.add("hidden")
   }
 }

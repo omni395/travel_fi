@@ -40,13 +40,22 @@
   <%# Контейнер данных POI для маркеров %>
   <div id="poi-map-features" class="hidden">
     <% if poi.present? %>
-    <div data-poi-id="<%= poi.id %>"
-         data-poi-lat="<%= poi.latitude %>"
-         data-poi-lng="<%= poi.longitude %>"
-         data-poi-name="<%= poi.localized_name %>"
-         data-poi-icon="<%= poi.poi_category&.icon || 'mdi-map-marker' %>"
-         data-poi-address="<%= [poi.address, poi.city].compact.join(', ') %>"></div>
+      <% feature = PoiService.map_feature_data(poi) %>
+      <div data-poi-id="<%= feature[:id] %>"
+           data-poi-lat="<%= feature[:lat] %>"
+           data-poi-lng="<%= feature[:lng] %>"
+           data-poi-name="<%= h(feature[:name]) %>"
+           data-poi-icon="<%= h(feature[:icon]) %>"
+           data-poi-category="<%= h(feature[:category]) %>"
+           data-poi-category-id="<%= feature[:category_id] %>"
+           data-poi-rating="<%= feature[:rating] %>"
+           data-poi-address="<%= h(feature[:address]) %>"
+           data-poi-user-id="<%= feature[:user_id] %>"
+           data-poi-slug="<%= h(feature[:slug]) %>"
+           data-poi-photo="<%= h(feature[:photo]) %>"></div>
     <% end %>
   </div>
+
+  <%# Тултип-попап при ховере (OL Overlay) — внутри контейнера карты для корректного позиционирования %>
+  <%= render Ui::TooltipComponent.new %>
 </div>
-<%= render Ui::TooltipComponent.new %>

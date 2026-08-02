@@ -103,6 +103,12 @@ class PoiService
     poi.coordinates = parse_coordinates(params[:latitude], params[:longitude]) if params[:latitude] && params[:longitude]
     poi.status ||= :pending
     poi.save!
+
+    # Галерея: обрабатываем и прикрепляем фото через PhotoService
+    if params[:photos].present?
+      PhotoService.attach_photos(record: poi, files: params[:photos], audit_touch: true)
+    end
+
     poi
   rescue ActiveRecord::RecordInvalid => e
     raise CreateError, e.message
@@ -128,6 +134,17 @@ class PoiService
       poi.coordinates = parse_coordinates(params[:latitude], params[:longitude])
     end
     poi.save!
+
+    # Галерея: удаляем отмеченные фото и прикрепляем новые через PhotoService
+    if params[:remove_photos].present?
+      Array(params[:remove_photos]).each do |photo_id|
+        PhotoService.remove_photo(record: poi, signed_id: photo_id, audit_touch: true)
+      end
+    end
+    if params[:photos].present?
+      PhotoService.attach_photos(record: poi, files: params[:photos], audit_touch: true)
+    end
+
     poi
   rescue ActiveRecord::RecordInvalid => e
     raise UpdateError, e.message
@@ -250,6 +267,30 @@ class PoiService
     }
   end
 
+  #
+  # Строит хэш data-атрибутов фичи карты для скрытого контейнера #poi-map-features.
+  # Значения сырые (без экранирования) — экранирование при сборке HTML выполняет Reflex.
+  #
+  # @param poi [Poi] объект POI
+  # @return [Hash] хэш атрибутов: id/lat/lng/name/icon/category/category_id/rating/address/user_id/slug/photo
+  #
+  def self.map_feature_data(poi)
+    {
+      id: poi.id,
+      lat: poi.latitude,
+      lng: poi.longitude,
+      name: poi.localized_name.to_s,
+      icon: poi.poi_category&.icon.presence || "mdi-map-marker",
+      category: poi.poi_category&.localized_name.to_s,
+      category_id: poi.poi_category_id,
+      rating: poi.rating&.to_f || 0,
+      address: [poi.address, poi.city].compact.join(", "),
+      user_id: poi.user_id,
+      slug: poi.slug,
+      photo: PhotoService.cover_photo_url(poi)
+    }
+  end
+
   private
 
   #
@@ -265,7 +306,7 @@ class PoiService
       poi.name = if params[:name].is_a?(String)
                    { I18n.locale.to_s => params[:name] }
                  else
-                   params[:name].to_unsafe_h
+                   params[:name]
                  end
     end
 
@@ -273,7 +314,7 @@ class PoiService
       poi.description = if params[:description].is_a?(String)
                           { I18n.locale.to_s => params[:description] }
                         else
-                          params[:description].to_unsafe_h
+                          params[:description]
                         end
     end
   end

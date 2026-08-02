@@ -1,7 +1,7 @@
-import ApplicationController from '../../../../javascript/controllers/application_controller'
+import ApplicationController from '../../../../../javascript/controllers/application_controller'
 
 /**
- * Admin::PoiCategories::FieldsListComponent — список полей категории
+ * Admin::PoiCategories::PoiCategory::FieldsListComponent — список полей категории
  *
  * Действия:
  *   openForm — открывает диалог создания поля

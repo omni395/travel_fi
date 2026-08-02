@@ -60,4 +60,12 @@
       <p><%= t(".no_pois") %></p>
     </div>
   <% end %>
+
+  <%# Пагинация списка POI %>
+  <% if pagy.pages > 1 %>
+    <%= render Ui::PaginationComponent.new(
+      pagy: pagy,
+      pagination_controller: "admin--poi-categories--poi-category--pois-list-component"
+    ) %>
+  <% end %>
 </div>
