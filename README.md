@@ -1,252 +1,146 @@
-# Travel Fi - Architecture & System Design
+# Travel Fi — Architecture & System Design
 
-Travel Fi — Rails 8.1 приложение для туристических услуг с DeFi функциональностью с ERC-20 токеном. Архитектура построена на WebSocket-first подходе с асинхронными обновлениями через ActionCable, фоновыми задачами через SolidQueue и кэш-инфраструктурой SolidCache (кэширование в коде временно на период разработки отключено).
+Travel Fi — Rails 8.1 приложение для туристических услуг с DeFi-функциональностью и ERC-20 токеном (TFT). Архитектура — WebSocket-first: асинхронные обновления через ActionCable (SolidCable), фоновые задачи через SolidQueue, кэш-инфраструктура SolidCache (кэширование в коде временно отключено), аудит через PaperTrail.
 
-Возможно при согласовании запустить сервер через ngrok тобы увидеть как это работет вживую.
+> Демо: https://noneternally-approbative-rosanne.ngrok-free.dev/ (запуск сервераа по согласованию)
+
+## 🏗️ Technology Stack
+
+| Слой | Компоненты |
+|------|-----------|
+| **Backend Framework** | Rails 8.1 |
+| **Database** | PostgreSQL + PostGIS |
+| **Authentication** | Devise + Bcrypt |
+| **Authorization** | Pundit + Rolify |
+| **Audit & Versioning** | Paper Trail |
+| **Frontend** | Stimulus, StimulusReflex |
+| **Map Engine** | OpenLayers 10 (кластеризация, Overlay, PostGIS-запросы) |
+| **Realtime** | ActionCable, SolidCable, CableReady |
+| **Background Jobs** | SolidQueue |
+| **Job Dashboard** | SolidQueueDashboard |
+| **Caching** | SolidCache (инфраструктура; кэш в коде отключён) |
+| **Search & Filtering** | Ransack |
+| **Gamification** | Собственная система (баллы/бейджи/уровни) |
+| **Notifications** | Noticed (database + email + action_cable + web_push) |
+| **CSS Framework** | Tailwind CSS, Stimulus-Components |
+| **Web3** | viem |
+
+---
 
 ## 🎯 Project Vision
 
-**Миссия:** Community-driven карта для путешественников — глобальная платформа для шеринга POI (Points of Interest), которые критичны во время путешествия.
+**Миссия:** Community-driven карта для путешественников — глобальная платформа для шеринга POI (Points of Interest), критичных во время путешествия.
 
-**Целевая аудитория:**
-- Budget backpackers
-- Digital nomads
-- Solo-туристы из развивающихся стран
-- Vanlife путешественники
+**Целевая аудитория:** Budget backpackers, Digital nomads, Solo-туристы из развивающихся стран, Vanlife путешественники.
 
-**Ключевое преимущество:** Нет одного сильного глобального игрока в большинстве ниш. WiFi-точки забиты (WiFi Map + Instabridge), но остальное — это белые пятна.
-
----
+**Ключевое преимущество:** Нет одного сильного глобального игрока в большинстве ниш (WiFi-точки заняты WiFi Map/Instabridge, остальное — белые пятна).
 
 ## 📍 POI Categories (от самого востребованного)
 
-### 1️⃣ Места покупки prepaid SIM и eSIM-киосков
-- **Статус рынка:** Нет специализированного приложения
-- **Боль юзеров:** Новые страны → поиск дешевой local SIM
-- **Features для app:** Фильтр по тарифам, 24/7 наличие, близость к аэропорту
-- **Потенциал:** Магнит для миллионов путешественников
-
-### 2️⃣ Общественные туалеты + душевые кабины
-- **Конкуренты:** Flush (200k точек), SitOrSquat — но узкие
-- **Инновация:** Комбо туалет + душ + фото от юзеров + рейтинг чистоты
-- **Специфика:** Доступность для инвалидов, разделение по гендеру
-
-### 3️⃣ Бесплатные точки набора воды (refill stations + фонтаны)
-- **Конкуренты:** Closca Water, FreeTaps, WeTap — все слабые
-- **Мотивация юзеров:** Экономия на бутылках + экология
-- **Вирусный фактор:** Трекер «сколько пластика ты сэкономил»
-
-### 4️⃣ Общественные души и прачечные (для backpackers)
-- **Status:** Park4Night и iOverlander имеют как побочку, dedicated apps крошечные
-- **Use case:** Идеально для длинных поездок (месяцы в дороге)
-- **Features:** Расписание, цена, доступ для гостей отелей
-
-### 5️⃣ Хранение багажа (luggage storage)
-- **Конкуренты:** Radical Storage и Bounce — **платные** сети
-- **Возможность:** Community-карта (кафе, хостелы, магазины) — бесплатный вариант
-- **Юнит экономика:** Они берут за копейки, user экономит
-
-### 6️⃣ Зарядки и розетки (бесплатные в кафе, power bank rental)
-- **Проблема:** Никто не делает полноценно
-- **Features:** Фильтр по типу (медленная/быстрая), наличие WiFi, работающие розетки
-
-### 7️⃣ Банкоматы с минимальной комиссией + обменники
-- **Конкурент:** ATM Fee Saver — но **не на живой карте**
-- **User pain:** Скрытые комиссии — путешественники ненавидят
-- **Feature:** User-reported актуальные курсы обмена
-
-### 8️⃣ Бесплатная парковка / overnight spots
-- **Конкуренты:** iOverlander и Park4Night сильны, но узкие
-- **Use case:** Vanlife, доступность по GPS
-- **Потенциал:** Расширить на все виды транспорта (машины, скутеры, велики)
-
-### 9️⃣ Круглосуточные аптеки + пункты первой помощи
-- **Критично:** В Азии, ЛатАм, Африке
-- **Features:** Наличие конкретных лекарств, языки обслуживания
-
-### 🔟 Бонусные лайфхаки
-- Бесплатные зарядки для ноутбуков в коворкингах
-- Pet-friendly точки (места где можно оставить животное)
-- LGBTQ+-safe места
-- Пункты бесплатной еды / волонтерства
-
----
+1. **Места покупки prepaid SIM и eSIM-киосков** — нет специализированного приложения; фильтр по тарифам, 24/7, близость к аэропорту.
+2. **Общественные туалеты + душевые** — конкуренты (Flush, SitOrSquat) узкие; инновация: комбо + фото + рейтинг чистоты + доступность.
+3. **Бесплатные точки набора воды (refill + фонтаны)** — конкуренты слабые; вирусный трекер «сколько пластика сэкономил».
+4. **Общественные души и прачечные** — Park4Night/iOverlander имеют как побочку; расписание, цена, доступ для гостей отелей.
+5. **Хранение багажа (luggage storage)** — платные сети (Radical Storage/Bounce); community-вариант (кафе/хостелы) — бесплатный.
+6. **Зарядки и розетки** — фильтр по типу (медленная/быстрая), наличие WiFi, рабочие розетки.
+7. **Банкоматы с минимальной комиссией + обменники** — ATM Fee Saver не на живой карте; user-reported курсы.
+8. **Бесплатная парковка / overnight spots** — расширение на все виды транспорта.
+9. **Круглосуточные аптеки + пункты первой помощи** — критично в Азии/ЛатАм/Африке; наличие лекарств, языки.
+10. **Бонусные лайфхаки** — зарядки в коворкингах, pet-friendly, LGBTQ+-safe, пункты бесплатной еды.
 
 ## 💰 Web3 Integration Point
 
-**Как монетизировать через ERC-20 токены:**
+**Монетизация через ERC-20 (TFT):**
 - Юзеры получают токены за добавление/верификацию POI
-- Premium features за токены (фильтры, аналитика, рейтинги)
+- Premium-функции за токены (фильтры, аналитика, рейтинги)
 - DAO для управления категориями и политиками
-- Affiliate для крупных провайдеров (хостелы, отели, сервисы)
-
----
+- Affiliate для провайдеров (хостелы, отели, сервисы)
 
 ### 🔐 Web3 & Onboarding (Custodial / Embedded Wallet)
-
-**Автоматическое создание кошелька:** При успешной регистрации пользователя сервис фоново генерирует скрытый (embedded/custodial) кошелек на базе `viem`.
-**Zero-Friction UX:** Обычные пользователи не взаимодействуют со сложным интерфейсом Web3 (сид-фразы, расширения Metamask) на начальном этапе — вся логика списания/начисления токенов происходит бесшовно.
-**DeFi-интеграция:** На созданный кошелек автоматически зачисляются токены за активность (добавление POI, верификация, отзывы), которые в дальнейшем можно использовать для доступа к премиум-функциям.
+- **Автоматическое создание кошелька:** при успешной регистрации/подтверждении сервис генерирует скрытый (custodial) кошелёк **на Ruby** — `OpenSSL::PKey::EC` (secp256k1) + собственная реализация keccak256 + EIP-55 (модуль [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1), без новых гемов). Приватный ключ шифруется `ActiveSupport::MessageEncryptor` (`WalletService`).
+- **`viem` — только фронтенд** (npm, [`package.json`](package.json:23)): EIP-2771 sponsored-транзакции, Contract Mgmt, чтение баланса ERC-20. Генерация ключей на сервере к viem отношения не имеет.
+- **Zero-Friction UX:** пользователь не взаимодействует с Web3-интерфейсом на старте — начисление/списание токенов бесшовно.
+- **DeFi-интеграция:** на кошелёк зачисляются токены (off-chain леджер `UserReward`) за активность → доступ к премиум-функциям. On-chain отправка — через [`ContractService`](app/services/contract_service.rb:22) (контракты задеплоены, см. `.env`).
 
 ---
 
-### Фронэнд
-Используются исключительно веб компоненты. НИКАКИХ партиалов.
-Используются исключительно чистый TailwindCSS + sidecar-паттерн
-Для иконок используем иконки MDI с обязательным коментрием названия класса иконки.
+## ⚙️ Единый поток данных (Database-Triggered Workflow)
 
-### ViewComponent
-Все компоненты определяются ТОЛЬКО как классы. Запрещено использование module-обёрток.
-Правильный синтаксис: `class Ui::FiltersComponent < ApplicationComponent`
-Неправильный синтаксис: `module UI; class FiltersComponent; end; end`
-Все компоненты наследуются от `ApplicationComponent`, а не от `ViewComponent::Base`.
+> **Эталон архитектуры.** Любое изменение состояния проходит по этой цепочке. Reflex/Controller НЕ рендерит DOM после сохранения — UI обновляет ТОЛЬКО Broadcaster через `VersionObserverJob`. Соблюдение цепочки гарантирует live-обновление у всех подписанных браузеров (инициатор и остальные).
 
+### Фаза 1 — ВВОД (браузер)
+1. **Stimulus-контроллер** (sidecar компонента) перехватывает событие (клик/ввод)
+2. `this.stimulate("XxxReflex#action", params)` — RPC через WebSocket
+3. **Reflex**: `current_user` → `morph :nothing` (отмена полного перерендера) → `deep_symbolize_keys(params)` → `authorize_with_pundit!(record, :action?)`
+4. Reflex **только делегирует** в Service. Логики в рефлексе — НОЛЬ.
 
-## Архитектурное правило: Создание ViewComponents (Rails + Hotwire)
+### Фаза 2 — СОСТОЯНИЕ (PostgreSQL)
+5. **Service**: вся бизнес-логика + `Model.save!`/`update!` **внутри транзакции**
+6. **PaperTrail** создаёт `Version` (event, `whodunnit` = current_user.id, `object_changes`)
+7. `after_commit :broadcast_changes` → `VersionObserverJob.perform_later(version.id)`
 
-При создании или генерации нового компонента `SomeNameComponent`, ты обязан строго следовать паттерну "Sidecar Subdirectory". Компонент должен быть разделен на основной Ruby-файл и изолированную папку для фронтенд-ассетов по следующему правилу:
+### Фаза 3 — АСИНХРОННОЕ РАСПРОСТРАНЕНИЕ (SolidQueue)
+8. **VersionObserverJob**: парсит `item_type` → ветка `handle_<model>_update` → вызывает `XxxBroadcaster.call`
+9. **Broadcaster**: рендерит зоны (ViewComponent через `helpers.render`) → `cable_ready["AdminChannel"].inner_html(selector:, html:)` по селекторам-обёрткам
+10. `.broadcast` → ActionCable (**SolidCable**) → стрим
 
-1. Основной класс компонента создается как отдельный файл в корне папки `components`.
-2. Рядом создается папка с точно таким же именем, как имя компонента (в snake_case).
-3. Внутри этой папки создаются ровно три файла: HTML-шаблон, YAML-переводы и Stimulus JS-контроллер.
+### Фаза 4 — ДОСТАВКА (браузеры А и Б)
+11. Клиент подписан на канал (`AdminChannel`/`user_N`) → `received` применяет операции **по одной** (`forEach` + `try/catch`, пропуск отсутствующих селекторов)
+12. DOM обновляется **точечно** (inner_html по обёрткам) — без перезагрузки
 
-### Пример файловой структуры для `UserCardComponent`:
+### Строгие правила слоёв
+| Слой | Делает | Запрещено |
+|------|--------|-----------|
+| Controller | Только доступ (Pundit) + рендер страницы + данные вкладок + pagy | Логика |
+| Reflex | Мост UI→Service: `morph :nothing` + authorize + делегирование | Рендерить DOM после сохранения |
+| Service | Бизнес-логика, `save!`/`update!` в транзакции | — |
+| Model | Только данные | Логика рассылок |
+| Broadcaster | Рендер зон + `inner_html` + broadcast | `morph`, `update_all` |
+| VersionObserverJob | Маршрутизация по `item_type` | — |
+| ViewComponent | Только презентация (sidecar 7 файлов, 4 локали) | partials, хардкод текста |
 
-app/components/
-├── user_card_component.rb  (Класс Ruby)
-└── user_card_component/    (Папка ассетов компонента)
-    ├── user_card_component.html.erb  (Шаблон)
-    ├── user_card_component.en.yml    (Локализация)
-    ├── user_card_component.ru.yml    (Локализация)
-    ├── user_card_component.es.yml    (Локализация)
-    ├── user_card_component.zh.yml    (Локализация)
-    └── user_card_component_controller.js  (Stimulus-контроллер)
-    └── user_card_component.css       (Стили компонента)
+### Практические правила интеграции (обязательны)
+- **Зарезервированные ключи StimulusReflex** (`id`, `params`, `selectors`, `morph`, `attrs`, `flash`, `event`, `permanent_attribute_name`) нельзя передавать top-level в `this.stimulate` — объект станет опциями, `args` придёт пустым. Используй неймспейсные ключи (`field_id`) или `{ params: {...} }`; из FormData удаляй `id`.
+- **Reflex не рендерит DOM после сохранения** — только `morph :nothing` + Service. Селекторный морф — только для чтения (пагинация/фильтры).
+- **Broadcaster использует `inner_html`, не `morph`** — `morph` падает на `undefined.dispatchEvent` (`parent.children[idx]`).
+- **Контейнер-цель отдельно от содержимого:** селектор `[data-...]` — на обёртке в шаблоне страницы, НЕ на корне компонента (иначе вложенность при `inner_html`).
+- **Нормализация параметров:** в Reflex `deep_symbolize_keys(params)` перед Service (строковые ключи из JS).
+- **Аудит и массовые обновления:** `update!`/`save!` (версии → Broadcast); `update_all` запрещён для данных с аудитом (в т.ч. реордер позиций).
+- **Клиентская обработка CableReady:** в `received` операции по одной (`forEach` + `try/catch`), пропуск отсутствующих селекторов.
+- **Рендер вложенных ViewComponent в Broadcaster (SolidQueue worker):** только `<%= render %>`/`helpers.render` (view_context). Запрещён вложенный `ApplicationController.render` — падает в job, зона молча не отправляется. Per-entry `rescue` (см. `AuditLogComponent#render_entries_html`).
+- **Broadcast из worker (`bin/jobs`):** инициализировать ActionCable PubSub до `SolidQueue::Cli.start` — `ActionCable.server.config.cable = { "adapter" => "solid_cable" }` (СТРОКОВЫЙ ключ; символьный `:adapter` → дефолт `"redis"` → `Redis::CannotConnectError`), затем `ActionCable.server.pubsub`.
+- **`pagy()` в Broadcaster:** в worker нет `request` → `NameError: request`. Добавь mock: `def request; @request ||= ActionDispatch::Request.new({}); end`.
+- **Чекбоксы (Rails `check_box`):** hidden(value=0)+checkbox с одним `name`. В JS выбирай `input[name='...'][type='checkbox']`, иначе всегда читается hidden (false).
 
-### Правила именования внутри файлов:
+### Сценарий «А создал, Б видит»
+- **А:** Фазы 1–2 + синхронный `redirect_to` (только А) + тост инициатору (`dispatch_event`)
+- **Б:** Фазы 3–4: job → broadcaster → `AdminChannel` → все подписанные админы получают `inner_html` без перезагрузки
 
-1. **В классе Ruby (`.rb`):** Имя класса `UserCardComponent < ViewComponent::Base`.
-2. **В шаблоне (`.html.erb`):** Корневой тег должен подключать контроллер: `<div data-controller="user-card-component">`.
-3. **В переводах (`.yml`):** Использовать относительные ключи для изоляции:
-   en:
-     user_card_component:
-       user_card_component:
-         title: "Hello"
-   (В шаблоне вызывать через `<%= t(".title") %>`).
-4. **В JS-контроллере (`_controller.js`):** Стандартный Stimulus-контроллер, управляющий интерактивностью этого компонента.
+---
 
-Никогда не сваливай всё в один файл и не используй инлайн-теги `<script>` или `<style>`. Всегда изолируй логику по этой схеме.
+## 📡 Каналы и доставка (ActionCable Channels)
 
-### Стиль и цвета.
-Приложение должно быть четко тилизировно. Взде придерживться одного стиля в зелено-глбых цветах с соответтвующими оттенками.
-Кастомные стили не должны ипользовться никогда. Вся работа ведется через классы TailwindCSS.
+Всё отправляется через WebSocket — нет данных в JSON-ответе контроллера.
 
-### Комментарии
-Все методы должны дыть задокументированы. коментарий с описанием действий писать перед методом.
+**Личный канал:** каждый пользователь подписан на `user_<id>` (`UserChannel`).
+- `user_100` / `user_200` / `user_N` — персональные обновления и уведомления (включая админов как обычных пользователей).
 
-### Интернационализация
-Используются четыре локали: en, ru, es, zh
-Не должно бть ни одного захардкоренного текста в приложении ни на одной странице и ни в одном компоненте. все должно быть прописано через ключи.
+**Админ-канал:** `AdminChannel` — подписка для ролей `admin` И `moderator` (moderator имеет права на edit в политиках).
+- Live-обновления админки (поля категорий, лента аудита, статистика) шлются в `AdminChannel` (см. «Единый паттерн админ-сущности»).
 
-## 📐 Архитектура системы
+**ActionCable** — WebSocket-инфраструктура Rails: долгоживущее соединение, сервер шлёт сообщения всем подписанным на канал браузерам.
 
-### Принцип "Одна сущность"
-Разработка строится по строгому принципу инкапсуляции сущностей:
-- **Model**: Описание данных и связей (только база).
-- **Service**: Единственная точка входа для бизнес-логики (создание, обновление, сложные расчеты).
-- **Reflex**: Точка входа для всех UI-взаимодействий через WebSocket (StimulusReflex).
-- **Controller**: Только управление доступом, рендеринг страниц и Pundit-политики.
-- **Broadcaster**: Слой доставки обновлений интерфейса (CableReady).
-- **Notification**: Уведомления (Noticed) с фильтрацией через настройки сущности `Setting`.
+**SolidCable** — database-backed адаптер ActionCable: сообщения в PostgreSQL вместо Redis; позволяет масштабировать несколько Rails-процессов без отдельной инфраструктуры (процесс 1 отправил → процесс 2 доставил браузеру).
 
-### Принцип работы: DATABASE as Single Source of Truth
-
-Все данные хранятся в PostgreSQL с историей изменений через Paper Trail. Это гарантирует:
-- **Транзакционность**: Все или ничего, нет половинчатых обновлений
-- **Аудит**: Каждое изменение залогировано с версией, пользователем и временем
-- **Надёжность**: Если транзакция не прошла, ничего не отправляется
-
-### 🔄 Поток данных (Database-Triggered Architecture)
-
-Stimulus (Браузер: клик/ввод)
-    ↓
-Stimulus вызывает `this.stimulusReflex("methodName")`
-    ↓
-WebSocket отправляет Reflex действие (RPC вызов)
-    ↓
-Reflex Class (app/reflexes/):
-  ├─ Находит current_user через Connection
-  ├─ morph :nothing (отмена стандартного морфинга всей страницы; prevent_refresh! не существует)
-  └─ Вызывает Service слой
-    ↓
-Service Layer (app/services/):
-  ├─ Pundit: проверка прав доступа
-  └─ Model.save (внутри транзакции)
-    ↓
-Database (PostgreSQL + PaperTrail):
-  ├─ Данные зафиксированы в БД
-  └─ PaperTrail создает запись Version (Single Source of Truth)
-    ↓
-VersionObserverJob (Background Process - Triggered by PaperTrail):
-  ├─ Извлекает изменения из version.object_changes
-  ├─ Фильтрация получателей (Роль, Контекст, Настройки)
-  └─ Вызывает Broadcaster
-    ↓
-Broadcaster (app/broadcasters/):
-  ├─ CableReady: Генерирует точечные команды для прошедших фильтр юзеров
-  └─ Noticed: Отправляет внешние уведомления (Email/Push)
-    ↓
-ActionCable: Доставляет команды в индивидуальные каналы User:ID:Stream
-    ↓
-DOM обновляется (Инициатор — мгновенно, остальные — согласно правам и контексту)
-
-**Важно**: Модели НЕ содержат логики рассылок. Весь жизненный цикл изменений после сохранения в БД управляется через `VersionObserverJob`.
-
-### ✅ Практические правила интеграции (проверено, обязательны к соблюдению)
-
-**StimulusReflex — зарезервированные ключи аргументов.**
-`id`, `params`, `selectors`, `morph`, `attrs`, `flash`, `event`, `permanent_attribute_name` — зарезервированные опции StimulusReflex. Если объект-аргумент в `this.stimulate("Reflex#method", obj)` содержит такой ключ, он трактуется как опции, а `args` приходит пустым (на сервере `RecordNotFound: Couldn't find ... without an ID`). Передавай неймспейсные ключи: `{ field_id: ... }`, `{ poi_category_id: ... }`, либо явно `{ params: { id: ... } }`. Внутри формы удаляй зарезервированный `id` из распарсенных данных (`delete params.id`) перед стимуляцией.
-
-**Reflex не рендерит DOM после сохранения.**
-Методы, меняющие состояние (create/update/destroy), вызывают Service и делают `morph :nothing`. Селекторный морф в Reflex допустим только для операций чтения (пагинация, фильтры). Обновление UI после сохранения выполняет ТОЛЬКО Broadcaster через `VersionObserverJob`. Это исключает гонки двух морфов одного селектора.
-
-**Broadcaster использует `inner_html`, а не `morph`.**
-CableReady `morph` внутри операции вызывает `after(parent ? parent.children[idx] : document.documentElement)`; если целевой элемент вне актуального `parent.children` — `undefined.dispatchEvent` (TypeError в консоли). `inner_html` безопасен (хук на сам элемент, нет `parent.children[idx]`). Для обновления зон из Broadcaster используй `inner_html`.
-
-**Контейнер-цель отдельно от содержимого.**
-Селектор цели (`[data-...]`) размещай на обёртке в шаблоне страницы, а НЕ на корне компонента. Если корень компонента несёт тот же селектор, что и цель `inner_html` — возникает вложенность. Пример: панель `fields` → обёртка `<div data-poi-category-fields>` в `show.html.erb`, корень `FieldsListComponent` — без этого атрибута.
-
-**Нормализация параметров из JS.**
-Параметры из `stimulate` приходят со строковыми ключами. В Reflex перед передачей в Service выполняй `deep_symbolize_keys(params)` (метод есть в `ApplicationReflex`). Иначе `params.slice(:attr)` вернёт пустой хэш и данные не сохранятся.
-
-**Аудит и массовые обновления.**
-Используй `update!`/`save!` (создают PaperTrail-версии → триггерят Broadcast). `update_all` пропускает колбэки и НЕ создаёт версии — только для операций, не требующих аудита (например, транзитные правки позиций реордера запрещены — только `update!`).
-
-**Клиентская обработка CableReady.**
-В `received` применяй операции по одной (`forEach` + `try/catch`), пропуская морфы на отсутствующие в текущем DOM селекторы. Одна упавшая операция не должна ронять весь пак.
-
-**Рендер вложенных ViewComponent в Broadcaster (SolidQueue worker).**
-Компоненты, которые Broadcaster рендерит из фонового job, обязаны рендерить вложенные ViewComponent через стандартный `<%= render Component %>` (в шаблоне) или `helpers.render` (в Ruby-методе компонента) — через текущий view_context. Запрещено использовать вложенный `ApplicationController.render` внутри такого компонента: class-level render в контексте job падает, зона возвращает пустую строку и `inner_html` не отправляется. Симптом: часть зон обновляется (fields/POIs — обычный render), а зона на таком рендере — нет (audit). Пример: `AuditLogComponent#render_entries_html` рендерит записи через `helpers.render(Ui::AuditEntryComponent...)` с per-entry `rescue`.
-
-**Broadcast из SolidQueue worker (bin/jobs) — инициализация ActionCable PubSub.**
-`cable_ready.broadcast` из worker доходит до клиента только если ActionCable PubSub инициализирован. В [`bin/jobs`](bin/jobs) перед `SolidQueue::Cli.start`:
-```ruby
-ActionCable.server.config.cable = { "adapter" => "solid_cable" }
-ActionCable.server.config.logger = Rails.logger
-ActionCable.server.pubsub
-```
-Ключ `"adapter"` — ОБЯЗАТЕЛЬНО строковый: `ActionCable::Server::Configuration#pubsub_adapter` делает `cable.fetch("adapter") { "redis" }`; символьный `:adapter` → дефолт `"redis"` → `Redis::CannotConnectError` (проект zero-Redis). SolidCable-адаптер Redis не использует: `broadcast` пишет через `SolidCable::Message.broadcast` (INSERT в Postgres `travel_fi_dev_cable`), подключение к cable-БД SolidCable делает сам (`SolidCable.connects_to`).
-
-**pagy() в Broadcaster (SolidQueue worker).**
-`Pagy::Method#pagy` вызывает `self.request` (`options[:request] ||= request`); в worker `request` отсутствует → `NameError: request`, зона с пагинацией не отправляется (симптом: show/fields обновляются, POIs/Audit — нет). Добавь в Broadcaster mock: `def request; @request ||= ActionDispatch::Request.new({}); end` (Pagy затем заменяет его на `Pagy::Request`).
+---
 
 ## 🗂 Единый паттерн админ-сущности (для быстрого расширения админки)
 
-Одна админ-сущность (User, Poi, Setting, PoiCategory…) реализуется по единому шаблону. Соблюдай его, чтобы «хоп-хоп» добавлять новые.
+Одна админ-сущность (User, Poi, Setting, PoiCategory…) реализуется по единому шаблону:
 
 ### 1. Компоненты (Sidecar, полный набор: rb + html.erb + css + controller.js + 4 yml)
-- **Index**: `Admin/<entity>/TableComponent` + `RowComponent` (в корне `app/components/admin/<entity>/`).
-- **Show**: `Admin/<entity>/<entity>/ShowComponent` + для КАЖДОГО таба отдельный компонент внутри `.../<entity>/` (например `FieldsListComponent`, `PoisListComponent`, `AuditLogComponent`, `ActivityComponent`).
+- **Index**: `Admin/<entity>/TableComponent` + `RowComponent`.
+- **Show**: `Admin/<entity>/<entity>/ShowComponent` + для КАЖДОГО таба отдельный компонент (`FieldsListComponent`, `PoisListComponent`, `AuditLogComponent`, `ActivityComponent`).
 - **Edit**: `Admin/<entity>/<entity>/EditComponent`.
 - Контейнер-цель (`[data-...]`) — на обёртке в `show.html.erb`, корень компонента без неё.
 
@@ -260,258 +154,155 @@ ActionCable.server.pubsub
 
 ### 4. Broadcaster (`app/broadcasters/<entity>_broadcaster.rb`)
 - `include CableReady::Broadcaster`, `include Pagy::Method` (+ mock `request` для pagy).
-- `broadcast` — рендер зон по одной (`inner_html` по селектору-обёртке), каждая зона в `rescue` (одна упавшая не роняет пак).
-- Вложенные ViewComponent из job — только через `<%= render %>`/`helpers.render` (НЕ вложенный `ApplicationController.render`).
-- Результат отправляется в `cable_ready["AdminChannel"]` → `.broadcast`.
+- `broadcast` — рендер зон по одной (`inner_html` по селектору-обёртке), каждая зона в `rescue`.
+- Вложенные ViewComponent из job — только через `<%= render %>`/`helpers.render`.
+- Результат: `cable_ready["AdminChannel"]` → `.broadcast`.
 
 ### 5. Канал
-`AdminChannel` (`app/channels/admin_channel.rb`) — подписка `admin` ИЛИ `moderator` (moderator имеет права на edit в политиках).
+`AdminChannel` (`app/channels/admin_channel.rb`) — подписка `admin` ИЛИ `moderator`.
 
 ### 6. VersionObserverJob (`app/jobs/version_observer_job.rb`)
 - Для каждого `item_type` — ветка `handle_<model>_update(version)` → `XxxBroadcaster.call(<entity>: version.item || version.reify)`.
 
 ### 7. Живой аудит (лента)
-- Единый `Ui::AuditEntryComponent` для всех сущностей: `changes` фильтрует «пусто→пусто» (`blank_value?`), `format_value`/`format_hash` — читаемый JSONB (Label → `en: ..., ru: ...`; Options → ключи), `field_key_from_version` fallback на `version.object` (видно имя поля при реордере).
-- Панель таба аудита — компонент с собственным Stimulus-контроллером на корне (пагинация работает: контроллер-предок), `goToPage` → Reflex `<entity>_page`.
+- Единый `Ui::AuditEntryComponent` для всех сущностей: `changes` фильтрует «пусто→пусто», читаемый JSONB, `field_key_from_version` fallback на `version.object`.
+- Панель таба аудита — компонент с собственным Stimulus-контроллером на корне (контроллер-предок для пагинации), `goToPage` → Reflex `<entity>_page`.
 
 ### 8. Формы (чекбоксы!)
-Rails `check_box` генерирует пару инпутов с одним `name` (hidden `value="0"` + checkbox). В JS всегда выбирай `input[name='...'][type='checkbox']`, иначе читается hidden (`checked=false`) и в БД всегда пишется `false`. Пример: `form.querySelector("[name='poi_category_field[required]'][type='checkbox']")`.
+Rails `check_box` генерирует пару инпутов с одним `name` (hidden `value="0"` + checkbox). В JS выбирай `input[name='...'][type='checkbox']`, иначе читается hidden (false). Пример: `form.querySelector("[name='poi_category_field[required]'][type='checkbox']")`.
 
-## 📡 Система подписок (ActionCable Channels)
+---
 
-Каждый пользователь подписан на свой канал в ActionCable. Нет отправки данных через JSON в ответе контроллера — **всё отправляется через WebSocket**.
+## 🏛 Архитектурные решения
 
-### Как работает подписка:
+Зафиксированные решения. При изменении любого пункта — обновлять этот раздел и инструкции (`.roo/rules`).
 
-1. **Пользователь заходит** → ActionCable создаёт соединение WebSocket
-2. **Браузер подписывается** на личный канал (для своего ID пользователя)
-3. **Сервер слушает** этот канал для broadcast операций
-4. **Когда происходит действие** → PaperTrail-версия (`after_commit`) → `VersionObserverJob` → Broadcaster отправляет broadcast
-5. **Только подписанные браузеры** получают обновление
+| Решение | Обоснование |
+|---------|-------------|
+| Database-Triggered Workflow | PaperTrail → VersionObserverJob → Broadcaster → CableReady. БД = Single Source of Truth |
+| StimulusReflex + CableReady | WebSocket-first, без JSON API. Reflex не рендерит DOM после сохранения |
+| Sidecar ViewComponents | Изоляция шаблонов/стилей/JS, 4 локали, запрет partials |
+| PostGIS | Пространственные запросы (bounds, radius, ST_DWithin) |
+| Proximity Check (100м) | Антифрод для комментариев и голосования через `ST_DWithin` |
+| ERC-20 (TFT) геймификация | Utility-токен: награды за активность, верификация, premium |
+| EIP-2771 (ERC-2771) | Спонсированные транзакции — газ платит платформа |
+| TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton для Telegram экосистемы |
+| SolidQueue вместо Sidekiq | Zero Redis (SolidQueue/SolidCache/SolidCable) |
+| PWA + Telegram Mini App | Вместо нативных приложений — охват, бюджет, гранты TON Foundation |
 
+### Токеномика TFT (полузакрытая система)
+- **Лимит эмиссии:** 1 000 000 TFT (18 decimals), задано в [`travel-fi.sol`](travel-fi.sol) (`MAX_SUPPLY`).
+- **Токены НЕ сжигаются (no burn).** TFT циркулируют внутри платформы: начисляются за активность (POI, фото, комментарии, рефералы), расходуются на premium-услуги и верификацию, возвращаются в оборот. Дефицит — за счёт жёсткого лимита эмиссии.
+- **Utility-механики:** награды, репутация/уровни, премиум-фильтры, приоритетная верификация, DAO-голосование.
+- **Продажа (crowdsale) — отдельная юридически выверенная сущность**, не входит в грант-заявку (регуляторный риск).
 
-**Пользователь 1** (ID 100) подписан на личный канал `user_100`, **Пользователь 2** (ID 200) на `user_200`, **Пользователь N** (ID N) на `user_N`.
+### Открытые технические долги
+- [ ] **`ContractService.detect_changes_for_contract`** использует `Rails.cache` (TTL 2h) как снапшот — эфемерно. Заменить на модель `ContractSnapshot` (contract_type, data jsonb, created_at) с ротацией.
+- [ ] **Точечное кэширование** — SolidCache включён, кэш в коде отключён. Возвращать точечно: ShowComponent `[category, I18n.locale]`, агрегаты с зависимостью от коллекции; НЕ кэшировать формы.
+- [ ] **`Ui::ConfirmDialogComponent`** — вынести модалку в отдельный компонент, убрать окно из `Poi::ShowComponent`/`Poi::FormComponent`.
 
-**Админ-панель** использует два канала:
-- `UserChannel` (`user_<id>`) — персональные обновления/уведомления пользователя (включая админов/модераторов как обычных пользователей).
-- `AdminChannel` — админ-обновления (поля категорий, лента аудита, статистика и т.д.); подписка для ролей `admin` И `moderator` (moderator имеет права на редактирование категорий в Pundit-политиках).
-Админ-обновления (live) шлются в `AdminChannel` (см. единый паттерн админ-сущности).
+---
 
-### 🛠 Универсальный алгоритм обработки события (Любая модель)
-**Пользователь совершает действие в интерфейсе:**
-1. Stimulus перехватывает событие и инициирует Reflex (RPC-вызов через WebSocket).
-2. Reflex на сервере идентифицирует current_user через активное соединение и запрашивает у Pundit проверку прав доступа.
-3. Pundit проверяет политики и роли (Rolify): если доступ запрещен, выполнение прерывается.
-4. При успешной проверке Reflex делегирует выполнение соответствующему Service Object.
-5. Service Layer выполняет атомарную бизнес-логику (расчеты, внешние API, лимиты).
-6. Service вызывает сохранение модели (.save, .update или .create).
-7. ActiveRecord запускает цепочку колбэков:
- - Проверка валидаций.
- - Paper Trail фиксирует состояние объекта в таблице версий (аудит).
- - Данные фиксируются в PostgreSQL.
- - after_commit — финальная точка, гарантирующая успех транзакции.
-8. `PaperTrail::Version` (`after_commit :broadcast_changes`) ставит `VersionObserverJob`, который вызывает специализированный Broadcaster для данной модели:
- - Broadcaster определяет список получателей обновления на основе их ролей и настроек.
- - Broadcaster создает системные уведомления через Noticed.
- - Broadcaster формирует набор команд CableReady для точечного обновления интерфейса.
-9. CableReady отправляет команды (morph, inner_html, notify) в соответствующие каналы ActionCable.
-10. WebSocket (SolidCable) доставляет команды подписанным браузерам в реальном времени.
-11. Stimulus на клиенте мгновенно применяет изменения к DOM без перезагрузки страницы.
-12. SolidQueue параллельно обрабатывает тяжелые задачи уведомлений (Email, Push, SMS), поставленные через Noticed.
+## 📐 Архитектура системы
+
+### Принцип «Одна сущность»
+- **Model** — данные и связи (только база).
+- **Service** — единственная точка входа для бизнес-логики.
+- **Reflex** — точка входа UI-взаимодействий через WebSocket.
+- **Controller** — только доступ (Pundit), рендеринг, Pundit-политики.
+- **Broadcaster** — слой доставки обновлений интерфейса (CableReady).
+- **Notification** — уведомления (Noticed) с фильтрацией через `Setting`.
+
+### DATABASE as Single Source of Truth
+Данные в PostgreSQL с историей через PaperTrail: транзакционность (всё или ничего), аудит каждого изменения, надёжность (не прошла транзакция — ничего не отправлено).
+
+---
+
+## 📦 Стандарты разработки
+
+### ViewComponent (Sidecar Subdirectory)
+Полное описание — в [`.roo/rules/01-INSTRUCTIONS.md`](.roo/rules/01-INSTRUCTIONS.md) и [`.roo/rules/03-COMPONENT-REFERENCE.md`](.roo/rules/03-COMPONENT-REFERENCE.md). Кратко:
+- Каждый компонент — класс `XxxComponent < ApplicationComponent` (НЕ module-обёртки, НЕ `ViewComponent::Base`).
+- Sidecar-папка с одноимённым именем: `html.erb` + `css` + `controller.js` + 4 yml (en/ru/es/zh) — **полный набор, всегда** (даже пустые JS/CSS).
+- Корневой тег шаблона: `data-controller="kebab-case-name"`.
+- Partial'ы запрещены. Инлайн `<script>`/`<style>` запрещены.
+
+### Стиль и цвета
+- Только зелено-голубая гамма Tailwind (`emerald`, `teal`, `sky`). Кастомные стили запрещены.
+- Иконки — только MDI, с комментарием названия класса (`<%# Иконка: mdi-pencil %>`).
+
+### Интернационализация
+- 4 локали: en, ru, es, zh. Хардкод текста запрещён.
+- Переводы — в sidecar YAML компонента, относительные ключи `t(".key")`. Ключи в `config/locales/*.yml` для текстов внутри ViewComponent — запрещено.
+
+### Комментарии
+Каждый метод документируется комментарием СТРОГО перед объявлением.
+
+---
 
 ## 🔌 Основные компоненты фронтенда
 
 ### Stimulus
-
-Легковесный фреймворк для взаимодействия браузера с Rails. Не заменяет JavaScript, а расширяет его для работы с Rails контроллерами.
-
-**Назначение**: Слушает события браузера (клики, ввод текста), отправляет сигналы на Rails, обновляет DOM локально или через запросы, управляет состоянием интерфейса.
-
-**Жизненный цикл**: Когда элемент появляется в DOM браузера — срабатывает инициализация, слушает события пользователя, когда элемент удаляется — очищает слушатели.
+Лёгкий фреймворк взаимодействия браузера с Rails. Слушает события (клики, ввод), отправляет сигналы на Rails, обновляет DOM, управляет состоянием. Жизненный цикл: инициализация при появлении элемента в DOM, очистка при удалении.
 
 ### StimulusReflex
-
-Реактивные компоненты через WebSocket. Отличие от простого HTTP запроса: браузер отправляет действие через WebSocket, сервер обновляет только нужные части DOM и отправляет обратно (морфинг).
-
-**Назначение**: Для быстрого взаимодействия без полной перезагрузки страницы. Пользователь видит изменения в реальном времени.
-
-**❗ ЗАПРЕЩЕН `prevent_refresh!`**: этот метод НЕ СУЩЕСТВУЕТ в используемой версии StimulusReflex. Вместо него используй `morph :nothing` в конце метода для отмены полного перерендера страницы.
+Реактивные компоненты через WebSocket: браузер отправляет действие, сервер обновляет нужные части DOM (морфинг). Используй `this.stimulate("Reflex#method", params)`. **`prevent_refresh!` НЕ СУЩЕСТВУЕТ** — вместо него `morph :nothing`.
 
 ### CableReady
+Генератор команд обновления DOM. Транспортный слой: команда (обновить/заменить/добавить/удалить/уведомление) отправляется через WebSocket и выполняется браузером.
 
-Генератор команд обновления DOM для браузера. Не UI фреймворк, это транспортный слой для доставки команд обновления.
-
-**Назначение**: Когда сервер хочет обновить DOM браузера, CableReady генерирует команду (обновить элемент, заменить, добавить, удалить, показать уведомление), которая отправляется через WebSocket и выполняется браузером.
+---
 
 ## 📨 Уведомления и фоновые задачи
 
 ### Noticed
-
-Мультиканальная система уведомлений. Одно уведомление может быть отправлено через несколько каналов одновременно.
-
-**Работа**: Система создаёт уведомление, Noticed определяет каналы доставки. Каждый канал имеет свой способ отправки: Email → отправка письма, SMS → API Twilio, Push → WebPush, In-app → WebSocket broadcast.
+Мультиканальная система уведомлений: одно уведомление — несколько каналов (Email, SMS/Twilio, Push/WebPush, In-app/WebSocket).
 
 ### SolidQueue
-
-Database-backed очередь для фоновых работ (альтернатива Sidekiq + Redis). Все долгие операции сохраняются в БД, worker процессы выполняют их асинхронно.
-
-**Назначение**: Долгие операции (отправка письма, обработка платежа, генерирование отчёта) не блокируют браузер. Браузер получает ответ сразу, работа выполняется в фоне.
+Database-backed очередь (вместо Sidekiq + Redis). Долгие операции сохраняются в БД, worker-процессы выполняют асинхронно.
 
 ### SolidCache
-
-Database-backed кэш (альтернатива Redis). Инфраструктура установлена и настроена (`config/cache.yml`, `:solid_cache_store` в environments), но в настоящее время **кэширование в коде отключено** — фрагментный и низкоуровневый кэш удалены, чтобы исключить stale-данные при broadcast-морфах (см. ROADMAP → «Точечное кэширование»).
-
-**Когда вернуть кэш (точечно):**
-- Статичные части ShowComponent — ключ `[category, I18n.locale]` (инвалидируется автоматически по `updated_at` категории)
-- Агрегаты (`pois.count`) — ключ ОБЯЗАТЕЛЬНО с зависимостью от коллекции POI, например `[category, category.pois, I18n.locale]`
-- НЕ кэшировать: формы (OsmImportComponent), блоки со счётчиками/списками POI без ключа по коллекции
-
-**Конфигурация:**
-- `config/cache.yml` — 256MB, namespace по env
-- `config/environments/production.rb` — `config.cache_store = :solid_cache_store`, `perform_caching = true`
-- `config/environments/development.rb` — SolidCache включён, fragment caching только при наличии `tmp/caching-dev.txt`
-- Для включения кэша в dev: `bin/rails dev:cache`
-
-### ReverseGeocodingService
-
-Сервис обратного геокодирования — определение страны, города и адреса по GPS-координатам.
-
-**API**: Nominatim (OpenStreetMap) — бесплатно, без ключа, лимит 1 запрос/секунду.
-
-**Использование:** При клике на карту в форме добавления POI → `ReverseGeocodingService.reverse_geocode(lat, lng)` → автозаполнение city/country/address.
-
-**Файл:** [`app/services/reverse_geocoding_service.rb`](app/services/reverse_geocoding_service.rb)
-
-### AI-сервисы (платные LLM API)
-
-Решение: использовать **прямые API платных ИИ** (OpenAI и OpenAI-совместимые endpoint'ы) вместо бесплатных/self-hosted моделей. HuggingFace отклонено, сервис удалён.
-
-**Провайдеры (OpenAI-совместимые):** OpenAI, DeepSeek (`api.deepseek.com`, модели `deepseek-chat`/`deepseek-reasoner`), иные совместимые endpoint'ы. Переключение — через конфиг, без правок бизнес-кода.
-
-**Архитектура:** единый `AiService` (клиент API, промпты, ключи, лимиты — одна точка). Бизнес-сервисы вызывают его как шаг валидации/обработки, не содержат HTTP-логику.
-
-**Планируемое использование:**
-- `AiService.check_toxicity(text)` — проверка токсичности комментариев (вызывается из сервиса комментариев перед сохранением)
-- `AiService.translate_missing_keys` — автозаполнение пропущенных ключей переводов в админке
-- AI-рекомендации (Premium)
-
-**Реализация:** TODO — создать `AiService` (обёртка над OpenAI-совместимым API), API-ключ через `ENV`.
+Database-backed кэш (альтернатива Redis). Инфраструктура настроена, **кэширование в коде отключено** (исключить stale при broadcast-морфах). Когда вернуть (точечно): статичные части ShowComponent — ключ `[category, I18n.locale]`; агрегаты — с зависимостью от коллекции (`[category, category.pois, I18n.locale]`); НЕ кэшировать формы. Конфигурация: `config/cache.yml` (256MB), `:solid_cache_store` в production, `bin/rails dev:cache` в dev.
 
 ### SolidQueueDashboard
+Веб-интерфейс мониторинга очередей, статусов задач, повторного запуска упавших.
 
-Сторонний инструмент для мониторинга и управления фоновыми задачами SolidQueue. Предоставляет веб-интерфейс для просмотра очередей, статусов задач и повторного запуска упавших задач.
+### ReverseGeocodingService
+Обратное геокодирование (страна/город/адрес по координатам). API: Nominatim (бесплатно, 1 запрос/сек). Файл: [`app/services/reverse_geocoding_service.rb`](app/services/reverse_geocoding_service.rb).
 
-**Назначение**: Администрирование очередей без доступа к консоли Rails.
+### AI-сервисы (платные LLM API)
+Единый `AiService` (OpenAI-совместимые API: OpenAI, DeepSeek; переключение через ENV). Сценарии: `check_toxicity`, `translate_missing_keys`, AI-рекомендации (Premium). Реализация — TODO.
 
 ### Ransack
+Поиск и фильтрация данных на основе параметров запроса, без ручного SQL.
 
-Гибкая система поиска и фильтрации данных на основе параметров запроса. Позволяет строить сложные поисковые запросы без написания SQL вручную.
+---
 
-**Назначение**: Поиск и фильтрация туров, пользователей и других сущностей через веб-интерфейс с поддержкой сортировки, пагинации и составных условий.
+## 🏆 Геймификация и токены TFT
 
-## 🌐 Realtime обновления
+**ТОКЕННАЯ МОДЕЛЬ:** награды начисляются токенами TFT (не «баллами»).
 
-### ActionCable
+**Архитектура:** модель `UserReward` (`amount` TFT, `action_key`, `wallet_id`) — off-chain леджер начислений; `User#token_balance` = сумма начислений; сервис `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`); бейджи — модель `Gamification` (event_type `badge`, репутационные достижения); конфиг [`config/gamification.yml`](config/gamification.yml) (rewards — токены TFT, badges — достижения).
 
-WebSocket инфраструктура Rails. Браузер создаёт долгоживущее соединение, подписывается на каналы. Сервер отправляет сообщения подписанным браузерам через WebSocket.
+**Награды (TFT):** регистрация (welcome) 10, реферал (реферер) 15, реферал (новый) 5, добавление POI 20, фото POI 5, комментарий 5, голос за POI 2.
 
-**Архитектура**: Каждое WebSocket соединение имеет свой Channel на сервере. Несколько браузеров могут подписаться на один канал (например, все администраторы на admin_channel). Когда сервер отправляет сообщение — получают ВСЕ подписанные браузеры.
+**Бейджи:** `registration_complete`, `first_poi`, `contributor` (10+), `explorer` (5+ городов), `recruiter` (5+ рефералов), `veteran` (баланс 1000+ TFT).
 
-### SolidCable
+**I18n:** названия бейджей и наград локализованы (en, ru, es, zh).
 
-Database-backed адаптер для ActionCable. WebSocket сообщения хранятся в PostgreSQL вместо отдельного Redis сервера, что позволяет масштабировать несколько Rails процессов без дополнительной инфраструктуры.
-
-**Масштабируемость**: Rails процесс 1 может отправить сообщение, Rails процесс 2 получить его из БД и доставить браузеру. SolidCable гарантирует доставку сообщения всем подписанным браузерам.
-
-## 🏆 Геймификация
-
-### Gamification (собственная система)
-
-Кастомная система геймификации. Единая таблица `gamifications` хранит все события: начисление баллов и выдачу бейджей.
-
-**Архитектура:**
-- **Модель `Gamification`** — `belongs_to :user`, поля: `event_type` (score/badge), `value` (баллы или badge_id), `action_key`, `log`
-- **Сервис `GamificationService`** — единая точка входа: `award!`, `award_referral!`, `level_for`, `badge_key`, `check_badges!`
-- **Методы `User`** — `total_points`, `badge_ids`, `earned_badge?`, `add_points`, `grant_badge`, `remove_badge`, `update_level!`
-- **Конфиг `config/gamification.yml`** — YAML-файл с настройками наград и бейджей
-
-**Награды (баллы):**
-| Действие | Баллы |
-|----------|-------|
-| Регистрация | 10 |
-| Приглашение друга (реферер) | 15 |
-| Регистрация по рефералу (новый юзер) | 5 |
-| Добавление POI | 20 |
-| Добавление фото к POI | 5 |
-| Комментарий | 5 |
-| Голос за POI | 2 |
-
-**Бейджи:**
-- `registration_complete` — первая регистрация
-- `first_poi` — первая добавленная точка
-- `contributor` — 10+ точек
-- `explorer` — 5+ городов
-- `recruiter` — 5+ приглашённых друзей
-- `veteran` — максимальный уровень
-
-**Уровни:**
-| Уровень | Баллы |
-|---------|-------|
-| 1 (Новичок) | 0–49 |
-| 2 (Исследователь) | 50–199 |
-| 3 (Путешественник) | 200–499 |
-| 4 (Эксперт) | 500–999 |
-| 5 (Легенда) | 1000+ |
-
-**I18n**: Все названия бейджей, уровней и наград локализованы для en, ru, es, zh.
+---
 
 ## 🗄️ Данные и аудит
 
 ### Paper Trail
-
-Полное версионирование всех изменений моделей. Каждый раз когда модель сохраняется, Paper Trail создаёт запись с полной историей.
-
-**Функции**: Записывает ЧТО изменилось (старые и новые значения полей), КТО изменил (пользователь), КОГДА (дата и время), ЧТО произошло (создание, обновление, удаление). Позволяет откатиться к старой версии, просмотреть всю историю.
-
-**Ключевое**: Это полноценное версионирование в БД, которое является триггером успеха для всех остальных действий (notifications, broadcasts и т.д.).
+Полное версионирование моделей: ЧТО изменилось (старые/новые значения), КТО (пользователь), КОГДА, ЧТО произошло (create/update/destroy). Триггер всех последующих действий (notifications, broadcasts).
 
 ### PostgreSQL + PostGIS
+Основная БД + географическое расширение: координаты как географические типы, пространственные запросы (объекты в радиусе, на маршруте).
 
-PostgreSQL — основная БД приложения. PostGIS — расширение PostgreSQL для работы с географическими данными. Хранит координаты как специальные географические типы, позволяет делать пространственные запросы (найти объекты в радиусе 50км, на маршруте и т.д.).
+---
 
 ## 🔐 Безопасность
 
 ### Devise
-
-Система аутентификации. Управляет регистрацией пользователей, входом в систему, восстановлением пароля, сессиями. Пароли хранятся хешированными через bcrypt (необратимое шифрование).
-
-**Использование**: Предоставляет методы проверки: текущий пользователь, есть ли пользователь в системе, защищает маршруты от неавторизованного доступа.
-
-## 🏗️ Technology Stack
-
-| Слой | Компоненты |
-|------|-----------|
-| **Backend Framework** | Rails 8.1 |
-| **Database** | PostgreSQL + PostGIS |
-| **Authentication** | Devise + Bcrypt |
-| **Authorization** | Pundit + Rolify |
-| **Audit & Versioning** | Paper Trail |
-| **Frontend** | Stimulus, StimulusReflex |
-| **Map Engine** | OpenLayers 10 (с кластеризацией, Overlay, пространственные запросы через PostGIS) |
-| **Realtime** | ActionCable, SolidCable, CableReady |
-| **Background Jobs** | SolidQueue |
-| **Job Dashboard** | SolidQueueDashboard |
-| **Caching** | SolidCache (инфраструктура; кэширование в коде временно отключено) |
-| **Search & Filtering** | Ransack |
-| **Gamification** | Gamification (собственная) |
-| **Notifications** | Noticed |
-| **CSS Framework** | Tailwind CSS, Stimulus-Components |
-| **Web3** | viem |
-
-
-
-
-
-
-
-
+Аутентификация: регистрация, вход, восстановление пароля, сессии. Пароли — bcrypt (необратимое хеширование). Предоставляет `current_user`, защиту маршрутов от неавторизованного доступа.

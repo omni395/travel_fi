@@ -5,6 +5,9 @@ Rails.application.configure do
   config.action_controller.default_url_options = { host: "localhost", port: 3000 }
   # Settings specified here will take precedence over those in config/application.rb.
 
+  config.hosts << "noneternally-approbative-rosanne.ngrok-free.dev"
+
+
   # Make code changes take effect immediately without server restart.
   config.enable_reloading = true
 

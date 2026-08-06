@@ -7,11 +7,17 @@ class User < ApplicationRecord
   # PaperTrail - аудит всех изменений пользователя
   has_paper_trail
 
-  # Enum для статусов пользователя
+  # Enum для статусов пользователя (чистая модель жизненного цикла):
+  #   pending   — зарегистрирован, email не подтверждён
+  #   active    — подтверждён и активен
+  #   inactive  — неактивен более 6 мес (фоновый job)
+  #   suspended — временно заморожен админом (восстановим)
+  #   banned    — забанен
+  #   deleted   — мягко удалён (виден админу через фильтр)
   enum :status, {
-    registered: "registered",
-    pending_verification: "pending_verification",
+    pending: "pending",
     active: "active",
+    inactive: "inactive",
     suspended: "suspended",
     banned: "banned",
     deleted: "deleted"
@@ -19,11 +25,11 @@ class User < ApplicationRecord
 
   # Scopes для фильтрации по статусу
   scope :active, -> { where(status: :active) }
+  scope :inactive, -> { where(status: :inactive) }
   scope :suspended, -> { where(status: :suspended) }
   scope :banned, -> { where(status: :banned) }
-  scope :pending_verification, -> { where(status: :pending_verification) }
   scope :deleted, -> { where(status: :deleted) }
-  scope :registered, -> { where(status: :registered) }
+  scope :pending, -> { where(status: :pending) }
 
   #
   # Ransack 4.x — явный allowlist атрибутов для поиска
@@ -58,8 +64,14 @@ class User < ApplicationRecord
   # Настройки уведомлений
   has_one :setting, dependent: :destroy
 
-  # Геймификация: баллы и бейджи
+  # Репутационные достижения (бейджи)
   has_many :gamifications, dependent: :destroy
+
+  # Кошельки (custodial — наш, external — собственный юзера)
+  has_many :wallets, dependent: :destroy
+
+  # Токен-начисления (off-chain леджер TFT)
+  has_many :user_rewards, dependent: :destroy
 
   # Валидации
   validates :email, presence: true, uniqueness: true
@@ -155,15 +167,24 @@ class User < ApplicationRecord
     UserService.handle_google_oauth(auth)
   end
 
-  # --- Геймификация ---
+  # --- Токены и достижения ---
 
   #
-  # Сумма всех начисленных баллов
+  # Текущий баланс токенов TFT (сумма начислений, off-chain леджер)
   #
-  # @return [Integer] общее количество баллов
+  # @return [BigDecimal] баланс токенов
   #
-  def total_points
-    gamifications.scores.sum(:value)
+  def token_balance
+    user_rewards.sum(:amount)
+  end
+
+  #
+  # Возвращает основной custodial-кошелёк (скрытый, платформы).
+  #
+  # @return [Wallet, nil]
+  #
+  def wallet
+    wallets.custodial.first
   end
 
   #
@@ -183,6 +204,21 @@ class User < ApplicationRecord
   #
   def earned_badge?(badge_id)
     gamifications.badges.exists?(value: badge_id)
+  end
+
+  #
+  # Возвращает локализованные названия выданных бейджей.
+  # Используется для отображения бейджей в профиле.
+  #
+  # @return [Array<String>] названия бейджей
+  #
+  def badges
+    badge_ids.filter_map do |badge_id|
+      key = GamificationService.badge_key(badge_id)
+      next unless key
+
+      I18n.t("gamification.badges.#{key}.title", default: key.humanize)
+    end
   end
 
   # Примечание: мутационные методы (add_points, grant_badge, remove_badge, update_level!)

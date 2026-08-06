@@ -1,0 +1,87 @@
+<%# Poi::ShowComponent - карточка POI: ОКНО модалки (шапка-попап + табы) %>
+<%# Иконки: mdi-close / mdi-pencil / mdi-information-outline / mdi-comment-text-outline / mdi-star-outline / mdi-image-multiple-outline %>
+<div data-controller="poi--show-component"
+     data-poi--show-component-poi-id="<%= poi.id %>"
+     data-poi-show-component-poi-id="<%= poi.id %>">
+  <%# Скрытые данные POI (для мини-карты в DetailsComponent) %>
+  <div data-poi-id="<%= poi.id %>"
+       data-poi-lat="<%= poi.latitude %>"
+       data-poi-lng="<%= poi.longitude %>"
+       class="hidden"></div>
+
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+    <%# Кнопка закрытия — правый верхний угол окна, вне контента, не прокручивается %>
+    <%= render Ui::BtnComponent.new(size: :sm, html: { class: "absolute top-3 right-3 z-10 w-8 h-8 rounded-full p-0 text-gray-400 hover:text-gray-600", data: { action: "click->poi--show-component#close" } }) do %>
+      <i class="mdi mdi-close text-xl"></i>
+      <%# Иконка: mdi-close %>
+    <% end %>
+
+    <%# ШАПКА: двухколонная структура по образцу Ui::TooltipComponent %>
+    <div class="flex p-4 gap-4 border-b border-gray-200 pr-12">
+      <%# Фото (обложка) слева %>
+      <div class="w-28 h-28 shrink-0 rounded-lg overflow-hidden border border-gray-200">
+        <img src="<%= cover_photo_url %>"
+             alt="<%= t('.photo_alt') %>"
+             class="w-full h-full object-cover">
+      </div>
+
+      <%# Текстовая колонка: категория / название / статус / рейтинг / адрес %>
+      <div class="flex-1 min-w-0 flex flex-col gap-1">
+        <div class="flex items-center gap-2">
+          <% if poi.poi_category&.icon.present? %>
+            <i class="mdi <%= poi.poi_category.icon %> text-emerald-500 text-sm"></i>
+            <%# Иконка: динамическая из poi_category.icon %>
+          <% else %>
+            <i class="mdi mdi-map-marker text-emerald-500 text-sm"></i>
+            <%# Иконка: mdi-map-marker %>
+          <% end %>
+          <span class="text-xs font-medium text-gray-500 uppercase tracking-wider truncate"><%= poi.poi_category&.localized_name %></span>
+          <span class="px-2 py-0.5 rounded-full text-xs font-medium <%= status_badge_class %>">
+            <%= t(".status_#{poi.status}") %>
+          </span>
+        </div>
+
+        <h2 class="text-lg font-bold text-gray-900 leading-tight break-words"><%= poi.localized_name %></h2>
+
+        <div class="flex items-center gap-3 text-sm">
+          <% if poi.rating.present? && poi.rating > 0 %>
+            <span class="flex items-center gap-0.5">
+              <i class="mdi mdi-star text-yellow-400 text-sm"></i>
+              <%# Иконка: mdi-star %>
+              <span class="font-medium text-gray-900"><%= poi.rating %></span>
+            </span>
+          <% end %>
+          <% if poi.verification_count > 0 %>
+            <span class="flex items-center gap-0.5 text-gray-500">
+              <i class="mdi mdi-check-circle text-emerald-500 text-sm"></i>
+              <%# Иконка: mdi-check-circle %>
+              <span><%= t(".verified_count", count: poi.verification_count) %></span>
+            </span>
+          <% end %>
+        </div>
+
+        <% if poi.address.present? || poi.city.present? %>
+          <p class="flex items-center gap-1 text-sm text-gray-600 truncate">
+            <i class="mdi mdi-map-marker text-gray-400 text-sm"></i>
+            <%# Иконка: mdi-map-marker %>
+            <span><%= [poi.address, poi.city, poi.country].compact.join(", ") %></span>
+          </p>
+        <% end %>
+
+        <%# Кнопки действий (Close вынесен в угол окна) %>
+        <% if can_edit? %>
+          <div class="flex items-center gap-2 mt-1">
+            <%= render Ui::BtnComponent.new(color: :ghost, size: :sm, html: { data: { action: "click->poi--show-component#editPoi" } }) do %>
+              <i class="mdi mdi-pencil text-sm mr-1"></i>
+              <%# Иконка: mdi-pencil %>
+              <%= t(".edit") %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <%# ТАБЫ %>
+    <%= render Ui::TabsComponent.new(tabs: tabs, active_tab: "details", panels: panels) %>
+  </div>
+</div>

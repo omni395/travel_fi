@@ -1,6 +1,7 @@
 en:
   pois:
     title: "POIs"
+    update_success: "POI successfully updated"
     loading_location: "Determining your location..."
     no_location_title: "Location unavailable"
     no_location_description: "Enable location services in your browser settings to see points of interest near you."
@@ -60,16 +61,16 @@ en:
         email: "Email"
         referral_code_input: "Referral code"
         statuses:
-          registered: "Registered"
-          pending_verification: "Pending"
+          pending: "Pending"
           active: "Active"
+          inactive: "Inactive"
           suspended: "Suspended"
           banned: "Banned"
           deleted: "Deleted"
         statuses_full:
-          registered: "Registered"
-          pending_verification: "Pending Verification"
+          pending: "Pending"
           active: "Active"
+          inactive: "Inactive"
           suspended: "Suspended"
           banned: "Banned"
           deleted: "Deleted"
@@ -108,6 +109,11 @@ en:
       greeting: "Hi %{name},"
       body: "Your profile information has been updated."
       view_profile: "View Profile"
+    osm_import_complete:
+      subject: "OSM import completed"
+      greeting: "Hi %{name},"
+      body: "The OSM import has finished. Check the updated POI categories."
+      view_category: "View Categories"
     account_deleted:
       subject: "Your account has been deleted"
 
@@ -125,6 +131,10 @@ en:
     name_changed: "Name Changed"
     oauth_login: "OAuth Login"
     poi_updated: "POI %{name} was updated."
+    osm_import_complete: "OSM import completed: %{count} POI(s) added to %{category}."
+    osm_import_complete_title: "OSM Import Completed"
+    poi_category_updated: "POI category %{category} was updated."
+    poi_category_updated_title: "POI Category Updated"
 
   settings:
     title: "Notification Settings"
@@ -146,6 +156,7 @@ en:
       deleted_user: "Deleted"
       user_updated_by_admin: "Updated"
       profile_updated: "Updated"
+      osm_import: "OSM Import"
     channels:
       notifications: "In-App"
       email: "Email"
@@ -237,6 +248,8 @@ en:
         badge_earned_desc: "User received a new achievement badge"
         points_earned: "%{points} points earned"
         points_earned_desc: "User received points for activity"
+        tokens_earned: "%{amount} TFT earned"
+        tokens_earned_desc: "User received TFT tokens for activity"
         action_performed: "Action performed"
         action_performed_desc: "User performed an action in the application"
       tabs:

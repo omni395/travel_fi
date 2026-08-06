@@ -29,7 +29,7 @@
           <%= render Ui::AvatarComponent.new(user: user, size: :xl) %>
           <%= f.file_field :avatar,
                            id: 'user_avatar_input',
-                           accept: 'image/png,image/jpeg,image/webp',
+                           accept: 'image/*',
                            class: "hidden",
                            data: { action: "change->admin--users--user--edit-component#previewAvatar", "admin--users--user--edit-component_target" => "avatarInput" } %>
           <label for="user_avatar_input"

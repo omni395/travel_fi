@@ -1,0 +1,8 @@
+en:
+  poi:
+    ratings_component:
+      title: Ratings
+      coming_soon: Coming soon
+      verified_count:
+        one: Verified %{count} time
+        other: Verified %{count} times

@@ -11,7 +11,7 @@
 #
 class PoisController < ApplicationController
   before_action :authenticate_user!, except: [ :index ]
-  before_action :set_poi, only: [ :show ]
+  before_action :set_poi, only: [ :show, :update ]
 
   #
   # Отображает карту со списком POI
@@ -77,6 +77,20 @@ class PoisController < ApplicationController
     @categories = PoiCategory.active.by_position
     flash.now[:alert] = e.message
     render :new, status: :unprocessable_entity
+  end
+
+  #
+  # Обновляет существующий POI (редактирование из модалки)
+  #
+  # PATCH/PUT /pois/:id
+  #
+  def update
+    authorize @poi, :update?
+
+    PoiService.update(poi: @poi, params: poi_params, current_user: current_user)
+    redirect_to pois_path, notice: t("pois.update_success")
+  rescue PoiService::UpdateError => e
+    redirect_to pois_path, alert: e.message
   end
 
   private

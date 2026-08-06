@@ -22,6 +22,7 @@ en:
       website: Website
       wheelchair: Wheelchair accessible
       photos: Photos
+      add_photos: Add photos
       photos_hint: Upload several photos (JPEG, PNG, WebP). The first photo becomes the cover.
       photo_alt: POI photo
       remove_photo: Remove photo

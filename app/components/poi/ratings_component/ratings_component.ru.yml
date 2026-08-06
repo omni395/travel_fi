@@ -1,0 +1,10 @@
+ru:
+  poi:
+    ratings_component:
+      title: Рейтинги
+      coming_soon: Скоро
+      verified_count:
+        one: Подтверждено %{count} раз
+        few: Подтверждено %{count} раза
+        many: Подтверждено %{count} раз
+        other: Подтверждено %{count} раз

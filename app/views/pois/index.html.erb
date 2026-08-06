@@ -1,36 +1,37 @@
 <%# Pois Index - карта POI на весь экран + сайдбар + модалка %>
 <% content_for :content_class, "overflow-hidden p-0" %>
 
-<div class="h-[calc(100vh-4rem)] flex overflow-hidden"
+<div class="h-[calc(100vh-4rem)] relative overflow-hidden flex"
      data-controller="poi--map-component">
-<%# Сайдбар %>
-<%= render Ui::SidebarComponent.new(width_class: "w-80") do %>
-  <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
-    <div class="flex items-center justify-between">
-      <h2 class="text-md font-semibold text-gray-900">
-        <i class="mdi mdi-map-marker-multiple text-emerald-500 mr-0.5"></i>
-        <%# Иконка: mdi-map-marker-multiple %>
-        <%= t("pois.title") %>
-      </h2>
-    </div>
+  <%# Сайдбар: закрыт — узкая колонка слева (две колонки), открыт — оверлей поверх карты %>
+  <div class="shrink-0">
+    <%= render Ui::SidebarComponent.new(width_class: "w-80") do %>
+      <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+        <div class="flex items-center justify-between">
+          <h2 class="text-md font-semibold text-gray-900">
+            <i class="mdi mdi-map-marker-multiple text-emerald-500 mr-0.5"></i>
+            <%# Иконка: mdi-map-marker-multiple %>
+            <%= t("pois.title") %>
+          </h2>
+        </div>
+      </div>
+      <div id="poi-list" data-ui--sidebar-component-target="list" class="divide-y divide-gray-100">
+        <%= render Poi::ListItemComponent.with_collection(@pois) %>
+      </div>
+      <div id="poi-detail-wrapper" data-ui--sidebar-component-target="detail" class="hidden">
+        <div id="poi-detail"></div>
+      </div>
+    <% end %>
   </div>
-  <div id="poi-list" data-ui--sidebar-component-target="list" class="divide-y divide-gray-100">
-    <%= render Poi::ListItemComponent.with_collection(@pois) %>
-  </div>
-  <div id="poi-detail-wrapper" data-ui--sidebar-component-target="detail" class="hidden">
-    <div id="poi-detail"></div>
-  </div>
-<% end %>
 
-  <%# Карта %>
-  <div class="flex-1 min-h-0 relative">
+  <%# Карта: справа от сайдбара (закрыт) или на весь экран под оверлеем (открыт) %>
+  <div class="flex-1 min-w-0 relative">
     <%= render Poi::MapComponent.new(categories: @categories) %>
   </div>
 
   <%# Спиннер загрузки %>
   <div id="poi-loading"
-       class="absolute inset-0 flex items-center justify-center bg-white z-50"
-       style="top: 4rem;">
+       class="absolute inset-0 flex items-center justify-center bg-white z-50">
     <div class="text-center">
       <i class="mdi mdi-map-search text-emerald-500 text-4xl mb-2 block"></i>
       <%# Иконка: mdi-map-search %>
@@ -41,25 +42,24 @@
 
 <%# Единая модалка для просмотра и формы POI %>
 <div id="poi-detail-overlay"
-     data-controller="poi--detail-component"
-     data-poi--detail-component-target="overlay"
+     data-controller="poi--show-component"
+     data-poi--show-component-target="overlay"
      class="fixed inset-0 z-50 hidden"
-     data-action="keydown.esc->poi--detail-component#close">
-  <div class="absolute inset-0 bg-black/50" data-action="click->poi--detail-component#close"></div>
+     data-action="keydown.esc->poi--show-component#close">
+  <div class="absolute inset-0 bg-black/50" data-action="click->poi--show-component#close"></div>
   <div class="absolute inset-0 flex items-center justify-center p-4">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-      <div id="poi-detail-modal-body">
-        <%# Сюда рендерится Poi::DetailComponent (view) через Reflex %>
-      </div>
+    <%# Окно модалки рендерится самим компонентом (ShowComponent / FormComponent) %>
+    <div id="poi-detail-modal-body">
+      <%# Сюда рендерится Poi::ShowComponent (окно: шапка + табы) через Reflex %>
+    </div>
 
-      <div id="poi-form-content" class="hidden">
-        <%# Сюда рендерится Poi::FormComponent (form) через Reflex %>
-        <%= render Poi::FormComponent.new(
-              categories: @categories,
-              user_lat: @user_lat,
-              user_lng: @user_lng
-            ) %>
-      </div>
+    <div id="poi-form-content" class="hidden">
+      <%# Сюда рендерится Poi::FormComponent (окно: форма) через Reflex %>
+      <%= render Poi::FormComponent.new(
+            categories: @categories,
+            user_lat: @user_lat,
+            user_lng: @user_lng
+          ) %>
     </div>
   </div>
 </div>

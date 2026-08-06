@@ -55,18 +55,20 @@ class VersionObserverJob < ApplicationJob
     user = version.item || version.reify
     return unless user || version.event == 'destroy'
 
-    # 1. Административные бродкасты (всегда при изменении пользователя)
+    # 1. Административные бродкасты (всегда при изменении пользователя).
+    # Каждая зона в rescue: сбой одного бродкаста не должен ронять весь job
+    # (уведомления/остальные зоны доставляются).
     case version.event
     when 'create'
-      Admin::DashboardBroadcaster.broadcast_recent_users_update
-      Admin::DashboardBroadcaster.broadcast_stats_update
-      Admin::UserBroadcaster.broadcast_user_created(user)
+      safe_broadcast { Admin::DashboardBroadcaster.broadcast_recent_users_update }
+      safe_broadcast { Admin::DashboardBroadcaster.broadcast_stats_update }
+      safe_broadcast { Admin::UserBroadcaster.broadcast_user_created(user) }
     when 'update'
-      Admin::DashboardBroadcaster.broadcast_stats_update
-      Admin::UserBroadcaster.broadcast_user_update(user)
+      safe_broadcast { Admin::DashboardBroadcaster.broadcast_stats_update }
+      safe_broadcast { Admin::UserBroadcaster.broadcast_user_update(user) }
     when 'destroy'
-      Admin::DashboardBroadcaster.broadcast_stats_update
-      Admin::UserBroadcaster.broadcast_user_destroy(user) if user
+      safe_broadcast { Admin::DashboardBroadcaster.broadcast_stats_update }
+      safe_broadcast { Admin::UserBroadcaster.broadcast_user_destroy(user) } if user
     end
 
     # 2. Пользовательские бродкасты и уведомления (Live Update для клиента)
@@ -136,7 +138,11 @@ class VersionObserverJob < ApplicationJob
     category = version.item || version.reify
     return unless category
 
-    PoiCategoryBroadcaster.call(category: category)
+    PoiCategoryBroadcaster.call(
+      category: category,
+      event_type: version.event,
+      payload: { initiator_id: version.whodunnit }
+    )
   end
 
   #
@@ -147,6 +153,21 @@ class VersionObserverJob < ApplicationJob
     return unless field
 
     # Обновляем родительскую категорию, т.к. поле отображается внутри неё
-    PoiCategoryBroadcaster.call(category: field.poi_category)
+    PoiCategoryBroadcaster.call(
+      category: field.poi_category,
+      event_type: "field_#{version.event}",
+      payload: { initiator_id: version.whodunnit }
+    )
+  end
+
+  #
+  # Выполняет бродкаст-зону с устойчивостью: сбой одной зоны не роняет job.
+  #
+  # @yield блок бродкаста
+  #
+  def safe_broadcast
+    yield
+  rescue StandardError => e
+    Rails.logger.error("VersionObserverJob broadcast error: #{e.class} #{e.message}")
   end
 end

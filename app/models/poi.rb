@@ -78,11 +78,18 @@ class Poi < ApplicationRecord
   }
 
   # PostGIS: POI в радиусе N метров от точки
+  # ST_MakePoint возвращает геометрию с SRID 0 — явно задаём SRID 4326 перед
+  # кастом в geography (иначе `Cannot find SRID (4326) in spatial_ref_sys`).
   scope :within_meters, ->(lat, lng, meters) {
     where(
-      "ST_DWithin(coordinates, ST_MakePoint(:lng, :lat)::geography, :meters)",
+      "ST_DWithin(coordinates, ST_SetSRID(ST_MakePoint(:lng, :lat), 4326)::geography, :meters)",
       lat: lat, lng: lng, meters: meters
     )
+  }
+
+  # PostGIS: POI в радиусе N километров (обёртка над within_meters)
+  scope :nearby, ->(lat, lng, radius_km) {
+    within_meters(lat, lng, radius_km.to_f * 1000)
   }
 
   # PostGIS: POI в пределах прямоугольника (границы видимой области карты)

@@ -13,10 +13,9 @@ export default class extends ApplicationController {
   connect() {
     super.connect()
 
-    // На мобильных сайдбар скрыт по умолчанию
-    if (this.isMobile()) {
-      this.sidebarTarget.classList.add(this.hiddenClass)
-    }
+    // Сайдбар скрыт по умолчанию на ВСЕХ экранах — остаётся узкая колонка с шевроном,
+    // контент справа (две колонки). Открывается шевроном как оверлей поверх контента.
+    this.sidebarTarget.classList.add(this.hiddenClass)
   }
 
   // ============================================================
@@ -25,7 +24,28 @@ export default class extends ApplicationController {
 
   // Переключение видимости сайдбара
   sidebarToggle() {
-    this.sidebarTarget.classList.toggle(this.hiddenClass)
+    if (this.sidebarTarget.classList.contains(this.hiddenClass)) {
+      this._open()
+    } else {
+      this._close()
+    }
+  }
+
+  /**
+   * Открыть сайдбар — как оверлей поверх контента (сайдбар absolute, контент flex-1 на всю ширину)
+   */
+  _open() {
+    this.sidebarTarget.classList.remove(this.hiddenClass)
+    this.element.classList.add("ui-sidebar--overlay")
+    this.toggleChevron()
+  }
+
+  /**
+   * Закрыть сайдбар — узкая колонка слева (две колонки), контент справа
+   */
+  _close() {
+    this.sidebarTarget.classList.add(this.hiddenClass)
+    this.element.classList.remove("ui-sidebar--overlay")
     this.toggleChevron()
   }
 

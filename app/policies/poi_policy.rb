@@ -41,6 +41,9 @@ class PoiPolicy < ApplicationPolicy
   #
   class Scope < ApplicationPolicy::Scope
     def resolve
+      # Гость (публичная карта) — только approved POI
+      return scope.approved unless user
+
       if user.has_role?(:admin) || user.has_role?(:moderator)
         scope.all
       else

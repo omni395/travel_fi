@@ -20,16 +20,16 @@ es:
         email: "Email"
         referral_code_input: "Código de referido"
         statuses:
-          registered: "Registrado"
-          pending_verification: "Pendiente"
+          pending: "Pendiente"
           active: "Activo"
+          inactive: "Inactivo"
           suspended: "Suspendido"
           banned: "Prohibido"
           deleted: "Eliminado"
         statuses_full:
-          registered: "Registrado"
-          pending_verification: "Pendiente de verificación"
+          pending: "Pendiente"
           active: "Activo"
+          inactive: "Inactivo"
           suspended: "Suspendido"
           banned: "Prohibido"
           deleted: "Eliminado"
@@ -72,6 +72,7 @@ es:
       deleted_user: "Eliminado"
       user_updated_by_admin: "Actualizado"
       profile_updated: "Actualizado"
+      osm_import: "Importación OSM"
     channels:
       notifications: "En App"
       email: "Email"
@@ -90,6 +91,10 @@ es:
     email_changed: "Correo cambiado"
     name_changed: "Nombre cambiado"
     oauth_login: "Inicio de sesión OAuth"
+    osm_import_complete: "Importación OSM completada: %{count} POI añadidos a %{category}."
+    osm_import_complete_title: "Importación OSM completada"
+    poi_category_updated: "La categoría de POI %{category} fue actualizada."
+    poi_category_updated_title: "Categoría de POI actualizada"
 
   admin:
     poi_categories:
@@ -177,6 +182,8 @@ es:
         badge_earned_desc: "El usuario recibió una nueva insignia"
         points_earned: "%{points} puntos obtenidos"
         points_earned_desc: "El usuario recibió puntos por actividad"
+        tokens_earned: "%{amount} TFT obtenidos"
+        tokens_earned_desc: "El usuario recibió tokens TFT por actividad"
         action_performed: "Acción realizada"
         action_performed_desc: "El usuario realizó una acción"
       tabs:
@@ -240,6 +247,7 @@ es:
 
   pois:
     title: "POIs"
+    update_success: "POI actualizado exitosamente"
     no_location_toast: "Acceso a la ubicación denegado. Habilite los servicios de ubicación para añadir e interactuar con POIs cercanos."
     guest_warning: "Estás usando como invitado. Inicia sesión o regístrate para añadir y gestionar POIs."
     auth_required_title: "Inicio de sesión requerido"

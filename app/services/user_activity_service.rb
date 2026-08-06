@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 #
-# UserActivityService — сервис для сбора активности пользователя из Gamification
+# UserActivityService — сервис для сбора активности пользователя.
 #
-# Собирает данные из таблицы gamifications:
-# - event_type: "badge" — полученные бейджи
-# - event_type: "score" — начисленные баллы
+# Собирает данные:
+# - gamifications (event_type: "badge") — полученные бейджи
+# - user_rewards — токен-начисления TFT (off-chain леджер)
 #
 # Возвращает отсортированный по времени массив событий ActivityEvent
 #
@@ -29,7 +29,7 @@ class UserActivityService
   def call
     events = []
     events.concat(badge_events)
-    events.concat(score_events)
+    events.concat(reward_events)
     events.sort_by(&:created_at).reverse
   end
 
@@ -56,19 +56,19 @@ class UserActivityService
   end
 
   #
-  # Формирует события из начисленных баллов
+  # Формирует события из токен-начислений TFT (user_rewards)
   #
   # @return [Array<ActivityEvent>]
   #
-  def score_events
-    user.gamifications.scores.ordered.map do |g|
+  def reward_events
+    user.user_rewards.order(created_at: :desc).map do |r|
       ActivityEvent.new(
-        type: :score,
-        title: t("admin.users.activity.points_earned", points: g.value),
-        description: g.log.presence || t("admin.users.activity.points_earned_desc"),
-        created_at: g.created_at,
-        icon: "mdi-star",
-        color: "text-blue-500"
+        type: :reward,
+        title: t("admin.users.activity.tokens_earned", amount: r.amount),
+        description: r.log.presence || t("admin.users.activity.tokens_earned_desc"),
+        created_at: r.created_at,
+        icon: "mdi-coins",
+        color: "text-emerald-600"
       )
     end
   end

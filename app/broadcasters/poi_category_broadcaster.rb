@@ -19,19 +19,27 @@ class PoiCategoryBroadcaster
   include CableReady::Broadcaster
   include Pagy::Method
 
+  # События категории, для которых рассылаются уведомления (PoiCategoryNotification)
+  # по личным настройкам получателей. Для остальных — только live-обновление UI.
+  NOTIFICATION_EVENTS = %w[osm_import].freeze
+
   #
   # Отправляет обновление категории POI через WebSocket
   #
   # @param category [PoiCategory] обновленная категория
+  # @param event_type [String] ключ события ("update", "create", "osm_import", ...)
+  # @param payload [Hash] контекст события { stats:, initiator_id: }
   #
-  def self.call(category:)
-    new(category: category).broadcast
+  def self.call(category:, event_type: "update", payload: {})
+    new(category: category, event_type: event_type, payload: payload).broadcast
   end
 
-  attr_reader :category
+  attr_reader :category, :event_type, :payload
 
-  def initialize(category:)
+  def initialize(category:, event_type: "update", payload: {})
     @category = category
+    @event_type = event_type
+    @payload = payload
   end
 
   #
@@ -77,12 +85,32 @@ class PoiCategoryBroadcaster
 
     cable_ready["AdminChannel"].broadcast
 
+    # Рассылаем уведомления (мультикаст) для событий с настроенными каналами
+    notify_recipients if NOTIFICATION_EVENTS.include?(event_type)
+
     Rails.logger.info("PoiCategoryBroadcaster: Sent update for category #{category.id} (#{category.localized_name})")
   rescue StandardError => e
     Rails.logger.error("PoiCategoryBroadcaster error: #{e.class} #{e.message}")
   end
 
   private
+
+  #
+  # Рассылает уведомления о событии категории инициатору и всем админам.
+  # Для КАЖДОГО получателя каналы фильтруются по его Setting внутри
+  # PoiCategoryNotification (deliver_by ... if:). Каналы настраиваются колонками
+  # "#{event_type}_*_enabled" (например osm_import_notifications_enabled).
+  #
+  def notify_recipients
+    initiator = User.find_by(id: payload[:initiator_id])
+    recipients = [ initiator, *User.with_role(:admin) ].compact.uniq
+
+    recipients.each do |recipient|
+      PoiCategoryNotification.with(item: category, event_type: event_type, payload: payload).deliver_later(recipient)
+    end
+  rescue StandardError => e
+    Rails.logger.error("PoiCategoryBroadcaster#notify_recipients error: #{e.class} #{e.message}")
+  end
 
   #
   # request для pagy() в SolidQueue worker (аналог того, что Reflex получает от

@@ -124,18 +124,22 @@ class OsmImportBroadcaster
     cable_ready.broadcast
     Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: first broadcast done"
 
-    # 3. Обновляем UI категории (счётчик POI) — отдельно, может упасть
+    # 3. Обновляем ВСЕ зоны категории единым кодом PoiCategoryBroadcaster (inner_html):
+    #    карточку, список полей, ВКЛАДКУ POIs ([data-poi-category-pois]) и ленту аудита —
+    #    чтобы новые импортированные POI появились во вкладке.
+    #    Ранее здесь был отдельный cable_ready.morph на [data-admin-poi-category-id] —
+    #    удалён: двойное обновление #poi-category-detail (морф + inner_html) и падение
+    #    morph на клиенте (undefined.dispatchEvent; догма «Broadcaster — только inner_html»).
+    #    PoiCategoryBroadcaster также рассылает уведомления (PoiCategoryNotification)
+    #    инициатору и всем админам по их личным настройкам (event_type "osm_import").
     begin
-      component = Admin::PoiCategories::PoiCategory::ShowComponent.new(category: category.reload)
-      html = ApplicationController.render(component, layout: false)
-      cable_ready["AdminChannel"].morph(
-        selector: "[data-admin-poi-category-id='#{category.id}']",
-        html: html
+      PoiCategoryBroadcaster.call(
+        category: category.reload,
+        event_type: "osm_import",
+        payload: { stats: stats, initiator_id: user.id }
       )
-      cable_ready.broadcast
-      Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: AdminChannel morph done"
     rescue StandardError => e
-      Rails.logger.warn "[TRACE] OsmImportBroadcaster: AdminChannel morph skipped: #{e.class} #{e.message}"
+      Rails.logger.warn "[TRACE] OsmImportBroadcaster: PoiCategoryBroadcaster skipped: #{e.class} #{e.message}"
     end
 
     Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: sent result to user##{user.id} for category##{category.id}"

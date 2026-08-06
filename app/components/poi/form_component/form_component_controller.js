@@ -61,7 +61,7 @@ export default class extends ApplicationController {
    * Открыть модалку — инициализировать карту
    */
   open() {
-    const overlay = this.element.closest("[data-poi--detail-component-target='overlay']")
+    const overlay = this.element.closest("[data-poi--show-component-target='overlay']")
     if (overlay) overlay.classList.remove("hidden")
 
     // Показываем контейнер формы, скрываем контейнер детального просмотра
@@ -82,8 +82,17 @@ export default class extends ApplicationController {
    * Закрыть модалку
    */
   close() {
-    const overlay = this.element.closest("[data-poi--detail-component-target='overlay']")
+    const overlay = this.element.closest("[data-poi--show-component-target='overlay']")
     if (overlay) overlay.classList.add("hidden")
+  }
+
+  /**
+   * Открыть выбор фото (системный пикер: галерея + камера на мобильных).
+   */
+  openGallery() {
+    if (this.hasPhotosInputTarget) {
+      this.photosInputTarget.click()
+    }
   }
 
   // ============================================================

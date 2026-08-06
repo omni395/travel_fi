@@ -51,11 +51,11 @@ export default class extends Controller {
     this.tabTargets.forEach(btn => {
       const isActive = btn.dataset.tab === tab
       if (isActive) {
-        btn.classList.add("tab-active", "text-teal-700", "bg-white", "rounded-lg", "shadow-sm", "ring-1", "ring-slate-200", "font-bold")
+        btn.classList.add("tab-active", "text-emerald-700", "bg-white", "rounded-lg", "shadow-sm", "ring-1", "ring-emerald-200", "font-bold")
         btn.classList.remove("text-slate-500", "hover:text-slate-700", "hover:bg-white/50", "font-semibold")
       } else {
-        btn.classList.remove("tab-active", "text-teal-700", "bg-white", "rounded-lg", "shadow-sm", "ring-1", "ring-slate-200", "font-bold")
-        btn.classList.add("text-slate-500", "hover:text-slate-700", "hover:bg-white/50", "font-semibold")
+        btn.classList.remove("tab-active", "text-emerald-700", "bg-white", "rounded-lg", "shadow-sm", "ring-1", "ring-emerald-200", "font-bold")
+        btn.classList.add("text-slate-500", "hover:text-teal-700", "hover:bg-white/50", "font-semibold")
       }
     })
 

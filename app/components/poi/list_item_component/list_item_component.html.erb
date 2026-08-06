@@ -1,5 +1,8 @@
 <%# Poi::ListItemComponent - элемент списка POI %>
 <%# Иконка: mdi-map-marker %>
+<%# Клик обрабатывается делегированием в poi--show-component (document-level),
+    т.к. список вставляется через CableReady inner_html и Stimulus-контроллеры
+    на вставленных элементах могут не инициализироваться. %>
 <div data-poi-id="<%= poi.id %>"
      data-poi-name="<%= poi.localized_name %>"
      data-poi-city="<%= poi.city %>"
@@ -10,8 +13,6 @@
      data-poi-category="<%= poi.poi_category&.localized_name %>"
      data-poi-category-id="<%= poi.poi_category_id %>"
      data-poi-rating="<%= poi.rating&.to_f || 0 %>"
-     data-action="click->poi--list-item-component#showDetail"
-     data-poi--list-item-component-id-param="<%= poi.id %>"
      class="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150">
 
   <div class="flex items-start gap-3">

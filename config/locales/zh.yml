@@ -20,16 +20,16 @@ zh:
         email: "邮箱"
         referral_code_input: "邀请码"
         statuses:
-          registered: "已注册"
-          pending_verification: "待验证"
+          pending: "待处理"
           active: "活跃"
+          inactive: "不活跃"
           suspended: "已暂停"
           banned: "已封禁"
           deleted: "已删除"
         statuses_full:
-          registered: "已注册"
-          pending_verification: "等待验证"
+          pending: "待处理"
           active: "活跃"
+          inactive: "不活跃"
           suspended: "已暂停"
           banned: "已封禁"
           deleted: "已删除"
@@ -72,6 +72,7 @@ zh:
       deleted_user: "已删除"
       user_updated_by_admin: "已更新"
       profile_updated: "已更新"
+      osm_import: "OSM 导入"
     channels:
       notifications: "应用内"
       email: "邮箱"
@@ -79,6 +80,10 @@ zh:
   notifications:
     user_updated: "用户 %{name} 已更新。"
     registration: "新用户注册: %{name}。"
+    osm_import_complete: "OSM 导入完成: %{count} 个 POI 已添加到 %{category}。"
+    osm_import_complete_title: "OSM 导入完成"
+    poi_category_updated: "POI 分类 %{category} 已更新。"
+    poi_category_updated_title: "POI 分类已更新"
 
   user_audit:
     actions:
@@ -179,6 +184,8 @@ zh:
         badge_earned_desc: "用户获得了新的成就徽章"
         points_earned: "获得 %{points} 积分"
         points_earned_desc: "用户因活动获得积分"
+        tokens_earned: "获得 %{amount} TFT"
+        tokens_earned_desc: "用户因活动获得 TFT 代币"
         action_performed: "执行了操作"
         action_performed_desc: "用户在应用中执行了操作"
       tabs:
@@ -242,6 +249,7 @@ zh:
 
   pois:
     title: "兴趣点"
+    update_success: "POI更新成功"
     no_location_toast: "位置访问被拒绝。启用定位服务以添加和与附近的POI互动。"
     guest_warning: "您正在以访客身份使用。请登录或注册以添加和管理POI。"
     auth_required_title: "需要登录"

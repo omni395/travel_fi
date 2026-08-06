@@ -46,6 +46,16 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Тесты: RSpec + FactoryBot + PostGIS
+  gem "rspec-rails"
+  gem "factory_bot_rails"
+
+  # System-тесты «браузер А → браузер Б» (Capybara + Cuprite) + мок внешнего HTTP
+  gem "capybara"
+  gem "cuprite"
+  gem "webmock"
+  gem "database_cleaner-active_record"
 end
 
 group :development do

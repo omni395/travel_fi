@@ -1,0 +1,17 @@
+zh:
+  poi:
+    show_component:
+      tab_details: 详情
+      tab_comments: 评论
+      tab_ratings: 评分
+      tab_gallery: 图库
+      photo_alt: 地点照片
+      edit: 编辑
+      close: 关闭
+      status_pending: 待审核
+      status_approved: 已批准
+      status_rejected: 已拒绝
+      status_archived: 已归档
+      verified_count:
+        one: 已验证 %{count} 次
+        other: 已验证 %{count} 次

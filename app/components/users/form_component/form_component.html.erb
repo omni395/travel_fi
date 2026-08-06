@@ -92,15 +92,22 @@
             </div>
           </div>
 
-          <!-- File Input -->
-          <input
-            type="file"
-            id="user_avatar"
-            name="avatar"
-            accept="image/jpeg,image/png,image/webp"
-            data-users--form-component-target="avatarInput"
-            data-action="change->users--form-component#previewAvatar"
-            class="field-file">
+          <!-- File Input (одна кнопка — на телефоне системный выбор: галерея + камера) -->
+          <div class="flex items-center gap-2">
+            <%= render Ui::BtnComponent.new(color: :secondary, size: :md, html: { data: { action: "click->users--form-component#openAvatar" } }) do %>
+              <!-- mdi: image-plus -->
+              <i class="mdi mdi-image-plus"></i>
+              <%= t(".choose_avatar") %>
+            <% end %>
+            <input
+              type="file"
+              id="user_avatar"
+              name="avatar"
+              accept="image/*"
+              data-users--form-component-target="avatarInput"
+              data-action="change->users--form-component#previewAvatar"
+              class="hidden">
+          </div>
           <p class="text-xs text-gray-500 mt-1"><%= t(".avatar_hint") %></p>
         </div>
 

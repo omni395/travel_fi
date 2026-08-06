@@ -1,6 +1,7 @@
 zh:
   users:
     profile_component:
+      token_balance: "TFT 余额"
       badges: "徽章"
       roles: "角色"
       referral_code: "邀请码"

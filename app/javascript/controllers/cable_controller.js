@@ -42,9 +42,21 @@ export default class extends Controller {
       received(data) {
         console.log('[CABLE_SUBSCRIPTION] 📨 UserChannel: Received', data)
 
-        // Применяем CableReady-операции (тосты, морфинг и т.д.)
-        if (data && data.cableReady) {
-          CableReady.perform(data.operations)
+        // Применяем CableReady-операции (тосты, морфинг и т.д.) ПО ОДНОЙ,
+        // с пропуском операций на отсутствующие в DOM селекторы (как AdminChannel):
+        // падение одной операции не должно обрывать применение остальных.
+        if (data && data.cableReady && Array.isArray(data.operations)) {
+          data.operations.forEach(op => {
+            try {
+              if (op.selector && !document.querySelector(op.selector)) {
+                console.warn('[CABLE_SUBSCRIPTION] skip operation (selector not found):', op.selector)
+                return
+              }
+              CableReady.perform([op])
+            } catch (e) {
+              console.error('[CABLE_SUBSCRIPTION] CableReady operation failed:', op, e)
+            }
+          })
         }
       },
 

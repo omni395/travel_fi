@@ -1,0 +1,10 @@
+<%# Шаблон письма о завершении OSM-импорта POI %>
+<%# Используется UserMailer#osm_import_complete через PoiCategoryNotification (Noticed) %>
+
+<h1><%= I18n.t("mailer.osm_import_complete.greeting", name: @user.name) %></h1>
+
+<p><%= I18n.t("mailer.osm_import_complete.body") %></p>
+
+<p>
+  <%= link_to I18n.t("mailer.osm_import_complete.view_category"), root_url(locale: I18n.locale) %>
+</p>

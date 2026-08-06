@@ -6,7 +6,12 @@ development:
   polling_interval: 5.seconds
 
 test:
-  adapter: test
+  # SolidCable использует отдельную cable-БД (travel_fi_test_cable), как в dev/prod.
+  adapter: solid_cable
+  connects_to:
+    database:
+      writing: cable
+  polling_interval: 5.seconds
 
 production:
   adapter: solid_cable

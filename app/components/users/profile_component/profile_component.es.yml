@@ -1,6 +1,7 @@
 es:
   users:
     profile_component:
+      token_balance: "Saldo TFT"
       badges: "Insignias"
       roles: "Roles"
       referral_code: "Código de Referido"

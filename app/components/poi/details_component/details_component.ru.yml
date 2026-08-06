@@ -1,0 +1,17 @@
+ru:
+  poi:
+    details_component:
+      description: Описание
+      wheelchair_accessible: Доступно для инвалидных колясок
+      opening_hours: Часы работы
+      characteristics: Характеристики
+      location: Расположение
+      source_osm: Импортировано из OpenStreetMap
+      source_manual: Добавлено вручную
+      copy_coords: Копировать
+      open_in_maps: Открыть на карте
+      directions: Маршрут
+      added_by: "Добавлено: %{name}"
+      unknown: Неизвестно
+      true: "Да"
+      false: "Нет"

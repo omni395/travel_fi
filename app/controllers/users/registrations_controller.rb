@@ -23,6 +23,9 @@ class Users::RegistrationsController < Devise::RegistrationsController
         # Создаем настройки уведомлений по умолчанию
         UserService.create_default_settings(resource)
 
+        # Welcome-токены за регистрацию + реферальный бонус (бизнес-логика в Service).
+        UserService.award_registration_bonus!(resource, resource.referral_code_input)
+
         # Логируем регистрацию со ВСЕМИ заполненными полями
         registration_changes = {
           email: { old: nil, new: resource.email },

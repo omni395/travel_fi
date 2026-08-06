@@ -1,0 +1,8 @@
+es:
+  poi:
+    ratings_component:
+      title: Valoraciones
+      coming_soon: Próximamente
+      verified_count:
+        one: Verificado %{count} vez
+        other: Verificado %{count} veces

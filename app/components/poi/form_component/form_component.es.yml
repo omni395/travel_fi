@@ -22,6 +22,7 @@ es:
       website: Sitio web
       wheelchair: Accesible para silla de ruedas
       photos: Fotos
+      add_photos: Añadir fotos
       photos_hint: Sube varias fotos (JPEG, PNG, WebP). La primera foto será la portada.
       photo_alt: Foto del POI
       remove_photo: Eliminar foto

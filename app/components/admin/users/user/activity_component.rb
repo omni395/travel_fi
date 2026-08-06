@@ -38,7 +38,7 @@ class Admin::Users::User::ActivityComponent < ApplicationComponent
   def badge_color(type)
     case type
     when :badge then :warning
-    when :score then :primary
+    when :reward then :primary
     when :action then :success
     else :gray
     end

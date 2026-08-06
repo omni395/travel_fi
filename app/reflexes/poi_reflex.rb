@@ -26,7 +26,7 @@ class PoiReflex < ApplicationReflex
 
     cable_ready.morph(
       selector: "#poi-detail",
-      html: ApplicationController.render(Poi::DetailComponent.new(poi: poi))
+      html: ApplicationController.render(Poi::ShowComponent.new(poi: poi), layout: false)
     )
     cable_ready.set_attribute(selector: "#poi-list", name: "class", value: "hidden")
     cable_ready.remove_attribute(selector: "#poi-detail-wrapper", name: "class")
@@ -43,7 +43,7 @@ class PoiReflex < ApplicationReflex
   # Показывает детальную информацию о POI в модалке
   # Вызывается при клике на маркер карты (через poi:show-detail событие)
   #
-  # Использует Poi::DetailComponent как контейнер (оверлей + центрированная карточка)
+  # Использует Poi::ShowComponent (шапка + табы) как контейнер
   #
   # @param poi_id [Integer] ID POI
   #
@@ -75,18 +75,17 @@ class PoiReflex < ApplicationReflex
     poi = Poi.includes(:poi_category, :user).find(poi_id)
     authorize_with_pundit!(poi, :show?)
 
-    comments = PoiComment.where(poi_id: poi.id).includes(:user).recent
-    html = ApplicationController.render(Poi::DetailComponent.new(
+    # Таб «Комментарии» — заглушка (Poi::CommentsComponent), данные не запрашиваем.
+    html = ApplicationController.render(Poi::ShowComponent.new(
       poi: poi,
       current_user: current_user,
-      comments: comments,
       user_lat: session[:user_lat],
       user_lng: session[:user_lng]
-    ))
+    ), layout: false)
 
     cable_ready.inner_html(selector: "#poi-detail-modal-body", html: html)
     cable_ready.add_css_class(selector: "#poi-form-content", name: "hidden")
-    cable_ready.remove_css_class(selector: "[data-poi--detail-component-target='overlay']", name: "hidden")
+    cable_ready.remove_css_class(selector: "[data-poi--show-component-target='overlay']", name: "hidden")
     cable_ready.broadcast
     morph :nothing
 
@@ -474,7 +473,7 @@ class PoiReflex < ApplicationReflex
 
   #
   # Открывает форму редактирования POI с проверкой расстояния
-  # Вызывается из detail_component_controller.js (кнопка Edit)
+  # Вызывается из show_component_controller.js (кнопка Edit в шапке карточки)
   #
   # Если пользователь вне 50м от точки — показывает ConfirmDialog с предупреждением
   # Для админов/модераторов проверка пропускается
@@ -488,17 +487,17 @@ class PoiReflex < ApplicationReflex
     # Проверка расстояния (антифрод/спам)
     return unless check_proximity!(poi)
 
-    # Рендерим форму редактирования через Poi::FormComponent
+    # Рендерим форму редактирования через Poi::FormComponent (без layout — фрагмент модалки)
     html = ApplicationController.render(Poi::FormComponent.new(
       poi: poi,
       current_user: current_user,
       categories: PoiCategory.active.by_position,
       user_lat: session[:user_lat],
       user_lng: session[:user_lng]
-    ))
+    ), layout: false)
 
     cable_ready.inner_html(selector: "#poi-detail-modal-body", html: html)
-    cable_ready.remove_css_class(selector: "[data-poi--detail-component-target='overlay']", name: "hidden")
+    cable_ready.remove_css_class(selector: "[data-poi--show-component-target='overlay']", name: "hidden")
     cable_ready.broadcast
     morph :nothing
 
@@ -511,7 +510,7 @@ class PoiReflex < ApplicationReflex
 
   #
   # Создаёт комментарий к POI
-  # Вызывается из poi--detail-component#submitComment
+  # Вызывается из формы комментариев (Poi::CommentsComponent — заглушка, см. ROADMAP)
   #
   # @param params [Hash] { poi_id: Integer, body: String }
   #
@@ -530,15 +529,13 @@ class PoiReflex < ApplicationReflex
       body: params[:body]
     )
 
-    # Рендерим обновлённый список комментариев
-    comments = PoiComment.where(poi_id: poi.id).includes(:user).recent
-    detail_html = ApplicationController.render(Poi::DetailComponent.new(
+    # Рендерим обновлённую карточку (таб комментариев — заглушка, layout не подключаем)
+    detail_html = ApplicationController.render(Poi::ShowComponent.new(
       poi: poi,
       current_user: current_user,
-      comments: comments,
       user_lat: session[:user_lat],
       user_lng: session[:user_lng]
-    ))
+    ), layout: false)
 
     cable_ready.inner_html(selector: "#poi-detail-modal-body", html: detail_html)
     cable_ready.broadcast

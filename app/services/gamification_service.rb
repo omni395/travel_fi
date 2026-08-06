@@ -1,104 +1,39 @@
 # frozen_string_literal: true
 
 #
-# GamificationService — единый сервис геймификации.
+# GamificationService — награды токенами TFT и репутационные бейджи.
 #
-# Ответственность:
-# 1. Начисление баллов за действия (award!)
-# 2. Расчёт уровня от суммы баллов (level_for)
-# 3. Начисление баллов пользователю (add_points!)
-# 4. Выдача/удаление бейджей (grant_badge!, remove_badge!)
-# 5. Пересчёт уровня (update_level!)
-# 6. Проверка и выдача бейджей (check_badges!)
-# 7. Реферальные бонусы (award_referral!)
+# ТОКЕННАЯ МОДЕЛЬ: начисления идут в user_rewards (off-chain леджер, TFT),
+# а не в «баллы». Реальная отправка ERC-20 на custodial-кошелёк — через
+# ContractService (контракты задеплоены, см. .env).
 #
-# Конфиг: config/gamification.yml
+# Конфиг: config/gamification.yml (rewards — токены, badges — достижения).
 #
 # Использование:
 #   GamificationService.award!(:registration, user)
-#   GamificationService.add_points!(user, 10, action_key: "registration")
+#   GamificationService.award_referral!(referrer, new_user)
 #   GamificationService.grant_badge!(user, 1)
 #
 class GamificationService
-  LEVELS = [
-    { level: 1, min: 0, max: 49 },
-    { level: 2, min: 50, max: 199 },
-    { level: 3, min: 200, max: 499 },
-    { level: 4, min: 500, max: 999 },
-    { level: 5, min: 1000, max: Float::INFINITY }
-  ].freeze
-
   class << self
     #
-    # Начисляет баллы пользователю за действие
-    # 1. Читает количество баллов из конфига
-    # 2. Начисляет через add_points!
-    # 3. Проверяет условия для бейджей
+    # Начисляет токены TFT пользователю за действие и проверяет бейджи.
     #
     # @param action_key [String] ключ действия (registration, poi_create и т.д.)
     # @param user [User] пользователь
     # @param log [String, nil] описание начисления
     #
     def award!(action_key, user, log: nil)
-      points = config.dig("rewards", action_key)
-      return unless points&.positive?
+      key = action_key.to_s
+      amount = config.dig('rewards', key)
+      return unless amount && amount.to_f.positive?
 
-      add_points!(user, points, action_key: action_key, log: log || action_key.to_s)
-      check_badges!(user, action_key)
+      create_reward!(user, amount, key, log || key)
+      check_badges!(user, key)
     end
 
     #
-    # Начисляет баллы пользователю и пересчитывает уровень
-    #
-    # @param user [User] пользователь
-    # @param num [Integer] количество баллов
-    # @param action_key [String] ключ действия
-    # @param log [String, nil] описание начисления
-    #
-    def add_points!(user, num, action_key:, log: nil)
-      user.gamifications.create!(event_type: "score", value: num, action_key: action_key, log: log)
-      update_level!(user)
-    end
-
-    #
-    # Выдаёт бейдж пользователю
-    #
-    # @param user [User] пользователь
-    # @param badge_id [Integer] ID бейджа
-    #
-    def grant_badge!(user, badge_id)
-      return if user.earned_badge?(badge_id)
-
-      user.gamifications.create!(
-        event_type: "badge",
-        value: badge_id,
-        action_key: badge_key(badge_id)
-      )
-    end
-
-    #
-    # Удаляет бейдж у пользователя
-    #
-    # @param user [User] пользователь
-    # @param badge_id [Integer] ID бейджа
-    #
-    def remove_badge!(user, badge_id)
-      user.gamifications.badges.where(value: badge_id).destroy_all
-    end
-
-    #
-    # Пересчитывает уровень пользователя на основе суммы баллов
-    # Уровни: 1 (0-49), 2 (50-199), 3 (200-499), 4 (500-999), 5 (1000+)
-    #
-    # @param user [User] пользователь
-    #
-    def update_level!(user)
-      new_level = level_for(user.total_points)
-      user.update!(level: new_level) if user.level != new_level
-    end
-
-    #
-    # Начисляет реферальные бонусы рефереру и новому пользователю
+    # Начисляет реферальные бонусы рефереру и новому пользователю.
     #
     # @param referrer [User] пользователь, чей код использовали
     # @param new_user [User] только что зарегистрированный пользователь
@@ -109,31 +44,61 @@ class GamificationService
     end
 
     #
-    # Возвращает уровень для указанного количества баллов
+    # Создаёт запись начисления токенов (off-chain леджер).
     #
-    # @param points [Integer] сумма баллов
-    # @return [Integer] уровень (1-5)
+    # @param user [User] пользователь
+    # @param amount [Numeric] количество токенов TFT
+    # @param action_key [String] тип начисления
+    # @param log [String] описание
+    # @return [UserReward]
     #
-    def level_for(points)
-      LEVELS.each do |range|
-        return range[:level] if points >= range[:min] && points <= range[:max]
-      end
-      1
+    def create_reward!(user, amount, action_key, log)
+      user.user_rewards.create!(
+        amount: amount,
+        action_key: action_key,
+        log: log,
+        wallet: user.wallet
+      )
     end
 
     #
-    # Возвращает ключ бейджа по его ID
+    # Возвращает ключ бейджа по его ID.
     #
     # @param badge_id [Integer] ID бейджа
     # @return [String, nil] ключ бейджа
     #
     def badge_key(badge_id)
-      badge = config.dig("badges", badge_id.to_s)
-      badge&.dig("key")
+      config.dig('badges', badge_id.to_s)&.dig('key')
     end
 
     #
-    # Проверяет условия для всех бейджей и выдаёт подходящие
+    # Выдаёт бейдж пользователю (если ещё не выдан).
+    #
+    # @param user [User] пользователь
+    # @param badge_id [Integer] ID бейджа
+    #
+    def grant_badge!(user, badge_id)
+      return if user.earned_badge?(badge_id)
+
+      user.gamifications.create!(
+        event_type: 'badge',
+        value: badge_id,
+        action_key: badge_key(badge_id)
+      )
+    end
+
+    #
+    # Удаляет бейдж у пользователя.
+    #
+    # @param user [User] пользователь
+    # @param badge_id [Integer] ID бейджа
+    #
+    def remove_badge!(user, badge_id)
+      user.gamifications.badges.where(value: badge_id).destroy_all
+    end
+
+    #
+    # Проверяет условия для всех бейджей и выдаёт подходящие.
     #
     # @param user [User] пользователь
     # @param action_key [String] ключ выполненного действия
@@ -150,25 +115,25 @@ class GamificationService
     private
 
     #
-    # Загружает конфиг геймификации из YAML
+    # Загружает конфиг наград/бейджей из YAML.
     #
     # @return [Hash]
     #
     def config
-      @config ||= YAML.safe_load_file(Rails.root.join("config/gamification.yml"))
+      @config ||= YAML.safe_load_file(Rails.root.join('config/gamification.yml'))
     end
 
     #
-    # Возвращает список бейджей из конфига
+    # Возвращает список бейджей из конфига.
     #
     # @return [Hash]
     #
     def badges_config
-      config["badges"] || {}
+      config['badges'] || {}
     end
 
     #
-    # Проверяет, подходит ли бейдж под выполненное действие
+    # Проверяет, подходит ли бейдж под выполненное действие.
     #
     # @param badge [Hash] конфиг бейджа
     # @param action_key [String] ключ действия
@@ -176,10 +141,10 @@ class GamificationService
     # @return [Boolean]
     #
     def badge_matches_action?(badge, action_key, user)
-      condition = badge["condition"]
+      condition = badge['condition']
       return false unless condition
 
-      if condition.start_with?("action == ")
+      if condition.start_with?('action == ')
         expected_action = condition.split("'")[1]
         return action_key == expected_action
       end

@@ -20,7 +20,7 @@ class Admin::DashboardReflex < ApplicationReflex
     authorize :admin_dashboard, :access?
 
     # Получаем обновленную статистику
-    @stats = UserService.stats
+    @stats = Admin::DashboardService.stats
     @recent_users = User.order(created_at: :desc).limit(10)
     @recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
 
@@ -42,7 +42,7 @@ class Admin::DashboardReflex < ApplicationReflex
     authorize :admin_dashboard, :access?
 
     # Получаем обновленную статистику
-    @stats = UserService.stats
+    @stats = Admin::DashboardService.stats
     @recent_users = User.order(created_at: :desc).limit(10)
     @recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
 

@@ -1,0 +1,17 @@
+es:
+  poi:
+    show_component:
+      tab_details: Detalles
+      tab_comments: Comentarios
+      tab_ratings: Valoraciones
+      tab_gallery: Galería
+      photo_alt: Foto del punto
+      edit: Editar
+      close: Cerrar
+      status_pending: Pendiente
+      status_approved: Aprobado
+      status_rejected: Rechazado
+      status_archived: Archivado
+      verified_count:
+        one: Verificado %{count} vez
+        other: Verificado %{count} veces
