@@ -34,6 +34,8 @@ class PoiService
       parent_id: parent_id
     )
     comment.save!
+    # Геймификация: награда TFT за комментарий (сумма из config/gamification.yml)
+    GamificationService.award!(:comment_create, user)
     comment
   rescue ActiveRecord::RecordInvalid => e
     raise CreateError, e.message
@@ -109,6 +111,9 @@ class PoiService
     poi.coordinates = parse_coordinates(params[:latitude], params[:longitude]) if params[:latitude] && params[:longitude]
     poi.status ||= :pending
     poi.save!
+
+    # Геймификация: награда TFT за создание POI (сумма из config/gamification.yml)
+    GamificationService.award!(:poi_create, current_user)
 
     # Галерея: обрабатываем и прикрепляем фото через PhotoService
     if params[:photos].present?
@@ -219,7 +224,7 @@ class PoiService
     result = pois.ransack(conditions).result
 
     if sort_column.present? && %w[name city status rating verification_count created_at updated_at].include?(sort_column)
-      direction = sort_direction == 'asc' ? :asc : :desc
+      direction = sort_direction == "asc" ? :asc : :desc
       result = result.order(sort_column => direction)
     else
       result = result.order(created_at: :desc)
@@ -257,7 +262,7 @@ class PoiService
           type: "Feature",
           geometry: {
             type: "Point",
-            coordinates: [poi.longitude, poi.latitude]
+            coordinates: [ poi.longitude, poi.latitude ]
           },
           properties: {
             id: poi.id,
@@ -299,7 +304,7 @@ class PoiService
       category: poi.poi_category&.localized_name.to_s,
       category_id: poi.poi_category_id,
       rating: poi.rating&.to_f || 0,
-      address: [poi.address, poi.city].compact.join(", "),
+      address: [ poi.address, poi.city ].compact.join(", "),
       user_id: poi.user_id,
       slug: poi.slug,
       photo: PhotoService.cover_photo_url(poi)
@@ -320,17 +325,17 @@ class PoiService
     if params[:name].present?
       poi.name = if params[:name].is_a?(String)
                    { I18n.locale.to_s => params[:name] }
-                 else
+      else
                    params[:name]
-                 end
+      end
     end
 
     if params[:description].present?
       poi.description = if params[:description].is_a?(String)
                           { I18n.locale.to_s => params[:description] }
-                        else
+      else
                           params[:description]
-                        end
+      end
     end
   end
 

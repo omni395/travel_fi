@@ -13,13 +13,14 @@
 # @param interactive [Boolean] режим редактирования: клик/перетаскивание маркера обновляет координаты
 #
 class Poi::MapComponent < ApplicationComponent
-  def initialize(categories: nil, poi: nil, interactive: false)
+  def initialize(categories: nil, poi: nil, interactive: false, compact: false)
     @categories = categories
     @poi = poi
     @interactive = interactive
+    @compact = compact
   end
 
   private
 
-  attr_reader :categories, :poi, :interactive
+  attr_reader :categories, :poi, :interactive, :compact
 end

@@ -84,6 +84,7 @@ export default class extends ApplicationController {
     this._hoveredFeatureId = null
     this._geolocationTimer = null
     this._initRetries = 0
+    this._fallbackPoisTimer = null
     this._currentUserId = parseInt(document.body.dataset.currentUserId) || null
     this._boundOnReloadFeatures = this._onReloadFeatures.bind(this)
     document.addEventListener("poi:reload-features", this._boundOnReloadFeatures)
@@ -104,6 +105,7 @@ export default class extends ApplicationController {
     document.removeEventListener("poi:reload-features", this._boundOnReloadFeatures)
     clearTimeout(this._geolocationTimer)
     clearTimeout(this._forceInitTimer)
+    clearTimeout(this._fallbackPoisTimer)
     if (this._rafPending) {
       cancelAnimationFrame(this._rafPending)
     }
@@ -234,6 +236,27 @@ export default class extends ApplicationController {
         this._map.once("postrender", () => {
           this._loadPoisInBounds()
         })
+
+        // Fallback-загрузка: если первый кадр карты не отрисовался (headful/headless
+        // Chrome с --disable-gpu/SwiftShader, WebGL), событие postrender может не
+        // сработать, и _loadPoisInBounds не вызовется → маркеры не загружаются
+        // (баг «POI не появляется на карте», ROADMAP 2.2/3.4). Ретраим с паузой,
+        // пока карта не получит размер.
+        if (!this._fallbackPoisTimer) {
+          this._fallbackPoisTimer = setTimeout(() => {
+            const attemptLoad = (attempt) => {
+              const size = this._map?.getSize()
+              if (!size || size[0] === undefined || size[1] === undefined) {
+                if (attempt < 5) {
+                  setTimeout(() => attemptLoad(attempt + 1), 500)
+                }
+                return
+              }
+              this._loadPoisInBounds()
+            }
+            attemptLoad(0)
+          }, 1000)
+        }
 
         console.log("[POI MAP] initialization complete")
       } catch (e) {

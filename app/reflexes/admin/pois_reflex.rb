@@ -17,6 +17,8 @@ class Admin::PoisReflex < ApplicationReflex
   # @param params [Hash] параметры POI
   #
   def update(params = {})
+    morph :nothing
+
     poi = Poi.find(params[:id] || element.dataset.id)
     authorize_with_pundit!(poi, :update?)
 
@@ -26,10 +28,8 @@ class Admin::PoisReflex < ApplicationReflex
       current_user: current_user
     )
 
-    component = Admin::Pois::Poi::ShowComponent.new(poi: poi)
-    html = ApplicationController.render(component, layout: false)
-    morph "#poi-detail", html
-
+    # Reflex НЕ рендерит DOM после сохранения (эталон). Обновление страницы
+    # show/списка/карты выполняет VersionObserverJob → PoiBroadcaster.
     send_success(I18n.t("reflexes.admin.pois.update_success"))
   rescue Pundit::NotAuthorizedError => e
     send_error(I18n.t("reflexes.admin.pois.update_unauthorized"))
@@ -74,6 +74,8 @@ class Admin::PoisReflex < ApplicationReflex
   # @param params [Hash] параметры { id: Integer, status: String }
   #
   def change_status(params = {})
+    morph :nothing
+
     poi = Poi.find(params[:id] || element.dataset.id)
     authorize_with_pundit!(poi, :moderate?)
 
@@ -83,10 +85,8 @@ class Admin::PoisReflex < ApplicationReflex
       current_user: current_user
     )
 
-    component = Admin::Pois::Poi::ShowComponent.new(poi: poi)
-    html = ApplicationController.render(component, layout: false)
-    morph "#poi-detail", html
-
+    # Reflex НЕ рендерит DOM после сохранения (эталон). Обновление выполняет
+    # VersionObserverJob → PoiBroadcaster (inner_html #poi-detail для админов).
     send_success(I18n.t("reflexes.admin.pois.status_changed", status: params[:status]))
   rescue Pundit::NotAuthorizedError => e
     send_error(I18n.t("reflexes.admin.pois.moderate_unauthorized"))

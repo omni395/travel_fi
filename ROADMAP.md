@@ -104,14 +104,17 @@ Travel Fi
 
 **Баги:**
 - ✅ OSM-импорт: вкладка списка обновляется по мере добавления и при закрытии — исправлено: убран `morph`-дубль карточки в `OsmImportBroadcaster`, добавлен инкрементальный `inner_html [data-poi-category-pois]` каждые 10 импортов; подтверждено `poi_category_spec` (0 failures)
-- ⚠️ После импорта POI не появляются на карте (visible scope + активность категории)
-- ⚠️ После создания POI через админку точка не появляется на карте сразу (broadcaster в UserChannel, карта не перезагружает маркеры)
+- ✅ После импорта/создания POI не появлялись на карте — исправлено: fallback-загрузка маркеров в `map_component_controller.js` (если `postrender` OpenLayers не срабатывает — ретрай `_loadPoisInBounds`); `poi:reload-features` → перезапрос с сервера; system-тест `pois_map_spec` (0 failures)
 - ⚠️ Reverse geocoding не всегда заполняет city/country/address
 - ⚠️ Валидация координат: без координат — скрыть кнопку + сообщение
 - ⚠️ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart + `PhotoService.attach_photos`
 - ⚠️ Мини-карта формы не инициализируется после `cable_ready.inner_html`
-- ⚠️ Комментарии: live только для автора; proximity-check 100м не вызывается
-- ⚠️ Карточка POI: вынести модалку в `Ui::ConfirmDialogComponent` (без рефакторинга в `Poi::ShowComponent`/`Poi::FormComponent`) - это бред. это проссто диалог подтверждения какого-либо действия.
+- ✅ Комментарии: базовый `PoiCommentBroadcaster` + ветка `PoiComment` в `VersionObserverJob` (live для ВСЕХ — хотелка 2.2); proximity-check 100м исправлен — `within_range?` возвращал строку `"t"/"f"` (антифрод всегда проходил), теперь Boolean + SRID 4326, `check_proximity!`/`PoiCommentPolicy` корректны
+- ✅ Награды TFT за создание POI/комментарий не начислялись — `GamificationService.award!(:poi_create/:comment_create)` добавлены в `PoiService` (суммы из `config/gamification.yml`)
+- ✅ Создание POI с карты падало `PolicyScopingNotPerformedError` — `skip_after_action :verify_policy_scoped` в `PoisController`
+- ✅ Сломанная fallback-страница `new` (`Poi::AddFormComponent` не существовал) — страница убрана, создание через модалку `Poi::FormComponent`, create→JSON 422, fetch-сабмит формы
+- ✅ `PoiReflex#filter_by_categories` NameError (`bounds`→`params`) — исправлено
+- ✅ `PoiBroadcaster` использовал `morph` — заменён на `inner_html`
 - ⚠️ Карточка POI: полировка UI (фокус-трап, aria, скролл-блокировка)
 
 ### 2.3 User Profile (профиль пользователя)
@@ -212,7 +215,8 @@ Travel Fi
 - 🔴 KPI по POI (pending/approved/rejected), импортам OSM, комментариям
 
 **Баги:**
-- ⚠️ Статистика `new_users_today` показывает `pending` (см. `Admin::DashboardService.stats` — расхождение полей: нужны зарегистрированные сегодня, а не pending)
+- ✅ `new_users_today` — исправлено: `Admin::DashboardService.stats` возвращает `total_users/active_users/suspended_users/new_users_today` (совпадает с `DashboardComponent`); `new_users_today` = зарегистрированные сегодня (не pending); `dashboard_service_spec` обновлён
+- admin_channel.js:30 [AdminChannel] skip morph (selector not found): [data-admin-stats-total-users], при этом селектор вызывается когда я нахожусь на другой странице.
 
 ### 3.2 Users (пользователи)
 
@@ -236,6 +240,9 @@ Travel Fi
 
 **Баги:**
 - ✅ Управление ролями синхронизировано: форма шлёт `role_id` (одна роль), `Admin::UsersController#user_params` permit `role_id` ↔ `Admin::UserService#update_user_roles!`
+- тосты не отображаются при изменении юзера. 
+- потерялся аватар пользователя (логин через гугл оауз)
+
 
 ### 3.3 PoiCategories + поля + OSM-импорт
 
@@ -262,7 +269,9 @@ Travel Fi
 - 🔴 Импорт OSM в фоне через SolidQueue (сейчас синхронно в Reflex)
 
 **Баги:**
-- ⚠️ —
+- ⚠️
+ - отвалилась вкладка аудит лог. не находится селектор:
+      admin_channel.js:30 [AdminChannel] skip morph (selector not found): [data-audit-log]
 
 ### 3.4 Pois (точки интереса)
 
@@ -285,8 +294,9 @@ Travel Fi
 - 🔴 Массовая модерация
 
 **Баги:**
-- ⚠️ `Admin::PoisReflex#update` использует `morph "#poi-detail"` (нарушение «Reflex не рендерит DOM после сохранения» — перевести на Broadcaster)
-- ⚠️ После создания POI через админку точка не появляется на карте сразу
+- ✅ `Admin::PoisReflex#update`/`change_status` — переведены на `morph :nothing` + тост (эталон); зона `#poi-detail` рендерится `PoiBroadcaster` (AdminChannel, live у ВСЕХ админов, не только инициатора)
+- ✅ Бейджи `first_poi`/`contributor` не работали (`User` без `has_many :pois`) — исправлено в `User`
+- ✅ После создания POI через админку точка появляется на карте — `PoiBroadcaster` шлёт `poi:reload-features` + fallback-загрузка маркеров карты
 - ⚠️ Галерея: просмотр `Poi#photos` (сетка + lightbox) не реализован
 
 ### 3.5 Settings (настройки уведомлений админа)
@@ -442,21 +452,38 @@ DOM обновляется точечно у всех подписанных б�
 - ✅ ActionCable в тестах — `solid_cable` (live между браузерами), тестовая cable-БД `travel_fi_test_cable`
 - ✅ Хелперы [`spec/support/system_helpers.rb`](spec/support/system_helpers.rb:1): `browser_a`/`browser_b`, `sign_in_via_ui`, `wait_for_selector`, `perform_enqueued_jobs_now`
 
-### Сквозные system-тесты (созданы)
-- ✅ **`User`** (эталон, [`user_lifecycle_spec.rb`](spec/system/user_lifecycle_spec.rb:1)) — **ПРОШЁЛ (0 failures)**: регистрация → подтверждение → кошелёк → welcome-токены → админ live (статус/имя) → профиль (кошелёк/баланс) → мягкое удаление (deleted скрыт в All, виден через фильтр) → аудит → уведомления
-- ✅ **`Admin::PoiCategory`** (эталон, `poi_category_spec.rb`) — **ПРОШЁЛ (0 failures)**
-- ✅ `Admin::User` — ПРОШЁЛ (смена статуса)
-- ✅ `Auth` — ПРОШЁЛ (регистрация → видимость у админа Б)
-- ✅ `Gamification` — ПРОШЁЛ (токены → баланс в профиле)
-- ✅ `User::Settings` — ПРОШЁЛ
-- 🟡 `Admin::Poi` — каркас, требует доработки селекторов админ-таблицы
-- 🔴 `POI Map` — требует настройки live-карты в тестах (не относится к сущности User)
+### Сквозные system-тесты (созданы) — структура по секциям/сущностям
+```
+spec/system/
+├── user/                       # 👤 USER SECTION (2.x)
+│   ├── poi_map_spec.rb         # 2.2 POI Map (Poi) ✅
+│   ├── user_lifecycle_spec.rb  # 2.3/2.5/3.2 User (эталон) ✅
+│   ├── user_auth_spec.rb       # 2.5 Auth ✅
+│   └── user_settings_spec.rb   # 2.4 User Settings ✅
+├── admin/                      # 🛠 ADMIN SECTION (3.x)
+│   ├── users_spec.rb           # 3.2 Admin Users ✅
+│   ├── poi_category_spec.rb    # 3.3 PoiCategories ✅
+│   └── pois_spec.rb            # 3.4 Admin Pois ✅
+└── layer/                      # горизонтальные слои (4.x)
+    └── gamification_spec.rb    # 4.2 Gamification ✅
+```
+- ✅ **`User`** (эталон, [`user_lifecycle_spec.rb`](spec/system/user/user_lifecycle_spec.rb:1)) — **ПРОШЁЛ (0 failures)**: регистрация → подтверждение → кошелёк → welcome-токены → админ live (статус/имя) → профиль (кошелёк/баланс) → мягкое удаление (deleted скрыт в All, виден через фильтр) → аудит → уведомления
+- ✅ **`Admin::PoiCategory`** (эталон, [`poi_category_spec.rb`](spec/system/admin/poi_category_spec.rb:1)) — **ПРОШЁЛ (0 failures)**
+- ✅ `Admin::User` ([`users_spec.rb`](spec/system/admin/users_spec.rb:1)) — смена статуса (браузер А → Б)
+- ✅ `Auth` ([`user_auth_spec.rb`](spec/system/user/user_auth_spec.rb:1)) — регистрация → видимость у админа Б
+- ✅ `Gamification` ([`gamification_spec.rb`](spec/system/layer/gamification_spec.rb:1)) — токены → баланс в профиле
+- ✅ `User::Settings` ([`user_settings_spec.rb`](spec/system/user/user_settings_spec.rb:1))
+- ✅ `Admin::Poi` ([`pois_spec.rb`](spec/system/admin/pois_spec.rb:1)) — создание POI → виден в списке админки
+- ✅ `POI Map` ([`poi_map_spec.rb`](spec/system/user/poi_map_spec.rb:1)) — live-карта настроена (Selenium headful/headless + CDP-геолокация)
 
 ### Журнал последних прогонов
+- ✅ **Полный suite** (06.08.2026) — **173 examples, 0 failures, 3 pending** (заглушки `PoiRating`×2 + `PoiComment` live). Тест-инфраструктура: переход с Cuprite на **Selenium Chrome** — headful-окно/вкладка локально (визуально наблюдать процесс) + headless (`--headless=new`) в CI (`CUPRITE_HEADLESS=true`/`ENV['CI']`); precompiled-ассеты для system-тестов (`RAILS_ENV=test bin/rails assets:precompile`); `wait_for_selector` → `has_css?(visible: false)` (скрытый `#poi-map-features`); `spec/requests` deprecation `:unprocessable_entity`→`:unprocessable_content`; rspec добавлен в `config/ci.rb`. Закрыты баги: (1) `Admin::PoisReflex#update` `morph "#poi-detail"` → Broadcaster (зона `#poi-detail` в `PoiBroadcaster`); (2) `Admin::DashboardService.stats` ключи `total_users/.../new_users_today`; (3) `Admin::DashboardBroadcaster` `morph`→`inner_html`; (4) POI не на карте — fallback-загрузка `map_component_controller.js`; (5) per-entry rescue аудит-зон (`PoiBroadcaster`/`Admin::UserBroadcaster`).
+- ✅ **POI полное покрытие** (06.08.2026) — **unit+reflex+controller+broadcaster: 81 examples, 0 failures, 2 pending** (заглушки `PoiRating`/live-комментарии). Слои: `PoiService`/`Poi`/`PoiComment`/`PoiPolicy`/`PoiCommentPolicy`/`GamificationService`/`PoiBroadcaster`/`ToastBroadcaster`/`PoiReflex`/`Admin::PoisReflex`/`VersionObserverJob`/`PoisController`. **Полный suite: 153 examples, 1 failure** (🟡 `POI Map` — недонастроенная live-карта), **3 pending**. Выявлены и устранены баги: (1) SRID 4326 для geography-кастов + миграции `spatial_ref_sys`/`pois.description→jsonb`; (2) JSONB-поиск `search_pois`; (3) scope `nearby`; (4) `PoiPolicy::Scope` для гостя; (5) **награды TFT не начислялись** — `GamificationService.award!(:poi_create/:comment_create)` добавлены в `PoiService` (суммы из `config/gamification.yml`); (6) **бейджи first_poi/contributor не работали** — `User#pois` (has_many); (7) **live-комментарии отсутствовали** — `PoiCommentBroadcaster` + ветка `PoiComment` в `VersionObserverJob`; (8) `filter_by_categories` NameError (`bounds`→`params`); (9) **`PoiBroadcaster` использовал `morph`** — заменён на `inner_html`; (10) **`Poi::AddFormComponent` не существовал** — страница `new` убрана (модалка `Poi::FormComponent` остаётся основным UX), create→JSON 422, fetch-сабмит формы; (11) `PoisController` падал `PolicyScopingNotPerformedError` — `skip_after_action :verify_policy_scoped`.
+- ✅ **Сущности User + PoiCategory** (05.08.2026) — **16 examples, 0 failures**: unit (`UserService`/`Admin::DashboardService`/`OsmImportService`/`UserInactivityJob`) + system (`user_lifecycle`/`poi_category`/`admin_users`/`auth`/`gamification`/`settings`)
 - ✅ **Сущности User + PoiCategory** (05.08.2026) — **16 examples, 0 failures**: unit (`UserService`/`Admin::DashboardService`/`OsmImportService`/`UserInactivityJob`) + system (`user_lifecycle`/`poi_category`/`admin_users`/`auth`/`gamification`/`settings`)
 - ✅ `poi_category_spec` (05.08.2026) — **1 example, 0 failures** (28.7 c) — после фикса OSM (убран `morph`-дубль карточки, инкрементальный `inner_html [data-poi-category-pois]`); закрывает баг 2.2 «вкладка POIs при OSM-импорте»
 - ✅ `auth_spec` + `user_lifecycle_spec` (05.08.2026) — **2 examples, 0 failures** (46.5 c) — повторное подтверждение `User`/`Auth`; закрывает баг 2.5 «смена статусов / подтверждение email»
-- ⚠️ Полный `bundle exec rspec` (05.08.2026) — ранее 1 падение (F), причина устранена фиксом OSM; полный набор не перепрогонялся
+- ✅ Полный `bundle exec rspec` (06.08.2026) — **173 examples, 0 failures, 3 pending** (см. первую запись журнала)
 - ✅ Deprecation Noticed 3.x сняты миграцией (`Noticed::Event`, `required_param`, без `deliver_by :database`) — см. 4.5
 
 ### Недоделано → чинить, затем тест

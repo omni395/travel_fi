@@ -12,16 +12,22 @@
 #
 class Admin::DashboardService
   #
-  # Возвращает статистику по пользователям для дашборда
+  # Возвращает статистику по пользователям для дашборда.
   #
-  # @return [Hash] { total:, active:, pending:, restricted: }
+  # Ключи результата совпадают с типами карточек DashboardComponent
+  # (total_users/active_users/suspended_users/new_users_today) — раньше было
+  # расхождение (total/active/pending/restricted), из-за чего карточки дашборда
+  # рендерились с пустыми label, а new_users_today показывал pending.
+  #
+  # @return [Hash] { total_users:, active_users:, suspended_users:, new_users_today: }
   #
   def self.stats
     {
-      total: User.count,
-      active: User.active.count,
-      pending: User.pending.count,
-      restricted: User.suspended.count + User.banned.count
+      total_users: User.count,
+      active_users: User.active.count,
+      suspended_users: User.suspended.count + User.banned.count,
+      # Зарегистрированные сегодня (не pending — см. ROADMAP 3.1)
+      new_users_today: User.where(created_at: Time.current.all_day).count
     }
   end
 end

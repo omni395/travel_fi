@@ -397,4 +397,34 @@ RSpec.describe PoiService, type: :service do
       expect(poi.reload.rating).to eq(3.0)
     end
   end
+
+  describe 'геймификация (награды TFT из config/gamification.yml)' do
+    let(:rewards) { YAML.safe_load_file(Rails.root.join('config/gamification.yml'))['rewards'] }
+
+    describe '.create' do
+      it 'вызывает GamificationService.award!(:poi_create) для автора' do
+        expect(GamificationService).to receive(:award!).with(:poi_create, user)
+
+        described_class.create(params: valid_params, current_user: user)
+      end
+
+      it 'начисляет author-юзеру сумму poi_create из конфига' do
+        amount = rewards['poi_create'].to_d
+
+        described_class.create(params: valid_params, current_user: user)
+
+        expect(user.reload.token_balance).to eq(amount)
+      end
+    end
+
+    describe '.create_comment' do
+      it 'вызывает GamificationService.award!(:comment_create) для автора комментария' do
+        poi = create(:poi)
+
+        expect(GamificationService).to receive(:award!).with(:comment_create, user)
+
+        described_class.create_comment(poi: poi, user: user, body: 'Nice place')
+      end
+    end
+  end
 end

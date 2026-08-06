@@ -489,4 +489,84 @@ export default class extends ApplicationController {
     const wrapper = btn.closest(".group")
     if (wrapper) wrapper.classList.add("hidden")
   }
+
+  /**
+   * Отправка формы через fetch (create/edit) — без полной перезагрузки.
+   * При 302 (успех) переходим по итоговому URL; при 422 — показываем ошибку
+   * в блоке формы модалки (не закрывая её).
+   *
+   * @param {Event} event - событие submit
+   */
+  handleSubmit(event) {
+    event.preventDefault()
+    const form = event.target
+    const body = new FormData(form)
+
+    this._clearFormError()
+
+    fetch(form.action, {
+      method: form.method,
+      body: body,
+      headers: { 'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.content || '' },
+      credentials: 'same-origin'
+    })
+      .then((response) => {
+        if (response.redirected) {
+          window.location.href = response.url
+          return null
+        }
+        return response.json().catch(() => ({ error: 'Request failed' }))
+      })
+      .then((data) => {
+        if (data && data.error) {
+          this._showFormError(data.error)
+        }
+      })
+      .catch((e) => {
+        console.error('[POI FORM] submit error:', e)
+        this._showFormError('Network error')
+      })
+  }
+
+  /**
+   * Показывает ошибку валидации как тост (структура Ui::ToastComponent)
+   * в контейнере #notifications. Тост авто-скрывается через
+   * ui--toast-component (auto-dismiss).
+   *
+   * @param {string} message - текст ошибки
+   */
+  _showFormError(message) {
+    const container = document.getElementById("notifications")
+    if (!container) return
+
+    const toast = document.createElement("div")
+    toast.setAttribute("role", "alert")
+    toast.setAttribute("data-controller", "ui--toast-component")
+    toast.setAttribute("data-ui--toast-component-auto-dismiss-timeout-value", "6000")
+    toast.className = "mb-4 p-4 rounded-lg shadow-lg bg-red-600 text-white flex items-center justify-between pointer-events-auto"
+
+    const text = document.createElement("span")
+    text.textContent = message
+    toast.appendChild(text)
+
+    const dismissBtn = document.createElement("button")
+    dismissBtn.setAttribute("type", "button")
+    dismissBtn.setAttribute("data-action", "click->ui--toast-component#dismiss")
+    dismissBtn.className = "ml-4 text-white hover:text-gray-200"
+    const closeIcon = document.createElement("span")
+    closeIcon.className = "mdi mdi-close"
+    dismissBtn.appendChild(closeIcon)
+    toast.appendChild(dismissBtn)
+
+    container.appendChild(toast)
+  }
+
+  /**
+   * Скрывает блок ошибки формы.
+   * Тосты авто-скрываются контроллером ui--toast-component — отдельная
+   * очистка не требуется (метод оставлен для обратной совместимости).
+   */
+  _clearFormError() {
+    // no-op: тосты управляют собственным жизненным циклом
+  }
 }

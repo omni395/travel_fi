@@ -15,7 +15,9 @@ RSpec.describe 'Gamification (начисления токенов → профи
     browser_a do
       sign_in_via_ui(user)
       visit user_path(id: user)
-      wait_for_selector("[data-user-profile-id='#{user.id}']")
+      # Таймаут увеличен для Selenium headful (последовательные system-тесты
+      # загружаются медленнее Cuprite — флаки «элемент не появился»).
+      wait_for_selector("[data-user-profile-id='#{user.id}']", timeout: 30)
       expect(page).to have_content(user.reload.token_balance.to_s)
     end
 

@@ -50,14 +50,19 @@ module SystemHelpers
   # Ожидание появления CSS-селектора (polling) — для live-обновлений через
   # WebSocket. Бросает ошибку, если элемент не появился за timeout секунд.
   #
+  # ВАЖНО: visible: false — Capybara по умолчанию (ignore_hidden_elements = true)
+  # игнорирует СКРЫТЫЕ элементы. Скрытый контейнер #poi-map-features
+  # (class="hidden", map_component.html.erb:44 — данные маркеров карты) обычные
+  # селекторы не находят, хотя элемент есть в DOM и маркер на карте отрисован.
+  #
   # @param selector [String] CSS-селектор
   # @param timeout [Integer] максимальное время ожидания (секунды)
   # @return [Boolean]
   #
-  def wait_for_selector(selector, timeout: 10)
+  def wait_for_selector(selector, timeout: 20)
     Timeout.timeout(timeout) do
       loop do
-        return true if page.has_selector?(selector)
+        return true if page.has_css?(selector, visible: false)
         sleep 0.2
       end
     end

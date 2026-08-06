@@ -261,7 +261,7 @@ class PoiReflex < ApplicationReflex
     list_html = ApplicationController.render(
       Poi::ListItemComponent.with_collection(pois_list), layout: false
     )
-    more_html = render_load_more(total, PER_PAGE, bounds)
+    more_html = render_load_more(total, PER_PAGE, params)
     cable_ready.inner_html(
       selector: "#poi-list",
       html: list_html + more_html.html_safe

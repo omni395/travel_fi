@@ -97,7 +97,15 @@ class Admin::PoiCategoriesController < Admin::BaseController
   # @return [ActionController::Parameters]
   #
   def category_params
-    params.require(:poi_category).permit(:name, :slug, :icon, :description, :position, :active)
+    # Мультиязычные поля (name/description/osm_default_name) — вложенные Hash
+    # (JSONB). .to_h рекурсивно приводит вложенные Parameters к Hash, иначе
+    # PoiCategoryService.create падает с ActionController::UnfilteredParameters.
+    params.require(:poi_category).permit(
+      :slug, :icon, :position, :active, :osm_tags,
+      name: I18n.available_locales.map(&:to_s),
+      description: I18n.available_locales.map(&:to_s),
+      osm_default_name: I18n.available_locales.map(&:to_s)
+    ).to_h
   end
 
   #

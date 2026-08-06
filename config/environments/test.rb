@@ -20,6 +20,12 @@ Rails.application.configure do
 
   # Show full error reports.
   config.consider_all_requests_local = true
+
+  # Selenium system-тесты (видимое окно Chrome): Propshaft отдаёт ассеты.
+  # Для headful-прогона нужны precompiled-ассеты (RAILS_ENV=test bin/rails
+  # assets:precompile) — иначе Chrome получает страницу БЕЗ JS/CSS, карта
+  # и скрипты не работают (симптом «окно открывается, но пусто»).
+  config.assets.compile = true
   # Кэш в памяти: StimulusReflex требует кэширование (Sanity Check) для работы
   # Reflex в тестах (null_store не позволяет модифицировать сессию в ActionCable).
   config.cache_store = :memory_store

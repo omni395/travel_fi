@@ -210,11 +210,11 @@ class Poi < ApplicationRecord
 
     max_len = if name.is_a?(Hash)
                 name.values.select { |v| v.is_a?(String) }.map(&:length).max || 0
-              elsif name.is_a?(String)
+    elsif name.is_a?(String)
                 name.length
-              else
+    else
                 return
-              end
+    end
 
     errors.add(:name, :too_short, count: 2) if max_len < 2
     errors.add(:name, :too_long, count: 200) if max_len > 200

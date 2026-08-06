@@ -45,6 +45,20 @@ RSpec.describe VersionObserverJob, type: :job do
     end
   end
 
+  describe 'PoiComment-ветка (#handle_poi_comment_update — live-комментарии)' do
+    it 'вызывает PoiCommentBroadcaster при создании комментария' do
+      # Спецификация: комментарии должны доставляться live всем подписанным.
+      # Сейчас ветки handle_poi_comment_update в job НЕТ — тест падает (A-баг,
+      # ROADMAP 2.2 «live-комментарии для всех»).
+      comment = create(:poi_comment)
+      version = comment.versions.last
+
+      expect(PoiCommentBroadcaster).to receive(:call).with(comment: comment)
+
+      described_class.perform_now(version.id)
+    end
+  end
+
   describe 'игнорирование audit-only событий' do
     it 'пропускает версии из AUDIT_ONLY_EVENTS' do
       user = create(:user)
