@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_22_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_06_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
@@ -114,13 +114,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_22_000001) do
     t.index ["position"], name: "index_poi_category_fields_on_position"
   end
 
+  create_table "poi_comments", force: :cascade do |t|
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.bigint "parent_id"
+    t.bigint "poi_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["created_at"], name: "index_poi_comments_on_created_at"
+    t.index ["parent_id"], name: "index_poi_comments_on_parent_id"
+    t.index ["poi_id", "created_at"], name: "idx_poi_comments_on_poi_and_created"
+    t.index ["poi_id"], name: "index_poi_comments_on_poi_id"
+    t.index ["user_id"], name: "index_poi_comments_on_user_id"
+  end
+
   create_table "pois", force: :cascade do |t|
     t.string "address"
     t.string "city"
     t.geography "coordinates", limit: {srid: 4326, type: "st_point", geographic: true}, null: false
     t.string "country"
     t.datetime "created_at", null: false
-    t.text "description"
+    t.jsonb "description", default: {}, null: false
     t.datetime "last_verified_at"
     t.jsonb "metadata", default: {}, null: false
     t.jsonb "name", default: {}, null: false
@@ -177,6 +191,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_22_000001) do
     t.boolean "new_registration_email_enabled", default: false
     t.boolean "new_registration_notifications_enabled", default: true
     t.boolean "new_registration_push_enabled", default: false
+    t.boolean "osm_import_email_enabled", default: false
+    t.boolean "osm_import_notifications_enabled", default: true
+    t.boolean "osm_import_push_enabled", default: false
     t.boolean "pending_verification_email_enabled", default: false
     t.boolean "pending_verification_notifications_enabled", default: true
     t.boolean "pending_verification_push_enabled", default: false
@@ -197,6 +214,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_22_000001) do
     t.index ["user_id"], name: "index_settings_on_user_id", unique: true
   end
 
+  create_table "user_rewards", force: :cascade do |t|
+    t.string "action_key", null: false
+    t.decimal "amount", precision: 30, scale: 18, null: false
+    t.datetime "created_at", null: false
+    t.text "log"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "wallet_id"
+    t.index ["action_key"], name: "index_user_rewards_on_action_key"
+    t.index ["user_id"], name: "index_user_rewards_on_user_id"
+    t.index ["wallet_id"], name: "index_user_rewards_on_wallet_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "confirmation_sent_at"
     t.string "confirmation_token"
@@ -213,7 +243,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_22_000001) do
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
     t.string "slug"
-    t.string "status", default: "registered"
+    t.string "status", default: "pending"
     t.string "uid"
     t.string "unconfirmed_email"
     t.string "unlock_token"
@@ -254,11 +284,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_22_000001) do
     t.index ["whodunnit"], name: "index_versions_on_whodunnit"
   end
 
+  create_table "wallets", force: :cascade do |t|
+    t.string "address", null: false
+    t.string "chain_id", null: false
+    t.datetime "created_at", null: false
+    t.text "encrypted_private_key"
+    t.string "kind", default: "custodial", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["address"], name: "index_wallets_on_address", unique: true
+    t.index ["user_id"], name: "index_wallets_on_user_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "gamifications", "users"
   add_foreign_key "poi_category_fields", "poi_categories"
+  add_foreign_key "poi_comments", "poi_comments", column: "parent_id", on_delete: :cascade
+  add_foreign_key "poi_comments", "pois", on_delete: :cascade
+  add_foreign_key "poi_comments", "users", on_delete: :cascade
   add_foreign_key "pois", "poi_categories"
   add_foreign_key "pois", "users"
   add_foreign_key "settings", "users", on_delete: :cascade
+  add_foreign_key "user_rewards", "users"
+  add_foreign_key "user_rewards", "wallets"
+  add_foreign_key "wallets", "users"
 end

@@ -9,7 +9,7 @@
 #   <%= render Ui::FiltersComponent.new(
 #         search_query: @search_query,
 #         status_filter: @status_filter,
-#         statuses: %w[registered pending_verification active suspended banned deleted],
+#         statuses: %w[pending active inactive suspended banned deleted],
 #         status_model: :user,
 #         search_controller: "admin--users--table-component",
 #         search_action: "input->admin--users--table-component#filter",
@@ -38,7 +38,7 @@ class Ui::FiltersComponent < ApplicationComponent
   def initialize(
     search_query: nil,
     status_filter: nil,
-    statuses: %w[registered pending_verification active suspended banned deleted],
+    statuses: %w[pending active inactive suspended banned deleted],
     status_model: :user,
     search_controller: "admin--users--table-component",
     search_action: "input->admin--users--table-component#filter",

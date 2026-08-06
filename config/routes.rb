@@ -50,8 +50,8 @@ Rails.application.routes.draw do
       resources :pois, only: [:index, :show, :new, :create, :update]
     end
 
-    # User-facing POI routes - карта и список POI
-    resources :pois, only: [:index, :show, :new, :create]
+    # User-facing POI routes - карта, список и редактирование (PATCH /pois/:id из модалки)
+    resources :pois, only: [:index, :show, :new, :create, :update]
 
     # User profile routes - FriendlyId slug или числовой id
     # ВАЖНО: эти маршруты должны быть ПОСЛЕ devise_for и admin namespace,

@@ -10,7 +10,7 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
   /**
    * Показывает детали POI при клике на элемент списка
-   * Диспатчит событие, которое ловит Poi::DetailComponent
+   * Диспатчит событие, которое ловит Poi::ShowComponent (оверлей)
    */
   showDetail() {
     const poiId = parseInt(this.element.dataset.poiId)

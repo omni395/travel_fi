@@ -46,15 +46,23 @@ application.register('admin--users--user--show-component', () => import('../../c
 
 application.register('admin--users--user--wallet-component', () => import('../../components/admin/users/user/wallet_component/wallet_component_controller.js'))
 
-application.register('poi--detail-component', () => import('../../components/poi/detail_component/detail_component_controller.js'))
+application.register('poi--comments-component', () => import('../../components/poi/comments_component/comments_component_controller.js'))
+
+application.register('poi--details-component', () => import('../../components/poi/details_component/details_component_controller.js'))
 
 application.register('poi--filters-component', () => import('../../components/poi/filters_component/filters_component_controller.js'))
 
 application.register('poi--form-component', () => import('../../components/poi/form_component/form_component_controller.js'))
 
+application.register('poi--gallery-component', () => import('../../components/poi/gallery_component/gallery_component_controller.js'))
+
 application.register('poi--list-item-component', () => import('../../components/poi/list_item_component/list_item_component_controller.js'))
 
 application.register('poi--map-component', () => import('../../components/poi/map_component/map_component_controller.js'))
+
+application.register('poi--ratings-component', () => import('../../components/poi/ratings_component/ratings_component_controller.js'))
+
+application.register('poi--show-component', () => import('../../components/poi/show_component/show_component_controller.js'))
 
 application.register('settings--field-component', () => import('../../components/settings/field_component/field_component_controller.js'))
 
@@ -73,6 +81,8 @@ application.register('ui--card-component', () => import('../../components/ui/car
 application.register('ui--clipboard-component', () => import('../../components/ui/clipboard_component/clipboard_component_controller.js'))
 
 application.register('ui--confirm-dialog-component', () => import('../../components/ui/confirm_dialog_component/confirm_dialog_component_controller.js'))
+
+application.register('ui--date-component', () => import('../../components/ui/date_component/date_component_controller.js'))
 
 application.register('ui--dropdown-component', () => import('../../components/ui/dropdown_component/dropdown_component_controller.js'))
 

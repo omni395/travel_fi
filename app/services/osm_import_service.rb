@@ -67,6 +67,30 @@ class OsmImportService
     end
   end
 
+  #
+  # Полный импорт: fetch + первичный прогресс (найдено/уже в БД) + обработка.
+  # Единая точка входа для Reflex — бизнес-логика в Service, а не в Reflex.
+  #
+  # @param category [PoiCategory] категория с osm_tags
+  # @param location [Hash] { city:, country:, bbox: [s, w, n, e] }
+  # @param user [User] инициатор импорта
+  # @yield [processed, total, already_in_db] колбэк прогресса
+  #   (первый вызов: processed=0, already_in_db=N; далее already_in_db=nil)
+  # @return [Hash] статистика { created:, skipped_duplicate:, skipped_modified:, errors: }
+  #
+  def self.import(category:, location:, user:)
+    elements = fetch_elements(category: category, location: location, user: user)
+    total = elements.size
+    fetched_osm_ids = elements.map { |e| e["id"] }.compact
+    already_in_db = Poi.where(osm_id: fetched_osm_ids, poi_category_id: category.id).count
+
+    yield(0, total, already_in_db) if block_given?
+
+    process_elements(elements: elements, category: category, location: location, user: user) do |processed|
+      yield(processed, total, nil) if block_given?
+    end
+  end
+
   attr_reader :category, :location, :user
 
   def initialize(category, location, user)

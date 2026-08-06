@@ -1,0 +1,17 @@
+zh:
+  poi:
+    details_component:
+      description: 描述
+      wheelchair_accessible: 轮椅可通行
+      opening_hours: 营业时间
+      characteristics: 特点
+      location: 位置
+      source_osm: 从 OpenStreetMap 导入
+      source_manual: 手动添加
+      copy_coords: 复制
+      open_in_maps: 在地图中打开
+      directions: 路线
+      added_by: 由 %{name} 添加
+      unknown: 未知
+      true: "是"
+      false: "否"

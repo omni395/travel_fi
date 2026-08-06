@@ -31,7 +31,7 @@ import Overlay from "ol/Overlay"
  *   В data-атрибуты POI записывается user_id владельца (data-poi-user-id).
  *   Это НЕ используется для блокировки просмотра/навигации — тултип и детали
  *   доступны ВСЕГДА для любой точки.
- *   poiUserId применяется в Poi::DetailComponent для блокировки действий:
+ *   poiUserId применяется в Poi::ShowComponent для блокировки действий:
  *   редактирование, лайки, комментарии — если расстояние от пользователя
  *   до точки > 100м, И точка НЕ принадлежит пользователю. Это антифрод:
  *   нельзя написать "я был там" про точку в Китае из Америки.
@@ -132,12 +132,15 @@ export default class extends ApplicationController {
   }
 
   /**
-   * Обработчик события poi:reload-features от Poi::FiltersComponent
-   * Перезагружает маркеры после apply_filters / reset_filters
+   * Обработчик события poi:reload-features (шлёт PoiBroadcaster и OsmImportBroadcaster
+   * после создания/обновления/импорта POI).
+   * ВАЖНО: вызываем _loadPoisInBounds() (перезапрос с сервера), а не _loadPois() —
+   * скрытый контейнер #poi-map-features ещё не содержит новых POI, поэтому
+   * перечитывание DOM не покажет свежие маркеры/список.
    */
   _onReloadFeatures() {
-    console.log('[POI MAP] _onReloadFeatures: reloading POI features')
-    this._loadPois()
+    console.log('[POI MAP] _onReloadFeatures: reloading POIs in bounds from server')
+    this._loadPoisInBounds()
   }
 
   // ============================================================
@@ -398,7 +401,12 @@ export default class extends ApplicationController {
       zoomControls.appendChild(gpsBtn)
     }
 
-    this._resizeObserver = new ResizeObserver(() => { this._map?.updateSize() })
+    // При изменении размера (скрытие/показ сайдбара, ресайз окна) — обновляем размер
+    // и пересчитываем POI в уменьшенных bounds (90% видимой части)
+    this._resizeObserver = new ResizeObserver(() => {
+      this._map?.updateSize()
+      this._loadPoisInBounds()
+    })
     this._resizeObserver.observe(el)
   }
 
@@ -463,9 +471,50 @@ export default class extends ApplicationController {
     if (addressEl) { addressEl.textContent = poiAddress; addressEl.classList.toggle("hidden", !poiAddress) }
 
     const geometry = sourceFeature.getGeometry()
-    if (geometry) this._tooltipOverlay.setPosition(geometry.getCoordinates())
-    el.classList.remove("hidden")
+    if (geometry) this._positionTooltip(el, geometry.getCoordinates())
     this._map.getTargetElement().style.cursor = "pointer"
+  }
+
+  /**
+   * Позиционирует тултип над точкой, не давая ему выйти за пределы карты/экрана.
+   * Если карточка не влезает вверх — открывается вниз (top-center);
+   * по горизонтали — прижимается к границам с отступом PADDING.
+   *
+   * @param {HTMLElement} el - элемент тултипа (#ui-tooltip)
+   * @param {Array<number>} coords - координаты точки (EPSG:3857)
+   */
+  _positionTooltip(el, coords) {
+    const PADDING = 12
+    const mapEl = this._map.getTargetElement()
+    const mapW = mapEl.clientWidth
+
+    // Показываем для измерения реальных размеров (visibility:hidden — без мигания)
+    el.classList.remove("hidden")
+    el.style.visibility = "hidden"
+    const tw = el.offsetWidth || 300
+    const th = el.offsetHeight || 120
+    el.style.visibility = ""
+
+    const px = this._map.getPixelFromCoordinate(coords)
+    if (!px) return
+
+    // Вертикаль: по умолчанию вверх (bottom-center); если не влезает — вниз (top-center)
+    let positioning = "bottom-center"
+    let dy = -15
+    if (px[1] - th - 15 < PADDING) {
+      positioning = "top-center"
+      dy = 15
+    }
+
+    // Горизонталь: кламп центрированного тултипа к границам карты
+    const left = px[0] - tw / 2
+    let dx = 0
+    if (left < PADDING) dx = PADDING - left
+    else if (left + tw > mapW - PADDING) dx = (mapW - PADDING) - (left + tw)
+
+    this._tooltipOverlay.setPositioning(positioning)
+    this._tooltipOverlay.setOffset([dx, dy])
+    this._tooltipOverlay.setPosition(coords)
   }
 
   _handleMapClick(e) {
@@ -489,12 +538,11 @@ export default class extends ApplicationController {
   }
 
   _closeDetailModal() {
-    const modalOverlay = document.querySelector("[data-poi--detail-component-target='overlay']")
+    const modalOverlay = document.querySelector("[data-poi--show-component-target='overlay']")
     if (!modalOverlay || modalOverlay.classList.contains("hidden")) return
-    const detailContent = document.getElementById("poi-detail-modal-content")
-    const formContent = document.getElementById("poi-form-content")
-    if (detailContent) detailContent.classList.add("hidden")
-    if (formContent) formContent.classList.remove("hidden")
+    // Делегируем закрытие контроллеру диалога (poi--show-component), который
+    // корректно скрывает оверлей. Fallback — скрыть напрямую.
+    document.dispatchEvent(new CustomEvent("poi:close-detail"))
     modalOverlay.classList.add("hidden")
   }
 
@@ -539,8 +587,15 @@ export default class extends ApplicationController {
       return
     }
     const extent = this._map.getView().calculateExtent(size)
-    const sw = toLonLat([extent[0], extent[1]])
-    const ne = toLonLat([extent[2], extent[3]])
+    // Баунды запроса — 90% видимой части (сжатие к центру), чтобы не грузить
+    // крайние точки у сайдбара/навбара и за пределами видимой области экрана
+    const cx = (extent[0] + extent[2]) / 2
+    const cy = (extent[1] + extent[3]) / 2
+    const w = (extent[2] - extent[0]) * 0.9
+    const h = (extent[3] - extent[1]) * 0.9
+    const shrunk = [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2]
+    const sw = toLonLat([shrunk[0], shrunk[1]])
+    const ne = toLonLat([shrunk[2], shrunk[3]])
     console.log(`[POI MAP] bounds: SW(${sw[1].toFixed(4)},${sw[0].toFixed(4)}) NE(${ne[1].toFixed(4)},${ne[0].toFixed(4)})`)
 
     // Читаем текущее состояние фильтров из DOM (не из session)
@@ -586,14 +641,12 @@ export default class extends ApplicationController {
 
     const center = fromLonLat([lng, lat])
 
-    // Булавка пользователя (HTML overlay с mdi-pin, primary blue #0288D1)
-    const pinEl = document.createElement("div")
-    pinEl.className = "flex items-center justify-center"
-    pinEl.innerHTML = '<span class="mdi mdi-pin text-[#0288D1] text-3xl leading-none"></span>'
-    // mdi: pin
+    // Маркер пользователя — простая точка (кружок sky-600 с белой обводкой)
+    const dotEl = document.createElement("div")
+    dotEl.className = "w-3 h-3 rounded-full bg-sky-600 border-2 border-white shadow"
     this._userPinOverlay = new Overlay({
-      element: pinEl,
-      positioning: "bottom-center",
+      element: dotEl,
+      positioning: "center-center",
       offset: [0, 0],
       stopEvent: false
     })

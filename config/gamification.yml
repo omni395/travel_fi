@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
-# Gamification Configuration
-# Единый конфиг для начислений баллов и бейджей.
-# Ключи:
-#   rewards  — action_key → количество баллов
-#   badges   — badge_id → { key, name, icon, condition }
+# Конфигурация наград и бейджей (ТОКЕННАЯ МОДЕЛЬ, TFT).
+#
+# rewards — action_key → количество токенов TFT (начисление в user_rewards,
+#           off-chain леджер; on-chain отправка через ContractService)
+# badges  — badge_id → { key, name, icon, condition }
+#           (репутационные достижения, не токены)
 
 rewards:
   registration: 10
@@ -45,4 +46,4 @@ badges:
     key: veteran
     name: Veteran
     icon: mdi-shield-star
-    condition: user.level == 5
+    condition: user.token_balance >= 1000

@@ -9,6 +9,7 @@ ru:
       name_hint: "Ваше имя будет видно другим пользователям"
       email_cannot_change: "Email не может быть изменен в целях безопасности"
       avatar_hint: "Выберите изображение JPG, PNG или WebP. Макс размер: 5MB"
+      choose_avatar: "Выбрать фото"
       save: "Сохранить"
       cancel: "Отмена"
       loading: "Загрузка..."

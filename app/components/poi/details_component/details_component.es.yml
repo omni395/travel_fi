@@ -1,0 +1,17 @@
+es:
+  poi:
+    details_component:
+      description: Descripción
+      wheelchair_accessible: Accesible en silla de ruedas
+      opening_hours: Horario
+      characteristics: Características
+      location: Ubicación
+      source_osm: Importado de OpenStreetMap
+      source_manual: Añadido manualmente
+      copy_coords: Copiar
+      open_in_maps: Abrir en el mapa
+      directions: Ruta
+      added_by: Añadido por %{name}
+      unknown: Desconocido
+      true: "Sí"
+      false: "No"

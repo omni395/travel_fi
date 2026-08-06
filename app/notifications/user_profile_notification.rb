@@ -4,13 +4,13 @@
 # Уведомление об изменении профиля пользователя
 #
 class UserProfileNotification < ApplicationNotification
-  deliver_by :database
+  # deliver_by :database deprecated в Noticed 3 — записи создаются автоматически
   deliver_by :email, mailer: "UserMailer", method: :profile_updated, if: :email_enabled?
   deliver_by :action_cable, channel: "UserChannel", stream: :user_stream, message: :to_websocket, if: :notifications_enabled?
   deliver_by :web_push, class: "Noticed::DeliveryMethods::WebPush", if: :push_enabled?
 
-  param :item
-  param :event_type
+  required_param :item
+  required_param :event_type
 
   def message
     I18n.t("notifications.user_updated", name: params[:item].name)

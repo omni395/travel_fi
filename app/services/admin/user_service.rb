@@ -96,7 +96,9 @@ class Admin::UserService
   # @return [ActiveRecord::Relation] отфильтрованные пользователи
   #
   def self.search_users(query: nil, status: nil, sort_column: nil, sort_direction: nil)
-    users = User.includes(:roles).where.not(status: "deleted")
+    # Единое правило с index: в «All Statuses» deleted скрыт; виден при выборе статуса deleted.
+    users = User.includes(:roles)
+    users = users.where.not(status: "deleted") unless status == "deleted"
 
     conditions = {}
     conditions[:status_eq] = status if status.present?

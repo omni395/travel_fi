@@ -3,6 +3,6 @@
 #
 # Базовый класс для всех уведомлений в приложении
 #
-class ApplicationNotification < Noticed::Base
+class ApplicationNotification < Noticed::Event
   # Общие методы для всех уведомлений
 end

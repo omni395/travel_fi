@@ -21,8 +21,10 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
     if resource.errors.empty?
       set_flash_message(:notice, :confirmed)
       # Обновляем статус пользователя после подтверждения
-      # Используем confirm_email! БЕЗ условия - всегда переводим в active статус при подтверждении email
-      resource.confirm_email!
+      # UserService.confirm_email — мутация в Service слое (не в модели), всегда active
+      UserService.confirm_email(resource)
+      # Скрытый custodial-кошелёк создаётся после подтверждения (для email-регистрации).
+      WalletService.create_hidden_wallet(user: resource)
       # Логируем подтверждение email
       UserAuditLogger.log_email_verified(resource) if defined?(UserAuditLogger)
       # Логируем вход при подтверждении email (timestamps будут разные благодаря счётчику)

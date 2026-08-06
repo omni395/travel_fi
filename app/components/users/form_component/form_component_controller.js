@@ -35,6 +35,15 @@ export default class extends ApplicationController {
   }
 
   /**
+   * Открыть выбор аватара (системный пикер: галерея + камера на мобильных)
+   */
+  openAvatar() {
+    if (this.hasAvatarInputTarget) {
+      this.avatarInputTarget.click()
+    }
+  }
+
+  /**
    * Обработчик submit события формы
    * Отправляет все поля через StimulusReflex в Admin::UsersReflex#update
    */

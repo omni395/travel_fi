@@ -1,0 +1,17 @@
+en:
+  poi:
+    show_component:
+      tab_details: Details
+      tab_comments: Comments
+      tab_ratings: Ratings
+      tab_gallery: Gallery
+      photo_alt: POI photo
+      edit: Edit
+      close: Close
+      status_pending: Pending
+      status_approved: Approved
+      status_rejected: Rejected
+      status_archived: Archived
+      verified_count:
+        one: Verified %{count} time
+        other: Verified %{count} times

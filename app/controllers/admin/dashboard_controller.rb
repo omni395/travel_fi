@@ -14,7 +14,7 @@ class Admin::DashboardController < Admin::BaseController
   def index
     authorize :admin_dashboard, :access?
 
-    @stats = UserService.stats
+    @stats = Admin::DashboardService.stats
     @recent_users = User.order(created_at: :desc).limit(10)
     @recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
   end

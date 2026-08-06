@@ -1,6 +1,7 @@
 ru:
   users:
     profile_component:
+      token_balance: "Баланс TFT"
       badges: "Значки"
       roles: "Роли"
       referral_code: "Код приглашения"

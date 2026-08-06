@@ -3,7 +3,7 @@
 #
 # Custom WebPush delivery method for Noticed 2.0
 #
-class Noticed::DeliveryMethods::WebPush < Noticed::DeliveryMethods::Base
+class Noticed::DeliveryMethods::WebPush < Noticed::DeliveryMethod
   #
   # Deliver the notification using the web-push gem
   #

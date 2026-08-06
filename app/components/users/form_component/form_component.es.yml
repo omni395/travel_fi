@@ -9,6 +9,7 @@ es:
       name_hint: "Tu nombre será visible para otros usuarios"
       email_cannot_change: "El email no puede ser cambiado por razones de seguridad"
       avatar_hint: "Elige una imagen JPG, PNG o WebP. Tamaño máximo: 5MB"
+      choose_avatar: "Elegir foto"
       save: "Guardar"
       cancel: "Cancelar"
       loading: "Cargando..."

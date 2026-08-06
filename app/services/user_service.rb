@@ -14,18 +14,6 @@
 #
 class UserService
   #
-  # Возвращает статистику по пользователям для дашборда
-  #
-  def self.stats
-    {
-      total: User.count,
-      active: User.active.count,
-      pending: User.pending_verification.count,
-      restricted: User.suspended.count + User.banned.count
-    }
-  end
-
-  #
   # Обрабатывает вход/регистрацию через Google OAuth
   #
   # @param auth [OmniAuth::AuthHash] данные от провайдера
@@ -80,6 +68,57 @@ class UserService
   end
 
   #
+  # Переводит юзера в статус active после подтверждения email.
+  # Вызывается из Users::ConfirmationsController#show.
+  # Мутация вынесена из модели (User#confirm_email! удалён) в Service слой.
+  #
+  # @param user [User] пользователь, подтвердивший email
+  # @return [Boolean] true если статус обновлён
+  #
+  def self.confirm_email(user)
+    user.update!(status: :active)
+  end
+
+  #
+  # Переводит активных пользователей без активности за N месяцев в статус inactive.
+  # Активность определяется по последней записи в PaperTrail versions
+  # (User#last_activity_at). Пользователи без версий (вне аудита) не трогаются.
+  # Вызывается из UserInactivityJob (SolidQueue recurring, config/recurring.yml).
+  #
+  # @param inactivity_months [Integer] порог неактивности (по умолчанию 6)
+  # @return [Integer] количество переведённых в inactive
+  #
+  def self.mark_inactive_old_users(inactivity_months: 6)
+    threshold = inactivity_months.months.ago
+    marked = 0
+
+    User.where(status: :active).find_each do |user|
+      last_activity = user.last_activity_at
+      next if last_activity.nil? || last_activity >= threshold
+
+      user.update!(status: :inactive)
+      marked += 1
+    end
+
+    marked
+  end
+
+  #
+  # Начисляет бонусы за регистрацию: welcome-токены + реферальный бонус.
+  #
+  # @param user [User] только что созданный пользователь
+  # @param referral_code_input [String, nil] реферальный код, введённый при регистрации
+  #
+  def self.award_registration_bonus!(user, referral_code_input = nil)
+    GamificationService.award!(:registration, user)
+
+    return if referral_code_input.blank?
+
+    referrer = User.find_by(referral_code: referral_code_input)
+    GamificationService.award_referral!(referrer, user) if referrer
+  end
+
+  #
   # Обрабатывает логику Google OAuth
   #
   def handle_google_oauth(auth)
@@ -100,7 +139,9 @@ class UserService
       self.class.create_default_settings(user)
       attach_oauth_avatar(user, auth.info.image) if auth.info.image.present?
       log_oauth_registration(user, auth)
-      GamificationService.award!(:registration, user)
+      # OAuth: юзер сразу активен → скрытый custodial-кошелёк и welcome-токены сразу.
+      WalletService.create_hidden_wallet(user: user)
+      self.class.award_registration_bonus!(user)
     end
 
     user

@@ -56,13 +56,25 @@ class UserMailer < ApplicationMailer
 
   #
   # Письмо об обновлении профиля пользователя
-  # Вызывается из UserProfileNotification через Noticed
+  # Вызывается из UserProfileNotification через Noticed (deliver_by :email).
+  # ВАЖНО: Noticed 3.x вызывает mailer через mailer.with(params) —
+  # получатель доступен как params[:recipient] (ActionMailer::Parameterized).
   #
-  # @param recipient [User] получатель уведомления
-  #
-  def profile_updated(recipient)
-    @user = recipient
+  def profile_updated
+    @user = params[:recipient]
 
     mail(to: @user.email, subject: I18n.t("mailer.profile_updated.subject"))
+  end
+
+  #
+  # Письмо о завершении OSM-импорта POI
+  # Вызывается из PoiCategoryNotification через Noticed (deliver_by :email).
+  # Отправляется только если у получателя включена настройка osm_import_email_enabled.
+  # Получатель — params[:recipient] (Noticed 3.x, mailer.with(params)).
+  #
+  def osm_import_complete
+    @user = params[:recipient]
+
+    mail(to: @user.email, subject: I18n.t("mailer.osm_import_complete.subject"))
   end
 end

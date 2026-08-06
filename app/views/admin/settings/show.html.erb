@@ -35,6 +35,7 @@
         pending_verification verification_failed
         suspended_user banned_user deleted_user
         user_updated_by_admin profile_updated
+        osm_import
       ].each do |event_type| %>
         <%= render Settings::FieldComponent.new(setting: @setting, event_type: event_type) %>
       <% end %>

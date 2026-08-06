@@ -82,12 +82,18 @@ class PoiService
     return true if user&.has_role?(:admin) || user&.has_role?(:moderator)
 
     return false if user_lat.nil? || user_lng.nil?
-    Poi.connection.select_value(
+
+    # ST_MakePoint возвращает геометрию с SRID 0 — каст в geography без явного
+    # SRID падает (`Cannot find SRID (4326) in spatial_ref_sys`). Явно задаём SRID.
+    result = Poi.connection.select_value(
       Poi.sanitize_sql_array([
-        "SELECT ST_DWithin(ST_MakePoint(?, ?)::geography, ST_MakePoint(?, ?)::geography, ?)",
+        "SELECT ST_DWithin(ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ST_SetSRID(ST_MakePoint(?, ?), 4326)::geography, ?)",
         user_lng, user_lat, poi_lng, poi_lat, max_meters
       ])
     )
+
+    # select_value возвращает строку "t"/"f" — нормализуем в Boolean
+    result == "t" || result == true
   end
 
   #
@@ -196,8 +202,17 @@ class PoiService
   def self.search_pois(query: nil, status: nil, category_id: nil, sort_column: nil, sort_direction: nil)
     pois = Poi.includes(:poi_category, :user)
 
+    # Поиск по query — jsonb_each_text ILIKE (Ransack `name_or_description_cont`
+    # не работает на JSONB-колонках: `operator does not exist: jsonb ~~* unknown`).
+    if query.present?
+      q = "%#{Poi.sanitize_sql_like(query)}%"
+      pois = pois.where(
+        "EXISTS (SELECT 1 FROM jsonb_each_text(pois.name) WHERE value ILIKE :q) OR EXISTS (SELECT 1 FROM jsonb_each_text(pois.description) WHERE value ILIKE :q)",
+        q: q
+      )
+    end
+
     conditions = {}
-    conditions[:name_or_description_cont] = query if query.present?
     conditions[:status_eq] = status if status.present?
     conditions[:poi_category_id_eq] = category_id if category_id.present?
 

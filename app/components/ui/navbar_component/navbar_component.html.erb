@@ -1,80 +1,46 @@
-<!-- Navbar Component: Сине-зеленый градиентный navbar -->
+<!-- Navbar Component: Сине-зеленый градиентный navbar, растянут на всю ширину -->
 <nav class="navbar-component shadow-lg" data-controller="ui--navbar-component">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  <div class="w-full px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16 relative z-50">
+      <%# Левая группа: логотип, прижатый к левому краю (подпись скрыта на мобильных) %>
       <div class="flex items-center">
-        <%# Гамбургер-меню (только мобильные) %>
+        <%= link_to root_path(locale: I18n.locale), class: "flex items-center py-2" do %>
+          <%= image_tag "logo-2.png", class: "h-8 w-auto", alt: "Travel-Fi" %>
+          <span class="ml-2 hidden md:inline text-white text-xl font-medium">Travel-Fi</span>
+        <% end %>
+      </div>
+
+      <%# Центр: десктоп-меню (только md+) %>
+      <div class="hidden md:flex items-center space-x-4">
+        <% main_menu_items.each do |item| %>
+          <%= link_to item[:label], item[:path], class: "text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200" %>
+        <% end %>
+      </div>
+
+      <%# Правая группа: гамбургер (мобильные) + auth + язык %>
+      <div class="flex items-center space-x-2">
+        <%# Гамбургер-меню (только мобильные) с кнопками Home/Map и пр. %>
+        <%# Мобильное меню (md:hidden): dropdown с основной навигацией (Главная/Карта).
+            Схлопывание управляется навбаром через ui--dropdown-component (гем hamburger удалён). %>
         <div class="md:hidden">
-          <%= render Ui::HamburgerComponent.new(position: :left, menu_width_class: "w-72") do |h| %>
-            <% h.with_trigger do %>
-              <button type="button" class="text-white hover:bg-white/10 p-2 rounded-md cursor-pointer"
-                      aria-label="<%= t(".toggle_menu") %>">
+          <%= render Ui::DropdownComponent.new do |dropdown| %>
+            <% dropdown.with_trigger do %>
+              <button type="button" data-action="ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 p-2 rounded-md transition-colors duration-200 cursor-pointer" aria-label="<%= t(".toggle_menu") %>">
                 <%# MDI: menu %>
                 <i class="mdi mdi-menu text-xl"></i>
               </button>
             <% end %>
-            <% h.with_menu do %>
-              <div class="p-4 space-y-6">
-                <%# Навигационные ссылки %>
-                <div class="space-y-1">
-                  <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    <%= t(".navigation") %>
-                  </div>
+            <% dropdown.with_menu do %>
+              <div class="whitespace-nowrap navbar-component__dropdown bg-linear-to-br from-teal-600 to-sky-600">
+                <div class="py-2">
                   <% main_menu_items.each do |item| %>
-                    <%= link_to item[:label], item[:path],
-                                class: "block py-2 text-gray-700 hover:text-teal-600 font-medium transition-colors duration-200" %>
-                  <% end %>
-                </div>
-
-                <%# Пользовательский блок %>
-                <% if user_signed_in? %>
-                  <div class="space-y-1">
-                    <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                      <%= t(".account") %>
-                    </div>
-                    <%= link_to t(".profile"), user_path(@user, locale: I18n.locale),
-                                class: "block py-2 text-gray-700 hover:text-teal-600 font-medium transition-colors duration-200" %>
-                    <%= link_to t(".settings"), user_settings_path(@user, locale: I18n.locale),
-                                class: "block py-2 text-gray-700 hover:text-teal-600 font-medium transition-colors duration-200" %>
-                    <% if helpers.policy(@user).admin_panel_access? %>
-                      <%= link_to t(".admin_panel"), admin_root_path(locale: I18n.locale),
-                                  class: "block py-2 text-teal-600 font-medium transition-colors duration-200" %>
+                    <%= link_to item[:path],
+                                class: "flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors duration-200",
+                                data: { action: "ui--dropdown-component#toggle" } do %>
+                      <%# Иконка: из main_menu_items (mdi-home / mdi-map-marker-multiple) %>
+                      <i class="mdi <%= item[:icon] %> text-lg"></i>
+                      <span><%= item[:label] %></span>
                     <% end %>
-                  </div>
-                  <hr class="border-gray-200">
-                  <%= button_to destroy_user_session_path, method: :delete,
-                                class: "flex items-center w-full py-2 text-gray-500 hover:text-red-600 transition-colors duration-200",
-                                data: { turbo: false } do %>
-                    <%# MDI: logout %>
-                    <i class="mdi mdi-logout mr-2"></i>
-                    <%= t(".logout") %>
-                  <% end %>
-                <% else %>
-                  <div class="space-y-2">
-                    <%= link_to new_user_session_path(locale: I18n.locale),
-                                class: "flex items-center justify-center w-full bg-teal-600 text-white px-4 py-2 rounded-md hover:bg-teal-700 transition-colors duration-200" do %>
-                      <%# MDI: login %>
-                      <i class="mdi mdi-login mr-2"></i>
-                      <%= t(".login") %>
-                    <% end %>
-                    <%= link_to new_user_registration_path(locale: I18n.locale),
-                                class: "flex items-center justify-center w-full border border-teal-600 text-teal-600 px-4 py-2 rounded-md hover:bg-teal-50 transition-colors duration-200" do %>
-                      <%# MDI: account-plus %>
-                      <i class="mdi mdi-account-plus mr-2"></i>
-                      <%= t(".register") %>
-                    <% end %>
-                  </div>
-                <% end %>
-
-                <%# Переключатель языка %>
-                <hr class="border-gray-200">
-                <div class="space-y-1">
-                  <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                    <%= t(".language") %>
-                  </div>
-                  <% language_items.each do |item| %>
-                    <%= link_to item[:label], item[:path],
-                                class: "block py-2 text-gray-700 hover:text-teal-600 font-medium transition-colors duration-200" %>
                   <% end %>
                 </div>
               </div>
@@ -82,19 +48,7 @@
           <% end %>
         </div>
 
-        <%= link_to root_path(locale: I18n.locale), class: "flex items-center hover:bg-transparent transition-colors duration-200 py-2" do %>
-          <%= image_tag "logo-2.png", class: "h-8 w-auto", alt: "Travel-Fi" %>
-          <span class="ml-2 hidden md:inline text-white text-xl font-medium">Travel-Fi</span>
-        <% end %>
-      </div>
-
-      <div class="hidden md:flex items-center space-x-4">
-        <% main_menu_items.each do |item| %>
-          <%= link_to item[:label], item[:path], class: "text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200" %>
-        <% end %>
-      </div>
-
-      <div class="flex items-center space-x-2">
+        <%# Кнопки Логин/Регистрация — без подписей на мобильных %>
         <% unless user_signed_in? %>
           <%= link_to new_user_session_path(locale: I18n.locale), class: "flex items-center justify-center text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200" do %>
             <%# MDI: login %>
@@ -138,6 +92,7 @@
           <% end %>
         <% end %>
 
+        <%# Дропдаун выбора языка %>
         <%= render Ui::DropdownComponent.new do |dropdown| %>
           <% dropdown.with_trigger do %>
             <button type="button" data-action="ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 px-3 py-2 rounded-md transition-colors duration-200">

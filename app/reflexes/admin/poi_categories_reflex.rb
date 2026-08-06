@@ -122,28 +122,25 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       return
     end
 
-    location = location.symbolize_keys
-    loc = { city: location[:city], country: location[:country], bbox: location[:bbox] }
+    loc = location.symbolize_keys.slice(:city, :country, :bbox)
 
-    # Этап 1: Получаем элементы из Overpass API
-    elements = OsmImportService.fetch_elements(category: category, location: loc, user: current_user)
-    total = elements.size
-
-    # Считаем, сколько из найденных элементов уже есть в БД (по osm_id)
-    fetched_osm_ids = elements.map { |e| e["id"] }.compact
-    existing_ids = Poi.where(osm_id: fetched_osm_ids, poi_category_id: category.id).count
-
-    # Отправляем прогресс: найдено N элементов, M уже в БД, обработано 0
-    OsmImportBroadcaster.progress(user: current_user, total: total, processed: 0, already_in_db: existing_ids)
-
-    # Этап 2: Обрабатываем элементы с прогрессом
-    stats = OsmImportService.process_elements(
-      elements: elements,
+    # Делегируем в Service (OsmImportService#import): fetch + первичный прогресс + обработка.
+    # В колбэке — только UI: прогресс-бродкаст + инкрементальный апдейт вкладки POIs.
+    stats = OsmImportService.import(
       category: category,
       location: loc,
       user: current_user
-    ) do |processed|
-      OsmImportBroadcaster.progress(user: current_user, total: total, processed: processed)
+    ) do |processed, total, already_in_db|
+      OsmImportBroadcaster.progress(
+        user: current_user,
+        total: total,
+        processed: processed,
+        already_in_db: already_in_db
+      )
+
+      # Инкрементальный апдейт вкладки POIs: каждые 10 обработанных новых POI
+      # появляются в списке ПО МЕРЕ добавления (не только по завершении импорта).
+      broadcast_pois_panel(category) if processed.positive? && (processed % 10).zero?
     end
 
     # Отправляем результат + обновляем UI категории + триггерим перезагрузку карты
@@ -234,6 +231,30 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   def render_categories_table(categories, pagy = nil)
     component = Admin::PoiCategories::TableComponent.new(categories: categories, pagy: pagy)
     ApplicationController.render(component, layout: false)
+  end
+
+  #
+  # Инкрементально обновляет вкладку POIs (первая страница) через AdminChannel.
+  # Вызывается из блока прогресса импорта — новые POI появляются по мере добавления.
+  # Рендер изолирован в rescue: сбой одной итерации не роняет импорт.
+  #
+  # @param category [PoiCategory] категория, список POI которой обновляем
+  #
+  def broadcast_pois_panel(category)
+    pagy, pois = pagy(
+      category.pois.includes(:user).order(created_at: :desc),
+      limit: 10,
+      page: 1
+    )
+    html = ApplicationController.render(
+      Admin::PoiCategories::PoiCategory::PoisListComponent.new(category: category, pagy: pagy, pois: pois),
+      layout: false
+    )
+
+    cable_ready["AdminChannel"].inner_html(selector: "[data-poi-category-pois]", html: html)
+    cable_ready["AdminChannel"].broadcast
+  rescue StandardError => e
+    Rails.logger.error("PoiCategory pois panel incremental update failed: #{e.class} #{e.message}")
   end
 
   #

@@ -1,0 +1,133 @@
+<%# Poi::DetailsComponent - таб «Детали» карточки POI %>
+<%# Иконки: mdi-phone / mdi-web / mdi-wheelchair / mdi-currency-usd / mdi-clock-outline / mdi-source-branch / mdi-map-marker / mdi-content-copy / mdi-map-marker-outline / mdi-directions %>
+<div data-controller="poi--details-component" class="space-y-4 p-4">
+  <%# Описание %>
+  <% if poi.localized_description.present? %>
+    <div>
+      <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"><%= t(".description") %></h4>
+      <p class="text-sm text-gray-700"><%= poi.localized_description %></p>
+    </div>
+  <% end %>
+
+  <%# Контакты и доступность %>
+  <div class="grid grid-cols-2 gap-3">
+    <% if poi.phone.present? %>
+      <div class="flex items-center gap-2 text-sm">
+        <i class="mdi mdi-phone text-gray-400"></i>
+        <%# Иконка: mdi-phone %>
+        <a href="tel:<%= poi.phone %>" class="text-emerald-600 hover:text-emerald-800"><%= poi.phone %></a>
+      </div>
+    <% end %>
+    <% if poi.website.present? %>
+      <div class="flex items-center gap-2 text-sm">
+        <i class="mdi mdi-web text-gray-400"></i>
+        <%# Иконка: mdi-web %>
+        <a href="<%= poi.website %>" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-800 truncate"><%= poi.website %></a>
+      </div>
+    <% end %>
+    <% if poi.wheelchair_accessible %>
+      <div class="flex items-center gap-2 text-sm text-gray-600">
+        <i class="mdi mdi-wheelchair text-gray-400"></i>
+        <%# Иконка: mdi-wheelchair %>
+        <%= t(".wheelchair_accessible") %>
+      </div>
+    <% end %>
+    <% if poi.price_info.present? %>
+      <div class="flex items-center gap-2 text-sm text-gray-600">
+        <i class="mdi mdi-currency-usd text-gray-400"></i>
+        <%# Иконка: mdi-currency-usd %>
+        <%= poi.price_info %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Часы работы %>
+  <% if poi.opening_hours.present? %>
+    <div>
+      <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"><%= t(".opening_hours") %></h4>
+      <p class="text-sm text-gray-700 flex items-start gap-1">
+        <i class="mdi mdi-clock-outline text-gray-400 mt-0.5"></i>
+        <%# Иконка: mdi-clock-outline %>
+        <%= poi.opening_hours.is_a?(Hash) ? poi.opening_hours.to_json : poi.opening_hours %>
+      </p>
+    </div>
+  <% end %>
+
+  <%# Метаданные категории %>
+  <% if metadata_fields.any? %>
+    <div>
+      <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2"><%= t(".characteristics") %></h4>
+      <dl class="grid grid-cols-2 gap-2">
+        <% metadata_fields.each do |field| %>
+          <div class="text-sm">
+            <dt class="text-xs text-gray-400"><%= field[:label] %></dt>
+            <dd class="text-gray-900">
+              <% if field[:value].is_a?(Array) %>
+                <%= field[:value].join(", ") %>
+              <% elsif [true, false].include?(field[:value]) %>
+                <%= field[:value] ? t(".true") : t(".false") %>
+              <% else %>
+                <%= field[:value] %>
+              <% end %>
+            </dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+  <% end %>
+
+  <%# Источник %>
+  <div class="flex items-center gap-2 text-sm text-gray-600">
+    <i class="mdi mdi-source-branch text-gray-400"></i>
+    <%# Иконка: mdi-source-branch %>
+    <span><%= source_label %></span>
+    <% if poi.osm_id.present? %>
+      <span class="text-xs text-gray-400">(OSM ID: <%= poi.osm_id %>)</span>
+    <% end %>
+  </div>
+
+  <%# Расположение: мини-карта + координаты + ссылки %>
+  <div>
+    <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2"><%= t(".location") %></h4>
+    <div data-poi--details-component-target="viewMap"
+         class="w-full h-48 rounded-lg border border-gray-200 overflow-hidden"></div>
+    <% if coordinates_text.present? %>
+      <div class="flex flex-wrap items-center gap-3 mt-2">
+        <span class="text-xs text-gray-400 font-mono"><%= coordinates_text %></span>
+        <button type="button"
+                data-controller="ui--clipboard-component"
+                data-clipboard-text-value="<%= coordinates_text %>"
+                data-action="click->ui--clipboard-component#copy"
+                class="inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700">
+          <i class="mdi mdi-content-copy"></i>
+          <%# Иконка: mdi-content-copy %>
+          <%= t(".copy_coords") %>
+        </button>
+        <% if maps_url.present? %>
+          <a href="<%= maps_url %>" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800">
+            <i class="mdi mdi-map-marker-outline"></i>
+            <%# Иконка: mdi-map-marker-outline %>
+            <%= t(".open_in_maps") %>
+          </a>
+        <% end %>
+        <% if directions_url.present? %>
+          <a href="<%= directions_url %>" target="_blank" rel="noopener"
+             class="inline-flex items-center gap-1 text-xs text-emerald-600 hover:text-emerald-800">
+            <i class="mdi mdi-directions"></i>
+            <%# Иконка: mdi-directions %>
+            <%= t(".directions") %>
+          </a>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Автор и дата %>
+  <div class="pt-3 border-t border-gray-100">
+    <p class="text-xs text-gray-400">
+      <%= t(".added_by", name: poi.user&.name || t(".unknown")) %> ·
+      <%= l poi.created_at, format: :long %>
+    </p>
+  </div>
+</div>

@@ -20,7 +20,7 @@ class Admin::DashboardBroadcaster
   end
 
   def send_stats_update
-    stats = UserService.stats
+    stats = Admin::DashboardService.stats
 
     # Обновляем карточки статистики
     cable_ready["AdminChannel"].morph(
@@ -69,7 +69,7 @@ class Admin::DashboardBroadcaster
   end
 
   def send_full_update
-    stats = UserService.stats
+    stats = Admin::DashboardService.stats
     recent_users = User.order(created_at: :desc).limit(10)
     recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
 

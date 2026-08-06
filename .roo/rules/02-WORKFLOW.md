@@ -2,37 +2,44 @@
 
 Stimulus (Браузер: клик/ввод)
     ↓
-Stimulus вызывает `this.stimulusReflex("methodName")`
-    ↓
-WebSocket отправляет Reflex действие (RPC вызов)
+Stimulus вызывает `this.stimulate("XxxReflex#action", params)` (RPC вызов через WebSocket)
     ↓
 Reflex Class (app/reflexes/):
   ├─ Находит current_user через Connection
   ├─ morph :nothing (отмена стандартного морфинга всей страницы)
-  └─ Вызывает Service слой
+  ├─ deep_symbolize_keys(params) (строковые ключи из JS → символьные)
+  └─ Вызывает Service слой (логики в рефлексе НЕТ)
     ↓
 Service Layer (app/services/):
   ├─ Pundit: проверка прав доступа
-  └─ Model.save (внутри транзакции)
+  └─ Model.save! / update! (внутри транзакции)
     ↓
 Database (PostgreSQL + PaperTrail):
   ├─ Данные зафиксированы в БД
   └─ PaperTrail создает запись Version (Single Source of Truth)
     ↓
 VersionObserverJob (Background Process - Triggered by PaperTrail):
-  ├─ Извлекает изменения из version.object_changes
-  ├─ Фильтрация получателей (Роль, Контекст, Настройки)
-  └─ Вызывает Broadcaster
+  ├─ Парсит version.item_type → ветка handle_<model>_update
+  └─ Вызывает XxxBroadcaster.call
     ↓
 Broadcaster (app/broadcasters/):
-  ├─ CableReady: Генерирует точечные команды для прошедших фильтр юзеров
-  └─ Noticed: Отправляет внешние уведомления (Email/Push)
+  ├─ Рендерит зоны (helpers.render)
+  └─ cable_ready["AdminChannel"].inner_html(selector:, html:) → .broadcast
     ↓
-ActionCable: Доставляет команды в индивидуальные каналы User:ID:Stream
+ActionCable (SolidCable): Доставляет команды в стрим (AdminChannel / user_N)
     ↓
-DOM обновляется (Инициатор — мгновенно, остальные — согласно правам и контексту)
+DOM обновляется (Инициатор — мгновенно/redirect, остальные — через broadcast без перезагрузки)
 
 **Важно**: Модели НЕ содержат логики рассылок. Весь жизненный цикл изменений после сохранения в БД управляется через `VersionObserverJob`.
+
+**Строгие правила слоёв (эталон):**
+- Controller: только доступ (Pundit) + рендер страницы + данные вкладок + pagy. Без логики.
+- Reflex: мост UI→Service. `morph :nothing` + authorize + делегирование. НЕ рендерить DOM после сохранения.
+- Service: вся бизнес-логика. `save!`/`update!` в транзакции.
+- Model: только данные. Без логики рассылок.
+- Broadcaster: рендер зон + `inner_html` + broadcast. НЕ `morph`, НЕ `update_all`.
+- VersionObserverJob: маршрутизация по `item_type` → `XxxBroadcaster.call`.
+- ViewComponent: только презентация (sidecar 7 файлов, 4 локали).
 
 **Практические правила (проверено на практике, обязательны):**
 - **Reflex**: `morph :nothing` + Service; НЕ рендерить/морфить DOM селекторами в методах, меняющих состояние (обновление — только через Broadcaster).

@@ -22,6 +22,7 @@ ru:
       website: Веб-сайт
       wheelchair: Доступно для инвалидных колясок
       photos: Фотографии
+      add_photos: Добавить фото
       photos_hint: Загрузите несколько фотографий (JPEG, PNG, WebP). Первое фото станет обложкой.
       photo_alt: Фото точки
       remove_photo: Удалить фото

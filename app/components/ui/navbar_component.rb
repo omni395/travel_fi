@@ -48,8 +48,8 @@ class Ui::NavbarComponent < ApplicationComponent
   #
   def main_menu_items
     [
-      { label: t(".home"), path: root_path(locale: I18n.locale) },
-      { label: t(".map"), path: pois_path(locale: I18n.locale) }
+      { label: t(".home"), path: root_path(locale: I18n.locale), icon: "mdi-home" },
+      { label: t(".map"), path: pois_path(locale: I18n.locale), icon: "mdi-map-marker-multiple" }
     ]
   end
 

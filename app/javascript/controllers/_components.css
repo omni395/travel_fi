@@ -265,7 +265,7 @@
   position: relative;
 }
 
-/* Скрытое состояние (только десктоп — скрывает через width: 0) */
+/* Скрытое состояние — скрывает через width: 0 */
 .ui-sidebar--hidden {
   width: 0px !important;
   overflow: hidden !important;
@@ -273,6 +273,23 @@
   padding: 0 !important;
   margin: 0 !important;
   border: none !important;
+}
+
+/* Сайдбар overlay поверх карты: на мобильных — вся ширина экрана, на ПК — фиксированная (w-80) */
+@media (max-width: 767px) {
+  .ui-sidebar {
+    width: 100vw !important;
+  }
+}
+
+/* Оверлей-режим (раскрытый сайдбар): поверх контента (карта/админка).
+   bottom: 0 растягивает absolute-обёртку на всю высоту контейнера
+   (flex-1 под навбаром h-16) — иначе высота = по контенту («кастрированный» сайдбар). */
+.ui-sidebar--overlay {
+  position: absolute !important;
+  inset: 0 auto 0 0 !important;
+  height: 100% !important;
+  z-index: 20 !important;
 }
 
 /* === ui/tooltip_component/tooltip_component.css === */

@@ -31,7 +31,7 @@ class Admin::UsersController < Admin::BaseController
     @user = User.friendly.find(params[:id])
     authorize @user, :show?
 
-    @edit_mode = params[:edit] == 'true'
+    @edit_mode = params[:edit] == "true"
     @activities = UserActivityService.new(user: @user).call
     @pagy_audit, @versions = pagy(@user.versions.order(created_at: :desc), limit: 20)
     @roles = Role.all
@@ -51,7 +51,7 @@ class Admin::UsersController < Admin::BaseController
       current_user: current_user
     )
 
-    redirect_to admin_user_path(@user), notice: t('admin.users.update_success')
+    redirect_to admin_user_path(@user), notice: t("admin.users.update_success")
   rescue Admin::UserService::UpdateError => e
     @edit_mode = true
     @pagy_audit, @versions = pagy(@user.versions.order(created_at: :desc), limit: 20)
@@ -64,11 +64,14 @@ class Admin::UsersController < Admin::BaseController
 
   #
   # Разрешенные параметры для обновления пользователя
+  # role_id (одна роль, не role_ids): форма EditComponent шлёт hidden_field :role_id,
+  # сервис Admin::UserService#update_user_roles! читает params[:role_id].
+  # Синхронизировано с Reflex-путём (Admin::UsersReflex#update).
   #
   # @return [ActionController::Parameters]
   #
   def user_params
-    params.require(:user).permit(:name, :email, :status, role_ids: [])
+    params.require(:user).permit(:name, :email, :status, :role_id)
   end
 
   #
@@ -77,7 +80,9 @@ class Admin::UsersController < Admin::BaseController
   # @return [ActiveRecord::Relation]
   #
   def filtered_users
+    # Единое правило: в «All Statuses» deleted скрыт; виден при выборе статуса deleted.
     users = User.all
+    users = users.where.not(status: 'deleted') unless params[:status] == 'deleted'
 
     # Применяем scope из политики Admin::UserPolicy
     users = Admin::UserPolicy::Scope.new(current_user, users).resolve
@@ -88,7 +93,7 @@ class Admin::UsersController < Admin::BaseController
     # Поиск по имени или email
     if params[:q].present?
       query = "%#{params[:q]}%"
-      users = users.where('name LIKE ? OR email LIKE ?', query, query)
+      users = users.where("name LIKE ? OR email LIKE ?", query, query)
     end
 
     users

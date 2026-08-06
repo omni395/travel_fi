@@ -79,16 +79,21 @@ class Admin::UserBroadcaster
   # Морфит строку пользователя в таблице
   #
   def send_user_update(user)
-    # Морфим строку пользователя в таблице
-    cable_ready["AdminChannel"].morph(
-      selector: "[data-admin-user-id='#{user.id}']",
-      html: render_user_row_component(user)
+    # Обновляем таблицу целиком через inner_html на контейнер [data-admin-users-list].
+    # Точечная замена одной <tr> (morph падает, inner_html на tr создаёт вложенность)
+    # на клиенте ненадёжна — рендерим актуальный список.
+    users = Admin::UserService.search_users(query: nil, status: nil).limit(20)
+    table_html = ApplicationController.render(Admin::Users::TableComponent.new(users: users, pagy: nil), layout: false)
+
+    cable_ready["AdminChannel"].inner_html(
+      selector: "[data-admin-users-list]",
+      html: table_html
     )
 
     # Обновляем ленту аудита пользователя (если админ на его show-странице)
     audit_html = render_audit_component(user)
     if audit_html.present?
-      cable_ready["AdminChannel"].morph(
+      cable_ready["AdminChannel"].inner_html(
         selector: "[data-audit-log]",
         html: audit_html
       )
@@ -133,8 +138,8 @@ class Admin::UserBroadcaster
   # Обновляет бейдж статуса в компонентах
   #
   def send_status_change(user, old_status, new_status)
-    # Обновляем бейдж статуса в детальной информации
-    cable_ready["AdminChannel"].morph(
+    # Обновляем бейдж статуса в детальной информации (inner_html)
+    cable_ready["AdminChannel"].inner_html(
       selector: "[data-admin-user-status='#{user.id}']",
       html: render_status_badge(user)
     )
@@ -159,8 +164,8 @@ class Admin::UserBroadcaster
   # Обновляет список ролей в компонентах
   #
   def send_role_change(user, role_name, action)
-    # Обновляем список ролей в детальной информации
-    cable_ready["AdminChannel"].morph(
+    # Обновляем список ролей в детальной информации (inner_html)
+    cable_ready["AdminChannel"].inner_html(
       selector: "[data-admin-user-roles='#{user.id}']",
       html: render_user_roles(user)
     )
@@ -182,8 +187,6 @@ class Admin::UserBroadcaster
 
     cable_ready["AdminChannel"].broadcast
   end
-
-  private
 
   #
   # Отправляет уведомление о создании нового пользователя
@@ -207,6 +210,8 @@ class Admin::UserBroadcaster
 
     cable_ready["AdminChannel"].broadcast
   end
+
+  private
 
   #
   # Рендерит строку пользователя для списка

@@ -45,10 +45,11 @@
           </div>
           <div class="field-group sm:w-auto shrink-0">
             <%= form.label :avatar, class: "field-label" %>
-            <%= form.file_field :avatar, id: "user_avatar_input", accept: 'image/png,image/jpeg,image/webp', class: "hidden" %>
+            <%# Одна кнопка — на телефоне системный выбор (галерея + «Сделать фото» внутри пикера) %>
+            <%= form.file_field :avatar, id: "user_avatar_input", accept: "image/*", class: "hidden" %>
             <%= render Ui::BtnComponent.new(color: :secondary, size: :md, html: { type: "button", onclick: "document.getElementById('user_avatar_input').click()" }) do %>
-              <!-- mdi: camera-plus -->
-              <i class="mdi mdi-camera-plus"></i>
+              <!-- mdi: image-plus -->
+              <i class="mdi mdi-image-plus"></i>
             <% end %>
           </div>
         </div>

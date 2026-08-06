@@ -37,8 +37,8 @@ class UserBroadcaster
     # Получаем канал для пользователя
     channel = "user_#{user.id}"
 
-    # 1. Живое обновление профиля (morph)
-    cable_ready[channel].morph(
+    # 1. Живое обновление профиля (inner_html, НЕ morph — morph падает на клиенте)
+    cable_ready[channel].inner_html(
       selector: "[data-user-profile-id='#{user.id}']",
       html: updated_component_html
     )
@@ -72,8 +72,13 @@ class UserBroadcaster
   def render_user_profile_component
     component = Users::ProfileComponent.new(user: user)
 
-    # Используем ApplicationController renderer для рендеринга компонента
-    ApplicationController.renderer.render(component)
+    # ApplicationController.render (НЕ renderer): renderer не знает route helpers/locale
+    # и падает "No route matches {locale: :en}" при рендере вложенных ссылок.
+    # В SolidQueue worker I18n.locale = nil → route helper с locale: nil не матчит scope
+    # "(:locale)". Фиксируем дефолтную локаль на время рендера (как в PoiCategoryBroadcaster).
+    I18n.with_locale(I18n.default_locale) do
+      ApplicationController.render(component, layout: false)
+    end
   rescue StandardError => e
     Rails.logger.error("Failed to render Users::ProfileComponent: #{e.class} #{e.message}")
     ""

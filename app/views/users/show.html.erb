@@ -10,7 +10,9 @@
       <% end %>
     </div>
 
-    <!-- User Profile Component -->
-    <%= render Users::ProfileComponent.new(user: @user) %>
+    <!-- User Profile Component (обёртка-цель для CableReady inner_html) -->
+    <div data-user-profile-id="<%= @user.id %>">
+      <%= render Users::ProfileComponent.new(user: @user) %>
+    </div>
   </div>
 </div>

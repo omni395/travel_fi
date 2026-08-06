@@ -1,0 +1,19 @@
+ru:
+  poi:
+    show_component:
+      tab_details: Детали
+      tab_comments: Комментарии
+      tab_ratings: Рейтинги
+      tab_gallery: Галерея
+      photo_alt: Фото точки
+      edit: Редактировать
+      close: Закрыть
+      status_pending: На рассмотрении
+      status_approved: Одобрено
+      status_rejected: Отклонено
+      status_archived: В архиве
+      verified_count:
+        one: Подтверждено %{count} раз
+        few: Подтверждено %{count} раза
+        many: Подтверждено %{count} раз
+        other: Подтверждено %{count} раз

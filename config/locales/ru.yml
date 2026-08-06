@@ -43,16 +43,16 @@ ru:
         email: "Email"
         referral_code_input: "Код приглашения"
         statuses:
-          registered: "Зарегистрирован"
-          pending_verification: "Ожидание"
+          pending: "Ожидает"
           active: "Активен"
+          inactive: "Неактивен"
           suspended: "Заморожен"
           banned: "Забанен"
           deleted: "Удалён"
         statuses_full:
-          registered: "Зарегистрирован"
-          pending_verification: "Ожидает верификации"
+          pending: "Ожидает подтверждения"
           active: "Активен"
+          inactive: "Неактивен (6+ мес)"
           suspended: "Заморожен"
           banned: "Забанен"
           deleted: "Удалён"
@@ -95,6 +95,7 @@ ru:
       deleted_user: "Удалён"
       user_updated_by_admin: "Обновлён"
       profile_updated: "Изменён"
+      osm_import: "Импорт OSM"
     channels:
       notifications: "В приложении"
       email: "Email"
@@ -112,6 +113,10 @@ ru:
     email_changed: "Изменение email"
     name_changed: "Изменение имени"
     oauth_login: "Вход через OAuth"
+    osm_import_complete: "Импорт OSM завершён: добавлено %{count} POI в «%{category}»."
+    osm_import_complete_title: "Импорт OSM завершён"
+    poi_category_updated: "Категория POI «%{category}» обновлена."
+    poi_category_updated_title: "Категория POI обновлена"
 
   admin:
     poi_categories:
@@ -199,6 +204,8 @@ ru:
         badge_earned_desc: "Пользователь получил новый бейдж достижения"
         points_earned: "Начислено %{points} очков"
         points_earned_desc: "Пользователь получил очки за активность"
+        tokens_earned: "Начислено %{amount} TFT"
+        tokens_earned_desc: "Пользователь получил токены TFT за активность"
         action_performed: "Выполнено действие"
         action_performed_desc: "Пользователь выполнил действие в приложении"
       tabs:
@@ -257,6 +264,7 @@ ru:
 
   pois:
     title: "Точки интереса"
+    update_success: "Точка успешно обновлена"
     no_location_toast: "Доступ к геолокации запрещён. Включите службы геолокации, чтобы добавлять и взаимодействовать с ближайшими POI."
     guest_warning: "Вы используете режим гостя. Войдите или зарегистрируйтесь, чтобы добавлять и управлять POI."
     auth_required_title: "Требуется вход"
