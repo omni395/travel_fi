@@ -5,6 +5,7 @@
     Заполняется через PoiReflex#load_pois_in_bounds (CableReady morph).
     Содержит элементы с data-poi-id/data-poi-lat/data-poi-lng для _loadPois().
     НЕ зависит от DOM сайдбара. %>
+<%# compact — мини-карта формы (без фильтров/кнопки добавления/features/тултипа) %>
 <div class="relative h-full">
   <%# Карта %>
   <div class="poi-map h-full"
@@ -14,48 +15,51 @@
        data-poi-interactive="<%= interactive %>"
        <% end %>></div>
 
-  <%# Верхняя панель-оверлей: фильтры (дропдаун) + кнопка добавления POI %>
-  <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
-    <%# Кнопка фильтров (дропдаун) — только на публичной карте с категориями %>
-    <% if categories.present? %>
-      <%= render Poi::FiltersComponent.new(categories: categories, variant: :dropdown) %>
-    <% end %>
-
-    <%# Кнопка добавления POI %>
-    <% if helpers.user_signed_in? %>
-      <%= render Ui::BtnComponent.new(
-            color: :primary,
-            size: :sm,
-            html: {
-              data: { action: "click->poi--map-component#openAddPoi" }
-            }
-          ) do %>
-        <!-- mdi: plus -->
-        <i class="mdi mdi-plus mr-1"></i>
-        <%= t(".add_poi") %>
+  <%# Верхняя панель-оверлей: фильтры (дропдаун) + кнопка добавления POI.
+      В compact-режиме (мини-карта формы) оверлей не рендерится. %>
+  <% unless compact %>
+    <div class="absolute top-4 right-4 z-10 flex items-center gap-2">
+      <%# Кнопка фильтров (дропдаун) — только на публичной карте с категориями %>
+      <% if categories.present? %>
+        <%= render Poi::FiltersComponent.new(categories: categories, variant: :dropdown) %>
       <% end %>
-    <% end %>
-  </div>
 
-  <%# Контейнер данных POI для маркеров %>
-  <div id="poi-map-features" class="hidden">
-    <% if poi.present? %>
-      <% feature = PoiService.map_feature_data(poi) %>
-      <div data-poi-id="<%= feature[:id] %>"
-           data-poi-lat="<%= feature[:lat] %>"
-           data-poi-lng="<%= feature[:lng] %>"
-           data-poi-name="<%= h(feature[:name]) %>"
-           data-poi-icon="<%= h(feature[:icon]) %>"
-           data-poi-category="<%= h(feature[:category]) %>"
-           data-poi-category-id="<%= feature[:category_id] %>"
-           data-poi-rating="<%= feature[:rating] %>"
-           data-poi-address="<%= h(feature[:address]) %>"
-           data-poi-user-id="<%= feature[:user_id] %>"
-           data-poi-slug="<%= h(feature[:slug]) %>"
-           data-poi-photo="<%= h(feature[:photo]) %>"></div>
-    <% end %>
-  </div>
+      <%# Кнопка добавления POI %>
+      <% if helpers.user_signed_in? %>
+        <%= render Ui::BtnComponent.new(
+              color: :primary,
+              size: :sm,
+              html: {
+                data: { action: "click->poi--map-component#openAddPoi" }
+              }
+            ) do %>
+          <!-- mdi: plus -->
+          <i class="mdi mdi-plus mr-1"></i>
+          <%= t(".add_poi") %>
+        <% end %>
+      <% end %>
+    </div>
 
-  <%# Тултип-попап при ховере (OL Overlay) — внутри контейнера карты для корректного позиционирования %>
-  <%= render Ui::TooltipComponent.new %>
+    <%# Контейнер данных POI для маркеров %>
+    <div id="poi-map-features" class="hidden">
+      <% if poi.present? %>
+        <% feature = PoiService.map_feature_data(poi) %>
+        <div data-poi-id="<%= feature[:id] %>"
+             data-poi-lat="<%= feature[:lat] %>"
+             data-poi-lng="<%= feature[:lng] %>"
+             data-poi-name="<%= h(feature[:name]) %>"
+             data-poi-icon="<%= h(feature[:icon]) %>"
+             data-poi-category="<%= h(feature[:category]) %>"
+             data-poi-category-id="<%= feature[:category_id] %>"
+             data-poi-rating="<%= feature[:rating] %>"
+             data-poi-address="<%= h(feature[:address]) %>"
+             data-poi-user-id="<%= feature[:user_id] %>"
+             data-poi-slug="<%= h(feature[:slug]) %>"
+             data-poi-photo="<%= h(feature[:photo]) %>"></div>
+      <% end %>
+    </div>
+
+    <%# Тултип-попап при ховере (OL Overlay) — внутри контейнера карты для корректного позиционирования %>
+    <%= render Ui::TooltipComponent.new %>
+  <% end %>
 </div>

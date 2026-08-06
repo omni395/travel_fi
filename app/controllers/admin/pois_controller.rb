@@ -34,6 +34,31 @@ class Admin::PoisController < Admin::BaseController
   end
 
   #
+  # Создаёт новый POI
+  #
+  # POST /admin-panel/pois
+  #
+  # Дублирует путь Admin::PoisReflex#create для обычного HTTP POST (fallback
+  # формы new, если JS/Reflex не сработал). Без этого action маршрут :create
+  # указывает на несуществующий метод, и Rails 7.1+ поднимает
+  # AbstractController::ActionNotFound для skip_after_action verify_policy_scoped.
+  #
+  def create
+    authorize Poi, :create?
+
+    @poi = PoiService.create(
+      params: poi_params,
+      current_user: current_user
+    )
+
+    redirect_to admin_poi_path(id: @poi), notice: t("admin.pois.create_success")
+  rescue PoiService::CreateError => e
+    @categories = PoiCategory.active.by_position
+    flash.now[:alert] = e.message
+    render :new, status: :unprocessable_entity
+  end
+
+  #
   # Отображает детальную страницу POI
   #
   def show

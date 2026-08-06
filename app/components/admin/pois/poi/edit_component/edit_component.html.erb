@@ -4,7 +4,7 @@
 #
 # Использует Ui::CardComponent
 # Отправляет через Admin::PoisReflex#update
-#%>
+# %>
 <%= render Ui::CardComponent.new do |card| %>
   <% card.with_body do %>
     <%= form_with model: poi,
@@ -114,7 +114,8 @@
           <%= t(".pick_location") %>
         </label>
         <div class="h-72 rounded-lg overflow-hidden border border-gray-200">
-          <%= render Poi::MapComponent.new(poi: poi, interactive: true) %>
+          <%# Compact: мини-карта без фильтров/кнопки добавления/features/тултипа %>
+          <%= render Poi::MapComponent.new(poi: poi, interactive: true, compact: true) %>
         </div>
         <p class="text-xs text-gray-400 mt-1"><%= t(".map_hint") %></p>
       </div>

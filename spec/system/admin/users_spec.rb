@@ -20,7 +20,9 @@ RSpec.describe 'Admin Users (браузер А → браузер Б)', type: :s
     browser_b do
       sign_in_via_ui(admin_b)
       visit admin_users_path
-      wait_for_selector('[data-admin-users-list]')
+      # Таймаут увеличен для Selenium headful (последовательные system-тесты
+      # грузят админку медленнее Cuprite — флаки «таблица не появилась»).
+      wait_for_selector('[data-admin-users-list]', timeout: 30)
       expect(page).to have_content(target_user.email)
       expect(page).to have_content(I18n.t('activerecord.attributes.user.statuses.suspended'))
     end

@@ -13,6 +13,11 @@ class PoisController < ApplicationController
   before_action :authenticate_user!, except: [ :index ]
   before_action :set_poi, only: [ :show, :update ]
 
+  # Список POI на карте загружается через PoiReflex (Poi.visible) — в index
+  # используется Poi.none; create/update работают с единичной записью через
+  # authorize, без policy_scope. Pundit-проверка scoping отключена.
+  skip_after_action :verify_policy_scoped
+
   #
   # Отображает карту со списком POI
   #
@@ -48,21 +53,12 @@ class PoisController < ApplicationController
   end
 
   #
-  # Отображает форму создания POI
-  #
-  # GET /pois/new
-  #
-  def new
-    authorize Poi, :create?
-
-    @poi = Poi.new
-    @categories = PoiCategory.active.by_position
-  end
-
-  #
   # Создаёт новый POI
   #
   # POST /pois
+  #
+  # При успехе — redirect (302); при ошибке валидации — JSON 422,
+  # который обрабатывает fetch-сабмит формы модалки (Poi::FormComponent).
   #
   def create
     authorize Poi, :create?
@@ -74,9 +70,7 @@ class PoisController < ApplicationController
 
     redirect_to pois_path, notice: t("pois.create_success")
   rescue PoiService::CreateError => e
-    @categories = PoiCategory.active.by_position
-    flash.now[:alert] = e.message
-    render :new, status: :unprocessable_entity
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   #

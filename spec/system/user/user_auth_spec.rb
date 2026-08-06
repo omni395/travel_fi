@@ -25,7 +25,9 @@ RSpec.describe 'Auth (браузер А → браузер Б)', type: :system d
     browser_b do
       sign_in_via_ui(admin_b)
       visit admin_users_path
-      wait_for_selector('[data-admin-users-list]')
+      # Таймаут увеличен для Selenium (headful/headless) — админка грузится
+      # медленнее Cuprite (флаки «таблица не появилась»).
+      wait_for_selector('[data-admin-users-list]', timeout: 35)
       expect(page).to have_content('new_traveler@example.com')
     end
   end

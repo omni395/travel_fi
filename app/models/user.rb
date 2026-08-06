@@ -67,6 +67,9 @@ class User < ApplicationRecord
   # Репутационные достижения (бейджи)
   has_many :gamifications, dependent: :destroy
 
+  # Созданные пользователем POI (бейджи first_poi/contributor, счётчики)
+  has_many :pois, dependent: :restrict_with_error
+
   # Кошельки (custodial — наш, external — собственный юзера)
   has_many :wallets, dependent: :destroy
 

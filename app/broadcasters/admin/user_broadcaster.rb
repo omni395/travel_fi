@@ -285,7 +285,13 @@ class Admin::UserBroadcaster
     html = +""
     if versions.any?
       versions.each do |v|
-        html << ApplicationController.render(Ui::AuditEntryComponent.new(version: v), layout: false)
+        # Per-entry устойчивость: битая версия (например, удалённая модель) не
+        # роняет рендер всей ленты (см. AuditLogComponent#render_entries_html).
+        begin
+          html << ApplicationController.render(Ui::AuditEntryComponent.new(version: v), layout: false)
+        rescue StandardError => e
+          Rails.logger.error("Failed to render user audit entry #{v.id}: #{e.class} #{e.message}")
+        end
       end
     else
       html << ApplicationController.render(Ui::AuditEntryComponent.new(version: nil), layout: false)

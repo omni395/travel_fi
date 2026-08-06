@@ -39,10 +39,13 @@ class PoiBroadcaster
     toast_html = render_toast
 
     # 1. Обновление элемента POI в списке сайдбара
-    cable_ready[UserChannel].morph(
-      selector: "[data-poi-id='#{poi.id}']",
-      html: card_html
-    )
+    # inner_html (НЕ morph — morph падает на undefined.dispatchEvent в CableReady).
+    if card_html.present?
+      cable_ready[UserChannel].inner_html(
+        selector: "[data-poi-id='#{poi.id}']",
+        html: card_html
+      )
+    end
 
     # 2. Toast-уведомление (если удалось отрендерить)
     if toast_html.present?
@@ -53,16 +56,28 @@ class PoiBroadcaster
       )
     end
 
-    # 3. Лента аудита POI для админов (AdminChannel)
+    # 3. Детальная карточка POI для админов (AdminChannel) — обёртка #poi-detail
+    # в show.html.erb. Раньше это делал Reflex через morph "#poi-detail"
+    # (нарушение эталона); теперь — только через Broadcaster, чтобы live-обновление
+    # видели ВСЕ подписанные админы, а не только инициатор.
+    show_html = render_poi_show_component
+    if show_html.present?
+      cable_ready["AdminChannel"].inner_html(
+        selector: "#poi-detail",
+        html: show_html
+      )
+    end
+
+    # 4. Лента аудита POI для админов (AdminChannel)
     audit_html = render_audit_component
     if audit_html.present?
-      cable_ready["AdminChannel"].morph(
+      cable_ready["AdminChannel"].inner_html(
         selector: "[data-audit-log]",
         html: audit_html
       )
     end
 
-    # 4. Триггерим перезагрузку маркеров на карте — ВСЕГДА
+    # 5. Триггерим перезагрузку маркеров на карте — ВСЕГДА
     cable_ready["UserChannel"].dispatch_event(
       name: "poi:reload-features"
     )
@@ -108,6 +123,20 @@ class PoiBroadcaster
   end
 
   #
+  # Рендерит детальную карточку POI для админки (AdminChannel, #poi-detail).
+  # Одиночный рендер через renderer допустим (аналог ListItemComponent);
+  # сбой — пустая строка, broadcast продолжается.
+  #
+  # @return [String] HTML строка ShowComponent
+  #
+  def render_poi_show_component
+    ApplicationController.renderer.render(Admin::Pois::Poi::ShowComponent.new(poi: poi))
+  rescue StandardError => e
+    Rails.logger.error("Failed to render Admin::Pois::Poi::ShowComponent: #{e.class} #{e.message}")
+    ""
+  end
+
+  #
   # Рендерит ленту аудита POI (версии PaperTrail) для админки.
   # Может упасть с Warden error в SolidQueue — возвращает пустую строку.
   #
@@ -119,7 +148,13 @@ class PoiBroadcaster
     html = +""
     if versions.any?
       versions.each do |v|
-        html << ApplicationController.render(Ui::AuditEntryComponent.new(version: v), layout: false)
+        # Per-entry устойчивость: битая версия (например, удалённая модель) не
+        # роняет рендер всей ленты (см. AuditLogComponent#render_entries_html).
+        begin
+          html << ApplicationController.render(Ui::AuditEntryComponent.new(version: v), layout: false)
+        rescue StandardError => e
+          Rails.logger.error("Failed to render POI audit entry #{v.id}: #{e.class} #{e.message}")
+        end
       end
     else
       html << ApplicationController.render(Ui::AuditEntryComponent.new(version: nil), layout: false)

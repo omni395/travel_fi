@@ -33,15 +33,17 @@ class VersionObserverJob < ApplicationJob
     return if AUDIT_ONLY_EVENTS.include?(version.event)
 
     case version.item_type
-    when 'User'
+    when "User"
       handle_user_update(version)
-    when 'Poi'
+    when "Poi"
       handle_poi_update(version)
-    when 'Setting'
+    when "PoiComment"
+      handle_poi_comment_update(version)
+    when "Setting"
       handle_setting_update(version)
-    when 'PoiCategory'
+    when "PoiCategory"
       handle_poi_category_update(version)
-    when 'PoiCategoryField'
+    when "PoiCategoryField"
       handle_poi_category_field_update(version)
     end
   end
@@ -53,26 +55,26 @@ class VersionObserverJob < ApplicationJob
   #
   def handle_user_update(version)
     user = version.item || version.reify
-    return unless user || version.event == 'destroy'
+    return unless user || version.event == "destroy"
 
     # 1. Административные бродкасты (всегда при изменении пользователя).
     # Каждая зона в rescue: сбой одного бродкаста не должен ронять весь job
     # (уведомления/остальные зоны доставляются).
     case version.event
-    when 'create'
+    when "create"
       safe_broadcast { Admin::DashboardBroadcaster.broadcast_recent_users_update }
       safe_broadcast { Admin::DashboardBroadcaster.broadcast_stats_update }
       safe_broadcast { Admin::UserBroadcaster.broadcast_user_created(user) }
-    when 'update'
+    when "update"
       safe_broadcast { Admin::DashboardBroadcaster.broadcast_stats_update }
       safe_broadcast { Admin::UserBroadcaster.broadcast_user_update(user) }
-    when 'destroy'
+    when "destroy"
       safe_broadcast { Admin::DashboardBroadcaster.broadcast_stats_update }
       safe_broadcast { Admin::UserBroadcaster.broadcast_user_destroy(user) } if user
     end
 
     # 2. Пользовательские бродкасты и уведомления (Live Update для клиента)
-    return if version.event == 'destroy' || user.nil?
+    return if version.event == "destroy" || user.nil?
 
     # Определяем, инициировано ли изменение администратором.
     # Контекст берём из version.whodunnit: Current.admin_context thread-local
@@ -89,13 +91,13 @@ class VersionObserverJob < ApplicationJob
     recipients = User.with_role(:admin).to_a
     recipients << user unless recipients.include?(user)
 
-    event_type = if version.event == 'create'
-                   'new_registration'
-                 elsif admin_initiated
-                   'user_updated_by_admin'
-                 else
-                   'user_updated_by_user'
-                 end
+    event_type = if version.event == "create"
+                   "new_registration"
+    elsif admin_initiated
+                   "user_updated_by_admin"
+    else
+                   "user_updated_by_user"
+    end
 
     recipients.each do |recipient|
       UserProfileNotification.with(item: user, event_type: event_type).deliver_later(recipient)
@@ -107,18 +109,28 @@ class VersionObserverJob < ApplicationJob
   #
   def handle_poi_update(version)
     poi = version.item || version.reify
-    return unless poi || version.event == 'destroy'
+    return unless poi || version.event == "destroy"
 
     # Административные бродкасты
     case version.event
-    when 'create', 'update'
+    when "create", "update"
       Admin::DashboardBroadcaster.broadcast_stats_update
     end
 
     # Пользовательские бродкасты
-    return if version.event == 'destroy' || poi.nil?
+    return if version.event == "destroy" || poi.nil?
 
     PoiBroadcaster.call(poi: poi)
+  end
+
+  #
+  # Маршрутизация обновлений модели PoiComment (live-комментарии)
+  #
+  def handle_poi_comment_update(version)
+    comment = version.item || version.reify
+    return unless comment
+
+    PoiCommentBroadcaster.call(comment: comment)
   end
 
   #

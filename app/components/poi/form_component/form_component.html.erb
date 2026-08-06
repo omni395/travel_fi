@@ -6,7 +6,8 @@
      data-poi--form-component-initial-lng="<%= initial_lng %>">
   <%# ОКНО МОДАЛКИ — основание окна живёт в компоненте (не в index) %>
   <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
-    <%= form_with model: edit_mode? ? poi : Poi.new, url: form_url, method: form_method, local: true, class: "p-6" do |f| %>
+    <%= form_with model: edit_mode? ? poi : Poi.new, url: form_url, method: form_method, local: true,
+                  html: { class: "p-6", data: { action: "submit->poi--form-component#handleSubmit" } } do |f| %>
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-lg font-semibold text-gray-900">
         <% if edit_mode? %>
@@ -17,9 +18,9 @@
         <%# Иконка: mdi-plus-circle / mdi-pencil %>
         <%= edit_mode? ? t(".edit_title") : t(".new_title") %>
       </h3>
-      <%= render Ui::BtnComponent.new(size: :sm, html: { class: "text-gray-400 hover:text-gray-600", data: { action: "poi--form-component#close" } }) do %>
-        <i class="mdi mdi-close text-xl"></i>
+      <%= render Ui::BtnComponent.new(color: :ghost, size: :sm, html: { data: { action: "poi--form-component#close" } }) do %>
         <%# Иконка: mdi-close %>
+        <i class="mdi mdi-close text-xl"></i>
       <% end %>
     </div>
 

@@ -11,9 +11,9 @@
 
   <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
     <%# Кнопка закрытия — правый верхний угол окна, вне контента, не прокручивается %>
-    <%= render Ui::BtnComponent.new(size: :sm, html: { class: "absolute top-3 right-3 z-10 w-8 h-8 rounded-full p-0 text-gray-400 hover:text-gray-600", data: { action: "click->poi--show-component#close" } }) do %>
-      <i class="mdi mdi-close text-xl"></i>
+    <%= render Ui::BtnComponent.new(color: :ghost, size: :sm, html: { class: "absolute top-3 right-3 z-10", data: { action: "click->poi--show-component#close" } }) do %>
       <%# Иконка: mdi-close %>
+      <i class="mdi mdi-close text-xl"></i>
     <% end %>
 
     <%# ШАПКА: двухколонная структура по образцу Ui::TooltipComponent %>

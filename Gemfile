@@ -51,9 +51,9 @@ group :development, :test do
   gem "rspec-rails"
   gem "factory_bot_rails"
 
-  # System-тесты «браузер А → браузер Б» (Capybara + Cuprite) + мок внешнего HTTP
+  # System-тесты «браузер А → браузер Б» (Capybara + Selenium Chrome) + мок внешнего HTTP
   gem "capybara"
-  gem "cuprite"
+  gem "selenium-webdriver"
   gem "webmock"
   gem "database_cleaner-active_record"
 end

@@ -154,7 +154,7 @@ contract TravelFiToken is ERC20, ERC20Permit, AccessControl, ReentrancyGuard, Pa
 
 
 // ============================================================================
-// 2. СМАРТ-КОНТРАКТ ОБМЕНА И КАССЫ (TravelFiCrowdsale)
+// 2. СМАРТ-КОНТРАКТ ОБМЕНА И КАССЫ (TravelFiCrowdsale) - С TON ORACLE
 // ============================================================================
 
 contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
@@ -164,11 +164,16 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
 
     TravelFiToken public token;
     IERC20 public usdt;
+    
+    // Оракулы
     AggregatorV3Interface public ethUsdPriceFeed;
+    AggregatorV3Interface public tonUsdPriceFeed;
 
     uint256 public usdtRate; 
     uint256 public usdtDecimals;
+    
     uint8 public oracleDecimals = 8;
+    uint8 public tonOracleDecimals = 8;
 
     uint256 public constant MAX_RATE_CHANGE_BPS = 1500;
     uint256 public constant RATE_COOLDOWN = 1 hours;
@@ -180,17 +185,18 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
 
     bool public useChainlinkOracle = true;
     uint256 public fallbackEthRate = 25_000 * 10**18; 
+    uint256 public fallbackTonRate = 5 * 10**18; // Запасной курс TON, например $5.00
 
     event TokensPurchased(address indexed buyer, uint256 amountIn, uint256 amountOut, string currency, uint256 timestamp);
     event TokensSold(address indexed seller, uint256 amountIn, uint256 amountOut, uint256 feeAmount, string currency, uint256 timestamp);
     event USDTRateUpdated(uint256 oldRate, uint256 newRate, uint256 timestamp);
     event SellFeeUpdated(uint256 newFeeBps, uint256 timestamp);
-    event OracleStatusUpdated(bool useOracle, address oracleAddress, uint8 decimals, uint256 timestamp);
+    event OracleStatusUpdated(bool useOracle, address ethOracleAddress, address tonOracleAddress, uint256 timestamp);
     event TokensWithdrawn(address indexed operator, address indexed to, address token, uint256 amount, uint256 timestamp);
 
     receive() external payable {}
 
-    constructor(address _token, address _usdt, address _priceFeed) payable {
+    constructor(address _token, address _usdt, address _ethPriceFeed, address _tonPriceFeed) payable {
         require(_token != address(0), "Invalid token address");
         require(_usdt != address(0), "Invalid USDT address");
 
@@ -200,22 +206,35 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         usdtDecimals = IERC20Metadata(_usdt).decimals();
         usdtRate = 10 * 10**18;
 
-        if (_priceFeed != address(0)) {
-            _updateOracleFeed(_priceFeed);
+        if (_ethPriceFeed != address(0)) {
+            _updateEthOracleFeed(_ethPriceFeed);
         } else {
             useChainlinkOracle = false;
+        }
+
+        if (_tonPriceFeed != address(0)) {
+            _updateTonOracleFeed(_tonPriceFeed);
         }
 
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(OPERATOR_ROLE, msg.sender);
     }
 
-    function _updateOracleFeed(address _priceFeed) internal {
+    function _updateEthOracleFeed(address _priceFeed) internal {
         ethUsdPriceFeed = AggregatorV3Interface(_priceFeed);
         try ethUsdPriceFeed.decimals() returns (uint8 dec) {
             oracleDecimals = dec;
         } catch {
             oracleDecimals = 8;
+        }
+    }
+
+    function _updateTonOracleFeed(address _priceFeed) internal {
+        tonUsdPriceFeed = AggregatorV3Interface(_priceFeed);
+        try tonUsdPriceFeed.decimals() returns (uint8 dec) {
+            tonOracleDecimals = dec;
+        } catch {
+            tonOracleDecimals = 8;
         }
     }
 
@@ -244,6 +263,55 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         } catch {
             return 0;
         }
+    }
+
+    function getLatestTONPrice() public view returns (uint256) {
+        if (!useChainlinkOracle || address(tonUsdPriceFeed) == address(0)) {
+            return 0;
+        }
+
+        try tonUsdPriceFeed.latestRoundData() returns (
+            uint80 roundId,
+            int256 price,
+            uint256,
+            uint256 updatedAt,
+            uint80 answeredInRound
+        ) {
+            if (
+                price <= 0 ||
+                updatedAt == 0 ||
+                updatedAt > block.timestamp ||
+                block.timestamp - updatedAt > STALE_PRICE_THRESHOLD ||
+                answeredInRound < roundId
+            ) {
+                return 0;
+            }
+            return uint256(price);
+        } catch {
+            return 0;
+        }
+    }
+
+    // Вспомогательная функция для бэкенда: расчет TFT за переданное количество TON (в wei)
+    function calculateTftForTon(uint256 tonAmountWei) public view returns (uint256) {
+        uint256 tonPrice;
+        
+        if (useChainlinkOracle) {
+            tonPrice = getLatestTONPrice();
+        }
+        
+        if (tonPrice == 0) {
+            require(fallbackTonRate > 0, "Fallback TON rate not set");
+            tonPrice = fallbackTonRate;
+        }
+
+        // Если цена получена из оракула (например 8 decimals), делим на (18 + tonOracleDecimals)
+        // Если из fallback (где уже 18 decimals), то логика как с fallbackEthRate
+        if (tonPrice == fallbackTonRate) {
+             return (tonAmountWei * fallbackTonRate * usdtRate) / (10 ** (18 + 18));
+        }
+
+        return (tonAmountWei * tonPrice * usdtRate) / (10 ** (18 + tonOracleDecimals));
     }
 
     function buyWithUSDT(uint256 usdtAmount, uint256 minTftOut) external nonReentrant whenNotPaused {
@@ -293,7 +361,6 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
     ) external nonReentrant whenNotPaused {
         require(tftAmount > 0, "Amount must be > 0");
 
-        // Прямой вызов permit с безопасным обработчиком try/catch
         try token.permit(msg.sender, address(this), tftAmount, deadline, v, r, s) {} catch {}
 
         uint256 grossUsdtAmount = (tftAmount * (10 ** usdtDecimals)) / usdtRate;
@@ -319,7 +386,6 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
     ) external nonReentrant whenNotPaused {
         require(tftAmount > 0, "Amount must be > 0");
 
-        // Прямой вызов permit с безопасным обработчиком try/catch
         try token.permit(msg.sender, address(this), tftAmount, deadline, v, r, s) {} catch {}
 
         uint256 grossEthAmount;
@@ -369,13 +435,26 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         emit SellFeeUpdated(_sellFeeBps, block.timestamp);
     }
 
-    function setOracleConfig(address _priceFeed, bool _useOracle, uint256 _fallbackRate) external onlyRole(DEFAULT_ADMIN_ROLE) {
-        if (_priceFeed != address(0)) {
-            _updateOracleFeed(_priceFeed);
+    function setOracleConfigs(
+        address _ethPriceFeed, 
+        address _tonPriceFeed, 
+        bool _useOracle, 
+        uint256 _fallbackEthRate, 
+        uint256 _fallbackTonRate
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        if (_ethPriceFeed != address(0)) {
+            _updateEthOracleFeed(_ethPriceFeed);
         }
+        if (_tonPriceFeed != address(0)) {
+            _updateTonOracleFeed(_tonPriceFeed);
+        }
+        
         useChainlinkOracle = _useOracle;
-        if (_fallbackRate > 0) fallbackEthRate = _fallbackRate;
-        emit OracleStatusUpdated(_useOracle, _priceFeed, oracleDecimals, block.timestamp);
+        
+        if (_fallbackEthRate > 0) fallbackEthRate = _fallbackEthRate;
+        if (_fallbackTonRate > 0) fallbackTonRate = _fallbackTonRate;
+        
+        emit OracleStatusUpdated(_useOracle, _ethPriceFeed, _tonPriceFeed, block.timestamp);
     }
 
     function transferToken(address tokenAddr, address to, uint256 amount)
@@ -420,7 +499,7 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
             uint256 ethBalance,
             uint256 currentUsdtRate,
             uint256 latestChainlinkEthPrice,
-            uint8 currentOracleDecimals,
+            uint256 latestChainlinkTonPrice,
             uint256 currentSellFeeBps,
             bool isPaused
         )
@@ -430,7 +509,7 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         ethBalance = address(this).balance;
         currentUsdtRate = usdtRate;
         latestChainlinkEthPrice = getLatestETHPrice();
-        currentOracleDecimals = oracleDecimals;
+        latestChainlinkTonPrice = getLatestTONPrice();
         currentSellFeeBps = sellFeeBps;
         isPaused = paused();
     }
