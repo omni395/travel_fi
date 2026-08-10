@@ -17,10 +17,11 @@ class UserService
   # Обрабатывает вход/регистрацию через Google OAuth
   #
   # @param auth [OmniAuth::AuthHash] данные от провайдера
+  # @param referral_code_input [String, nil] реферальный код (опционально)
   # @return [User] найденный или созданный пользователь
   #
-  def self.handle_google_oauth(auth)
-    new(user: nil, params: {}).handle_google_oauth(auth)
+  def self.handle_google_oauth(auth, referral_code_input = nil)
+    new(user: nil, params: {}).handle_google_oauth(auth, referral_code_input)
   end
 
   #
@@ -31,6 +32,25 @@ class UserService
   # @param params [Hash] параметры обновления (:name, :avatar)
   # @return [User] обновленный пользователь
   #
+  #
+  # Забирает разблокированные по лок-периоду начисления пользователя: ставит
+  # relay-Джоб (SolidQueue) для каждой available-записи, чтобы токены ушли на
+  # custodial-кошелёк. on-chain отправка — асинхронно, через очередь.
+  #
+  # @param user [User] пользователь, забирающий награды
+  # @return [Integer] количество поставленных в очередь начислений
+  #
+  def self.claim_rewards!(user)
+    available = user.token_transactions.unclaimed.available
+    available.each do |tx|
+      TokenTransactionRelayJob.perform_later(tx.id)
+    end
+    available.count
+  rescue StandardError => e
+    Rails.logger.error("UserService.claim_rewards! error: #{e.class} #{e.message}")
+    0
+  end
+
   def self.call(user:, params:)
     service = new(user: user, params: params)
     service.update
@@ -104,27 +124,53 @@ class UserService
   end
 
   #
-  # Начисляет бонусы за регистрацию: welcome-токены + реферальный бонус.
+  # Фиксирует реферальную связь при регистрации (persisted в БД).
+  # Вызывается в момент создания юзера (email или OAuth), чтобы связь
+  # пережила подтверждение почты (ссылка из письма — другой запрос,
+  # виртуальный атрибут referral_code_input там недоступен).
   #
   # @param user [User] только что созданный пользователь
-  # @param referral_code_input [String, nil] реферальный код, введённый при регистрации
+  # @param referral_code_input [String, nil] реферальный код
   #
-  def self.award_registration_bonus!(user, referral_code_input = nil)
-    GamificationService.award!(:registration, user)
-
+  def self.save_referral!(user, referral_code_input)
     return if referral_code_input.blank?
+    return if user.referred_by_id.present?
 
     referrer = User.find_by(referral_code: referral_code_input)
-    GamificationService.award_referral!(referrer, user) if referrer
+    return unless referrer
+
+    user.update!(referred_by: referrer)
   end
 
   #
-  # Обрабатывает логику Google OAuth
+  # Начисляет бонусы за регистрацию: welcome-токены + реферальный бонус.
+  # Вызывается ТОЛЬКО когда юзер достиг статуса active (для email — после
+  # подтверждения, для OAuth — сразу). Реферальная связь уже в БД (save_referral!).
   #
-  def handle_google_oauth(auth)
+  # @param user [User] активный пользователь
+  #
+  def self.award_registration_bonus!(user)
+    GamificationService.award!(:registration, user)
+
+    referrer = user.referred_by
+    return unless referrer
+
+    GamificationService.award_referral!(referrer, user)
+  end
+
+  #
+  # Обрабатывает логику Google OAuth.
+  # OAuth-юзер сразу активен → custodial-кошелёк + welcome-токены и реферальные
+  # бонусы начисляются сразу (накопление = по достижению статуса active).
+  #
+  # @param auth [OmniAuth::AuthHash] данные от провайдера
+  # @param referral_code_input [String, nil] реферальный код (опционально)
+  # @return [User]
+  #
+  def handle_google_oauth(auth, referral_code_input = nil)
     user = User.find_or_initialize_by(provider: 'google_oauth2', uid: auth.uid)
     is_new_user = user.new_record?
-    
+
     if is_new_user
       user.email = auth.info.email
       user.name = auth.info.name
@@ -133,15 +179,21 @@ class UserService
       user.skip_confirmation!
     end
 
-    user.save!(validate: false)
+    # Единая транзакция для нового OAuth-юзера: создание + кошелёк + начисления.
+    # Атомарность исключает частичное состояние (юзер есть, а бонусов нет —
+    # падение на любом этапе откатывает всю ветку начислений).
+    ActiveRecord::Base.transaction do
+      user.save!(validate: false)
 
-    if is_new_user
-      self.class.create_default_settings(user)
-      attach_oauth_avatar(user, auth.info.image) if auth.info.image.present?
-      log_oauth_registration(user, auth)
-      # OAuth: юзер сразу активен → скрытый custodial-кошелёк и welcome-токены сразу.
-      WalletService.create_hidden_wallet(user: user)
-      self.class.award_registration_bonus!(user)
+      if is_new_user
+        self.class.create_default_settings(user)
+        attach_oauth_avatar(user, auth.info.image) if auth.info.image.present?
+        log_oauth_registration(user, auth)
+        self.class.save_referral!(user, referral_code_input)
+        # OAuth: юзер сразу активен → скрытый custodial-кошелёк и начисления сразу.
+        WalletService.create_hidden_wallet(user: user)
+        self.class.award_registration_bonus!(user)
+      end
     end
 
     user

@@ -105,3 +105,5 @@ application.register('ui--tooltip-component', () => import('../../components/ui/
 application.register('users--form-component', () => import('../../components/users/form_component/form_component_controller.js'))
 
 application.register('users--profile-component', () => import('../../components/users/profile_component/profile_component_controller.js'))
+
+application.register('users--rewards-component', () => import('../../components/users/rewards_component/rewards_component_controller.js'))

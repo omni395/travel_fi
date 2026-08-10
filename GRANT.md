@@ -62,11 +62,11 @@ Travel Fi — community-driven карта для путешественнико�
 Строго по ROADMAP (Блок B — Контракт/кошелёк, Блок C — Web3 UI):
 
 1. **Custodial-кошелёк**: модель `Wallet` (`user_id, address, encrypted_private_key, chain_id`), `WalletService.create_hidden_wallet`, автосоздание при активации пользователя. Шифрование приватных ключей.
-2. **EIP-2771 (спонсированные транзакции)**: forwarder-контракт, `ContractService.send_transaction_sponsored` (газ платит платформа), admin hot-wallet с балансом. UX: пользователь не платит за газ.
+2. **EIP-2771 (спонсированные транзакции)**: forwarder-контракт, sponsored-отправка через сервис транзакций (газ платит платформа), admin hot-wallet с балансом. UX: пользователь не платит за газ.
 3. **Деплой контрактов на [СЕТЬ]**: `TravelFiToken` (ERC-20, mint/burn/pause), `TravelFiRewards` (награды с локом), `TravelFiCrowdsale` (покупка за USDT/ETH) — при необходимости по итогам ревью контракта.
 4. **Web3 UI**: wallet-контроллер (viem), MetaMask/WalletConnect (для продвинутых), баланс TFT/USDT/ETH, purchase (Crowdsale), claim (Rewards), админка контрактов (mint/rate/pause/награды).
 5. **Интеграция геймификации**: начисление TFT за активность (POI, фото, комментарии, рефералы) через существующий `GamificationService`.
-6. **Тесты Web3-слоя**: модель Wallet, `WalletService`, `ContractService`, политики, конвейер broadcast.
+6. **Тесты Web3-слоя**: модель Wallet, `WalletService`, `TokenTransactionService`, политики, конвейер broadcast.
 7. **Документация и безопасность**: ревью контракта, документация интеграции, отчёт по гранту.
 
 ## 6. Бюджет
@@ -74,7 +74,7 @@ Travel Fi — community-driven карта для путешественнико�
 | Позиция | Сумма |
 |---|---|
 | Custodial wallet + шифрование ключей | $5k–$10k |
-| EIP-2771 forwarder + `ContractService` + hot wallet | $4k–$8k |
+| EIP-2771 forwarder + sponsored-отправка + hot wallet | $4k–$8k |
 | Деплой и ревью контрактов на [СЕТЬ] | $3k–$6k |
 | Web3 UI (viem, MetaMask/WalletConnect, админка контрактов) | $7k–$12k |
 | Интеграция геймификации + тесты Web3 | $5k–$8k |

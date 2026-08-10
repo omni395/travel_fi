@@ -52,13 +52,25 @@ class Ui::AvatarComponent < ApplicationComponent
   end
 
   #
-  # URL аватара пользователя (вариант для отображения)
+  # URL аватара пользователя (вариант для отображения).
+  # Fallback: если variant-URL не построился (нет host в SolidQueue worker,
+  # representation ещё не готов и т.п.) — отдаём прямой blob-URL, чтобы аватар
+  # отображался всегда (баг «аватар Google OAuth иногда не показывается»).
   #
   # @return [String, nil] URL аватара
   #
   def avatar_url
     return nil unless user.avatar.attached?
 
-    rails_representation_url(user.avatar.variant(resize_to_fill: [120, 120]))
+    blob = user.avatar
+    begin
+      rails_representation_url(blob.variant(resize_to_fill: [120, 120]))
+    rescue StandardError => e
+      Rails.logger.warn("AvatarComponent: variant URL failed for user #{user.id}: #{e.class} #{e.message}")
+      rails_blob_url(blob)
+    end
+  rescue StandardError => e
+    Rails.logger.warn("AvatarComponent: avatar URL failed for user #{user.id}: #{e.class} #{e.message}")
+    nil
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_06_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_10_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
@@ -214,6 +214,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_000001) do
     t.index ["user_id"], name: "index_settings_on_user_id", unique: true
   end
 
+  create_table "token_transactions", force: :cascade do |t|
+    t.string "action_key", null: false
+    t.decimal "amount", precision: 30, scale: 18, null: false
+    t.string "chain_id", null: false
+    t.boolean "claimed", default: false, null: false
+    t.datetime "created_at", null: false
+    t.string "direction", default: "credit", null: false
+    t.jsonb "metadata", default: {}
+    t.string "status", default: "pending", null: false
+    t.string "tx_hash"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.bigint "user_reward_id"
+    t.bigint "wallet_id"
+    t.index ["action_key"], name: "index_token_transactions_on_action_key"
+    t.index ["status"], name: "index_token_transactions_on_status"
+    t.index ["user_id", "claimed"], name: "index_token_transactions_on_user_id_and_claimed"
+    t.index ["user_id"], name: "index_token_transactions_on_user_id"
+    t.index ["user_reward_id"], name: "index_token_transactions_on_user_reward_id", unique: true
+    t.index ["wallet_id"], name: "index_token_transactions_on_wallet_id"
+  end
+
   create_table "user_rewards", force: :cascade do |t|
     t.string "action_key", null: false
     t.decimal "amount", precision: 30, scale: 18, null: false
@@ -239,6 +261,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_000001) do
     t.string "name", default: "User", null: false
     t.string "provider"
     t.string "referral_code"
+    t.bigint "referred_by_id"
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
@@ -256,6 +279,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_000001) do
     t.index ["name"], name: "index_users_on_name"
     t.index ["provider", "uid"], name: "index_users_on_provider_and_uid", unique: true, where: "(provider IS NOT NULL)"
     t.index ["referral_code"], name: "index_users_on_referral_code", unique: true, where: "(referral_code IS NOT NULL)"
+    t.index ["referred_by_id"], name: "index_users_on_referred_by_id"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["slug"], name: "index_users_on_slug", unique: true
     t.index ["status"], name: "index_users_on_status"
@@ -306,7 +330,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_06_000001) do
   add_foreign_key "pois", "poi_categories"
   add_foreign_key "pois", "users"
   add_foreign_key "settings", "users", on_delete: :cascade
+  add_foreign_key "token_transactions", "user_rewards"
+  add_foreign_key "token_transactions", "users"
+  add_foreign_key "token_transactions", "wallets"
   add_foreign_key "user_rewards", "users"
   add_foreign_key "user_rewards", "wallets"
+  add_foreign_key "users", "users", column: "referred_by_id"
   add_foreign_key "wallets", "users"
 end

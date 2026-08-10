@@ -1,0 +1,17 @@
+---
+en:
+  users:
+    rewards_component:
+      title: Rewards history
+      empty: No rewards yet
+      locked_balance: Locked
+      available_balance: Available
+      claim_button: Claim rewards
+      action_keys:
+        registration: Registration bonus
+        referral_bonus_referrer: Referral bonus (referrer)
+        referral_bonus_new_user: Referral bonus (new user)
+        poi_create: POI created
+        poi_photo_add: POI photo added
+        comment_create: Comment created
+        poi_vote: POI voted

@@ -41,16 +41,53 @@ export default class extends ApplicationController {
   connect() {
     super.connect()
     document.addEventListener("poi:open-modal", this.open.bind(this))
+
+    // Форма вставлена через inner_html (PoiReflex#edit_poi) без события
+    // poi:open-modal. CableReady применяет операции по порядку: inner_html
+    // (connect срабатывает, пока overlay ещё hidden) → remove_css_class(hidden).
+    // Поэтому инициализируем карту ТОЛЬКО когда overlay стал видимым:
+    // иначе мини-карта не создаётся и reverse geocoding/адрес не заполняются
+    // (баг «редактирование POI — карта не инициализируется», ROADMAP 2.2).
+    const overlay = this.element.closest("[data-poi--show-component-target='overlay']")
+    if (this._map) return
+
+    if (overlay && overlay.classList.contains("hidden")) {
+      this._observeOverlay(overlay)
+    } else {
+      setTimeout(() => this.initMiniMap(), 100)
+    }
   }
 
   disconnect() {
     super.disconnect()
     document.removeEventListener("poi:open-modal", this.open.bind(this))
+    if (this._overlayObserver) {
+      this._overlayObserver.disconnect()
+      this._overlayObserver = null
+    }
     if (this._map) {
       this._map.setTarget(null)
       this._map = null
     }
     clearTimeout(this._reverseGeocodeTimer)
+  }
+
+  /**
+   * Следит за overlay: как только снят класс hidden (CableReady remove_css_class),
+   * инициализирует мини-карту. Используется при inner_html-вставке формы,
+   * когда connect срабатывает раньше снятия hidden.
+   *
+   * @param {HTMLElement} overlay контейнер модалки (data-poi--show-component-target="overlay")
+   */
+  _observeOverlay(overlay) {
+    if (this._overlayObserver) this._overlayObserver.disconnect()
+    this._overlayObserver = new MutationObserver(() => {
+      if (overlay.classList.contains("hidden") || this._map) return
+      this._overlayObserver.disconnect()
+      this._overlayObserver = null
+      setTimeout(() => this.initMiniMap(), 100)
+    })
+    this._overlayObserver.observe(overlay, { attributes: true, attributeFilter: ["class"] })
   }
 
   // ============================================================
@@ -500,6 +537,17 @@ export default class extends ApplicationController {
   handleSubmit(event) {
     event.preventDefault()
     const form = event.target
+
+    // Валидация координат: без широты/долготы форму не отправляем.
+    // Кнопка остаётся активной, но сабмит блокируется с сообщением
+    // (ROADMAP 2.2 — «без координат: скрыть кнопку + сообщение»).
+    const lat = parseFloat(this.hasLatitudeTarget ? this.latitudeTarget.value : 0)
+    const lng = parseFloat(this.hasLongitudeTarget ? this.longitudeTarget.value : 0)
+    if (!lat || !lng) {
+      this._showFormError(this.element.dataset.poiFormComponentMissingCoords || 'Coordinates are required')
+      return
+    }
+
     const body = new FormData(form)
 
     this._clearFormError()

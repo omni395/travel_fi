@@ -116,6 +116,11 @@ en:
       view_category: "View Categories"
     account_deleted:
       subject: "Your account has been deleted"
+      title: "Account Deleted"
+      hello: "Hello, %{name},"
+      message: "Your Travel-Fi account has been deleted."
+      contact_support: "If this was a mistake, please contact support."
+    footer: "Travel-Fi — WiFi for travelers"
 
   notifications:
     user_updated: "User %{name} was updated."
@@ -135,6 +140,12 @@ en:
     osm_import_complete_title: "OSM Import Completed"
     poi_category_updated: "POI category %{category} was updated."
     poi_category_updated_title: "POI Category Updated"
+    contract_balance:
+      title: "Reward Pool Balance"
+      title_warning: "Low Reward Pool Balance"
+      title_critical: "Critically Low Reward Pool Balance"
+      warning: "Reward pool balance is low: %{balance} TFT (below warning threshold %{warning_balance})."
+      critical: "Reward pool balance is critically low: %{balance} TFT (below critical threshold %{critical_balance})."
 
   settings:
     title: "Notification Settings"
@@ -265,6 +276,9 @@ en:
       not_authorized: "You are not authorized to update this profile"
       update_error: "An error occurred while updating your profile"
       profile_updated: "Profile updated successfully!"
+      no_rewards_available: "No rewards are available to claim yet."
+      rewards_claiming: "Rewards are being claimed (%{count}). They will appear in your wallet shortly."
+      claim_error: "An error occurred while claiming your rewards."
     admin:
       users:
         update_unauthorized: "You are not authorized to update this user"

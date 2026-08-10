@@ -17,7 +17,7 @@
                 <% else %>
                   <h3 style="margin: 0;"> <%= project_name %> </h3>
                 <% end %>
-                <h1 style="font-size: 22px; margin: 16px 0 8px; color: #111827;"> <%= t('devise.mailer.confirmation_instructions.greeting') %> </h1>
+                <h1 style="font-size: 22px; margin: 16px 0 8px; color: #111827;"> <%= t('devise.mailer.confirmation_instructions.greeting', name: @user.name) %> </h1>
                 <p style="color: #6b7280; font-size: 15px; line-height: 1.5; margin: 0 0 24px;">
                   <%= t('devise.mailer.confirmation_instructions.instruction') %>
                 </p>

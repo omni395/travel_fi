@@ -17,3 +17,7 @@ production:
     class: UserInactivityJob
     queue: default
     schedule: every day at 4am
+  check_contract_balances:
+    class: ContractBalanceCheckJob
+    queue: default
+    schedule: every hour at minute 30

@@ -5,4 +5,31 @@ en:
       user:
         wallet_component:
           wallet_title: Wallet
-          wallet_placeholder: Wallet functionality coming soon
+          token_balance: Token Balance
+          tft_balance: "%{balance} TFT"
+          referred_by: Referred by
+          referrals_count:
+            one: "%{count} referral"
+            other: "%{count} referrals"
+          transactions_title: Transactions
+          empty_transactions: No transactions yet
+          date: Date
+          action: Action
+          amount: Amount
+          status: Status
+          tx_hash: Tx Hash
+          directions:
+            credit: Credit
+            debit: Debit
+          statuses:
+            pending: Pending
+            confirmed: Confirmed
+            failed: Failed
+          action_keys:
+            registration: Registration bonus
+            referral_bonus_referrer: Referral bonus (referrer)
+            referral_bonus_new_user: Referral bonus (new user)
+            poi_create: POI created
+            poi_photo_add: POI photo added
+            comment_create: Comment created
+            poi_vote: POI voted

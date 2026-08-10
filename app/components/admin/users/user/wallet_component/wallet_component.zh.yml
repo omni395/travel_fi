@@ -5,4 +5,30 @@ zh:
       user:
         wallet_component:
           wallet_title: 钱包
-          wallet_placeholder: 钱包功能即将推出
+          token_balance: 代币余额
+          tft_balance: "%{balance} TFT"
+          referred_by: 推荐人
+          referrals_count:
+            other: "%{count} 个推荐"
+          transactions_title: 交易记录
+          empty_transactions: 暂无交易
+          date: 日期
+          action: 操作
+          amount: 金额
+          status: 状态
+          tx_hash: 链上哈希
+          directions:
+            credit: 入账
+            debit: 出账
+          statuses:
+            pending: 待处理
+            confirmed: 已确认
+            failed: 失败
+          action_keys:
+            registration: 注册奖励
+            referral_bonus_referrer: 推荐奖励（推荐人）
+            referral_bonus_new_user: 推荐奖励（新用户）
+            poi_create: 创建 POI
+            poi_photo_add: 添加 POI 照片
+            comment_create: 发表评论
+            poi_vote: 为 POI 投票

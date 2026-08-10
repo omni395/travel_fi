@@ -5,7 +5,7 @@
 #
 # amount — количество токенов (TFT, decimals 18), action_key — тип начисления
 # (registration, referral_bonus_*, poi_create и т.д.). On-chain отправка на кошелёк —
-# через ContractService (контракты уже задеплоены, см. .env).
+# через TokenTransactionService.relay! (контракты уже задеплоены, см. .env).
 #
 class UserReward < ApplicationRecord
   # Аудит всех начислений.

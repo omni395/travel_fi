@@ -82,11 +82,36 @@ zh:
       failure: 'Could not authorize you from %{kind} because "%{reason}".'
     mailer:
       confirmation_instructions:
-        subject: 'Confirmation instructions'
+        subject: '确认邮件'
+        greeting: '您好，%{name}，'
+        instruction: '您可以通过以下链接确认您的账户邮箱：'
+        action: '确认我的账户'
+        instruction_2: '如果您没有请求此操作，请忽略此邮件。'
+        closing: '如果您没有创建此账户，请忽略此邮件。'
       reset_password_instructions:
-        subject: '重新设置密码'
+        subject: '重置密码'
+        greeting: '您好，%{name}，'
+        instruction: '有人请求了更改您密码的链接。您可以通过以下链接进行操作：'
+        action: '修改我的密码'
+        instruction_2: '如果您没有请求此操作，请忽略此邮件。'
+        closing: '在您访问上方链接并设置新密码之前，您的密码不会更改。'
       unlock_instructions:
-        subject: 'Unlock Instructions'
+        subject: '解锁说明'
+        greeting: '您好，%{name}，'
+        message: '由于登录尝试失败次数过多，您的账户已被锁定。'
+        action: '解锁我的账户'
+        instruction: '点击以下链接解锁您的账户：'
+        closing: '如果您没有请求此操作，请忽略此邮件。'
+      email_changed:
+        subject: '邮箱已更改'
+        greeting: '您好，%{name}，'
+        message: '我们通知您，您的邮箱已更改为 %{email}。'
+        closing: '如果是您本人操作，可忽略此邮件。如果不是，请联系支持。'
+      password_change:
+        subject: '密码已更改'
+        greeting: '您好，%{name}，'
+        message: '我们通知您，您的密码已更改。'
+        closing: '如果不是您本人操作，请立即重置密码。'
     users:
       user:
         updated: 个人设置成功更新

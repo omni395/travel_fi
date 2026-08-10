@@ -1,1 +1,5 @@
 /* Admin::Users::User::WalletComponent styles */
+/* Изолировано внутри корневого класса .wallet-component */
+.wallet-component {
+  /* Стили Tailwind используются напрямую в шаблоне; кастомные правила не требуются */
+}

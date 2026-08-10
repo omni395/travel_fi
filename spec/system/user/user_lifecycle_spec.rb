@@ -43,8 +43,11 @@ RSpec.describe 'User (браузер А → браузер Б): полный ж�
     expect(user).to have_role(:user)
     expect(user.setting).to be_present
     expect(user.referral_code).to be_present
-    # Welcome-токены TFT начисляются при email-регистрации (токен-модель).
-    expect(user.reload.token_balance).to be > 0
+    # До подтверждения email — начислений НЕТ (точка начисления = статус active).
+    expect(user.reload.token_balance).to eq(0)
+    # Скрытый custodial-кошелёк создаётся СРАЗУ при регистрации (не ждём
+    # подтверждения), чтобы начисления после активации сразу получили on-chain адрес.
+    expect(user.reload.wallet).to be_present
 
     # ---------- 2. Подтверждение email (анонимная сессия, как клик по ссылке из письма) ----------
     token = user.reload.confirmation_token
@@ -56,9 +59,14 @@ RSpec.describe 'User (браузер А → браузер Б): полный ж�
     end
     expect(PaperTrail::Version.where(item_type: 'User', item_id: user.id, event: 'email_verified')).to exist
 
+    # После подтверждения (статус active) — welcome-токены начислены и relay поставлен.
+    expect(user.reload.token_balance).to be > 0
+    expect(user.reload.token_transactions.map(&:action_key)).to include('registration')
+
     # ---------- 3. Скрытый custodial-кошелёк ----------
     wallet = user.reload.wallet
     expect(wallet).to be_present
+    # Кошелёк уже был создан при регистрации (см. шаг 1) — повторный вызов идемпотентен.
     expect(wallet.address).to match(/\A0x[0-9a-fA-F]{40}\z/)
     expect(wallet.chain_id).to be_present
     expect(wallet.encrypted_private_key).to be_present
@@ -96,16 +104,19 @@ RSpec.describe 'User (браузер А → браузер Б): полный ж�
       expect(page).to have_content('Updated Traveler')
     end
 
-    # ---------- 5. Профиль: рендер с кошельком, балансом и актуальными данными ----------
+    # ---------- 5. Профиль: рендер с балансом и актуальными данными ----------
+    # Юзер залогинен в сессии :confirm (после подтверждения email);
+    # в :register он НЕ залогинен (регистрация не авторизует до подтверждения).
     # (live-обновление имени через user_N стрим — ограничение рендера ProfileComponent
     # из SolidQueue-контекста, см. ROADMAP 2.3 — Б7.)
-    using_session(:register) do
+    using_session(:confirm) do
       visit user_path(id: user)
       wait_for_selector("[data-user-profile-id='#{user.id}']")
       expect(page).to have_content('Updated Traveler')
       expect(page).to have_text(/suspended/i)
       expect(page).to have_content('TFT Balance')
-      expect(page).to have_content(user.wallet.address)
+      # Кошелёк в профиле юзера скрыт (только админ видит его во вкладке Wallet).
+      expect(page).not_to have_content(user.wallet.address)
     end
 
     # ---------- 6. Мягкое удаление: юзеров НЕ удаляем, только статус deleted ----------

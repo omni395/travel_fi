@@ -46,7 +46,9 @@
         <%# Кнопки действий %>
         <div class="flex flex-col gap-2 w-full sm:w-auto">
           <%# Редактировать %>
-          <%= link_to admin_user_path(id: user, edit: true, q: params[:q], status: params[:status]),
+          <%# Без q/status: компонент рендерится и из SolidQueue worker (Admin::UserBroadcaster),
+              где params недоступен — фильтры списка в ссылке не сохраняем. %>
+          <%= link_to admin_user_path(id: user, edit: true),
                       class: "btn-ui btn-ui--primary btn-ui--md" do %>
             <!-- mdi: pencil -->
             <i class="mdi mdi-pencil"></i>
