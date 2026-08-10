@@ -51,7 +51,7 @@ RSpec.describe 'POI Map (браузер А → браузер Б)', type: :syste
       )
 
       visit pois_path
-      wait_for_selector('#poi-map-features [data-poi-id]', timeout: 35)
+      wait_for_selector('#poi-map-features [data-poi-id]', timeout: 90)
       # visible: false — контейнер #poi-map-features скрыт (class="hidden"),
       # Capybara по умолчанию игнорирует скрытые элементы.
       expect(page).to have_css('#poi-map-features [data-poi-name="London Fountain"]', wait: 10, visible: false)

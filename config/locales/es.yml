@@ -5,6 +5,25 @@ es:
     es: "Español"
     zh: "中文"
 
+  mailer:
+    profile_updated:
+      subject: "Tu perfil ha sido actualizado"
+      greeting: "Hola, %{name},"
+      body: "La información de tu perfil ha sido actualizada."
+      view_profile: "Ver perfil"
+    osm_import_complete:
+      subject: "Importación OSM completada"
+      greeting: "Hola, %{name},"
+      body: "La importación OSM ha finalizado. Revisa las categorías de POI actualizadas."
+      view_category: "Ver categorías"
+    account_deleted:
+      subject: "Tu cuenta ha sido eliminada"
+      title: "Cuenta eliminada"
+      hello: "Hola, %{name},"
+      message: "Tu cuenta de Travel-Fi ha sido eliminada."
+      contact_support: "Si fue un error, contacta con soporte."
+    footer: "Travel-Fi — WiFi para viajeros"
+
   common:
     edit_profile: "Editar Perfil"
     save: "Guardar"
@@ -95,6 +114,12 @@ es:
     osm_import_complete_title: "Importación OSM completada"
     poi_category_updated: "La categoría de POI %{category} fue actualizada."
     poi_category_updated_title: "Categoría de POI actualizada"
+    contract_balance:
+      title: "Saldo del pool de recompensas"
+      title_warning: "Saldo bajo del pool de recompensas"
+      title_critical: "Saldo críticamente bajo del pool de recompensas"
+      warning: "El saldo del pool de recompensas es bajo: %{balance} TFT (por debajo del umbral de advertencia %{warning_balance})."
+      critical: "El saldo del pool de recompensas es críticamente bajo: %{balance} TFT (por debajo del umbral crítico %{critical_balance})."
 
   admin:
     poi_categories:
@@ -195,6 +220,13 @@ es:
       moderator: "Moderador"
 
   reflexes:
+    user:
+      not_authorized: "No estás autorizado para actualizar este perfil"
+      update_error: "Error al actualizar el perfil"
+      profile_updated: "¡Perfil actualizado con éxito!"
+      no_rewards_available: "Aún no hay recompensas disponibles para reclamar."
+      rewards_claiming: "Recompensas en proceso (%{count}). Aparecerán en tu cartera pronto."
+      claim_error: "Error al reclamar tus recompensas."
     admin:
       poi_categories:
         create_success: "Categoría creada exitosamente"

@@ -1,4 +1,4 @@
-<h2><%= t("devise.mailer.unlock_instructions.greeting") %></h2>
+<h2><%= t("devise.mailer.unlock_instructions.greeting", name: @user.name) %></h2>
 
 <p>
   <%= t("devise.mailer.unlock_instructions.message") %>

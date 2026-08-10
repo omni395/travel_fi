@@ -2,6 +2,31 @@ class User < ApplicationRecord
   extend FriendlyId
   friendly_id :name, use: :slugged
 
+  #
+  # Перегенерирует slug при изменении имени.
+  # Без этого ссылки на профиль (friendly_id) остаются со старым slug после смены name.
+  #
+  # @return [Boolean] true если name изменился
+  #
+  def should_generate_new_friendly_id?
+    name_changed?
+  end
+
+  #
+  # Возвращает читаемый slug; при пустом/непараметризуемом имени использует
+  # "user-<id>" (до сохранения — случайный суффикс). Защищает от nil-слогов
+  # у пользователей, созданных без имени (например, через OAuth).
+  #
+  # @param value [String] исходное значение (name)
+  # @return [String] нормализованный slug
+  #
+  def normalize_friendly_id(value)
+    normalized = super
+    return normalized if normalized.present?
+
+    "user-#{id || SecureRandom.hex(4)}"
+  end
+
   rolify
 
   # PaperTrail - аудит всех изменений пользователя
@@ -75,6 +100,16 @@ class User < ApplicationRecord
 
   # Токен-начисления (off-chain леджер TFT)
   has_many :user_rewards, dependent: :destroy
+
+  # Журнал движения токенов TFT (credit/debit, on-chain статус)
+  has_many :token_transactions, dependent: :destroy
+
+  # Реферальная связь: кто пригласил этого пользователя (self-join).
+  # referred_by_id заполняется при регистрации, если был введён рефкод.
+  belongs_to :referred_by, class_name: "User", optional: true
+
+  # Пользователи, приглашённые по реферальному коду (self-join).
+  has_many :referrals, class_name: "User", foreign_key: :referred_by_id
 
   # Валидации
   validates :email, presence: true, uniqueness: true
@@ -164,10 +199,11 @@ class User < ApplicationRecord
   # Делегирует логику в UserService
   #
   # @param auth [Hash] OmniAuth auth hash от провайдера
+  # @param referral_code_input [String, nil] реферальный код (опционально)
   # @return [User] найденный или созданный пользователь
   #
-  def self.from_google_oauth(auth)
-    UserService.handle_google_oauth(auth)
+  def self.from_google_oauth(auth, referral_code_input = nil)
+    UserService.handle_google_oauth(auth, referral_code_input)
   end
 
   # --- Токены и достижения ---
@@ -179,6 +215,16 @@ class User < ApplicationRecord
   #
   def token_balance
     user_rewards.sum(:amount)
+  end
+
+  #
+  # Количество пользователей, приглашённых по реферальному коду.
+  # Используется условием бейджа recruiter (config/gamification.yml).
+  #
+  # @return [Integer] количество рефералов
+  #
+  def referrals_count
+    referrals.count
   end
 
   #

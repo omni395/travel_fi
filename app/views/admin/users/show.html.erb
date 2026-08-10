@@ -36,7 +36,9 @@
         active_tab: active_tab,
         panels: {
           activity:  render(Admin::Users::User::ActivityComponent.new(user: @user)),
-          wallet:    render(Admin::Users::User::WalletComponent.new(user: @user)),
+          wallet:    content_tag(:div, data: { admin_user_wallet: true }) do
+                       render(Admin::Users::User::WalletComponent.new(user: @user))
+                     end,
           audit_log: content_tag(:div, data: { audit_log: true }) do
             if @versions.any?
               @versions.each { |v| concat render(Ui::AuditEntryComponent.new(version: v)) }

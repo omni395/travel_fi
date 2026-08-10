@@ -17,30 +17,28 @@ class Users::RegistrationsController < Devise::RegistrationsController
     # Обработаем аватар ДО того как сохранится пользователь
     process_avatar_before_save
 
-    super do |resource|
-      # Логируем регистрацию и вход (Devise вызывает sign_in после create)
-      if resource.persisted?
-        # Создаем настройки уведомлений по умолчанию
-        UserService.create_default_settings(resource)
+    self.resource = build_resource(sign_up_params)
+    resource.save
 
-        # Welcome-токены за регистрацию + реферальный бонус (бизнес-логика в Service).
-        UserService.award_registration_bonus!(resource, resource.referral_code_input)
+    if resource.persisted?
+      # Служебные данные + начисления (бизнес-логика в Service).
+      setup_new_user(resource)
 
-        # Логируем регистрацию со ВСЕМИ заполненными полями
-        registration_changes = {
-          email: { old: nil, new: resource.email },
-          name: { old: nil, new: resource.name }
-        }
-        # Добавляем аватар в изменения если был загружен
-        registration_changes[:avatar] = { old: nil, new: "Attached" } if resource.avatar.attached?
-
-        UserAuditLogger.log_registration(resource, registration_changes) if defined?(UserAuditLogger)
-        # Timestamps будут разные благодаря счётчику в UserAuditLogger
-        UserAuditLogger.log_login(resource) if defined?(UserAuditLogger)
-
-        # Devise сам обрабатывает редирект и flash внутри super
-        # Ничего не делаем — super уже вызвал respond_with
+      if resource.confirmed?
+        # Подтверждённый аккаунт (напр. OAuth) — стандартный вход.
+        set_flash_message!(:notice, :signed_up)
+        sign_up(resource_name, resource)
+      else
+        # Email не подтверждён: НЕ логиним — уводим на страницу входа
+        # с сообщением о необходимости подтверждения почты.
+        set_flash_message!(:notice, :signed_up_but_unconfirmed)
+        expire_data_after_sign_in!
+        redirect_to after_inactive_sign_up_path_for(resource)
       end
+    else
+      clean_up_passwords(resource)
+      set_minimum_password_length
+      respond_with resource
     end
   end
 
@@ -160,12 +158,40 @@ class Users::RegistrationsController < Devise::RegistrationsController
   #   super(resource)
   # end
 
-  # The path used after sign up for inactive accounts.
-  # def after_inactive_sign_up_path_for(resource)
-  #   super(resource)
-  # end
+  # После регистрации неподтверждённого юзера ведём на страницу входа
+  # (сообщение о подтверждении почты — в flash :signed_up_but_unconfirmed).
+  def after_inactive_sign_up_path_for(_resource)
+    new_user_session_path
+  end
 
   private
+
+  # Создаёт служебные данные для нового пользователя: настройки уведомлений,
+  # скрытый custodial-кошелёк, реферальную связь (в БД, до подтверждения) и
+  # аудит-записи.
+  #
+  # ВАЖНО: начисления TFT (welcome + реферальные) здесь НЕ производятся.
+  # Точка начисления — достижение статуса active:
+  #   - email-регистрация: удостоверение в ConfirmationsController#show
+  #   - OAuth: сразу в UserService.handle_google_oauth (юзер активен сразу)
+  # Реферальная связь фиксируется СЕЙЧАС (persisted), чтобы пережить
+  # подтверждение почты (там виртуальный атрибут недоступен).
+  #
+  # @param resource [User] только что созданный пользователь
+  #
+  def setup_new_user(resource)
+    UserService.create_default_settings(resource)
+    WalletService.create_hidden_wallet(user: resource)
+    UserService.save_referral!(resource, resource.referral_code_input)
+
+    registration_changes = {
+      email: { old: nil, new: resource.email },
+      name: { old: nil, new: resource.name }
+    }
+    registration_changes[:avatar] = { old: nil, new: "Attached" } if resource.avatar.attached?
+    UserAuditLogger.log_registration(resource, registration_changes) if defined?(UserAuditLogger)
+    UserAuditLogger.log_login(resource) if defined?(UserAuditLogger)
+  end
 
   def update_params
     devise_parameter_sanitizer.sanitize(:account_update)

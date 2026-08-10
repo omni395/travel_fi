@@ -30,9 +30,17 @@ Capybara.javascript_driver = :selenium_chrome_visible
 Capybara.server = :puma, { Silent: true }
 # SolidCable-клиент опрашивает сервер каждые 5 сек (polling_interval) —
 # увеличиваем время ожидания для live-обновлений «браузер А → браузер Б».
-Capybara.default_max_wait_time = 15
+Capybara.default_max_wait_time = 30
 
 RSpec.configure do |config|
+  # Потоковая индикация: печатаем [START] для каждого примера ДО его выполнения
+  # и сразу сбрасываем буфер ($stdout.flush). Без этого в pipe/CI имена примеров
+  # буферизуются, и при зависшем тесте непонятно, на каком он застрял.
+  config.before(:each) do |example|
+    $stdout.puts("\n[START] #{example.metadata[:full_description]}")
+    $stdout.flush
+  end
+
   # Драйвер system-тестов — selenium_chrome_visible (headful Chrome локально).
   # В rspec-rails 8 driven_by — instance-метод, вызываемый в before (example scope);
   # глобальный before(:each) выполняется раньше group-level дефолта

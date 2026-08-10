@@ -54,6 +54,31 @@ class UserReflex < ApplicationReflex
   end
 
   #
+  # Забирает разблокированные награды пользователя (claim).
+  # Ставит relay-Джобы (SolidQueue) для available-начислений; on-chain отправка
+  # происходит асинхронно, UI обновляет Broadcaster (через VersionObserverJob).
+  #
+  def claim_rewards
+    morph :nothing
+
+    user = current_user
+    authorize user, :update?
+
+    count = UserService.claim_rewards!(user)
+
+    if count.zero?
+      send_error(I18n.t("reflexes.user.no_rewards_available"))
+    else
+      send_success(I18n.t("reflexes.user.rewards_claiming", count: count))
+    end
+  rescue Pundit::NotAuthorizedError => e
+    send_error(I18n.t("reflexes.user.not_authorized"))
+  rescue StandardError => e
+    Rails.logger.error("UserReflex#claim_rewards error: #{e.class} #{e.message}")
+    send_error(I18n.t("reflexes.user.claim_error"))
+  end
+
+  #
   # Отправляет ошибку в браузер (показывает в форме)
   # Dispatch notice или alert через CableReady
   #

@@ -3,7 +3,8 @@
 <%# Иконка: mdi-plus-circle / mdi-pencil %>
 <div data-controller="poi--form-component"
      data-poi--form-component-initial-lat="<%= initial_lat %>"
-     data-poi--form-component-initial-lng="<%= initial_lng %>">
+     data-poi--form-component-initial-lng="<%= initial_lng %>"
+     data-poi--form-component-missing-coords="<%= t('.missing_coords') %>">
   <%# ОКНО МОДАЛКИ — основание окна живёт в компоненте (не в index) %>
   <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
     <%= form_with model: edit_mode? ? poi : Poi.new, url: form_url, method: form_method, local: true,

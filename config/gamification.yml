@@ -11,10 +11,19 @@ rewards:
   registration: 10
   referral_bonus_referrer: 15
   referral_bonus_new_user: 5
-  poi_create: 20
-  poi_photo_add: 5
-  comment_create: 5
-  poi_vote: 2
+  poi_create: 10
+  poi_photo_add: 3
+  comment_create: 3
+  poi_vote: 1
+
+# Глобальная конфигурация reward pool-контракта (единицы — TFT, НЕ wei).
+#   lock_days       — лок-период (дни). По умолчанию 7 (как в контракте TravelFiRewards).
+#   warning_balance — порог «жёлтой» плашки: ниже → предупреждение админам (Noticed).
+#   critical_balance— порог «красной» плашки: ниже → критический алерт (Noticed).
+pool:
+  lock_days: 7
+  warning_balance: 10000000
+  critical_balance: 1000000
 
 badges:
   1:

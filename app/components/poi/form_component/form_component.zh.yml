@@ -28,3 +28,4 @@ zh:
       remove_photo: 删除照片
       submit: 添加POI
       save: 保存
+      missing_coords: 请先在地图上指定位置

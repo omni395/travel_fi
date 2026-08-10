@@ -5,4 +5,33 @@ ru:
       user:
         wallet_component:
           wallet_title: Кошелек
-          wallet_placeholder: Функционал кошелька скоро появится
+          token_balance: Баланс токенов
+          tft_balance: "%{balance} TFT"
+          referred_by: Приглашён по рефкоду
+          referrals_count:
+            one: "%{count} реферал"
+            few: "%{count} реферала"
+            many: "%{count} рефералов"
+            other: "%{count} рефералов"
+          transactions_title: Транзакции
+          empty_transactions: Транзакций пока нет
+          date: Дата
+          action: Действие
+          amount: Сумма
+          status: Статус
+          tx_hash: Хэш в сети
+          directions:
+            credit: Приход
+            debit: Расход
+          statuses:
+            pending: Ожидает
+            confirmed: Подтверждена
+            failed: Ошибка
+          action_keys:
+            registration: Бонус за регистрацию
+            referral_bonus_referrer: Реферальный бонус (пригласившему)
+            referral_bonus_new_user: Реферальный бонус (новому)
+            poi_create: Создан POI
+            poi_photo_add: Добавлено фото POI
+            comment_create: Создан комментарий
+            poi_vote: Голос за POI

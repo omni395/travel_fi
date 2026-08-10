@@ -45,6 +45,8 @@ class VersionObserverJob < ApplicationJob
       handle_poi_category_update(version)
     when "PoiCategoryField"
       handle_poi_category_field_update(version)
+    when "TokenTransaction"
+      handle_token_transaction_update(version)
     end
   end
 
@@ -170,6 +172,17 @@ class VersionObserverJob < ApplicationJob
       event_type: "field_#{version.event}",
       payload: { initiator_id: version.whodunnit }
     )
+  end
+
+  #
+  # Маршрутизация записей журнала токенов (TokenTransaction).
+  # Обновляет баланс/историю в профиле юзера и вкладку Wallet в админке.
+  #
+  def handle_token_transaction_update(version)
+    transaction = version.item || version.reify
+    return unless transaction
+
+    TokenTransactionBroadcaster.call(token_transaction: transaction)
   end
 
   #

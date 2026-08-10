@@ -28,3 +28,4 @@ en:
       remove_photo: Remove photo
       submit: Add POI
       save: Save
+      missing_coords: Please set the location on the map first

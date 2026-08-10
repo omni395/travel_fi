@@ -1,0 +1,17 @@
+---
+es:
+  users:
+    rewards_component:
+      title: Historial de recompensas
+      empty: Sin recompensas aún
+      locked_balance: Bloqueado
+      available_balance: Disponible
+      claim_button: Reclamar recompensas
+      action_keys:
+        registration: Bono de registro
+        referral_bonus_referrer: Bono por referido (referidor)
+        referral_bonus_new_user: Bono por referido (nuevo usuario)
+        poi_create: POI creado
+        poi_photo_add: Foto de POI añadida
+        comment_create: Comentario creado
+        poi_vote: Voto por POI

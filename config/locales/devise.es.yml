@@ -67,6 +67,7 @@ es:
         has_account: "¿Ya tienes cuenta?"
         sign_in: "Iniciar sesión"
       signed_up: 'Bienvenido. Tu cuenta fue creada.'
+      signed_up_but_unconfirmed: 'Se ha enviado un enlace de confirmación a su correo. Confirme su email para iniciar sesión.'
       inactive_signed_up: 'Tu cuenta fue creada. Sin embargo, no podemos iniciar tu sesión porque tu cuenta está %{reason}.'
       updated: 'Tu cuenta fue actualizada.'
       destroyed: 'Fue grato tenerte con nosotros. Tu cuenta fue cancelada.'
@@ -82,9 +83,34 @@ es:
       success: 'Has sido autorizado satisfactoriamente de la cuenta %{kind}.'
       failure: 'No has sido autorizado en la cuenta %{kind} porque "%{reason}".'
     mailer:
-      confirmation_instructions: 
+      confirmation_instructions:
         subject: 'Instrucciones de confirmación'
+        greeting: 'Hola, %{name},'
+        instruction: 'Puedes confirmar el correo de tu cuenta mediante el siguiente enlace:'
+        action: 'Confirmar mi cuenta'
+        instruction_2: 'Si no solicitaste esto, ignora este correo.'
+        closing: 'Si no creaste esta cuenta, ignora este correo.'
       reset_password_instructions:
         subject: 'Instrucciones de recuperación de contraseña'
+        greeting: 'Hola, %{name},'
+        instruction: 'Alguien ha solicitado un enlace para cambiar tu contraseña. Puedes hacerlo mediante el siguiente enlace.'
+        action: 'Cambiar mi contraseña'
+        instruction_2: 'Si no solicitaste esto, ignora este correo.'
+        closing: 'Tu contraseña no cambiará hasta que accedas al enlace anterior y crees una nueva.'
       unlock_instructions:
         subject: 'Instrucciones para desbloquear'
+        greeting: 'Hola, %{name},'
+        message: 'Tu cuenta ha sido bloqueada debido a un número excesivo de intentos de inicio de sesión fallidos.'
+        action: 'Desbloquear mi cuenta'
+        instruction: 'Haz clic en el siguiente enlace para desbloquear tu cuenta:'
+        closing: 'Si no solicitaste esto, ignora este correo.'
+      email_changed:
+        subject: 'Correo cambiado'
+        greeting: 'Hola, %{name},'
+        message: 'Te notificamos que tu correo se ha cambiado a %{email}.'
+        closing: 'Si fuiste tú, puedes ignorar este correo. Si no, contacta con soporte.'
+      password_change:
+        subject: 'Contraseña cambiada'
+        greeting: 'Hola, %{name},'
+        message: 'Te notificamos que tu contraseña ha sido cambiada.'
+        closing: 'Si no fuiste tú, restablece tu contraseña de inmediato.'

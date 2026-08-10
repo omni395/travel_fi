@@ -15,6 +15,12 @@ class UsersController < ApplicationController
   before_action :set_user
   before_action :authorize_user!
 
+  # Показ и редактирование работают с единичной записью через Pundit#authorize,
+  # policy_scope здесь не нужен — отключаем verify_policy_scoped для этих действий.
+  # skip_policy_scope — instance-метод Pundit (устанавливает флаг), подключается
+  # как before_action (class-level DSL skip_policy_scope в Pundit 2.5 не существует).
+  before_action :skip_policy_scope, only: [:show, :edit]
+
   #
   # Отображает профиль пользователя
   #
@@ -45,8 +51,9 @@ class UsersController < ApplicationController
   #
   # Проверяет права доступа к профилю
   # Использует Pundit для авторизации
+  # Для edit проверяется :edit?, для show — :show?
   #
   def authorize_user!
-    authorize @user, :show?
+    authorize @user, action_name == "edit" ? :edit? : :show?
   end
 end

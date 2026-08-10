@@ -28,3 +28,4 @@ es:
       remove_photo: Eliminar foto
       submit: Añadir POI
       save: Guardar
+      missing_coords: Primero indica la ubicación en el mapa

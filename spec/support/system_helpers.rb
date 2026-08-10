@@ -29,6 +29,35 @@ module SystemHelpers
   end
 
   #
+  # Гарантирует, что у текущей сессии есть валидное окно (browser window handle).
+  #
+  # Причина: headful-Chrome открывает окно асинхронно; при переключении
+  # using_session Capybara выполняет window_handles/switch_to_window/close_window.
+  # Пока окно не создано — window_handles возвращает nil (симптомы: 'undefined
+  # method slice/map for nil') либо Selenium бросает InvalidArgumentError
+  # ('handle' must be a string). Данный хелпер ожидает готовности окна до
+  # первых window-операций и CDP-вызовов.
+  #
+  # @param timeout [Integer] максимальное время ожидания (секунды)
+  # @return [String] идентификатор (handle) активного окна сессии
+  #
+  def prepare_session_window(timeout: 90)
+    Timeout.timeout(timeout) do
+      loop do
+        begin
+          handles = page.driver.browser.window_handles
+          return handles.first if handles && handles.any?
+        rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::WebDriverError
+          # окно ещё не готово — повторяем
+        end
+        sleep 0.2
+      end
+    end
+  rescue Timeout::Error
+    raise "Session window did not become available within #{timeout}s"
+  end
+
+  #
   # Вход пользователя через UI (Devise). Надёжно для реального Capybara-сервера
   # (Warden-логин в памяти не переживает отдельный серверный процесс).
   #
@@ -37,6 +66,9 @@ module SystemHelpers
   def sign_in_via_ui(user)
     # Явный locale: маршруты Devise в scope "(:locale)", без locale возможен редирект.
     visit new_user_session_path(locale: I18n.locale)
+    # Страховка от гонки: ждём реального появления формы входа, иначе within
+    # ищет корневой узел на незагруженной странице → 'undefined method map for nil'.
+    wait_for_selector('#devise_session_form', timeout: 90)
     # Вьюха входа оборачивает форму в #devise_session_form (см. devise/sessions/new.html.erb).
     within('#devise_session_form') do
       fill_in 'user[email]', with: user.email
@@ -59,7 +91,13 @@ module SystemHelpers
   # @param timeout [Integer] максимальное время ожидания (секунды)
   # @return [Boolean]
   #
-  def wait_for_selector(selector, timeout: 20)
+  # ВАЖНО: дефолт 90с — Selenium headful при длинных прогонах грузит страницы
+  # медленно; меньшие таймауты дают флаки «элемент не появился». Не снижать.
+  # 60с было недостаточно при полном прогоне сьюта (281 пример): селектор
+  # присутствует в HTML (проверено диагностикой), но не успевает появиться из-за
+  # накопленной нагрузки. Тест идёт дольше, но не флакает.
+  #
+  def wait_for_selector(selector, timeout: 90)
     Timeout.timeout(timeout) do
       loop do
         return true if page.has_css?(selector, visible: false)

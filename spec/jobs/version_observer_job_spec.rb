@@ -59,6 +59,60 @@ RSpec.describe VersionObserverJob, type: :job do
     end
   end
 
+  describe 'TokenTransaction-ветка (#handle_token_transaction_update)' do
+    it 'вызывает TokenTransactionBroadcaster при создании транзакции' do
+      tx = create(:token_transaction)
+      version = tx.versions.last
+
+      expect(TokenTransactionBroadcaster).to receive(:call).with(token_transaction: tx)
+
+      described_class.perform_now(version.id)
+    end
+  end
+
+  describe 'User-ветка (#handle_user_update)' do
+    it 'user-initiated update → UserBroadcaster + Admin::UserBroadcaster + stats' do
+      user = create(:user)
+      user.update!(name: 'New Name')
+      version = user.versions.last
+
+      expect(UserBroadcaster).to receive(:call).with(user: user)
+      expect(Admin::UserBroadcaster).to receive(:broadcast_user_update).with(user)
+      expect(Admin::DashboardBroadcaster).to receive(:broadcast_stats_update)
+
+      described_class.perform_now(version.id)
+    end
+
+    it 'admin-initiated update → БЕЗ UserBroadcaster (только админ-бродкаст)' do
+      admin = create(:user, :admin)
+      user = create(:user)
+      user.update!(name: 'New Name')
+      version = user.versions.last
+      version.update_column(:whodunnit, admin.id.to_s)
+
+      expect(UserBroadcaster).not_to receive(:call)
+      expect(Admin::UserBroadcaster).to receive(:broadcast_user_update).with(user)
+      expect(Admin::DashboardBroadcaster).to receive(:broadcast_stats_update)
+
+      described_class.perform_now(version.id)
+    end
+
+    it 'destroy → только stats (без UserBroadcaster)' do
+      user = create(:user)
+      version = PaperTrail::Version.create!(
+        item_type: 'User',
+        item_id: user.id,
+        event: 'destroy',
+        whodunnit: user.id.to_s
+      )
+
+      expect(UserBroadcaster).not_to receive(:call)
+      expect(Admin::DashboardBroadcaster).to receive(:broadcast_stats_update)
+
+      described_class.perform_now(version.id)
+    end
+  end
+
   describe 'игнорирование audit-only событий' do
     it 'пропускает версии из AUDIT_ONLY_EVENTS' do
       user = create(:user)

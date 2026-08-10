@@ -99,6 +99,17 @@ class Admin::UserBroadcaster
       )
     end
 
+    # Обновляем карточку профиля на show-странице админки (если админ на ней).
+    # inner_html по обёртке #user-profile — актуальные имя/email/статус/роли
+    # (покрывает live-правку профиля самим пользователем).
+    profile_html = render_show_component(user)
+    if profile_html.present?
+      cable_ready["AdminChannel"].inner_html(
+        selector: "#user-profile",
+        html: profile_html
+      )
+    end
+
     # Отправляем уведомление об успехе
     cable_ready["AdminChannel"].dispatch_event(
       name: "adminUserUpdateSuccess",
@@ -222,6 +233,22 @@ class Admin::UserBroadcaster
   def render_user_row_component(user)
     component = Admin::Users::RowComponent.new(user: user)
     ApplicationController.render(component, layout: false)
+  end
+
+  #
+  # Рендерит карточку профиля (ShowComponent) для show-страницы админки.
+  # Рендер из SolidQueue worker: верхний уровень ApplicationController.render,
+  # вложенные компоненты внутри рендерятся через <%= render %> (view_context).
+  # При сбое возвращает пустую строку — зона пропускается, остальные доставляются.
+  #
+  # @param user [User] пользователь для отображения
+  # @return [String] HTML карточки профиля
+  #
+  def render_show_component(user)
+    ApplicationController.render(Admin::Users::User::ShowComponent.new(user: user), layout: false)
+  rescue StandardError => e
+    Rails.logger.error("Failed to render Admin::Users::User::ShowComponent: #{e.class} #{e.message}")
+    ""
   end
 
   #

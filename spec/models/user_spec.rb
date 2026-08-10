@@ -89,4 +89,56 @@ RSpec.describe User, type: :model do
       expect(user.reload.wallet).to eq(wallet)
     end
   end
+
+  describe 'реферальная связь' do
+    it 'сохраняет реферера (referred_by) и считает рефералов' do
+      referrer = create(:user)
+      referred = create(:user, referred_by: referrer)
+
+      expect(referred.referred_by).to eq(referrer)
+      expect(referrer.referrals).to include(referred)
+      expect(referrer.referrals_count).to eq(1)
+    end
+  end
+
+  describe 'friendly_id slug' do
+    it 'генерирует slug из имени при создании' do
+      user = create(:user, name: 'John Doe')
+      expect(user.slug).to eq('john-doe')
+    end
+
+    it 'перегенерирует slug при смене имени (should_generate_new_friendly_id?)' do
+      user = create(:user, name: 'John Doe')
+      user.update!(name: 'Jane Roe')
+      expect(user.slug).to eq('jane-roe')
+    end
+
+    it 'использует fallback user-<id> для непараметризуемого имени' do
+      user = create(:user, name: '!!')
+      expect(user.slug).to start_with('user-')
+    end
+
+    it 'уникализирует slug при коллизии' do
+      user1 = create(:user, name: 'Same Name')
+      user2 = create(:user, name: 'Same Name')
+      expect(user1.slug).to eq('same-name')
+      expect(user2.slug).not_to eq(user1.slug)
+    end
+  end
+
+  describe '.from_google_oauth' do
+    it 'принимает реферальный код (2 аргумента) без ArgumentError' do
+      referrer = create(:user)
+      auth = OmniAuth::AuthHash.new(
+        provider: 'google_oauth2',
+        uid: 'google-uid-signature',
+        info: { email: 'oauth-sig@example.com', name: 'Sig User', image: nil }
+      )
+
+      expect do
+        allow(TokenTransactionRelayJob).to receive(:perform_later)
+        User.from_google_oauth(auth, referrer.referral_code)
+      end.not_to raise_error
+    end
+  end
 end

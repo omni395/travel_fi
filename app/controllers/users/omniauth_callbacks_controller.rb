@@ -5,9 +5,12 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   # Вызывается когда пользователь возвращается с Google аутентификации
   #
   def google_oauth2
-    @user = User.from_google_oauth(request.env['omniauth.auth'])
+    # Рефкод берём из query (?ref=) либо из session (если был передан до старта OAuth).
+    @user = User.from_google_oauth(request.env['omniauth.auth'], referral_code_input)
 
     if @user.persisted?
+      # Рефкод истрачен после обработки — не размазываем по сессии.
+      session.delete(:referral_code) if session[:referral_code]
       sign_in @user, event: :authentication
       UserAuditLogger.log_login(@user) if defined?(UserAuditLogger)
 
@@ -20,6 +23,17 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       session['devise.google_data'] = request.env['omniauth.auth'].except(:extra)
       redirect_to new_user_registration_url, alert: @user.errors.full_messages.join("\n")
     end
+  end
+
+  private
+
+  #
+  # Реферальный код для OAuth: из query-параметра ?ref= или session[:referral_code].
+  #
+  # @return [String, nil]
+  #
+  def referral_code_input
+    params[:ref].presence || session[:referral_code].presence
   end
   
   #

@@ -1,4 +1,4 @@
-<%= t("devise.mailer.email_changed.greeting") %>
+<%= t("devise.mailer.email_changed.greeting", name: @user.name) %>
 
 <%= t("devise.mailer.email_changed.message", email: @user.email) %>
 

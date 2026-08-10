@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
-require_dependency 'ui/toast_component'
-
 class SettingsReflex < ApplicationReflex
 
   #
-  # Обновляет настройки через Reflex (WebSocket)
-  # После сохранения отправляет toast-уведомление
+  # Обновляет настройки через Reflex (WebSocket).
+  # Reflex НЕ рендерит тосты напрямую — тост доставляется через broadcast
+  # (ToastBroadcaster, user_N), а не локальным рендером Ui::ToastComponent
+  # (принцип «тосты только через broadcast», ROADMAP 3.2).
   #
   def update
     morph :nothing
@@ -21,63 +21,32 @@ class SettingsReflex < ApplicationReflex
 
     SettingService.update(current_user.setting, field, value)
 
-    # Отправляем toast об успешном сохранении
-    toast_html = ApplicationController.render(
-      Ui::ToastComponent.new(
-        message: t('settings.updated'),
-        type: :success,
-        dismissible: true,
-        auto_dismiss: 3000
-      ),
-      layout: false
+    # Тост об успехе — через broadcast (ToastBroadcaster → user_N)
+    ToastBroadcaster.call(
+      user_id: current_user.id,
+      message: t('settings.updated'),
+      type: :success,
+      auto_dismiss: 3000
     )
-
-    cable_ready["user_#{current_user.id}"].insert_adjacent_html(
-      selector: "#notifications",
-      position: "beforeend",
-      html: toast_html
-    )
-
-    cable_ready["user_#{current_user.id}"].broadcast
   rescue Pundit::NotAuthorizedError => e
     Rails.logger.warn("SettingsReflex#update not authorized: #{e.class} #{e.message}")
-
-    error_html = ApplicationController.render(
-      Ui::ToastComponent.new(
-        message: t('settings.update_error'),
-        type: :error,
-        dismissible: true,
-        auto_dismiss: 5000
-      ),
-      layout: false
-    )
-
-    cable_ready["user_#{current_user.id}"].insert_adjacent_html(
-      selector: "#notifications",
-      position: "beforeend",
-      html: error_html
-    )
-
-    cable_ready["user_#{current_user.id}"].broadcast
+    send_error_toast
   rescue StandardError => e
     Rails.logger.error("SettingsReflex#update error: #{e.class} #{e.message}")
+    send_error_toast
+  end
 
-    error_html = ApplicationController.render(
-      Ui::ToastComponent.new(
-        message: t('settings.update_error'),
-        type: :error,
-        dismissible: true,
-        auto_dismiss: 5000
-      ),
-      layout: false
+  private
+
+  #
+  # Отправляет тост об ошибке через broadcast (ToastBroadcaster → user_N)
+  #
+  def send_error_toast
+    ToastBroadcaster.call(
+      user_id: current_user&.id,
+      message: t('settings.update_error'),
+      type: :error,
+      auto_dismiss: 5000
     )
-
-    cable_ready["user_#{current_user.id}"].insert_adjacent_html(
-      selector: "#notifications",
-      position: "beforeend",
-      html: error_html
-    )
-
-    cable_ready["user_#{current_user.id}"].broadcast
   end
 end

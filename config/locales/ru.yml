@@ -5,6 +5,25 @@ ru:
     es: "Español"
     zh: "中文"
 
+  mailer:
+    profile_updated:
+      subject: "Ваш профиль был обновлён"
+      greeting: "Привет, %{name},"
+      body: "Информация вашего профиля была обновлена."
+      view_profile: "Смотреть профиль"
+    osm_import_complete:
+      subject: "OSM-импорт завершён"
+      greeting: "Привет, %{name},"
+      body: "Импорт OSM завершён. Проверьте обновлённые категории POI."
+      view_category: "Смотреть категории"
+    account_deleted:
+      subject: "Ваша учётная запись удалена"
+      title: "Учётная запись удалена"
+      hello: "Здравствуйте, %{name},"
+      message: "Ваша учётная запись Travel-Fi была удалена."
+      contact_support: "Если это ошибка, свяжитесь с поддержкой."
+    footer: "Travel-Fi — WiFi для путешественников"
+
   pages:
     index:
       title: "Полный аудит компонентов"
@@ -117,6 +136,12 @@ ru:
     osm_import_complete_title: "Импорт OSM завершён"
     poi_category_updated: "Категория POI «%{category}» обновлена."
     poi_category_updated_title: "Категория POI обновлена"
+    contract_balance:
+      title: "Баланс наградного пула"
+      title_warning: "Низкий баланс наградного пула"
+      title_critical: "Критически низкий баланс наградного пула"
+      warning: "Баланс наградного пула низкий: %{balance} TFT (ниже предупреждающего порога %{warning_balance})."
+      critical: "Баланс наградного пула критически низкий: %{balance} TFT (ниже критического порога %{critical_balance})."
 
   admin:
     poi_categories:
@@ -217,6 +242,13 @@ ru:
       moderator: "Модератор"
 
   reflexes:
+    user:
+      not_authorized: "У вас нет прав для обновления этого профиля"
+      update_error: "Ошибка при обновлении профиля"
+      profile_updated: "Профиль успешно обновлён!"
+      no_rewards_available: "Пока нет доступных для получения наград."
+      rewards_claiming: "Награды обрабатываются (%{count}). Они скоро появятся в вашем кошельке."
+      claim_error: "Ошибка при получении наград."
     admin:
       poi_categories:
         create_success: "Категория успешно создана"

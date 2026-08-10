@@ -19,6 +19,9 @@ module Crypto
   module Ethereum
     MASK64 = 0xFFFFFFFFFFFFFFFF
 
+    # Порядок группы secp256k1 (для ECDSA-подписи EVM-транзакций).
+    SECP256K1_ORDER = 115792089237316195423570985008687907852837564279074904382605163141518161494337
+
     # Сдвиги ρ для Keccak-f[1600], порядок индекса x + 5*y (x — первый индекс).
     ROTATION_OFFSETS = [
       0, 1, 62, 28, 27,
@@ -124,7 +127,244 @@ module Crypto
         eip55_checksum(digest[-20, 20].unpack1('H*'))
       end
 
+      # ===== Подпись EVM-транзакций (EIP-155) =====
+
+      #
+      # Подписывает и RLP-кодирует транзакцию EIP-155.
+      # Возвращает сырую подписанную транзакцию (hex) и её tx_hash.
+      #
+      # @param private_key_hex [String] приватный ключ (64 hex, без 0x)
+      # @param nonce [Integer] nonce отправителя
+      # @param gas_price [Integer] цена газа (wei)
+      # @param gas [Integer] лимит газа
+      # @param to [String] адрес получателя (0x + 40 hex)
+      # @param value [Integer] сумма (wei)
+      # @param data [String] calldata (0x + hex)
+      # @param chain_id [Integer] id сети (EIP-155)
+      # @return [Hash] { raw: String, tx_hash: String }
+      #
+      def sign_transaction(private_key_hex:, nonce:, gas_price:, gas:, to:, value:, data:, chain_id:)
+        d = private_key_hex.to_i(16)
+        to_bytes = address_to_bytes(to)
+        data_bytes = hex_to_bytes(data)
+
+        unsigned = rlp_encode([ nonce, gas_price, gas, to_bytes, value, data_bytes, chain_id, 0, 0 ])
+        msg_hash = keccak256(unsigned)
+        r, s, parity = ecdsa_sign(msg_hash, d)
+
+        # EIP-155: v = chain_id * 2 + 35 + parity
+        v = chain_id * 2 + 35 + parity
+        raw = rlp_encode([ nonce, gas_price, gas, to_bytes, value, data_bytes, v, r, s ])
+
+        { raw: raw.unpack1('H*'), tx_hash: "0x#{keccak256(raw)}" }
+      end
+
+      #
+      # Кодирует объект в RLP (рекурсивно): Integer / String(байты) / Array.
+      #
+      # @param obj [Integer, String, Array] объект
+      # @return [String] RLP-байты
+      #
+      def rlp_encode(obj)
+        case obj
+        when Integer
+          rlp_encode_integer(obj)
+        when String
+          rlp_encode_bytes(obj.b)
+        when Array
+          payload = obj.map { |o| rlp_encode(o) }.join
+          rlp_length_encode(payload.b, payload.bytesize, 0xc0, 0xf7)
+        else
+          raise ArgumentError, "Unsupported RLP type: #{obj.class}"
+        end
+      end
+
+      #
+      # Возвращает 4-байтовый selector функции по сигнатуре (Solidity ABI).
+      #
+      # @param signature [String] сигнатура (например "mint(address,uint256)")
+      # @return [String] selector (8 hex-символов)
+      #
+      def function_selector(signature)
+        keccak256(signature)[0, 8]
+      end
+
+      #
+      # Кодирует uint256 в 32-байтовое hex-поле (Solidity ABI).
+      #
+      # @param value [Integer, String] значение
+      # @return [String] 64 hex-символа
+      #
+      def encode_uint256(value)
+        value.to_i.to_s(16).rjust(64, '0')
+      end
+
+      #
+      # Кодирует адрес в 32-байтовое hex-поле (Solidity ABI, старшие нули).
+      #
+      # @param address [String] адрес (0x + 40 hex)
+      # @return [String] 64 hex-символа
+      #
+      def encode_address(address)
+        address.sub(/\A0x/, '').rjust(64, '0')
+      end
+
+      #
+      # Формирует calldata вызова mint(address,uint256) на ERC-20.
+      #
+      # @param to [String] адрес получателя
+      # @param amount_wei [Integer, String] сумма в wei
+      # @return [String] calldata (0x + hex)
+      #
+      def encode_mint_data(to, amount_wei)
+        "0x#{function_selector('mint(address,uint256)')}#{encode_address(to)}#{encode_uint256(amount_wei)}"
+      end
+
+      #
+      # Формирует calldata вызова transfer(address,uint256) на ERC-20
+      # (начисления из reward pool: токены берутся с баланса контракта).
+      #
+      # @param to [String] адрес получателя
+      # @param amount_wei [Integer, String] сумма в wei
+      # @return [String] calldata (0x + hex)
+      #
+      def encode_transfer_data(to, amount_wei)
+        "0x#{function_selector('transfer(address,uint256)')}#{encode_address(to)}#{encode_uint256(amount_wei)}"
+      end
+
+      #
+      # Формирует calldata вызова balanceOf(address) на ERC-20 для eth_call
+      # (чтение on-chain баланса контракта, напр. reward pool).
+      #
+      # @param address [String] адрес аккаунта/контракта
+      # @return [String] calldata (0x + hex)
+      #
+      def encode_balance_data(address)
+        "0x#{function_selector('balanceOf(address)')}#{encode_address(address)}"
+      end
+
+      #
+      # Подписывает keccak256-хэш сообщения по ECDSA (secp256k1).
+      # Возвращает [r, s, parity]; s нормализован к low-s (EIP-2), parity согласована.
+      #
+      # @param msg_hash_hex [String] хэш сообщения (64 hex)
+      # @param private_key_int [Integer] приватный ключ
+      # @return [Array(Integer, Integer, Integer)] [r, s, parity]
+      #
+      def ecdsa_sign(msg_hash_hex, private_key_int)
+        n = SECP256K1_ORDER
+        e = msg_hash_hex.to_i(16)
+        group = OpenSSL::PKey::EC::Group.new('secp256k1')
+        generator = group.generator
+
+        loop do
+          k = SecureRandom.random_number(n - 1) + 1
+          point = generator.mul(OpenSSL::BN.new(k.to_s, 10))
+          # OpenSSL::PKey::EC::Point в Ruby 3.4 не имеет методов #x/#y —
+          # координаты извлекаем из uncompressed-сериализации (0x04 || X(32) || Y(32)).
+          octet = point.to_octet_string(:uncompressed)
+          x = octet.byteslice(1, 32).unpack1('H*').to_i(16)
+          y = octet.byteslice(33, 32).unpack1('H*').to_i(16)
+          r = x % n
+          next if r.zero?
+
+          # Модульная инверсия по малой теореме Ферма (n — простое).
+          s = (k.pow(n - 2, n) * (e + (r * private_key_int))) % n
+          next if s.zero?
+
+          parity = y.odd? ? 1 : 0
+          if s > n / 2
+            s = n - s
+            parity = 1 - parity
+          end
+          return [ r, s, parity ]
+        end
+      end
+
       private
+
+      #
+      # Кодирует целое число в RLP-байты (0 → пустая строка 0x80).
+      #
+      # @param value [Integer] значение
+      # @return [String] RLP-байты
+      #
+      def rlp_encode_integer(value)
+        return "\x80".b if value.zero?
+
+        hex = value.to_s(16)
+        hex = "0#{hex}" if hex.length.odd?
+        rlp_encode_bytes([ hex ].pack('H*'))
+      end
+
+      #
+      # Кодирует строку байт в RLP (правило для строк).
+      #
+      # @param bytes [String] байты
+      # @return [String] RLP-байты
+      #
+      def rlp_encode_bytes(bytes)
+        len = bytes.bytesize
+        return bytes if len == 1 && bytes.getbyte(0) < 0x80
+        return (0x80 + len).chr.b + bytes if len <= 55
+
+        len_bytes = length_to_bytes(len)
+        (0xb7 + len_bytes.bytesize).chr.b + len_bytes + bytes
+      end
+
+      #
+      # Кодирует payload (строка/список) с префиксом длины (0x80/0xb7 или 0xc0/0xf7).
+      #
+      # @param payload [String] байты payload
+      # @param len [Integer] длина payload
+      # @param prefix_small [Integer] префикс для len <= 55
+      # @param prefix_long [Integer] префикс для длинных payload
+      # @return [String] RLP-байты
+      #
+      def rlp_length_encode(payload, len, prefix_small, prefix_long)
+        return (prefix_small + len).chr.b + payload if len <= 55
+
+        len_bytes = length_to_bytes(len)
+        (prefix_long + len_bytes.bytesize).chr.b + len_bytes + payload
+      end
+
+      #
+      # Представляет длину в виде байт (минимальное big-endian представление).
+      #
+      # @param len [Integer] длина
+      # @return [String] байты длины
+      #
+      def length_to_bytes(len)
+        hex = len.to_s(16)
+        hex = "0#{hex}" if hex.length.odd?
+        [ hex ].pack('H*')
+      end
+
+      #
+      # Преобразует адрес (0x + 40 hex) в 20 байт.
+      #
+      # @param address [String, nil] адрес
+      # @return [String] 20 байт (пустая строка для nil)
+      #
+      def address_to_bytes(address)
+        return "".b if address.blank?
+
+        [ address.sub(/\A0x/, '').rjust(40, '0') ].pack('H*')
+      end
+
+      #
+      # Преобразует hex-строку (опц. с 0x) в байты.
+      #
+      # @param hex [String, nil] hex
+      # @return [String] байты
+      #
+      def hex_to_bytes(hex)
+        return "".b if hex.blank?
+
+        clean = hex.sub(/\A0x/, '')
+        clean = "0#{clean}" if clean.length.odd?
+        [ clean ].pack('H*')
+      end
 
       #
       # Применяет EIP-55 checksum к 40-символьному hex-адресу (нижний регистр).

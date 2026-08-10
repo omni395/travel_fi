@@ -4,8 +4,8 @@
 # Создаёт таблицу user_rewards — off-chain леджер начислений токенов TFT.
 #
 # Здесь фиксируется НАЧИСЛЕНИЕ (amount в TFT, decimals 18);
-# фактическая on-chain отправка на custodial-кошелёк — через ContractService
-# (rewards_send_reward / token_transfer, signed_tx) — отдельная интеграция.
+# фактическая on-chain отправка на custodial-кошелёк — через
+# TokenTransactionService.relay! — отдельная интеграция.
 #
 class CreateUserRewards < ActiveRecord::Migration[8.1]
   def change

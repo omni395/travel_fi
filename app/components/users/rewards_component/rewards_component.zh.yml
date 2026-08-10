@@ -1,0 +1,17 @@
+---
+zh:
+  users:
+    rewards_component:
+      title: 奖励记录
+      empty: 暂无奖励
+      locked_balance: 已锁定
+      available_balance: 可领取
+      claim_button: 领取奖励
+      action_keys:
+        registration: 注册奖励
+        referral_bonus_referrer: 推荐奖励（推荐人）
+        referral_bonus_new_user: 推荐奖励（新用户）
+        poi_create: 创建 POI
+        poi_photo_add: 添加 POI 照片
+        comment_create: 发表评论
+        poi_vote: 为 POI 投票

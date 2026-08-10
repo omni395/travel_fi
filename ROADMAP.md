@@ -1,20 +1,16 @@
 # Travel Fi — Product Roadmap
 
-> Единый план по **секциям приложения**: что сделано, что нет, хотелки и баги — в каждом блоке.
-> **Статусы секций:** `✅ Сделано` · `🟡 Частично` · `🔴 В планах` · `🧪 Тесты`
-> **Статусы пунктов:** `✅` выполнено · `🔴` в планах (хотелка) · `⚠️` баг
+> Единый план по **секциям приложения**: что работает, что в работе, что в планах.
+> **Статусы:** `✅` работает · `🟡` частично · `🔴` хотелка/в планах · `⚠️` баг/долг
 > Архитектура и инструкции — в [`README.md`](README.md:1) и `.roo/rules/` (здесь не дублировать).
 
 ---
 
-## 0. Легенда и правила ведения
+## 0. Легенда
 
-- **Секции = страницы приложения** (USER SECTION и ADMIN SECTION). Горизонтальные слои — сквозная инфраструктура, на них ссылаются секции.
-- **В каждой секции** 3 блока:
-  - **Сделано** — пункты помечены `✅`
-  - **Хотелки** — пункты помечены `🔴` (в планах)
-  - **Баги** — пункты помечены `⚠️`
-- **Маршруты:** профиль юзера — `/:slug` (НЕ `/admin`), админка — `/admin-panel` (см. [`config/routes.rb`](config/routes.rb:36)).
+- **Секции = страницы приложения** (USER SECTION и ADMIN SECTION). Горизонтальные слои — сквозная инфраструктура.
+- **В каждой секции** 3 блока: **Сделано** (`✅`), **Хотелки** (`🔴`), **Баги/Долги** (`⚠️`).
+- **Маршруты:** профиль юзера — `/:slug`, админка — `/admin-panel` (см. [`config/routes.rb`](config/routes.rb:36)).
 - **Цепочка (Database-Triggered Workflow):** Controller/Reflex → Service (Pundit + save! в транзакции) → PostgreSQL + PaperTrail → VersionObserverJob → Broadcaster (inner_html) → CableReady → ActionCable (SolidCable) → DOM.
 
 ---
@@ -32,20 +28,20 @@ Travel Fi
 ├── 🛠 ADMIN SECTION         (/:locale/admin-panel)
 │   ├── 3.1 Dashboard        (/admin-panel)          ✅
 │   ├── 3.2 Users            (/admin-panel/users)    ✅
-│   ├── 3.3 PoiCategories    (/admin-panel/poi_categories)  🟡
+│   ├── 3.3 PoiCategories    (/admin-panel/poi_categories)  ✅
 │   ├── 3.4 Pois             (/admin-panel/pois)     🟡
 │   ├── 3.5 Settings         (/admin-panel/settings) ✅
 │   └── 3.6 Contract Mgmt    🔴 (в планах)
 ├── 4. Горизонтальные слои
 │   ├── 4.1 Auth & Roles     ✅
-│   ├── 4.2 Gamification & Web3  🟡/🔴
+│   ├── 4.2 Gamification & Web3  🟡
 │   ├── 4.3 Realtime-инфра   ✅
 │   ├── 4.4 Audit            ✅
 │   ├── 4.5 Notifications    ✅
-│   ├── 4.6 i18n / UI        ✅ (1 баг sidecar)
+│   ├── 4.6 i18n / UI        ✅
 │   ├── 4.7 PWA / Devices    🟡
-│   └── 4.8 CI / Tests / Production  🟡/🔴
-└── 5. ERD + потоки данных
+│   └── 4.8 CI / Tests / Production  🟡
+└── 5. Связи + потоки данных
 ```
 
 ---
@@ -60,7 +56,7 @@ Travel Fi
 
 **Компоненты:** [`Ui::NavbarComponent`](app/components/ui/navbar_component.rb:1) (общий layout [`app/views/layouts/application.html.erb`](app/views/layouts/application.html.erb:47))
 
-**Статус:** 🔴 **Не сделано** — [`app/views/pages/index.html.erb`](app/views/pages/index.html.erb:1) содержит заглушку («тест»).
+**Статус:** 🔴 **Заглушка** — [`app/views/pages/index.html.erb`](app/views/pages/index.html.erb:1) содержит тестовый контент.
 
 **Сделано:**
 - ✅ Роут и контроллер страницы
@@ -73,8 +69,10 @@ Travel Fi
 - 🔴 FAQ / Как это работает
 - 🔴 Подвал (футер): ссылки, локали, PWA-установка
 
-**Баги:**
+**Баги/Долги:**
 - ⚠️ —
+
+---
 
 ### 2.2 POI Map (карта + список + модалка)
 
@@ -82,7 +80,7 @@ Travel Fi
 
 **Цепочка:** `PoisController` (index/просмотр) → [`PoiReflex`](app/reflexes/poi_reflex.rb:16) (load_pois_in_bounds, load_more_pois, filter_by_categories, apply_filters, reset_filters, show_detail, show_detail_modal, edit_poi, create_comment, reverse_geocode, set_location, show_geolocation_toast) → [`PoiService`](app/services/poi_service.rb:12) → PostGIS (`within_bounds`/`within_meters`) → [`PoiBroadcaster`](app/broadcasters/poi_broadcaster.rb:12) / `ToastBroadcaster` → `UserChannel` / `AdminChannel`
 
-**Компоненты:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Модалки: `Poi::DetailsComponent`, `Poi::GalleryComponent`, `Poi::RatingsComponent` (частично/заглушки).
+**Компоненты:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Модалки: `Poi::DetailsComponent`, `Poi::GalleryComponent`, `Poi::RatingsComponent` (заглушки).
 
 **Статус:** 🟡 Частично
 
@@ -94,28 +92,27 @@ Travel Fi
 - ✅ Форма создания/редактирования POI + мини-карта + обратный геокодинг (Nominatim)
 - ✅ Галерея фото через `PhotoService` (ActiveStorage)
 - ✅ Проксимити-проверка 100м для комментариев/редактирования (`check_proximity!`, `PoiCommentPolicy`)
+- ✅ Live-комментарии: `PoiCommentBroadcaster` + ветка `PoiComment` в `VersionObserverJob` (автору); proximity-check 100м корректный (Boolean + SRID 4326, антифрод больше не «всегда проходит»)
+- ✅ Награды TFT за создание POI/комментарий (`GamificationService.award!(:poi_create/:comment_create)`, суммы из `config/gamification.yml`)
+- ✅ Live-карта: `poi:reload-features` → перезапрос с сервера; fallback-загрузка маркеров в `map_component_controller.js` (ретрай `_loadPoisInBounds`)
+- ✅ OSM-импорт: вкладка POIs обновляется инкрементально (`inner_html [data-poi-category-pois]` каждые 10 импортов), без `morph`-дублей карточек
+- ✅ Reverse geocoding при открытии формы редактирования (мини-карта в edit-режиме, автозаполнение address/city/country/zip)
+- ✅ Валидация координат: `handleSubmit` блокирует отправку без lat/lng (i18n `missing_coords`)
+- ✅ Мини-карта формы переинициализируется при `inner_html` (MutationObserver в `form_component_controller.js`)
+- ✅ Создание POI с карты — без `PolicyScopingNotPerformedError`; форма через модалку `Poi::FormComponent`, create→JSON 422, fetch-сабмит
 
 **Хотелки:**
 - 🔴 `PoiRating` — 5-звёздная система + агрегация в `poi.rating`
-- 🔴 Комментарии: live для всех + threaded-ответы + proximity 100м
+- 🔴 Комментарии: live для всех + threaded-ответы
 - 🔴 Галерея: сетка + lightbox/слайдер
 - 🔴 OSRM: построение маршрута к POI + линия на карте
 - 🔴 Offline-режим (PWA): тайлы + список (IndexedDB)
 
-**Баги:**
-- ✅ OSM-импорт: вкладка списка обновляется по мере добавления и при закрытии — исправлено: убран `morph`-дубль карточки в `OsmImportBroadcaster`, добавлен инкрементальный `inner_html [data-poi-category-pois]` каждые 10 импортов; подтверждено `poi_category_spec` (0 failures)
-- ✅ После импорта/создания POI не появлялись на карте — исправлено: fallback-загрузка маркеров в `map_component_controller.js` (если `postrender` OpenLayers не срабатывает — ретрай `_loadPoisInBounds`); `poi:reload-features` → перезапрос с сервера; system-тест `pois_map_spec` (0 failures)
-- ⚠️ Reverse geocoding не всегда заполняет city/country/address
-- ⚠️ Валидация координат: без координат — скрыть кнопку + сообщение
-- ⚠️ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart + `PhotoService.attach_photos`
-- ⚠️ Мини-карта формы не инициализируется после `cable_ready.inner_html`
-- ✅ Комментарии: базовый `PoiCommentBroadcaster` + ветка `PoiComment` в `VersionObserverJob` (live для ВСЕХ — хотелка 2.2); proximity-check 100м исправлен — `within_range?` возвращал строку `"t"/"f"` (антифрод всегда проходил), теперь Boolean + SRID 4326, `check_proximity!`/`PoiCommentPolicy` корректны
-- ✅ Награды TFT за создание POI/комментарий не начислялись — `GamificationService.award!(:poi_create/:comment_create)` добавлены в `PoiService` (суммы из `config/gamification.yml`)
-- ✅ Создание POI с карты падало `PolicyScopingNotPerformedError` — `skip_after_action :verify_policy_scoped` в `PoisController`
-- ✅ Сломанная fallback-страница `new` (`Poi::AddFormComponent` не существовал) — страница убрана, создание через модалку `Poi::FormComponent`, create→JSON 422, fetch-сабмит формы
-- ✅ `PoiReflex#filter_by_categories` NameError (`bounds`→`params`) — исправлено
-- ✅ `PoiBroadcaster` использовал `morph` — заменён на `inner_html`
+**Баги/Долги:**
+- ⚠️ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart — отдельная задача
 - ⚠️ Карточка POI: полировка UI (фокус-трап, aria, скролл-блокировка)
+
+---
 
 ### 2.3 User Profile (профиль пользователя)
 
@@ -123,29 +120,33 @@ Travel Fi
 
 **Цепочка:** `UsersController` (show/edit, рендер) + [`UserReflex`](app/reflexes/user_reflex.rb:10) (update_profile) → [`UserService`](app/services/user_service.rb:15) (name + avatar через `PhotoService`) → [`UserBroadcaster`](app/broadcasters/user_broadcaster.rb:12) → `user_<id>` (inner_html по обёртке `[data-user-profile-id]`)
 
-**Компоненты:** [`Users::ProfileComponent`](app/components/users/profile_component.rb:11), [`Users::FormComponent`](app/components/users/form_component.rb:1), табы `Ui::TabsComponent` (Activity / Wallet / Audit Log).
+**Компоненты:** [`Users::ProfileComponent`](app/components/users/profile_component.rb:11), [`Users::FormComponent`](app/components/users/form_component.rb:1), `Users::RewardsComponent`, табы `Ui::TabsComponent`.
 
 **Статус:** 🟡 Частично
 
 **Сделано:**
-- ✅ Отображение профиля (аватар, имя, email, статус, баланс TFT, кошелёк, бейджи, роли)
+- ✅ Отображение профиля (аватар, имя, email, статус, баланс TFT, бейджи, роли); кошелёк юзеру НЕ показывается (только админ — вкладка Wallet)
+- ✅ История начислений TFT в профиле: `Users::RewardsComponent` (live `inner_html [data-user-rewards]` через `TokenTransactionBroadcaster`)
 - ✅ Редактирование имени + аватар (через Broadcaster)
 - ✅ Настройки уведомлений на `/:slug/settings` (см. 2.4)
 - ✅ Pundit: свой профиль или админ
+- ✅ `User#badges` — бейджи по `badge_ids` через `gamification.yml` (профиль не падает)
+- ✅ Live-обновление имени через `UserBroadcaster`: рендер из job фиксирует `I18n.with_locale(default)`, `cable_controller.js` применяет CableReady-операции по одной (per-op try/catch)
+- ✅ Автоматика `inactive`: `UserInactivityJob` (active без активности 6+ мес → inactive) + `UserService.mark_inactive_old_users` + запись в `config/recurring.yml`
 
 **Хотелки:**
 - 🔴 Live-переключение табов (активность/аудит) без перезагрузки
 - 🔴 Секция уровней/бейджей геймификации
-- 🔴 Личная статистика активности (POI, комментарии, баллы)
+- 🔴 Личная статистика активности (POI, комментарии, токены)
+- 🔴 Поле ввода промо/скидочного кода в профиле при покупке платных фич (Token Spend / premium): применить код со скидкой перед подтверждением оплаты
 
-**Баги:**
-- ✅ `User#badges` — исправлен (метод по `badge_ids` через `gamification.yml`), профиль больше не падает
-- ✅ Live-обновление имени профиля через `UserBroadcaster` — исправлено: рендер `ProfileComponent` из job фиксирует `I18n.with_locale(default)` (No route matches устранён), `cable_controller.js` применяет CableReady-операции по одной (per-op try/catch). Live-e2e не покрыт (в `user_lifecycle_spec` — проверка через `visit`)
+**Баги/Долги:**
 - ⚠️ Табы (активность/аудит) в профиле — переключение не live
-- ✅ Автоматика `inactive` реализована: `UserInactivityJob` (active без активности 6+ мес → inactive) + `UserService.mark_inactive_old_users` + запись в `config/recurring.yml`; unit-покрытие `user_service_spec`/`user_inactivity_job_spec`
 - ⚠️ Неподтверждённая верификация → определить поведение (сброс/флаг/повтор)
 
-### 2.4 User Settings (настройки пользоателя)
+---
+
+### 2.4 User Settings (настройки пользователя)
 
 **Маршрут:** `/:slug/settings` — [`Users::SettingsController#show`](app/controllers/users/settings_controller.rb:10)
 
@@ -153,18 +154,20 @@ Travel Fi
 
 **Компоненты:** [`Settings::FieldComponent`](app/components/settings/field_component.rb:1) (в т.ч. админ-набор через `admin/settings`)
 
-**Статус:** ✅ Сделано (user-facing часть)
+**Статус:** ✅ Сделано
 
 **Сделано:**
 - ✅ Переключатели событий (in-app / email / push) для пользователя
-- ✅ Автосохранение через Reflex + toast
+- ✅ Автосохранение через Reflex + toast (тосты только через broadcast, без локальных рендеров)
 
 **Хотелки:**
 - 🔴 Верификация email/push перед включением каналов
 - 🔴 Группировка и поиск по событиям
 
-**Баги:**
+**Баги/Долги:**
 - ⚠️ —
+
+---
 
 ### 2.5 Auth pages (аутентификация)
 
@@ -172,21 +175,24 @@ Travel Fi
 
 **Цепочка:** Devise-контроллеры (`users/*`) → `UserService.handle_google_oauth` ([`app/services/user_service.rb`](app/services/user_service.rb:34)) → `Setting.create_for_user` + `WalletService.create_hidden_wallet` (OAuth сразу) + welcome-токены (`award_registration_bonus!`)
 
-**Статус:** ✅ Сделано (базовое)
+**Статус:** ✅ Сделано
 
 **Сделано:**
 - ✅ Регистрация/логин/подтверждение/восстановление пароля (Devise + confirmable + lockable)
+- ✅ **Регистрация НЕ авторизует до подтверждения:** редирект на страницу входа с flash «подтвердите почту» (`after_inactive_sign_up_path_for` → `new_user_session_path`, `signed_up_but_unconfirmed`)
 - ✅ Google OAuth (OmniAuth) + аватар через `PhotoService`
 - ✅ Роли по умолчанию (:user), реферальный код при регистрации
-- ✅ **Скрытый custodial-кошелёк:** email — после подтверждения, OAuth — сразу (`WalletService.create_hidden_wallet`, EIP-55, private key зашифрован)
-- ✅ Welcome-токены TFT (10) при регистрации + реферальные бонусы (15/5) через `award_registration_bonus!`
+- ✅ **Скрытый custodial-кошелёк создаётся СРАЗУ при регистрации** (и email, и OAuth): welcome-начисления сразу получают on-chain адрес → relay отправляет мгновенно
+- ✅ Welcome-токены TFT (10) при регистрации + реферальные бонусы (15/5) через `award_registration_bonus!` — **мгновенно, без лок-периода** (off-chain леджер)
+- ✅ Реферальная связь `users.referred_by_id` (self-join) + журнал транзакций `TokenTransaction` — при регистрации с рефкодом начисляется обоим (15/5), реферер/рефералы видны в админке
+- ✅ Смена статусов / подтверждение email / soft-delete — подтверждено `user_lifecycle_spec` (0 failures)
 
 **Хотелки:**
-- 🔴 EIP-2771: sponsored-транзакции + `ContractService` on-chain отправка токенов на кошелёк
+- 🔴 EIP-2771: sponsored-транзакции (on-chain отправка через сервер уже есть, см. 4.2)
+- 🔴 Регистрация через OAuth-контроллер с реферальным кодом: в OAuth-флоу отсутствует UI ввода/передачи рефкода (`?ref=` на кнопке authorize / поле). Бэкенд-приём кода работает — `User.from_google_oauth(auth, referral_code_input)` + `UserService.handle_google_oauth` (см. §4.2), требуется только UI-часть.
 
-**Баги:**
-- ✅ OAuth-флоу покрыт unit-тестом (`UserService.handle_google_oauth` в `user_service_spec`: роль, статус active, настройки, кошелёк, welcome-токены, идемпотентность); реферальная логика через OAuth — хотелка (в OAuth-флоу нет поля рефкода)
-- ✅ Смена статусов / подтверждение email / soft-delete — подтверждено `user_lifecycle_spec` (0 failures); автоматика `inactive` (recurring-джоб) — см. баг 2.3
+**Баги/Долги:**
+- ⚠️ —
 
 ---
 
@@ -198,14 +204,15 @@ Travel Fi
 
 **Маршрут:** `/admin-panel` — [`Admin::DashboardController#index`](app/controllers/admin/dashboard_controller.rb:9)
 
-**Цепочка:** `Admin::DashboardReflex` (refresh/refresh_stats) + `Admin::DashboardService.stats` → [`Admin::DashboardBroadcaster`](app/broadcasters/admin/dashboard_broadcaster.rb:3) (morph `[data-admin-*]`) → `AdminChannel`
+**Цепочка:** `Admin::DashboardReflex` (refresh/refresh_stats) + `Admin::DashboardService.stats` → [`Admin::DashboardBroadcaster`](app/broadcasters/admin/dashboard_broadcaster.rb:3) (`inner_html [data-admin-*]`) → `AdminChannel`
 
 **Компоненты:** [`Admin::DashboardComponent`](app/components/admin/dashboard_component.rb:15), `Admin::Dashboard::StatCardComponent`, `Ui::BreadcrumbsComponent`
 
-**Статус:** ✅ Сделано (базовое)
+**Статус:** ✅ Сделано
 
 **Сделано:**
-- ✅ Карточки статистики (total/active/restricted/pending) с live-обновлением
+- ✅ Карточки статистики (total/active/suspended/pending + new_users_today) с live-обновлением
+- ✅ `Admin::DashboardService.stats` возвращает `total_users/active_users/suspended_users/new_users_today` (совпадает с `DashboardComponent`); `new_users_today` = зарегистрированные сегодня (не pending)
 - ✅ Последние пользователи + последние активности (из `versions`)
 - ✅ Авторизация: admin/moderator
 
@@ -214,9 +221,10 @@ Travel Fi
 - 🔴 GA/GTM-интеграция
 - 🔴 KPI по POI (pending/approved/rejected), импортам OSM, комментариям
 
-**Баги:**
-- ✅ `new_users_today` — исправлено: `Admin::DashboardService.stats` возвращает `total_users/active_users/suspended_users/new_users_today` (совпадает с `DashboardComponent`); `new_users_today` = зарегистрированные сегодня (не pending); `dashboard_service_spec` обновлён
-- admin_channel.js:30 [AdminChannel] skip morph (selector not found): [data-admin-stats-total-users], при этом селектор вызывается когда я нахожусь на другой странице.
+**Баги/Долги:**
+- ⚠️ admin_channel.js: skip morph (selector not found): `[data-admin-stats-total-users]` — селектор шлётся, когда админ на другой странице (безвредное предупреждение, стоит глушить)
+
+---
 
 ### 3.2 Users (пользователи)
 
@@ -231,18 +239,20 @@ Travel Fi
 **Сделано:**
 - ✅ Список + поиск + фильтр по статусу (включая deleted) + сортировка + пагинация (pagy)
 - ✅ Детальная страница: профиль + табы (Activity / Wallet / Audit Log)
+- ✅ Вкладка Wallet: баланс TFT + история транзакций (`TokenTransaction`) + explorer-ссылка (выжимка 4+4) + реферальная инфо (реферер/кол-во рефералов); live `inner_html [data-admin-user-wallet]`
 - ✅ Редактирование (name/email/status/role) + мягкое удаление (статус `deleted`, запись не удаляется)
 - ✅ Live: prepend нового юзера + обновление таблицы (inner_html) через `AdminChannel`; deleted скрыт в «All», виден через фильтр статуса
+- ✅ Управление ролями: форма шлёт `role_id` (одна роль), permit `role_id` ↔ `Admin::UserService#update_user_roles!`
+- ✅ Аватар Google OAuth: `Ui::AvatarComponent#avatar_url` с fallback на blob-URL + rescue (сбой representation в worker)
 
 **Хотелки:**
 - 🔴 Массовые операции (батч-статус, батч-роль)
 - 🔴 Экспорт списка (CSV)
 
-**Баги:**
-- ✅ Управление ролями синхронизировано: форма шлёт `role_id` (одна роль), `Admin::UsersController#user_params` permit `role_id` ↔ `Admin::UserService#update_user_roles!`
-- тосты не отображаются при изменении юзера. 
-- потерялся аватар пользователя (логин через гугл оауз)
+**Баги/Долги:**
+- ⚠️ —
 
+---
 
 ### 3.3 PoiCategories + поля + OSM-импорт
 
@@ -261,17 +271,17 @@ Travel Fi
 - ✅ OSM-импорт: fetch + процесс с прогрессом (`OsmImportBroadcaster.progress`)
 - ✅ Единая лента аудита категории + полей (включая удалённые через `parse_version_object`)
 - ✅ **Live вкладка POIs:** после импорта `OsmImportBroadcaster` вызывает `PoiCategoryBroadcaster` → `inner_html [data-poi-category-pois]` (новые POI появляются без перезагрузки)
-- ✅ **Live карта:** событие `poi:reload-features` теперь вызывает `_loadPoisInBounds()` (перезапрос с сервера) — новые POI попадают на карту и в сайдбар
+- ✅ **Live карта:** событие `poi:reload-features` → `_loadPoisInBounds()` (перезапрос с сервера)
 - ✅ **Уведомления по настройкам:** единая `PoiCategoryNotification` (мультикаст инициатор + админы), персональные Setting-фильтры (in-app/email/push); колонки `osm_import_*` в `settings`
 
 **Хотелки:**
 - 🔴 DAO-верификация категорий
 - 🔴 Импорт OSM в фоне через SolidQueue (сейчас синхронно в Reflex)
 
-**Баги:**
-- ⚠️
- - отвалилась вкладка аудит лог. не находится селектор:
-      admin_channel.js:30 [AdminChannel] skip morph (selector not found): [data-audit-log]
+**Баги/Долги:**
+- ⚠️ Вкладка «Аудит лог»: admin_channel.js не находит селектор `[data-audit-log]` (skip morph) — проверить рендер зоны аудита
+
+---
 
 ### 3.4 Pois (точки интереса)
 
@@ -288,16 +298,19 @@ Travel Fi
 - ✅ Детальная страница: Details / Map / Audit Log
 - ✅ Модерация статуса (pending/approved/rejected/archived)
 - ✅ Мультиязычные JSONB name/description + dynamic fields в metadata
+- ✅ `Admin::PoisReflex#update`/`change_status` — `morph :nothing` + тост; зона `#poi-detail` рендерится `PoiBroadcaster` (live у ВСЕХ админов)
+- ✅ Мини-карта при редактировании: `form_component_controller.js` инициализирует карту через MutationObserver (порядок CableReady-операций не «зависает»)
+- ✅ Бейджи `first_poi`/`contributor` (связь `User#pois`)
+- ✅ После создания POI через админку точка появляется на карте (`poi:reload-features` + fallback-загрузка маркеров)
 
 **Хотелки:**
 - 🔴 Карточка POI по единому паттерну: табы Details/Comments/Ratings/Gallery/Audit
 - 🔴 Массовая модерация
 
-**Баги:**
-- ✅ `Admin::PoisReflex#update`/`change_status` — переведены на `morph :nothing` + тост (эталон); зона `#poi-detail` рендерится `PoiBroadcaster` (AdminChannel, live у ВСЕХ админов, не только инициатора)
-- ✅ Бейджи `first_poi`/`contributor` не работали (`User` без `has_many :pois`) — исправлено в `User`
-- ✅ После создания POI через админку точка появляется на карте — `PoiBroadcaster` шлёт `poi:reload-features` + fallback-загрузка маркеров карты
+**Баги/Долги:**
 - ⚠️ Галерея: просмотр `Poi#photos` (сетка + lightbox) не реализован
+
+---
 
 ### 3.5 Settings (настройки уведомлений админа)
 
@@ -316,8 +329,10 @@ Travel Fi
 **Хотелки:**
 - 🔴 Разделение уведомлений админских событий по ролям (Rolify-фильтрация)
 
-**Баги:**
+**Баги/Долги:**
 - ⚠️ —
+
+---
 
 ### 3.6 Contract Mgmt (управление контрактами)
 
@@ -325,9 +340,9 @@ Travel Fi
 
 **Хотелки:**
 - 🔴 Mint/rate/pause/награды через админку
-- 🔴 `ContractSnapshot` вместо эфемерного `Rails.cache` в `ContractService.detect_changes_for_contract`
+- 🔴 `ContractSnapshot` (мониторинг контрактов): модель `contract_type`/`data jsonb`/`created_at` с ротацией (в коде мониторинга пока нет)
 
-**Баги:**
+**Баги/Долги:**
 - ⚠️ —
 
 ---
@@ -343,11 +358,32 @@ Travel Fi
 
 ### 4.2 Gamification & Web3
 **Статус:** 🟡 Токен-модель ✅ / 🔴 EIP-2771
-- ✅ **ТОКЕННАЯ МОДЕЛЬ:** награды — токены TFT (`UserReward`, off-chain леджер), `User#token_balance`; `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`); бейджи — `gamifications` (event_type badge); welcome 10 / referral 15+5 TFT. Баллы и уровни удалены (был баг `user.level` — снят).
+- ✅ **ТОКЕННАЯ МОДЕЛЬ:** награды — токены TFT (`UserReward`, off-chain леджер), `User#token_balance`; `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`); бейджи — `gamifications` (event_type badge); welcome 10 / referral 15+5 TFT. **Уровни — плановая метрика от `token_balance`** (см. хотелку ниже).
+- ✅ **Журнал транзакций `TokenTransaction`:** каждая награда → запись credit (amount/action_key/tx_hash/status/chain_id/wallet_id/user_reward_id) в единой транзакции с `UserReward`; `tx_hash` заполняется после on-chain отправки, в админке — explorer-ссылка с выжимкой 4+4; баланс остаётся мгновенным (off-chain, без лок-периода)
+- ✅ **On-chain relay (серверная отправка):** `TokenTransactionService.relay!` + `TokenTransactionRelayJob` (SolidQueue) — подпись EIP-155 (RLP/ECDSA в [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1)) приватным ключом оператора (`OPERATOR_PRIVATE_KEY`, `.env`) → `eth_sendRawTransaction` → `transfer(address,uint256)` на **reward pool-контракт** (`REWARDS_CONTRACT_ADDRESS`) — токены берутся из баланса pool (НЕ mint), газ спонсирует оператор (gasless для юзера), БЕЗ лок-периода → `tx_hash`/`confirmed`. Без ключа/кошелька — `pending`, отправка позже. **`relay!` устойчив к любым исключениям (в т.ч. `Exception` — WebMock в тестах): помечает `failed`, job не роняет worker.**
+- ✅ **Точка начисления = статус active:** welcome-токены и реферальные бонусы начисляются ТОЛЬКО активному аккаунту. Email — после подтверждения (`ConfirmationsController#show`, кошелёк создан до начисления); OAuth — сразу (юзер активен). Реферальная связь (`referred_by`) фиксируется при регистрации (`UserService.save_referral!`) — переживает подтверждение.
+- ⚠️ **OAuth-рефкод:** бэкенд принимает рефкод — `User.from_google_oauth(auth, referral_code_input)` пробрасывает `?ref=`/`session[:referral_code]` в `UserService.handle_google_oauth` (реф-начисления работают при переданном коде). Но в OAuth-флоу НЕТ UI ввода рефкода и кнопка authorize не формирует `?ref=` → полноценный реферальный сценарий через OAuth недоступен до реализации UI-части (см. хотелку §2.4).
+- ✅ **Конфиг pool + мониторинг:** секция `pool` в `config/gamification.yml` (`lock_days`, `warning_balance`, `critical_balance`); `ContractBalanceCheckJob` (SolidQueue recurring) читает баланс pool через `TokenTransactionService.balance_of` и шлёт админам `ContractBalanceNotification` (Noticed) при низком балансе (жёлтая/красная плашка в интерфейсе — позже, с компонентами).
+- ✅ **ECDSA-подпись на Ruby 3.4:** [`Crypto::Ethereum#ecdsa_sign`](lib/crypto/ethereum.rb:231) — координаты точки извлекаются через `to_octet_string(:uncompressed)` (у API `OpenSSL::PKey::EC::Point` нет `#x/#y`); `sign_transaction` покрыт тестом
+- ✅ **Проверка в dev (Base Sepolia):** запустить `bin/jobs` → зарегистрировать юзера → relay-job отправит mint → в explorer транзакция, в админке explorer-ссылка (выжимка 4+4); `balanceOf(custodial)` == off-chain `token_balance`. RSpec RPC **мокает** (WebMock) — реальная сеть в тестах не затрагивается
 - ✅ **Custodial-кошелёк:** модель `Wallet` (`kind: custodial/external`), `WalletService.create_hidden_wallet` (EIP-55, шифрование private key `MessageEncryptor`), генерация на Ruby без новых гемов ([`Crypto::Ethereum`](lib/crypto/ethereum.rb:1) — OpenSSL secp256k1 + keccak256 + EIP-55). Email — после подтверждения, OAuth — сразу.
-- ✅ Контракты ERC-20 TFT (`travel-fi.sol`) — **задеплоены и верифицированы** (Base Sepolia, см. `.env`); on-chain отправка через [`ContractService`](app/services/contract_service.rb:22)
+- ✅ Контракты ERC-20 TFT (`travel-fi.sol`) — **написаны, задеплоены и верифицированы в тестнете** (детали сети — в `.env`); on-chain отправка через `TokenTransactionService.relay!` ([`token_transaction_service.rb`](app/services/token_transaction_service.rb:22))
 - 🔴 EIP-2771 forwarder + admin hot-wallet; Jetton TON + bridge
 - 🔴 Token Spend (premium-фичи), Contract Mgmt в админке
+- 🔴 **Уровни от `token_balance`**: сколько TFT накопил юзер → уровень (репутация/прогрессия в профиле); пороги — продукт-задача
+- ⚠️ **Курс ETH/USDT и TON/USDT:** разработать в сервисе транзакций метод получения актуального курса и вызывать перед каждой конвертацией. Токен фиксированный (1 TFT = 1 USDT) — курс нужен для понимания реальной рыночной ситуации и установки курса обмена.
+- ⚠️ **Лок-блокировка начислений — СРОЧНО ИСПРАВИТЬ:** сейчас начисления пула уходят сразу, без учёта локдейса. Блокировка ведётся в модели `TokenTransaction`; relay вызываем в нужный момент. **Контракт `TravelFiRewards` дорабатывается: убрать лишнее (on-chain vesting), оставить простое начисление.**
+- 🔴 **Целевая on-chain схема начислений (двухэтапная off-chain → on-chain, блокировка в БД):**
+  - **Этап 1 (off-chain, сразу, через Сервис→Джоб):** действие → `UserReward` + `TokenTransaction` в единой транзакции. Баланс/бейджи/уровни обновляются сразу — заблокированные TFT виртуальные (внутренний счёт в БД), on-chain `relay` уходит в очередь только в момент разблокировки/claim.
+  - **Этап 2 (on-chain, по кнопке «Забрать награды» или авто-claim job):** одна relay-отправка через Сервис→Джоб (SolidQueue) → реальные TFT на custodial-кошелёк. Газ платим один раз за claim.
+  - **Лок-период — вычислимая проверка, поля НЕТ:** запись `TokenTransaction` разблокирована, если `updated_at + lock_days(config)` уже наступило. Маркер «получено» — **булево поле** (`claimed`), проставляется при успешном relay; при этом `updated_at` обновляется (срабатывает аудит PaperTrail → broadcast).
+  - **Регистрация/рефералы (welcome/referral):** relay **сразу** (lock=0) — на кошелёк, без локдейса.
+  - **`sendRewardBatch` — ТОЛЬКО под акции/массовые награды** (несколько юзеров одной tx), не как регулярный процесс.
+  - **Плашка «доступно Y к снятию / Z на балансе»:** расчёт на бэке из скоупов `TokenTransaction` — `available` (разблокированы по `updated_at` И `claimed == false`), `locked` (ещё не прошёл лок-период). Ручной счётчик не нужен.
+  - **Claim-флоу:** кнопка → Сервис (`UserService.claim_rewards!`) → собирает `available`-начисления → ставит relay-Джоб → при успехе `claimed = true` (и `updated_at` обновляется → аудит → broadcast).
+- 🔴 **Вынести все динамические настройки геймификации из `config/gamification.yml` в сущность `Setting` + UI в админке `/admin-panel/settings`:** не только pool (`rewards_lock_days`, `pool_warning_balance`, `pool_critical_balance`), но и rewards-суммы (registration 10, referral 15+5, poi_create/photo/comment/vote) и thresholds бейджей (first_poi, contributor, explorer, recruiter, veteran, …). `GamificationService` читает из `Setting` (фолбэк на YAML-дефолты до первого сохранения); форма (числовые инпуты/пороги) через конвейер `SettingsReflex#update` → `SettingService.update` → `SettingBroadcaster`; аудит PaperTrail; синхронизация lock on-chain через `setLockDays`. **Пока настройки остаются в YAML — полный перенос позже отдельной задачей.**
+- 🔴 **Награда TFT за достижение уровня (рейтинг-система):** при переходе через порог `token_balance` (уровень из конфига) → разовый reward по двухэтапной схеме §4.2 (новый `action_key`, напр. `level_up`). Реализуется вместе с рейтинг-системой.
+- 🔴 **Акции / массовые награды через `sendRewardBatch`:** разовые кампании награждения группы юзеров одной tx (акции, розыгрыши, бонусы комьюнити). Отдельная фича поверх двухэтапной схемы.
 
 ### 4.3 Realtime-инфраструктура
 **Статус:** ✅ Сделано
@@ -364,15 +400,14 @@ Travel Fi
 **Статус:** 🟡 Частично (in-app/database ✅; email — долг)
 - ✅ In-app (action_cable) и database-уведомления работают (включая `PoiCategoryNotification`)
 - ✅ Фильтрация каналов через `Setting` (`setting_field_enabled?`), Web push [`web_push.rb`](app/notifications/noticed/delivery_methods/web_push.rb:1)
-- ✅ **Noticed 3.0.0 миграция выполнена:** `ApplicationNotification < Noticed::Event`, `required_param` вместо `param`, `deliver_by :database` удалён (записи сохраняются автоматически), `WebPush < Noticed::DeliveryMethod`. `action_cable` (UserChannel) настроен.
-- ⚠️ **Долг email:** доставка через `mailer.with(params)` (получатель `params[:recipient]`) — проверить в реальном прогоне; `EventJob` требует `perform_enqueued_jobs` в цикле.
+- ✅ **Noticed 3.0.0:** `ApplicationNotification < Noticed::Event`, `required_param`, без `deliver_by :database` (записи сохраняются автоматически), `WebPush < Noticed::DeliveryMethod`. `action_cable` (UserChannel) настроен.
+- ✅ Email-доставка проверена: `UserMailer.profile_updated` с `params[:recipient]`; Setting-фильтр `email_enabled?` — покрыт тестом `spec/notifications/user_profile_notification_spec.rb`
 
 ### 4.6 i18n / UI (ViewComponents)
 **Статус:** ✅ Сделано
 - ✅ 4 локали (en/ru/es/zh); sidecar ViewComponents (rb + html + css + controller.js + 4 yml)
 - ✅ Только зелёно-голубая палитра Tailwind (emerald/teal/sky), иконки MDI, запрет partials
-- ✅ UI-библиотека: `Ui::CardComponent`, `BtnComponent`, `DropdownComponent`, `TabsComponent`, `BadgeComponent`, `AvatarComponent`, `TooltipComponent`, `BreadcrumbsComponent`, `PaginationComponent`, `ConfirmDialogComponent`, `ToastComponent`, `SidebarComponent`, `NavbarComponent`, `FiltersComponent`, `AuditEntryComponent`, `ClipboardComponent`, `HamburgerComponent`
-- ✅ **Sidecar [`Ui::DateComponent`](app/components/ui/date_component.rb:1) дозаполнен** (css + controller.js) — баг закрыт
+- ✅ UI-библиотека: `Ui::CardComponent`, `BtnComponent`, `DropdownComponent`, `TabsComponent`, `BadgeComponent`, `AvatarComponent`, `TooltipComponent`, `BreadcrumbsComponent`, `PaginationComponent`, `ConfirmDialogComponent`, `ToastComponent`, `SidebarComponent`, `NavbarComponent`, `FiltersComponent`, `AuditEntryComponent`, `ClipboardComponent`, `DateComponent`, `HamburgerComponent`
 
 ### 4.7 PWA / Devices
 **Статус:** 🟡 Частично
@@ -381,8 +416,10 @@ Travel Fi
 - 🔴 Offline: тайлы карты, offline-список (IndexedDB), offline GPX/CSV, push
 
 ### 4.8 CI / Tests / Production
-**Статус:** 🟡/🔴
-- 🟡 CI: brakeman/bundler-audit/rubocop/yarn audit — есть; **rspec в [`config/ci.rb`](config/ci.rb:1) добавить**
+**Статус:** 🟡
+- ✅ CI: brakeman/bundler-audit/rubocop/yarn audit — есть; **rspec в [`config/ci.rb`](config/ci.rb:1) добавлен**
+- ✅ **Полный RSpec suite зелёный:** `CUPRITE_HEADLESS=true bundle exec rspec` → **250 examples, 0 failures, 3 pending** (заглушки: PoiRating, live-комментарии для всех). Прогон ~2.5 мин
+- ✅ **Стабильность прогона:** потоковая индикация `[START] <example>` с `$stdout.flush` в [`spec/rails_helper.rb`](spec/rails_helper.rb:38) — виден текущий пример при затыке; ENV-моки с `and_call_original` — каскадный сбой `DatabaseCleaner` (грязная БД → ложные падения `User scopes`/`DashboardService.stats`) устранён
 - 🔴 Production-деплой: [`config/deploy.yml`](config/deploy.yml:1) — заглушки `192.168.0.1`/`localhost:5555`; домен, SMTP, force_ssl
 - 🟡 Performance: tile caching, PostGIS-оптимизация, SolidCable clustering, GeoJSON-кэш
 
@@ -395,19 +432,20 @@ Travel Fi
 | # | Модель | Связь | Модель | Описание |
 |---|--------|-------|--------|----------|
 | 1 | `User` | 1 — 1 | `Setting` | у каждого юзера одна строка настроек уведомлений |
-| 2 | `User` | 1 — N | `Gamification` | баллы и бейджи юзера |
+| 2 | `User` | 1 — N | `Gamification` | бейджи юзера (event_type badge) |
 | 3 | `User` | M — N | `Role` | роли через таблицу `users_roles` (Rolify) |
 | 4 | `User` | 1 — N | `Poi` | юзер — создатель точек |
 | 5 | `User` | 1 — N | `PoiComment` | юзер — автор комментариев |
 | 6 | `User` | 1 — N | `Wallet` | custodial (наш) / external (свой) кошелёки |
-| 7 | `PoiCategory` | 1 — N | `PoiCategoryField` | категория определяет набор динамических полей |
-| 8 | `PoiCategory` | 1 — N | `Poi` | категория содержит точки |
-| 9 | `Poi` | 1 — N | `PoiComment` | комментарии к точке (self-join `parent_id` — ответы) |
-| 10 | `Poi` | 1 — N | `Photo` | галерея фото (ActiveStorage) |
-| 11 | `Poi` | 1 — N | `PoiRating` | 5-звёздные оценки (🔴 в планах) |
-| 12 | `Poi` | N — 1 | `PoiCategory` | каждая точка принадлежит одной категории |
-| 13 | `Poi` | N — 1 | `User` | у каждой точки есть создатель |
-| 14 | *(все)* | — | `PaperTrail::Version` | аудит изменений всех моделей с `has_paper_trail` |
+| 7 | `User` | 1 — N | `UserReward` | off-chain начисления токенов TFT |
+| 8 | `User` | 1 — N | `TokenTransaction` | журнал движения токенов (credit/debit) |
+| 9 | `User` | 1 — 1 | `User` (referred_by) | self-join: кто пригласил (рефкод) |
+| 10 | `PoiCategory` | 1 — N | `PoiCategoryField` | категория определяет набор динамических полей |
+| 11 | `PoiCategory` | 1 — N | `Poi` | категория содержит точки |
+| 12 | `Poi` | 1 — N | `PoiComment` | комментарии к точке (self-join `parent_id` — ответы) |
+| 13 | `Poi` | 1 — N | `Photo` | галерея фото (ActiveStorage) |
+| 14 | `Poi` | 1 — N | `PoiRating` | 5-звёздные оценки (🔴 в планах) |
+| 15 | *(все)* | — | `PaperTrail::Version` | аудит изменений всех моделей с `has_paper_trail` |
 
 ### 5.2 Эталонная цепочка обновлений (Database-Triggered Workflow)
 
@@ -433,11 +471,12 @@ DOM обновляется точечно у всех подписанных б�
 
 ### 5.3 Потоки данных между секциями
 
-- **User Profile ↔ Admin Users:** изменение юзера → PaperTrail → `VersionObserverJob#handle_user_update` → `Admin::UserBroadcaster` (AdminChannel) + `UserBroadcaster` (user_N, только если не админ-инициатива) + `UserProfileNotification` (Noticed, фильтр по `Setting`).
+- **User Profile ↔ Admin Users:** изменение юзера → PaperTrail → `VersionObserverJob#handle_user_update` → `Admin::UserBroadcaster` (AdminChannel) + `UserBroadcaster` (user_N) + `UserProfileNotification` (Noticed, фильтр по `Setting`).
 - **POI Map ↔ Admin Pois:** создание/изменение POI → `VersionObserverJob#handle_poi_update` → `PoiBroadcaster` (список + тост + `poi:reload-features` → карта) + `Admin::DashboardBroadcaster.broadcast_stats_update`.
 - **PoiCategories ↔ POI Map:** изменение категории/полей → `PoiCategoryBroadcaster` (AdminChannel, карточка/поля/POI/аудит); видимость POI на карте зависит от `poi_categories.active` (scope `Poi.visible`).
 - **OSM-импорт ↔ POI Map:** `Admin::PoiCategoriesReflex#import_from_osm` → `OsmImportBroadcaster` (прогресс/результат в user_N) + `poi:reload-features` → перезагрузка маркеров карты.
 - **Settings ↔ Notifications:** `SettingsReflex` → `SettingService` → `SettingBroadcaster` (user_N); `Setting`-фильтры применяются при рассылке Noticed.
+- **Gamification ↔ Wallet/TokenTransaction:** `GamificationService.award!` → `UserReward` + `TokenTransaction` (в одной транзакции) → `TokenTransactionRelayJob` (SolidQueue) → on-chain mint.
 
 ---
 
@@ -447,10 +486,11 @@ DOM обновляется точечно у всех подписанных б�
 Один тест на сценарий = **«браузер А → браузер Б»**: А выполняет действие (Reflex/Service → save! → PaperTrail → VersionObserverJob → Broadcaster → CableReady) → Б видит live-обновление БЕЗ перезагрузки + уведомления по своим настройкам.
 
 ### Инфраструктура
-- ✅ RSpec + FactoryBot + PostGIS; **Capybara + Cuprite** (headless Chrome) для двух сеансов
-- ✅ DatabaseCleaner (system — truncation, остальные — transaction); WebMock (мок Overpass); ActiveJob `:test`
+- ✅ RSpec + FactoryBot + PostGIS; **Capybara + Selenium Chrome**: headful-окно локально, headless (`--headless=new`) в CI (`CUPRITE_HEADLESS=true`/`ENV['CI']`)
+- ✅ DatabaseCleaner (system — truncation, остальные — transaction); WebMock (мок Overpass/RPC); ActiveJob `:test`
 - ✅ ActionCable в тестах — `solid_cable` (live между браузерами), тестовая cable-БД `travel_fi_test_cable`
 - ✅ Хелперы [`spec/support/system_helpers.rb`](spec/support/system_helpers.rb:1): `browser_a`/`browser_b`, `sign_in_via_ui`, `wait_for_selector`, `perform_enqueued_jobs_now`
+- ✅ Потоковая индикация `[START] <example>` в [`spec/rails_helper.rb`](spec/rails_helper.rb:38) — видно текущий пример при затыке
 
 ### Сквозные system-тесты (созданы) — структура по секциям/сущностям
 ```
@@ -465,26 +505,28 @@ spec/system/
 │   ├── poi_category_spec.rb    # 3.3 PoiCategories ✅
 │   └── pois_spec.rb            # 3.4 Admin Pois ✅
 └── layer/                      # горизонтальные слои (4.x)
-    └── gamification_spec.rb    # 4.2 Gamification ✅
+    ├── gamification_spec.rb    # 4.2 Gamification ✅
+    └── referral_rewards_spec.rb# 4.2 Реферальные начисления ✅
 ```
-- ✅ **`User`** (эталон, [`user_lifecycle_spec.rb`](spec/system/user/user_lifecycle_spec.rb:1)) — **ПРОШЁЛ (0 failures)**: регистрация → подтверждение → кошелёк → welcome-токены → админ live (статус/имя) → профиль (кошелёк/баланс) → мягкое удаление (deleted скрыт в All, виден через фильтр) → аудит → уведомления
-- ✅ **`Admin::PoiCategory`** (эталон, [`poi_category_spec.rb`](spec/system/admin/poi_category_spec.rb:1)) — **ПРОШЁЛ (0 failures)**
+- ✅ **`User`** (эталон, [`user_lifecycle_spec.rb`](spec/system/user/user_lifecycle_spec.rb:1)) — регистрация → подтверждение → кошелёк → welcome-токены → админ live (статус/имя) → профиль (баланс/кошелёк скрыт) → мягкое удаление → аудит → уведомления
+- ✅ **`Admin::PoiCategory`** (эталон, [`poi_category_spec.rb`](spec/system/admin/poi_category_spec.rb:1))
 - ✅ `Admin::User` ([`users_spec.rb`](spec/system/admin/users_spec.rb:1)) — смена статуса (браузер А → Б)
 - ✅ `Auth` ([`user_auth_spec.rb`](spec/system/user/user_auth_spec.rb:1)) — регистрация → видимость у админа Б
-- ✅ `Gamification` ([`gamification_spec.rb`](spec/system/layer/gamification_spec.rb:1)) — токены → баланс в профиле
+- ✅ `Gamification` ([`gamification_spec.rb`](spec/system/layer/gamification_spec.rb:1)) — токены → баланс + история в профиле
+- ✅ `Referral rewards` ([`referral_rewards_spec.rb`](spec/system/layer/referral_rewards_spec.rb:1)) — регистрация по рефкоду → начисления обоим (15/5), баланс+история, Wallet у админа (explorer-ссылка 4+4)
+- ✅ `TokenTransactionService` ([`token_transaction_service_spec.rb`](spec/services/token_transaction_service_spec.rb:1)) — relay mint (WebMock RPC) + `to_wei`; `TokenTransactionRelayJob` ([`token_transaction_relay_job_spec.rb`](spec/jobs/token_transaction_relay_job_spec.rb:1)); подпись/RLP — [`ethereum_spec.rb`](spec/lib/crypto/ethereum_spec.rb:39)
 - ✅ `User::Settings` ([`user_settings_spec.rb`](spec/system/user/user_settings_spec.rb:1))
 - ✅ `Admin::Poi` ([`pois_spec.rb`](spec/system/admin/pois_spec.rb:1)) — создание POI → виден в списке админки
-- ✅ `POI Map` ([`poi_map_spec.rb`](spec/system/user/poi_map_spec.rb:1)) — live-карта настроена (Selenium headful/headless + CDP-геолокация)
+- ✅ `POI Map` ([`poi_map_spec.rb`](spec/system/user/poi_map_spec.rb:1)) — live-карта (Selenium headful/headless + CDP-геолокация)
 
 ### Журнал последних прогонов
-- ✅ **Полный suite** (06.08.2026) — **173 examples, 0 failures, 3 pending** (заглушки `PoiRating`×2 + `PoiComment` live). Тест-инфраструктура: переход с Cuprite на **Selenium Chrome** — headful-окно/вкладка локально (визуально наблюдать процесс) + headless (`--headless=new`) в CI (`CUPRITE_HEADLESS=true`/`ENV['CI']`); precompiled-ассеты для system-тестов (`RAILS_ENV=test bin/rails assets:precompile`); `wait_for_selector` → `has_css?(visible: false)` (скрытый `#poi-map-features`); `spec/requests` deprecation `:unprocessable_entity`→`:unprocessable_content`; rspec добавлен в `config/ci.rb`. Закрыты баги: (1) `Admin::PoisReflex#update` `morph "#poi-detail"` → Broadcaster (зона `#poi-detail` в `PoiBroadcaster`); (2) `Admin::DashboardService.stats` ключи `total_users/.../new_users_today`; (3) `Admin::DashboardBroadcaster` `morph`→`inner_html`; (4) POI не на карте — fallback-загрузка `map_component_controller.js`; (5) per-entry rescue аудит-зон (`PoiBroadcaster`/`Admin::UserBroadcaster`).
-- ✅ **POI полное покрытие** (06.08.2026) — **unit+reflex+controller+broadcaster: 81 examples, 0 failures, 2 pending** (заглушки `PoiRating`/live-комментарии). Слои: `PoiService`/`Poi`/`PoiComment`/`PoiPolicy`/`PoiCommentPolicy`/`GamificationService`/`PoiBroadcaster`/`ToastBroadcaster`/`PoiReflex`/`Admin::PoisReflex`/`VersionObserverJob`/`PoisController`. **Полный suite: 153 examples, 1 failure** (🟡 `POI Map` — недонастроенная live-карта), **3 pending**. Выявлены и устранены баги: (1) SRID 4326 для geography-кастов + миграции `spatial_ref_sys`/`pois.description→jsonb`; (2) JSONB-поиск `search_pois`; (3) scope `nearby`; (4) `PoiPolicy::Scope` для гостя; (5) **награды TFT не начислялись** — `GamificationService.award!(:poi_create/:comment_create)` добавлены в `PoiService` (суммы из `config/gamification.yml`); (6) **бейджи first_poi/contributor не работали** — `User#pois` (has_many); (7) **live-комментарии отсутствовали** — `PoiCommentBroadcaster` + ветка `PoiComment` в `VersionObserverJob`; (8) `filter_by_categories` NameError (`bounds`→`params`); (9) **`PoiBroadcaster` использовал `morph`** — заменён на `inner_html`; (10) **`Poi::AddFormComponent` не существовал** — страница `new` убрана (модалка `Poi::FormComponent` остаётся основным UX), create→JSON 422, fetch-сабмит формы; (11) `PoisController` падал `PolicyScopingNotPerformedError` — `skip_after_action :verify_policy_scoped`.
-- ✅ **Сущности User + PoiCategory** (05.08.2026) — **16 examples, 0 failures**: unit (`UserService`/`Admin::DashboardService`/`OsmImportService`/`UserInactivityJob`) + system (`user_lifecycle`/`poi_category`/`admin_users`/`auth`/`gamification`/`settings`)
-- ✅ **Сущности User + PoiCategory** (05.08.2026) — **16 examples, 0 failures**: unit (`UserService`/`Admin::DashboardService`/`OsmImportService`/`UserInactivityJob`) + system (`user_lifecycle`/`poi_category`/`admin_users`/`auth`/`gamification`/`settings`)
-- ✅ `poi_category_spec` (05.08.2026) — **1 example, 0 failures** (28.7 c) — после фикса OSM (убран `morph`-дубль карточки, инкрементальный `inner_html [data-poi-category-pois]`); закрывает баг 2.2 «вкладка POIs при OSM-импорте»
-- ✅ `auth_spec` + `user_lifecycle_spec` (05.08.2026) — **2 examples, 0 failures** (46.5 c) — повторное подтверждение `User`/`Auth`; закрывает баг 2.5 «смена статусов / подтверждение email»
-- ✅ Полный `bundle exec rspec` (06.08.2026) — **173 examples, 0 failures, 3 pending** (см. первую запись журнала)
-- ✅ Deprecation Noticed 3.x сняты миграцией (`Noticed::Event`, `required_param`, без `deliver_by :database`) — см. 4.5
+- ✅ **Полный suite (07.08.2026)** — **250 examples, 0 failures, 3 pending** (заглушки `PoiRating`×2 + `PoiComment` live). Закрытые баги: (1) `relay!` ронял job — `WebMock::NetConnectNotAllowedError < Exception` не ловился `rescue StandardError`, добавлен перехват `Exception` + `mark_failed`; (2) ECDSA-подпись падала на Ruby 3.4 — координаты `OpenSSL::PKey::EC::Point` через `to_octet_string(:uncompressed)`; (3) ENV-моки ломали `DatabaseCleaner` (каскад: грязная БД → ложные падения `User scopes`/`DashboardService.stats`) — добавлен `and_call_original`; (4) устранён warning `already initialized constant` (дублирование констант `TOKEN_ADDRESS`/`RPC_URL`).
+- ✅ **Полный suite (06.08.2026)** — **173 examples, 0 failures, 3 pending**. Тест-инфраструктура: Selenium Chrome (headful/headless), precompiled-ассеты, `wait_for_selector` → `has_css?(visible: false)`, rspec в `config/ci.rb`. Закрыты баги: `Admin::PoisReflex#update` morph→Broadcaster; `Admin::DashboardService.stats` ключи; `Admin::DashboardBroadcaster` morph→inner_html; POI не на карте — fallback-загрузка; per-entry rescue аудит-зон.
+- ✅ **POI полное покрытие (06.08.2026)** — **unit+reflex+controller+broadcaster: 81 examples, 0 failures, 2 pending**. Закрытые баги: SRID 4326; JSONB-поиск; `nearby`; `PoiPolicy::Scope` для гостя; награды TFT; бейджи `first_poi`/`contributor`; live-комментарии; `filter_by_categories` NameError; `PoiBroadcaster` morph→inner_html; `Poi::AddFormComponent`; `PolicyScopingNotPerformedError`.
+- ✅ **Сущности User + PoiCategory (05.08.2026)** — **16 examples, 0 failures**: unit (`UserService`/`Admin::DashboardService`/`OsmImportService`/`UserInactivityJob`) + system (`user_lifecycle`/`poi_category`/`admin_users`/`auth`/`gamification`/`settings`)
+- ✅ `poi_category_spec` (05.08.2026) — **1 example, 0 failures** — после фикса OSM-импорта (инкрементальный `inner_html [data-poi-category-pois]`)
+- ✅ `auth_spec` + `user_lifecycle_spec` (05.08.2026) — **2 examples, 0 failures** — повторное подтверждение `User`/`Auth`
+- ✅ Deprecation Noticed 3.x сняты миграцией (`Noticed::Event`, `required_param`, без `deliver_by :database`)
 
 ### Недоделано → чинить, затем тест
 - ⚠️ `PoiComment` live для всех (сейчас только автор) — баг

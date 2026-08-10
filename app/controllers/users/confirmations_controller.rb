@@ -24,7 +24,14 @@ class Users::ConfirmationsController < Devise::ConfirmationsController
       # UserService.confirm_email — мутация в Service слое (не в модели), всегда active
       UserService.confirm_email(resource)
       # Скрытый custodial-кошелёк создаётся после подтверждения (для email-регистрации).
+      # Порядок важен: начисление идёт ПОСЛЕ кошелька, чтобы начисление сразу
+      # получило on-chain адрес (без backfill-ветки).
       WalletService.create_hidden_wallet(user: resource)
+      # Точка начисления = статус active: welcome-токены и реферальные бонусы
+      # начисляются ТОЛЬКО после активации аккаунта (не в registrations#create).
+      # Реферальная связь уже персистится при регистрации (save_referral!) —
+      # метод принимает один аргумент (user).
+      UserService.award_registration_bonus!(resource)
       # Логируем подтверждение email
       UserAuditLogger.log_email_verified(resource) if defined?(UserAuditLogger)
       # Логируем вход при подтверждении email (timestamps будут разные благодаря счётчику)

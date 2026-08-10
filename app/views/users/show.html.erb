@@ -14,5 +14,10 @@
     <div data-user-profile-id="<%= @user.id %>">
       <%= render Users::ProfileComponent.new(user: @user) %>
     </div>
+
+    <!-- Rewards History (обёртка-цель для TokenTransactionBroadcaster inner_html) -->
+    <div data-user-rewards>
+      <%= render Users::RewardsComponent.new(user: @user) %>
+    </div>
   </div>
 </div>

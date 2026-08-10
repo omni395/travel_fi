@@ -39,6 +39,15 @@ class UserMailer < ApplicationMailer
     mail(to: @user.email, subject: I18n.t("devise.mailer.email_changed.subject"))
   end
 
+  # Письмо уведомления об изменении пароля
+  # Вызывается Devise после успешной установки нового пароля
+  # (config.send_password_change_notification = true).
+  def password_change(record, opts = {})
+    @user = record
+
+    mail(to: @user.email, subject: I18n.t("devise.mailer.password_change.subject"))
+  end
+
   # Письмо разблокировки аккаунта
   def unlock_instructions(record, token, opts = {})
     @user = record

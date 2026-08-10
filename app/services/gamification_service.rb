@@ -5,7 +5,7 @@
 #
 # ТОКЕННАЯ МОДЕЛЬ: начисления идут в user_rewards (off-chain леджер, TFT),
 # а не в «баллы». Реальная отправка ERC-20 на custodial-кошелёк — через
-# ContractService (контракты задеплоены, см. .env).
+# TokenTransactionService.relay! (контракты задеплоены, см. .env).
 #
 # Конфиг: config/gamification.yml (rewards — токены, badges — достижения).
 #
@@ -53,12 +53,71 @@ class GamificationService
     # @return [UserReward]
     #
     def create_reward!(user, amount, action_key, log)
-      user.user_rewards.create!(
-        amount: amount,
-        action_key: action_key,
-        log: log,
-        wallet: user.wallet
+      # Единая транзакция: off-chain начисление (UserReward) + запись журнала
+      # движения токенов (TokenTransaction). Всё или ничего.
+      ActiveRecord::Base.transaction do
+        reward = user.user_rewards.create!(
+          amount: amount,
+          action_key: action_key,
+          log: log,
+          wallet: user.wallet
+        )
+
+        create_token_transaction!(reward)
+        reward
+      end
+    end
+
+    #
+    # Создаёт запись журнала движения токенов (TokenTransaction) для начисления.
+    # tx_hash пустой до on-chain отправки через релей (EIP-2771); статус pending.
+    #
+    # Лок-модель:
+    #   - мгновенные начисления (registration / referral_*) → claimed=false, но
+    #     relay-Джоб ставим СРАЗУ (lock=0, токены доступны для траты);
+    #   - vesting-начисления (остальные) → claimed=false, relay НЕ ставим —
+    #     отправка произойдёт через claim (UserService.claim_rewards!).
+    #
+    # @param reward [UserReward] только что созданное начисление
+    # @return [TokenTransaction]
+    #
+    def create_token_transaction!(reward)
+      transaction = reward.user.token_transactions.create!(
+        amount: reward.amount,
+        direction: :credit,
+        action_key: reward.action_key,
+        status: :pending,
+        claimed: false,
+        chain_id: default_chain_id,
+        metadata: { log: reward.log },
+        wallet: reward.wallet,
+        user_reward: reward
       )
+
+      # Мгновенные (lock=0) уходят в очередь сразу; vesting — только по claim.
+      enqueue_relay(transaction) if transaction.instant?
+      transaction
+    end
+
+    #
+    # Ставит on-chain отправку начисления в очередь (SolidQueue).
+    # Сбой очереди не роняет начисление (остаётся pending для backfill).
+    #
+    # @param transaction [TokenTransaction] запись журнала токенов
+    #
+    def enqueue_relay(transaction)
+      TokenTransactionRelayJob.perform_later(transaction.id)
+    rescue StandardError => e
+      Rails.logger.error("Failed to enqueue TokenTransactionRelayJob: #{e.class} #{e.message}")
+    end
+
+    #
+    # Возвращает id сети по умолчанию из ENV (CHAIN_ID, например 0x14a34 → 84532).
+    #
+    # @return [String] id сети
+    #
+    def default_chain_id
+      (ENV['CHAIN_ID'] || '0x14a34').to_i(16).to_s
     end
 
     #
@@ -110,6 +169,42 @@ class GamificationService
 
         grant_badge!(user, badge_id.to_i)
       end
+    end
+
+    #
+    # Секция pool глобальной конфигурации (config/gamification.yml).
+    #
+    # @return [Hash] { lock_days:, warning_balance:, critical_balance: }
+    #
+    def pool_config
+      config['pool'] || {}
+    end
+
+    #
+    # Лок-период начислений (дни) из конфигурации pool.
+    #
+    # @return [Integer] по умолчанию 7
+    #
+    def pool_lock_days
+      (pool_config['lock_days'] || 7).to_i
+    end
+
+    #
+    # Порог «жёлтой» плашки баланса pool (TFT).
+    #
+    # @return [Integer] по умолчанию 10_000_000
+    #
+    def pool_warning_balance
+      (pool_config['warning_balance'] || 10_000_000).to_i
+    end
+
+    #
+    # Порог «красной» плашки баланса pool (TFT).
+    #
+    # @return [Integer] по умолчанию 1_000_000
+    #
+    def pool_critical_balance
+      (pool_config['critical_balance'] || 1_000_000).to_i
     end
 
     private

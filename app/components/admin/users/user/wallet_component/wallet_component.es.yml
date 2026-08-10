@@ -5,4 +5,31 @@ es:
       user:
         wallet_component:
           wallet_title: Billetera
-          wallet_placeholder: Funcionalidad de billetera próximamente
+          token_balance: Saldo de tokens
+          tft_balance: "%{balance} TFT"
+          referred_by: Invitado por
+          referrals_count:
+            one: "%{count} referido"
+            other: "%{count} referidos"
+          transactions_title: Transacciones
+          empty_transactions: Sin transacciones aún
+          date: Fecha
+          action: Acción
+          amount: Importe
+          status: Estado
+          tx_hash: Hash de red
+          directions:
+            credit: Crédito
+            debit: Débito
+          statuses:
+            pending: Pendiente
+            confirmed: Confirmada
+            failed: Fallida
+          action_keys:
+            registration: Bono de registro
+            referral_bonus_referrer: Bono por referido (referidor)
+            referral_bonus_new_user: Bono por referido (nuevo usuario)
+            poi_create: POI creado
+            poi_photo_add: Foto de POI añadida
+            comment_create: Comentario creado
+            poi_vote: Voto por POI

@@ -5,6 +5,25 @@ zh:
     es: "Español"
     zh: "中文"
 
+  mailer:
+    profile_updated:
+      subject: "您的资料已更新"
+      greeting: "您好，%{name}，"
+      body: "您的个人资料信息已更新。"
+      view_profile: "查看个人资料"
+    osm_import_complete:
+      subject: "OSM 导入完成"
+      greeting: "您好，%{name}，"
+      body: "OSM 导入已完成。请查看更新的 POI 分类。"
+      view_category: "查看分类"
+    account_deleted:
+      subject: "您的账户已被删除"
+      title: "账户已删除"
+      hello: "您好，%{name}，"
+      message: "您的 Travel-Fi 账户已被删除。"
+      contact_support: "如果这是一个错误，请联系支持。"
+    footer: "Travel-Fi — 旅行者 WiFi"
+
   common:
     edit_profile: "编辑资料"
     save: "保存"
@@ -84,6 +103,12 @@ zh:
     osm_import_complete_title: "OSM 导入完成"
     poi_category_updated: "POI 分类 %{category} 已更新。"
     poi_category_updated_title: "POI 分类已更新"
+    contract_balance:
+      title: "奖励池余额"
+      title_warning: "奖励池余额不足"
+      title_critical: "奖励池余额严重不足"
+      warning: "奖励池余额较低：%{balance} TFT（低于预警阈值 %{warning_balance}）。"
+      critical: "奖励池余额严重不足：%{balance} TFT（低于严重阈值 %{critical_balance}）。"
 
   user_audit:
     actions:
@@ -197,6 +222,13 @@ zh:
       moderator: "版主"
 
   reflexes:
+    user:
+      not_authorized: "您无权更新此个人资料"
+      update_error: "更新个人资料时出错"
+      profile_updated: "个人资料更新成功！"
+      no_rewards_available: "暂时没有可领取的奖励。"
+      rewards_claiming: "奖励正在处理中（%{count}），稍后会显示在您的钱包中。"
+      claim_error: "领取奖励时出错。"
     admin:
       poi_categories:
         create_success: "分类创建成功"
