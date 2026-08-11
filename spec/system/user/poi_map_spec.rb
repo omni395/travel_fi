@@ -35,6 +35,11 @@ RSpec.describe 'POI Map (браузер А → браузер Б)', type: :syste
     browser_b do
       sign_in_via_ui(user_b)
 
+      # Гарантируем готовность окна сессии ДО CDP-вызова: execute_cdp требует
+      # активного таргета окна. При неинициализированной сессии window-цепочка
+      # разваливается (симптомы: 'handle' must be a string / slice for nil).
+      prepare_session_window
+
       # Детерминированная геолокация: переопределяем координаты на Лондон через CDP
       # ДО visit pois_path. Карта центрируется на Лондон, bounds покрывают POI,
       # #poi-map-features наполняется. Без override headful Chrome возвращает
@@ -43,12 +48,7 @@ RSpec.describe 'POI Map (браузер А → браузер Б)', type: :syste
       # Карта центрируется на Лондон, bounds покрывают POI, #poi-map-features
       # наполняется. Без override headful Chrome возвращает реальные координаты
       # машины → bounds не Лондон → маркеры пусты (флаки-падения).
-      page.driver.browser.execute_cdp(
-        'Emulation.setGeolocationOverride',
-        latitude: 51.5074,
-        longitude: -0.1278,
-        accuracy: 100
-      )
+      retry_cdp_geolocation(latitude: 51.5074, longitude: -0.1278, accuracy: 100)
 
       visit pois_path
       wait_for_selector('#poi-map-features [data-poi-id]', timeout: 90)
