@@ -428,7 +428,7 @@ export default class extends ApplicationController {
     // и пересчитываем POI в уменьшенных bounds (90% видимой части)
     this._resizeObserver = new ResizeObserver(() => {
       this._map?.updateSize()
-      this._loadPoisInBounds()
+      // this._loadPoisInBounds() - не дергаем лишний раз, т.к. moveend сработает после ресайза и вызовет _loadPoisInBounds
     })
     this._resizeObserver.observe(el)
   }
@@ -603,15 +603,10 @@ export default class extends ApplicationController {
 
   _loadPoisInBounds() {
     if (!this._map) return
-    // Guard: карта может не иметь размера при первом рендере
     const size = this._map.getSize()
-    if (!size || size[0] === undefined || size[1] === undefined) {
-      console.warn("[POI MAP] _loadPoisInBounds — map size not ready yet, skipping")
-      return
-    }
+    if (!size || size[0] === undefined || size[1] === undefined) return
+
     const extent = this._map.getView().calculateExtent(size)
-    // Баунды запроса — 90% видимой части (сжатие к центру), чтобы не грузить
-    // крайние точки у сайдбара/навбара и за пределами видимой области экрана
     const cx = (extent[0] + extent[2]) / 2
     const cy = (extent[1] + extent[3]) / 2
     const w = (extent[2] - extent[0]) * 0.9
@@ -619,17 +614,24 @@ export default class extends ApplicationController {
     const shrunk = [cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2]
     const sw = toLonLat([shrunk[0], shrunk[1]])
     const ne = toLonLat([shrunk[2], shrunk[3]])
-    console.log(`[POI MAP] bounds: SW(${sw[1].toFixed(4)},${sw[0].toFixed(4)}) NE(${ne[1].toFixed(4)},${ne[0].toFixed(4)})`)
 
-    // Читаем текущее состояние фильтров из DOM (не из session)
+    // --- ДОБАВЛЯЕМ ПРОВЕРКУ ---
+    // Округляем до 4 знаков, чтобы мелкие погрешности пикселей не считались сдвигом карты
+    const currentBoundsKey = `${sw[1].toFixed(4)},${sw[0].toFixed(4)},${ne[1].toFixed(4)},${ne[0].toFixed(4)}`
+    
+    if (this._lastBoundsKey === currentBoundsKey) {
+      // Координаты те же самые! Сбрасываем вызов, рефлекс НЕ летит
+      return 
+    }
+    this._lastBoundsKey = currentBoundsKey
+    // ---------------------------
+
     const filtersEl = document.querySelector('[data-controller="poi--filters-component"]')
     const categoryIds = filtersEl
       ? Array.from(filtersEl.querySelectorAll('input[type="checkbox"][value]:checked')).map((cb) => parseInt(cb.value))
       : []
     const query = filtersEl?.querySelector('[data-poi--filters-component-target="searchInput"]')?.value?.trim() || ""
-    console.log(`[POI MAP] _loadPoisInBounds — filters:`, { categoryIds, query })
 
-    // Шлём bounds + фильтры одним рефлексом
     this.stimulate("PoiReflex#load_pois_in_bounds", {
       sw_lat: sw[1],
       sw_lng: sw[0],
@@ -639,7 +641,6 @@ export default class extends ApplicationController {
       query
     })
 
-    // Сохраняем bounds в data-атрибуты для poi--filters-component (для Apply/Reset)
     this.element.dataset.swLat = sw[1]
     this.element.dataset.swLng = sw[0]
     this.element.dataset.neLat = ne[1]

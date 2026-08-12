@@ -5,7 +5,7 @@
 # Запуск Rails:
 #   bin/dev
 
-web: bin/rails server -b 0.0.0.0 -p 3000
+web: RUBYOPT="--disable=yjit --disable=error_highlight" bin/rails server -p 3000
 js: node esbuild.config.mjs --watch
 css: npx @tailwindcss/cli -i ./app/assets/tailwind/application.css -o ./app/assets/builds/application.css --watch=always --verbose
 jobs: bin/jobs

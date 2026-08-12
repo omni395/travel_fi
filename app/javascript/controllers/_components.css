@@ -261,20 +261,76 @@
 }
 
 /* === ui/sidebar_component/sidebar_component.css === */
-/* ui/sidebar_component — универсальные стили боковой панели */
-.ui-sidebar {
-  background-color: white;
-  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-  border-right: 1px solid #e5e7eb;
-  overflow-y: auto;
-  transition: all 0.3s ease-in-out;
-  z-index: 10;
-  position: relative;
+/* ============================================================
+   Ui::SidebarComponent — сайдбар
+
+   Ключевая идея: обёртка ВСЕГДА в flex-потоке и имеет ФИКСИРОВАННУЮ
+   ширину полоски (шеврона). Поэтому контейнер карты (flex-1 справа)
+   всегда начинается за полоской и НЕ меняет позицию/размер при
+   переключении состояния → bounds не пересчитываются.
+
+   При раскрытии панель (absolute, от левого края) и кнопка-шеврон
+   (absolute, справа от панели) выезжают поверх карты как оверлей
+   и «едут» вместе вправо.
+   ============================================================ */
+
+:root {
+  /* Ширина полоски-шеврона (в потоке). */
+  --ui-sidebar-chevron-width: 1.75rem;
 }
 
-/* Скрытое состояние — скрывает через width: 0 */
-.ui-sidebar--hidden {
+/* 1. Обёртка: ВСЕГДА в потоке (flex-строка вместе с картой),
+      фиксированная ширина полоски. relative — точка отсчёта для
+      absolute-панели и кнопки. z-index поднимает над картой.
+      display:flex — кнопка-шеврон вытягивается на всю высоту.
+      Панель absolute не занимает места в потоке (ширина = полоски). */
+.ui-sidebar--wrapper {
+  position: relative;
+  z-index: 20;
+  width: var(--ui-sidebar-chevron-width);
+  flex-shrink: 0;
+  display: flex;
+  align-items: stretch;
+}
+
+/* 2. Панель сайдбара: absolute, от левого края обёртки, выезжает
+      поверх карты. Высота — вся высота обёртки. */
+.ui-sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  background-color: white;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+
+  /* Плавная анимация ширины/прозрачности */
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease-in-out;
+}
+
+/* Контент внутри не сминается гармошкой */
+.ui-sidebar > * {
+  min-width: 20rem; /* w-80 (320px) */
+}
+
+/* 3. Кнопка-шеврон: по умолчанию (collapsed) — в потоке, формирует
+      полоску слева. При развёрнутом — absolute справа от панели. */
+.ui-sidebar--chevron {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-sidebar-chevron-width);
+}
+
+/* 4. СВЁРНУТОЕ состояние: панель скрыта (width:0, opacity:0),
+      кнопка — полоска в потоке. Карта справа — полный размер,
+      без наложения. */
+.ui-sidebar--collapsed .ui-sidebar {
   width: 0px !important;
+  min-width: 0px !important;
   overflow: hidden !important;
   opacity: 0 !important;
   padding: 0 !important;
@@ -282,21 +338,33 @@
   border: none !important;
 }
 
-/* Сайдбар overlay поверх карты: на мобильных — вся ширина экрана, на ПК — фиксированная (w-80) */
-@media (max-width: 767px) {
-  .ui-sidebar {
-    width: 100vw !important;
-  }
+/* 5. РАЗВЁРНУТОЕ состояние: панель раскрывается поверх карты (оверлей),
+      кнопка уходит в absolute следом за панелью (left: ширина панели) —
+      обе «едут» вправо. Ширина панели — Tailwind-класс (w-64/w-80). */
+.ui-sidebar--wrapper.ui-sidebar--expanded .ui-sidebar {
+  width: var(--ui-sidebar-width, 20rem); /* w-80 по умолчанию */
+  min-width: 0;
+  opacity: 1;
+  border-right: 1px solid #e5e7eb;
 }
 
-/* Оверлей-режим (раскрытый сайдбар): поверх контента (карта/админка).
-   bottom: 0 растягивает absolute-обёртку на всю высоту контейнера
-   (flex-1 под навбаром h-16) — иначе высота = по контенту («кастрированный» сайдбар). */
-.ui-sidebar--overlay {
-  position: absolute !important;
-  inset: 0 auto 0 0 !important;
-  height: 100% !important;
-  z-index: 20 !important;
+/* Кнопка при раскрытии: absolute справа от панели (вместе с ней вправо) */
+.ui-sidebar--wrapper.ui-sidebar--expanded .ui-sidebar--chevron {
+  position: absolute;
+  top: 0;
+  left: var(--ui-sidebar-width, 20rem);
+  height: 100%;
+}
+
+/* На мобилках развёрнутый сайдбар занимает весь экран */
+@media (max-width: 767px) {
+  .ui-sidebar--wrapper.ui-sidebar--expanded .ui-sidebar {
+    width: calc(100vw - var(--ui-sidebar-chevron-width));
+    min-width: calc(100vw - var(--ui-sidebar-chevron-width));
+  }
+  .ui-sidebar--wrapper.ui-sidebar--expanded .ui-sidebar > * {
+    min-width: calc(100vw - var(--ui-sidebar-chevron-width));
+  }
 }
 
 /* === ui/tooltip_component/tooltip_component.css === */

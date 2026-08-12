@@ -58,6 +58,41 @@ module SystemHelpers
   end
 
   #
+  # Устойчивый к гонке CDP-вызов переопределения геолокации.
+  #
+  # execute_cdp требует активного таргета окна сессии. Даже после
+  # prepare_session_window таргет может быть ещё не готов, и Selenium бросает
+  # InvalidArgumentError ('handle' must be a string) / NoSuchWindowError.
+  # Метод повторяет вызов, пока target не станет доступным.
+  #
+  # @param latitude [Float] широта (WGS84)
+  # @param longitude [Float] долгота (WGS84)
+  # @param accuracy [Float] точность (метры)
+  # @param timeout [Integer] максимальное время ожидания (секунды)
+  # @return [void]
+  #
+  def retry_cdp_geolocation(latitude:, longitude:, accuracy:, timeout: 90)
+    Timeout.timeout(timeout) do
+      loop do
+        begin
+          page.driver.browser.execute_cdp(
+            'Emulation.setGeolocationOverride',
+            latitude: latitude,
+            longitude: longitude,
+            accuracy: accuracy
+          )
+          return
+        rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::InvalidArgumentError
+          # CDP-таргет окна ещё не готов — повторяем
+        end
+        sleep 0.2
+      end
+    end
+  rescue Timeout::Error
+    raise "CDP geolocation override did not succeed within #{timeout}s"
+  end
+
+  #
   # Вход пользователя через UI (Devise). Надёжно для реального Capybara-сервера
   # (Warden-логин в памяти не переживает отдельный серверный процесс).
   #
