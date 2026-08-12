@@ -10,24 +10,47 @@ export default class extends ApplicationController {
   static targets = ["submitButton"]
 
   /**
-   * Отправляет форму через StimulusReflex
-   * Если POI имеет id → update, иначе → create
+   * Собирает вложенный хэш параметров формы из FormData.
+   * Ключи вида "poi[name][en]" распаковываются в { poi: { name: { en: value } } },
+   * "poi[metadata][key]" — в { poi: { metadata: { key: value } } },
+   * "poi[slug]" — в { poi: { slug: value } }.
+   * Служебный ключ "poi[id]" попадает в params.poi.id (используется для
+   * детекции режима update и поиска записи в Reflex).
+   *
+   * @param {HTMLFormElement} form - форма
+   * @return {Object} вложенный объект параметров { poi: { ... } }
+   */
+  _collectParams(form) {
+    const params = { poi: {} }
+    for (const [key, value] of new FormData(form).entries()) {
+      const match = key.match(/^poi\[([^\]]+)\](?:\[([^\]]+)\])?$/)
+      if (!match) continue
+      const [, field, subfield] = match
+      if (subfield !== undefined) {
+        if (typeof params.poi[field] !== 'object' || params.poi[field] === null) {
+          params.poi[field] = {}
+        }
+        params.poi[field][subfield] = value
+      } else {
+        params.poi[field] = value
+      }
+    }
+    return params
+  }
+
+  /**
+   * Отправляет форму через StimulusReflex.
+   * Если POI имеет id → Admin::PoisReflex#update, иначе → Admin::PoisReflex#create.
    */
   handleSubmit(event) {
     event.preventDefault()
-    const formData = new FormData(event.target)
-    const params = Object.fromEntries(formData.entries())
+    const params = this._collectParams(event.target)
 
-    // Удаляем id из params, чтобы избежать конфликта с getReflexOptions() в StimulusReflex 3.5.5:
-    // функция ошибочно поглощает объект, содержащий ключ `id`, как объект опций (см. utils.js#getReflexOptions).
-    // id доступен в рефлексе через element.dataset.id или formSelector.
-    delete params.id
-
-    const idInput = event.target.querySelector("[name='poi[id]']")
-    if (idInput && idInput.value) {
-      this.stimulate("Admin::PoisReflex#update", params)
+    const hasId = Object.prototype.hasOwnProperty.call(params.poi, 'id') && params.poi.id
+    if (hasId) {
+      this.stimulate("Admin::PoisReflex#update", { poi: params.poi })
     } else {
-      this.stimulate("Admin::PoisReflex#create", params)
+      this.stimulate("Admin::PoisReflex#create", { poi: params.poi })
     }
   }
 }

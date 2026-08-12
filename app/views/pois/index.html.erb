@@ -3,28 +3,25 @@
 
 <div class="h-[calc(100vh-4rem)] relative overflow-hidden flex"
      data-controller="poi--map-component">
-  <%# Сайдбар: закрыт — узкая колонка слева (две колонки), открыт — оверлей поверх карты %>
-  <div class="shrink-0">
-    <%= render Ui::SidebarComponent.new(width_class: "w-80") do %>
-      <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
-        <div class="flex items-center justify-between">
-          <h2 class="text-md font-semibold text-gray-900">
-            <i class="mdi mdi-map-marker-multiple text-emerald-500 mr-0.5"></i>
-            <%# Иконка: mdi-map-marker-multiple %>
-            <%= t("pois.title") %>
-          </h2>
-        </div>
-      </div>
-      <div id="poi-list" data-ui--sidebar-component-target="list" class="divide-y divide-gray-100">
-        <%= render Poi::ListItemComponent.with_collection(@pois) %>
-      </div>
-      <div id="poi-detail-wrapper" data-ui--sidebar-component-target="detail" class="hidden">
-        <div id="poi-detail"></div>
-      </div>
-    <% end %>
-  </div>
 
-  <%# Карта: справа от сайдбара (закрыт) или на весь экран под оверлеем (открыт) %>
+  <%= render Ui::SidebarComponent.new(width_class: "w-80") do %>
+    <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+      <div class="flex items-center justify-between">
+        <h2 class="text-md font-semibold text-gray-900">
+          <i class="mdi mdi-map-marker-multiple text-emerald-500 mr-0.5"></i>
+          <%= t("pois.title") %>
+        </h2>
+      </div>
+    </div>
+    <div id="poi-list" data-ui--sidebar-component-target="list" class="divide-y divide-gray-100">
+      <%= render Poi::ListItemComponent.with_collection(@pois) %>
+    </div>
+    <div id="poi-detail-wrapper" data-ui--sidebar-component-target="detail" class="hidden">
+      <div id="poi-detail"></div>
+    </div>
+  <% end %>
+
+  <%# Карта: правая колонка в flex-потоке %>
   <div class="flex-1 min-w-0 relative">
     <%= render Poi::MapComponent.new(categories: @categories) %>
   </div>
@@ -34,7 +31,6 @@
        class="absolute inset-0 flex items-center justify-center bg-white z-50">
     <div class="text-center">
       <i class="mdi mdi-map-search text-emerald-500 text-4xl mb-2 block"></i>
-      <%# Иконка: mdi-map-search %>
       <p class="text-sm text-gray-500"><%= t("pois.loading_location") %></p>
     </div>
   </div>
@@ -48,13 +44,9 @@
      data-action="keydown.esc->poi--show-component#close">
   <div class="absolute inset-0 bg-black/50" data-action="click->poi--show-component#close"></div>
   <div class="absolute inset-0 flex items-center justify-center p-4">
-    <%# Окно модалки рендерится самим компонентом (ShowComponent / FormComponent) %>
-    <div id="poi-detail-modal-body">
-      <%# Сюда рендерится Poi::ShowComponent (окно: шапка + табы) через Reflex %>
-    </div>
+    <div id="poi-detail-modal-body"></div>
 
     <div id="poi-form-content" class="hidden">
-      <%# Сюда рендерится Poi::FormComponent (окно: форма) через Reflex %>
       <%= render Poi::FormComponent.new(
             categories: @categories,
             user_lat: @user_lat,
@@ -64,5 +56,4 @@
   </div>
 </div>
 
-<%# Контейнер для ConfirmDialog аутентификации (для гостей) %>
 <div id="poi-auth-dialog" class="hidden"></div>

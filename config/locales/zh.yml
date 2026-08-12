@@ -282,6 +282,7 @@ zh:
   pois:
     title: "兴趣点"
     update_success: "POI更新成功"
+    create_success_moderation: "POI已创建。将在版主批准后显示在地图上。"
     no_location_toast: "位置访问被拒绝。启用定位服务以添加和与附近的POI互动。"
     guest_warning: "您正在以访客身份使用。请登录或注册以添加和管理POI。"
     auth_required_title: "需要登录"

@@ -19,12 +19,17 @@ class Admin::PoisReflex < ApplicationReflex
   def update(params = {})
     morph :nothing
 
-    poi = Poi.find(params[:id] || element.dataset.id)
+    # Нормализуем строковые ключи из JS в символьные (вложенный { poi: {...} }
+    # из edit_component_controller.js). Без глубокой символизации params.slice
+    # в PoiService возвращает пустой хэш для вложенных локалей/metadata.
+    poi_params = deep_symbolize_keys(params[:poi] || params)
+
+    poi = Poi.find(poi_params[:id] || element.dataset.id)
     authorize_with_pundit!(poi, :update?)
 
     PoiService.update(
       poi: poi,
-      params: params,
+      params: poi_params,
       current_user: current_user
     )
 
@@ -50,8 +55,12 @@ class Admin::PoisReflex < ApplicationReflex
 
     authorize_with_pundit!(Poi, :create?)
 
+    # Нормализуем строковые ключи из JS в символьные (вложенный { poi: {...} }
+    # из edit_component_controller.js). Симметрично update.
+    poi_params = deep_symbolize_keys(params[:poi] || params)
+
     poi = PoiService.create(
-      params: params,
+      params: poi_params,
       current_user: current_user
     )
 

@@ -54,6 +54,8 @@ application.register('poi--filters-component', () => import('../../components/po
 
 application.register('poi--form-component', () => import('../../components/poi/form_component/form_component_controller.js'))
 
+application.register('poi--form-fields-component', () => import('../../components/poi/form_fields_component/form_fields_component_controller.js'))
+
 application.register('poi--gallery-component', () => import('../../components/poi/gallery_component/gallery_component_controller.js'))
 
 application.register('poi--list-item-component', () => import('../../components/poi/list_item_component/list_item_component_controller.js'))

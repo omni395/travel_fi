@@ -2,6 +2,7 @@ en:
   pois:
     title: "POIs"
     update_success: "POI successfully updated"
+    create_success_moderation: "POI created. It will appear on the map after moderator approval."
     loading_location: "Determining your location..."
     no_location_title: "Location unavailable"
     no_location_description: "Enable location services in your browser settings to see points of interest near you."

@@ -280,6 +280,7 @@ es:
   pois:
     title: "POIs"
     update_success: "POI actualizado exitosamente"
+    create_success_moderation: "POI creado. Aparecerá en el mapa tras la aprobación de un moderador."
     no_location_toast: "Acceso a la ubicación denegado. Habilite los servicios de ubicación para añadir e interactuar con POIs cercanos."
     guest_warning: "Estás usando como invitado. Inicia sesión o regístrate para añadir y gestionar POIs."
     auth_required_title: "Inicio de sesión requerido"
