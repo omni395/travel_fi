@@ -99,7 +99,9 @@ Travel Fi
 - ✅ Reverse geocoding при открытии формы редактирования (мини-карта в edit-режиме, автозаполнение address/city/country/zip)
 - ✅ Валидация координат: `handleSubmit` блокирует отправку без lat/lng (i18n `missing_coords`)
 - ✅ Мини-карта формы переинициализируется при `inner_html` (MutationObserver в `form_component_controller.js`)
-- ✅ Создание POI с карты — без `PolicyScopingNotPerformedError`; форма через модалку `Poi::FormComponent`, create→JSON 422, fetch-сабмит
+- ✅ Создание/редактирование POI с карты — через модалку `Poi::FormComponent` на Reflex-флоу (`PoiReflex#create/#update` → `PoiService` → PaperTrail → `PoiBroadcaster`); без перезагрузки страницы, без JSON в ответе контроллера; тост пользователю через `ToastBroadcaster` (WebSocket); автозаполнение адреса отключено (`autocomplete="off"`)
+- ✅ Динамические поля категории в форме POI: `PoiReflex#load_category_fields` рендерит `Poi::FormFieldsComponent` по field_type (string/text/number/boolean/select/multiselect) в обёртку `[data-poi-form-fields]` через CableReady (`inner_html`), неймспейс `poi[metadata][field_key]`
+- ✅ Sidebar-оверлей: `Ui::SidebarComponent` раскрывается ПОВЕРХ карты (absolute), не выталкивая flex-поток — bounds карты не пересчитываются (`poi:reload-features` не дублируется, `_loadPoisInBounds` guard по `_lastBoundsKey`)
 
 **Хотелки:**
 - 🔴 `PoiRating` — 5-звёздная система + агрегация в `poi.rating`
@@ -110,8 +112,10 @@ Travel Fi
 
 **Баги/Долги:**
 - ⚠️ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart — отдельная задача
-- ⚠️ Карточка POI: полировка UI (фокус-трап, aria, скролл-блокировка)
-
+- ⚠️ Карточка POI: полировка UI (фокус-трап, aria, скролл-блокировка) - отдельная задача
+- ✅ Автозаполнение адреса браузером отключено: `autocomplete="off"` на address/city/country/zip_code в `Poi::FormComponent` и админ-`EditComponent`
+- ⚠️ Админка. Форма редактирования: компоновка + `Ui::DropdownComponent` вместо `<select>`; мини-карта не инициализируется; `rating` — консолидируемое вычисляемое поле, НЕ редактируется вручную. Пользователь покажет структуру страницы — отдельная задача.
+- ⚠️ Фильтры. Компонент. Разобраться. - отдельная задача.
 ---
 
 ### 2.3 User Profile (профиль пользователя)
@@ -358,9 +362,11 @@ Travel Fi
 
 ### 4.2 Gamification & Web3
 **Статус:** 🟡 Токен-модель ✅ / 🔴 EIP-2771
-- ✅ **ТОКЕННАЯ МОДЕЛЬ:** награды — токены TFT (`UserReward`, off-chain леджер), `User#token_balance`; `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`); бейджи — `gamifications` (event_type badge); welcome 10 / referral 15+5 TFT. **Уровни — плановая метрика от `token_balance`** (см. хотелку ниже).
+- ✅ **ТОКЕННАЯ МОДЕЛЬ:** награды — токены TFT (`UserReward`, off-chain леджер), `User#token_balance`; `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`); бейджи — `gamifications` (event_type badge); welcome 10 / referral 5+5 TFT (реферер — vesting, новичок — мгновенно). **Уровни — плановая метрика от `token_balance`** (см. хотелку ниже).
 - ✅ **Журнал транзакций `TokenTransaction`:** каждая награда → запись credit (amount/action_key/tx_hash/status/chain_id/wallet_id/user_reward_id) в единой транзакции с `UserReward`; `tx_hash` заполняется после on-chain отправки, в админке — explorer-ссылка с выжимкой 4+4; баланс остаётся мгновенным (off-chain, без лок-периода)
-- ✅ **On-chain relay (серверная отправка):** `TokenTransactionService.relay!` + `TokenTransactionRelayJob` (SolidQueue) — подпись EIP-155 (RLP/ECDSA в [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1)) приватным ключом оператора (`OPERATOR_PRIVATE_KEY`, `.env`) → `eth_sendRawTransaction` → `transfer(address,uint256)` на **reward pool-контракт** (`REWARDS_CONTRACT_ADDRESS`) — токены берутся из баланса pool (НЕ mint), газ спонсирует оператор (gasless для юзера), БЕЗ лок-периода → `tx_hash`/`confirmed`. Без ключа/кошелька — `pending`, отправка позже. **`relay!` устойчив к любым исключениям (в т.ч. `Exception` — WebMock в тестах): помечает `failed`, job не роняет worker.**
+- ✅ **On-chain relay (серверная отправка):** `TokenTransactionService.relay!` + `TokenTransactionRelayJob` (SolidQueue) — подпись EIP-155 (RLP/ECDSA в [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1)) приватным ключом оператора (`OPERATOR_PRIVATE_KEY`, `.env`) → `eth_sendRawTransaction` → `transfer(address,uint256)` на **reward pool-контракт** (`REWARDS_CONTRACT_ADDRESS`) — токены берутся из баланса pool (НЕ mint), газ спонсирует оператор (gasless для юзера). **`relay!` устойчив к любым исключениям (в т.ч. `Exception` — WebMock в тестах): помечает `failed`, job не роняет worker.**
+- ✅ **Сериализация relay по оператору:** `limits_concurrency key: "token-relay-operator", to: 1, on_conflict: :block` — все начисления подписываются одним ключом, отправка строго последовательна (не конфликтуют nonce при параллельном relay).
+- ✅ **Авто-ретрай упавших relay:** `TokenTransactionRetryJob` (recurring каждые 15 мин) находит `status: failed` + `tx_hash: nil` и переотправляет через `relay!` только мгновенные/доступные по лок-периоду (vesting, ещё не разблокированные, — ждут claim).
 - ✅ **Точка начисления = статус active:** welcome-токены и реферальные бонусы начисляются ТОЛЬКО активному аккаунту. Email — после подтверждения (`ConfirmationsController#show`, кошелёк создан до начисления); OAuth — сразу (юзер активен). Реферальная связь (`referred_by`) фиксируется при регистрации (`UserService.save_referral!`) — переживает подтверждение.
 - ⚠️ **OAuth-рефкод:** бэкенд принимает рефкод — `User.from_google_oauth(auth, referral_code_input)` пробрасывает `?ref=`/`session[:referral_code]` в `UserService.handle_google_oauth` (реф-начисления работают при переданном коде). Но в OAuth-флоу НЕТ UI ввода рефкода и кнопка authorize не формирует `?ref=` → полноценный реферальный сценарий через OAuth недоступен до реализации UI-части (см. хотелку §2.4).
 - ✅ **Конфиг pool + мониторинг:** секция `pool` в `config/gamification.yml` (`lock_days`, `warning_balance`, `critical_balance`); `ContractBalanceCheckJob` (SolidQueue recurring) читает баланс pool через `TokenTransactionService.balance_of` и шлёт админам `ContractBalanceNotification` (Noticed) при низком балансе (жёлтая/красная плашка в интерфейсе — позже, с компонентами).
@@ -372,12 +378,12 @@ Travel Fi
 - 🔴 Token Spend (premium-фичи), Contract Mgmt в админке
 - 🔴 **Уровни от `token_balance`**: сколько TFT накопил юзер → уровень (репутация/прогрессия в профиле); пороги — продукт-задача
 - ⚠️ **Курс ETH/USDT и TON/USDT:** разработать в сервисе транзакций метод получения актуального курса и вызывать перед каждой конвертацией. Токен фиксированный (1 TFT = 1 USDT) — курс нужен для понимания реальной рыночной ситуации и установки курса обмена.
-- ⚠️ **Лок-блокировка начислений — СРОЧНО ИСПРАВИТЬ:** сейчас начисления пула уходят сразу, без учёта локдейса. Блокировка ведётся в модели `TokenTransaction`; relay вызываем в нужный момент. **Контракт `TravelFiRewards` дорабатывается: убрать лишнее (on-chain vesting), оставить простое начисление.**
+- ✅ **Лок-блокировка начислений (антифрод реферера):** `referral_bonus_referrer` исключён из `INSTANT_ACTION_KEYS` — реферер идёт по vesting-лок-периоду (`updated_at + lock_days`), маркер получения — булево `claimed`. Бонус новичку и welcome — мгновенно (lock=0).
 - 🔴 **Целевая on-chain схема начислений (двухэтапная off-chain → on-chain, блокировка в БД):**
   - **Этап 1 (off-chain, сразу, через Сервис→Джоб):** действие → `UserReward` + `TokenTransaction` в единой транзакции. Баланс/бейджи/уровни обновляются сразу — заблокированные TFT виртуальные (внутренний счёт в БД), on-chain `relay` уходит в очередь только в момент разблокировки/claim.
   - **Этап 2 (on-chain, по кнопке «Забрать награды» или авто-claim job):** одна relay-отправка через Сервис→Джоб (SolidQueue) → реальные TFT на custodial-кошелёк. Газ платим один раз за claim.
   - **Лок-период — вычислимая проверка, поля НЕТ:** запись `TokenTransaction` разблокирована, если `updated_at + lock_days(config)` уже наступило. Маркер «получено» — **булево поле** (`claimed`), проставляется при успешном relay; при этом `updated_at` обновляется (срабатывает аудит PaperTrail → broadcast).
-  - **Регистрация/рефералы (welcome/referral):** relay **сразу** (lock=0) — на кошелёк, без локдейса.
+  -   **Регистрация/бонус новичку:** relay **сразу** (lock=0) — на кошелёк, без локдейса. **Реферальный бонус РЕФЕРЕРА** — по лок-периоду (vesting, антифрод фейковых регистраций).
   - **`sendRewardBatch` — ТОЛЬКО под акции/массовые награды** (несколько юзеров одной tx), не как регулярный процесс.
   - **Плашка «доступно Y к снятию / Z на балансе»:** расчёт на бэке из скоупов `TokenTransaction` — `available` (разблокированы по `updated_at` И `claimed == false`), `locked` (ещё не прошёл лок-период). Ручной счётчик не нужен.
   - **Claim-флоу:** кнопка → Сервис (`UserService.claim_rewards!`) → собирает `available`-начисления → ставит relay-Джоб → при успехе `claimed = true` (и `updated_at` обновляется → аудит → broadcast).

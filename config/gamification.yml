@@ -9,7 +9,7 @@
 
 rewards:
   registration: 10
-  referral_bonus_referrer: 15
+  referral_bonus_referrer: 5
   referral_bonus_new_user: 5
   poi_create: 10
   poi_photo_add: 3

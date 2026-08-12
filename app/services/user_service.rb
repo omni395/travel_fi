@@ -124,10 +124,33 @@ class UserService
   end
 
   #
+  # Присваивает реферальную связь юзеру БЕЗ сохранения (ассоциация ляжет в
+  # тот же INSERT, что и создание юзера). Вызывается в registrations#create
+  # ПЕРЕД resource.save, чтобы referred_by_id был виден сразу после INSERT —
+  # устраняет гонку (тест-поллинг может прочитать юзера между resource.save
+  # и отдельным update!, когда рефсвязь ещё nil).
+  #
+  # @param user [User] создаваемый пользователь
+  # @param referral_code_input [String, nil] реферальный код
+  # @return [User, nil] реферер, если связь присвоена
+  #
+  def self.assign_referral(user, referral_code_input)
+    return if referral_code_input.blank?
+    return if user.referred_by_id.present?
+
+    referrer = User.find_by(referral_code: referral_code_input)
+    return unless referrer
+
+    user.referred_by = referrer
+    referrer
+  end
+
+  #
   # Фиксирует реферальную связь при регистрации (persisted в БД).
   # Вызывается в момент создания юзера (email или OAuth), чтобы связь
   # пережила подтверждение почты (ссылка из письма — другой запрос,
   # виртуальный атрибут referral_code_input там недоступен).
+  # Идемпотентен: если связь уже присвоена assign_referral — early return.
   #
   # @param user [User] только что созданный пользователь
   # @param referral_code_input [String, nil] реферальный код

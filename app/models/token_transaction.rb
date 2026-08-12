@@ -23,8 +23,11 @@
 #
 class TokenTransaction < ApplicationRecord
   # Action-ключи с нулевым лок-периодом (начисление сразу доступно для траты):
-  # welcome-токены за регистрацию и реферальные бонусы.
-  INSTANT_ACTION_KEYS = %w[registration referral_bonus_referrer referral_bonus_new_user].freeze
+  # welcome-токены за регистрацию и бонус самому новому юзеру. Реферальный бонус
+  # РЕФЕРЕРА (referral_bonus_referrer) НАМЕРЕННО не входит в этот список — он
+  # становится available по vesting-лок-периоду (антифрод: реферер получает
+  # on-chain токены только после квалификации/разблокировки, а не мгновенно).
+  INSTANT_ACTION_KEYS = %w[registration referral_bonus_new_user].freeze
   # Аудит всех изменений транзакций.
   has_paper_trail
 
@@ -33,14 +36,14 @@ class TokenTransaction < ApplicationRecord
   belongs_to :user_reward, optional: true
 
   enum :direction, {
-    credit: 'credit',
-    debit: 'debit'
+    credit: "credit",
+    debit: "debit"
   }, validate: true
 
   enum :status, {
-    pending: 'pending',
-    confirmed: 'confirmed',
-    failed: 'failed'
+    pending: "pending",
+    confirmed: "confirmed",
+    failed: "failed"
   }, validate: true
 
   validates :amount, numericality: { greater_than: 0 }
@@ -102,7 +105,7 @@ class TokenTransaction < ApplicationRecord
   def explorer_url
     return nil if tx_hash.blank?
 
-    base = ENV['CHAIN_EXPLORER_URL']
+    base = ENV["CHAIN_EXPLORER_URL"]
     return nil if base.blank?
 
     "#{base.sub(%r{/+\z}, '')}/tx/#{tx_hash}"

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'net/http'
-require 'json'
+require "net/http"
+require "json"
 
 #
 # TokenTransactionService — единый сервис сущности TokenTransaction (журнал токенов).
@@ -35,9 +35,9 @@ class TokenTransactionService
   #
   def self.to_wei(amount, decimals = 18)
     amt = amount.to_s.strip
-    return '0' if amt == ''
+    return "0" if amt == ""
 
-    require 'bigdecimal'
+    require "bigdecimal"
     value = BigDecimal(amt)
     factor = BigDecimal(10) ** decimals
     (value * factor).to_i.to_s
@@ -96,10 +96,10 @@ class TokenTransactionService
     return unless wallet&.address.present?
 
     # Ретрай после failed: сбрасываем в pending перед повторной отправкой.
-    token_transaction.update!(status: :pending) if token_transaction.status == 'failed'
+    token_transaction.update!(status: :pending) if token_transaction.status == "failed"
 
     signed = build_signed_transaction(wallet.address)
-    tx_hash = rpc('eth_sendRawTransaction', [ "0x#{signed[:raw]}" ])
+    tx_hash = rpc("eth_sendRawTransaction", [ "0x#{signed[:raw]}" ])
     return unless tx_hash
 
     # Успех: confirmed + claimed=true (начисление получено). update! обновляет
@@ -193,8 +193,8 @@ class TokenTransactionService
   # @return [String, nil] ключ или nil
   #
   def operator_private_key
-    key = ENV['OPERATOR_PRIVATE_KEY']
-    key&.sub(/\A0x/, '')
+    key = ENV["OPERATOR_PRIVATE_KEY"]
+    key&.sub(/\A0x/, "")
   end
 
   #
@@ -212,7 +212,7 @@ class TokenTransactionService
   # @return [Integer] id сети
   #
   def chain_id
-    (ENV['CHAIN_ID'] || '0x14a34').to_i(16)
+    (ENV["CHAIN_ID"] || "0x14a34").to_i(16)
   end
 
   #
@@ -222,7 +222,7 @@ class TokenTransactionService
   # @return [Integer] nonce
   #
   def nonce_of(address)
-    rpc('eth_getTransactionCount', [ address, 'pending' ]).to_i(16)
+    rpc("eth_getTransactionCount", [ address, "pending" ]).to_i(16)
   end
 
   #
@@ -230,8 +230,15 @@ class TokenTransactionService
   #
   # @return [Integer] цена газа (wei)
   #
+  # Возвращает цену газа на 15% выше текущей рыночной. Bump-запас нужен, чтобы
+  # транзакция прошла в мемпул при росте цены газа (иначе legacy-подпись с ровно
+  # рыночной ценой зависает в Pending и не майнится).
+  #
+  # @return [Integer] цена газа в wei
+  #
   def gas_price_for
-    rpc('eth_gasPrice').to_i(16)
+    base = rpc("eth_gasPrice").to_i(16)
+    (base * 1.15).ceil
   rescue StandardError
     DEFAULT_GAS_PRICE
   end
@@ -243,7 +250,7 @@ class TokenTransactionService
   # @return [Integer] лимит газа
   #
   def estimate_gas(data)
-    rpc('eth_estimateGas', [ { from: operator_address, to: token_address, data: data }, 'latest' ]).to_i(16)
+    rpc("eth_estimateGas", [ { from: operator_address, to: token_address, data: data }, "latest" ]).to_i(16)
   rescue StandardError
     DEFAULT_GAS
   end
@@ -258,16 +265,16 @@ class TokenTransactionService
   def rpc(method, params)
     uri = URI.parse(rpc_url)
     http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = (uri.scheme == 'https')
+    http.use_ssl = (uri.scheme == "https")
 
-    request = Net::HTTP::Post.new(uri.path.empty? ? '/' : uri.path)
-    request['Content-Type'] = 'application/json'
-    request.body = { jsonrpc: '2.0', method: method, params: params, id: 1 }.to_json
+    request = Net::HTTP::Post.new(uri.path.empty? ? "/" : uri.path)
+    request["Content-Type"] = "application/json"
+    request.body = { jsonrpc: "2.0", method: method, params: params, id: 1 }.to_json
 
     parsed = JSON.parse(http.request(request).body)
-    raise parsed['error']['message'] if parsed['error']
+    raise parsed["error"]["message"] if parsed["error"]
 
-    parsed['result']
+    parsed["result"]
   end
 
   class << self
@@ -277,7 +284,7 @@ class TokenTransactionService
     # @return [String, nil] URL JSON-RPC эндпоинта
     #
     def rpc_url
-      ENV['RPC_URL']
+      ENV["RPC_URL"]
     end
 
     #
@@ -286,7 +293,7 @@ class TokenTransactionService
     # @return [String, nil] адрес токена
     #
     def token_address
-      ENV['TOKEN_CONTRACT_ADDRESS']
+      ENV["TOKEN_CONTRACT_ADDRESS"]
     end
 
     #
@@ -295,7 +302,7 @@ class TokenTransactionService
     # @return [String]
     #
     def rewards_contract_address
-      ENV['REWARDS_CONTRACT_ADDRESS'].presence || token_address
+      ENV["REWARDS_CONTRACT_ADDRESS"].presence || token_address
     end
 
     #
@@ -309,7 +316,7 @@ class TokenTransactionService
       return nil if address.blank? || rpc_url.blank?
 
       data = Crypto::Ethereum.encode_balance_data(address)
-      raw = new(nil).send(:rpc, 'eth_call', [ { to: address, data: data }, 'latest' ])
+      raw = new(nil).send(:rpc, "eth_call", [ { to: address, data: data }, "latest" ])
       return nil unless raw.is_a?(String)
 
       raw.to_i(16)

@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "./TravelFiToken.sol";
+import "./01-TravelFiToken.sol";
 
 /// @title TravelFiRewards
 /// @notice Reward pool-контракт: выдаёт токены TFT из своего баланса по вызову оператора.

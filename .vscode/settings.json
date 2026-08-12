@@ -1,7 +1,6 @@
 {
-  "Codegeex.CommitMessageStyle": "Default",
-  "Codegeex.Comment.LanguagePreference": "English",
-  "Codegeex.Chat.LanguagePreference": "English",
-  "Codegeex.CompletionDelay": 1,
-  "zoo-code.codeIndex.embeddingBatchSize": 60
+  "zoo-code.codeIndex.embeddingBatchSize": 60,
+  "terminal.integrated.env.osx": {
+    "RUBYOPT": "--disable=yjit --disable=error_highlight"
+  }
 }
