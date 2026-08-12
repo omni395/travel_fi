@@ -1,0 +1,7 @@
+zh:
+  poi:
+    form_fields_component:
+      form_fields_component:
+        category_fields: "类别字段"
+        select_prompt: "选择..."
+        no_fields: "此类别没有其他字段。"

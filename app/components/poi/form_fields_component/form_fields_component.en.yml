@@ -1,0 +1,7 @@
+en:
+  poi:
+    form_fields_component:
+      form_fields_component:
+        category_fields: "Category fields"
+        select_prompt: "Select..."
+        no_fields: "This category has no additional fields."

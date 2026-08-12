@@ -1,0 +1,7 @@
+ru:
+  poi:
+    form_fields_component:
+      form_fields_component:
+        category_fields: "Поля категории"
+        select_prompt: "Выбрать..."
+        no_fields: "У этой категории нет дополнительных полей."

@@ -551,6 +551,81 @@ class PoiReflex < ApplicationReflex
   end
 
   #
+  # Создаёт новый POI через модалку (Poi::FormComponent)
+  # Вызывается из poi--form-component#handleSubmit (create-режим).
+  #
+  # Reflex не рендерит DOM после сохранения: создание фиксирует PaperTrail →
+  # VersionObserverJob → PoiBroadcaster (обновление карты/списка у подписанных).
+  # Пользователю — тост через ToastBroadcaster + закрытие модалки (CableReady).
+  #
+  # @param params [Hash] { poi: { name:, description:, poi_category_id:,
+  #   latitude:, longitude:, address:, ... } }
+  #
+  def create(params = {})
+    morph :nothing
+
+    authorize_with_pundit!(Poi, :create?)
+
+    poi_params = deep_symbolize_keys(params[:poi] || params)
+    poi = PoiService.create(params: poi_params, current_user: current_user)
+
+    # Тост «появится после одобрения модератора» (live через WebSocket)
+    ToastBroadcaster.call(
+      user_id: current_user.id,
+      message: I18n.t("pois.create_success_moderation"),
+      type: :success,
+      auto_dismiss: 8000
+    )
+
+    close_poi_modal
+
+    Rails.logger.info("PoiReflex: Created POI #{poi.id} (#{poi.localized_name}) via modal")
+  rescue Pundit::NotAuthorizedError
+    Rails.logger.warn("PoiReflex: Not authorized to create POI")
+  rescue PoiService::CreateError => e
+    Rails.logger.error("PoiReflex: POI creation failed - #{e.message}")
+    send_poi_form_error(e.message)
+  end
+
+  #
+  # Обновляет существующий POI через модалку (Poi::FormComponent)
+  # Вызывается из poi--form-component#handleSubmit (edit-режим).
+  #
+  # Reflex не рендерит DOM после сохранения: обновление распространяет
+  # PoiBroadcaster по версии PaperTrail. Пользователю — тост + закрытие модалки.
+  #
+  # @param params [Hash] { poi: { id:, name:, ... } }
+  #
+  def update(params = {})
+    morph :nothing
+
+    poi_params = deep_symbolize_keys(params[:poi] || params)
+    poi = Poi.find(poi_params[:id])
+    authorize_with_pundit!(poi, :update?)
+
+    PoiService.update(poi: poi, params: poi_params, current_user: current_user)
+
+    # Тост об успешном обновлении (live через WebSocket)
+    ToastBroadcaster.call(
+      user_id: current_user.id,
+      message: I18n.t("pois.update_success"),
+      type: :success,
+      auto_dismiss: 5000
+    )
+
+    close_poi_modal
+
+    Rails.logger.info("PoiReflex: Updated POI #{poi.id} (#{poi.localized_name}) via modal")
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("PoiReflex: POI not found for update - #{e.message}")
+  rescue Pundit::NotAuthorizedError
+    Rails.logger.warn("PoiReflex: Not authorized to update POI")
+  rescue PoiService::UpdateError => e
+    Rails.logger.error("PoiReflex: POI update failed - #{e.message}")
+    send_poi_form_error(e.message)
+  end
+
+  #
   # Reverse geocoding через Nominatim (ReverseGeocodingService)
   # Вызывается из poi--form-component#_reverseGeocode
   # Заполняет поля city/country/address в форме через CableReady
@@ -613,5 +688,68 @@ class PoiReflex < ApplicationReflex
   rescue StandardError => e
     Rails.logger.warn "PoiReflex: reverse_geocode error: #{e.message}"
     morph :nothing
+  end
+
+  #
+  # Загружает динамические поля выбранной категории POI в форму создания.
+  # Вызывается из poi--form-component#selectCategory.
+  #
+  # Операция чтения: изменения состояния БД не происходит, поэтому цепочка
+  # PaperTrail → VersionObserverJob → Broadcaster не задействована.
+  # Reflex рендерит Poi::FormFieldsComponent и доставляет HTML точечно в
+  # целевую обёртку [data-poi-form-fields] через cable_ready.inner_html.
+  #
+  # @param params [Hash] { category_id: Integer }
+  #
+  def load_category_fields(params = {})
+    category_id = params[:category_id].to_i
+    category = PoiCategory.friendly.find(category_id)
+    authorize_with_pundit!(category, :show?)
+
+    html = ApplicationController.render(
+      Poi::FormFieldsComponent.new(category: category),
+      layout: false
+    )
+
+    cable_ready.inner_html(selector: "[data-poi-form-fields]", html: html)
+    cable_ready.broadcast
+    morph :nothing
+
+    Rails.logger.info("PoiReflex: Loaded #{category.poi_category_fields.active.by_position.size} fields for category #{category.id}")
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("PoiReflex: Category not found for fields - #{e.message}")
+    morph :nothing
+  rescue Pundit::NotAuthorizedError
+    Rails.logger.warn("PoiReflex: Not authorized to load category fields")
+    morph :nothing
+  end
+
+  private
+
+  #
+  # Закрывает модалку формы POI после успешного create/update (инверсия open()
+  # из poi--form-component): скрывает оверлей и контейнер формы, возвращает
+  # контейнер детального просмотра.
+  #
+  def close_poi_modal
+    cable_ready.add_css_class(selector: "[data-poi--show-component-target='overlay']", name: "hidden")
+    cable_ready.add_css_class(selector: "#poi-form-content", name: "hidden")
+    cable_ready.remove_css_class(selector: "#poi-detail-modal-body", name: "hidden")
+    cable_ready.broadcast
+  end
+
+  #
+  # Показывает тост об ошибке валидации формы POI через ToastBroadcaster
+  # (live через WebSocket, форма остаётся открытой для исправления).
+  #
+  # @param message [String] текст ошибки
+  #
+  def send_poi_form_error(message)
+    ToastBroadcaster.call(
+      user_id: current_user.id,
+      message: message,
+      type: :error,
+      auto_dismiss: 8000
+    )
   end
 end

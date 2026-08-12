@@ -29,7 +29,6 @@ import DragPan from "ol/interaction/DragPan"
 export default class extends ApplicationController {
   static targets = [
     "categoryDropdown", "categoryName", "categoryId",
-    "fieldsContainer",
     "latitude", "longitude", "miniMap",
     "coordDisplayLat", "coordDisplayLng",
     "photosInput", "photosPreview", "removePhotosInput"
@@ -158,22 +157,11 @@ export default class extends ApplicationController {
     const menu = dropdown?.querySelector('[data-ui--dropdown-component-target="menu"]')
     if (menu) menu.classList.add("hidden")
 
-    // Загружаем поля для выбранной категории
-    this.loadFields(id)
-  }
-
-  /**
-   * Загружает динамические поля для выбранной категории
-   *
-   * @param {string} categoryId
-   */
-  loadFields(categoryId) {
-    if (!categoryId) return
-
-    fetch(`/poi_categories/${categoryId}/fields.json`)
-      .then(r => r.json())
-      .then(data => this.renderFields(data))
-      .catch(e => console.error("Fields load error:", e))
+    // Загружаем динамические поля выбранной категории через WebSocket (StimulusReflex)
+    // Сервер рендерит Poi::FormFieldsComponent и доставляет HTML в [data-poi-form-fields]
+    if (id) {
+      this.stimulate("PoiReflex#load_category_fields", { category_id: id })
+    }
   }
 
   // ============================================================
@@ -386,98 +374,6 @@ export default class extends ApplicationController {
   }
 
   // ============================================================
-  // ДИНАМИЧЕСКИЕ ПОЛЯ КАТЕГОРИИ
-  // ============================================================
-
-  /**
-   * Рендерит динамические поля в fieldsContainer
-   *
-   * @param {Array} fields
-   */
-  renderFields(fields) {
-    if (!this.hasFieldsContainerTarget) return
-    this.fieldsContainerTarget.innerHTML = ""
-
-    fields.forEach(field => {
-      const wrapper = document.createElement("div")
-      wrapper.className = "mb-3"
-
-      const label = document.createElement("label")
-      label.className = "block text-sm font-medium text-gray-700 mb-1"
-      label.textContent = field.label
-      wrapper.appendChild(label)
-
-      switch (field.field_type) {
-        case "boolean":
-          const cb = document.createElement("input")
-          cb.type = "checkbox"
-          cb.name = `poi[metadata][${field.field_key}]`
-          cb.value = "1"
-          cb.className = "rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
-          wrapper.appendChild(cb)
-          break
-
-        case "select":
-        case "multiselect":
-          this.renderSelectField(wrapper, field)
-          break
-
-        case "number":
-          const num = document.createElement("input")
-          num.type = "number"
-          num.name = `poi[metadata][${field.field_key}]`
-          num.placeholder = field.placeholder || ""
-          num.className = "w-full px-3 py-2 border rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500"
-          wrapper.appendChild(num)
-          break
-
-        default:
-          const txt = document.createElement("input")
-          txt.type = "text"
-          txt.name = `poi[metadata][${field.field_key}]`
-          txt.placeholder = field.placeholder || ""
-          txt.className = "w-full px-3 py-2 border rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500"
-          wrapper.appendChild(txt)
-      }
-
-      this.fieldsContainerTarget.appendChild(wrapper)
-    })
-  }
-
-  /**
-   * Рендер select/multiselect с локализованными option { key, label }
-   *
-   * @param {HTMLElement} wrapper
-   * @param {Object} field
-   */
-  renderSelectField(wrapper, field) {
-    const select = document.createElement("select")
-    select.name = `poi[metadata][${field.field_key}]${field.field_type === "multiselect" ? "[]" : ""}`
-    select.className = "w-full px-3 py-2 border rounded-md text-sm focus:ring-emerald-500 focus:border-emerald-500"
-    if (field.field_type === "multiselect") select.multiple = true
-
-    const emptyOpt = document.createElement("option")
-    emptyOpt.value = ""
-    emptyOpt.textContent = field.placeholder || "Select..."
-    select.appendChild(emptyOpt)
-
-    const options = field.options || []
-    options.forEach(opt => {
-      const option = document.createElement("option")
-      if (typeof opt === "string") {
-        option.value = opt
-        option.textContent = opt
-      } else {
-        option.value = opt.key || opt.value
-        option.textContent = opt.label || opt.key
-      }
-      select.appendChild(option)
-    })
-
-    wrapper.appendChild(select)
-  }
-
-  // ============================================================
   // ФОТО (галерея)
   // ============================================================
 
@@ -528,9 +424,21 @@ export default class extends ApplicationController {
   }
 
   /**
-   * Отправка формы через fetch (create/edit) — без полной перезагрузки.
-   * При 302 (успех) переходим по итоговому URL; при 422 — показываем ошибку
-   * в блоке формы модалки (не закрывая её).
+   * Отправка формы через StimulusReflex (create/edit) — Websocket-first,
+   * без полной перезагрузки страницы. DOM после сохранения не рендерится:
+   * обновление списка/карты выполняет PoiBroadcaster (по версии PaperTrail),
+   * пользователю приходит тост через ToastBroadcaster (WebSocket).
+   *
+   * Валидация координат: без широты/долготы форму не отправляем.
+   *
+   * Формат: for edit mode FormData содержит poi[id] (persisted model); удаляем
+   * его из params, чтобы не конфликтовать с getReflexOptions() в StimulusReflex
+   * (ключ `id` верхнего уровня поглощается как опции). id уходит только внутри
+   * вложенного `poi.id`, который использует PoiReflex#update.
+   *
+   * Примечание: бинарники фото (File) через StimulusReflex не передаются —
+   * загрузка фото вынесена в отдельную задачу (ROADMAP: «фото → HTTP/multipart»),
+   * поэтому элементы File пропускаются.
    *
    * @param {Event} event - событие submit
    */
@@ -539,8 +447,6 @@ export default class extends ApplicationController {
     const form = event.target
 
     // Валидация координат: без широты/долготы форму не отправляем.
-    // Кнопка остаётся активной, но сабмит блокируется с сообщением
-    // (ROADMAP 2.2 — «без координат: скрыть кнопку + сообщение»).
     const lat = parseFloat(this.hasLatitudeTarget ? this.latitudeTarget.value : 0)
     const lng = parseFloat(this.hasLongitudeTarget ? this.longitudeTarget.value : 0)
     if (!lat || !lng) {
@@ -548,32 +454,47 @@ export default class extends ApplicationController {
       return
     }
 
-    const body = new FormData(form)
-
     this._clearFormError()
 
-    fetch(form.action, {
-      method: form.method,
-      body: body,
-      headers: { 'X-CSRF-Token': document.querySelector('[name="csrf-token"]')?.content || '' },
-      credentials: 'same-origin'
-    })
-      .then((response) => {
-        if (response.redirected) {
-          window.location.href = response.url
-          return null
+    const params = this._collectPoiParams(form)
+
+    const hasId = Object.prototype.hasOwnProperty.call(params.poi, 'id') && params.poi.id
+    if (hasId) {
+      this.stimulate("PoiReflex#update", { poi: params.poi })
+    } else {
+      this.stimulate("PoiReflex#create", { poi: params.poi })
+    }
+  }
+
+  /**
+   * Собирает вложенный хэш пар цифровых полей формы POI из FormData.
+   * Ключи вида "poi[name]" распаковываются в { poi: { name: value } };
+   * "poi[metadata][key]" — в { poi: { metadata: { key: value } } }.
+   * Библиотечные File (фото) пропускаются.
+   *
+   * @param {HTMLFormElement} form - форма
+   * @return {Object} вложенный объект параметров { poi: { ... } }
+   */
+  _collectPoiParams(form) {
+    const params = { poi: {} }
+    for (const [key, value] of new FormData(form).entries()) {
+      if (value instanceof File) continue // фото — отдельная задача (HTTP upload)
+      const match = key.match(/^poi\[([^\]]+)\](?:\[([^\]]+)\])?$/)
+      if (!match) continue
+      const [, field, subfield] = match
+      if (subfield !== undefined) {
+        if (typeof params.poi[field] !== 'object' || params.poi[field] === null) {
+          params.poi[field] = {}
         }
-        return response.json().catch(() => ({ error: 'Request failed' }))
-      })
-      .then((data) => {
-        if (data && data.error) {
-          this._showFormError(data.error)
-        }
-      })
-      .catch((e) => {
-        console.error('[POI FORM] submit error:', e)
-        this._showFormError('Network error')
-      })
+        params.poi[field][subfield] = value
+      } else {
+        params.poi[field] = value
+      }
+    }
+    // NOTE: ключ poi[id] остаётся — он вложен, НЕ является top-level опцией
+    // StimulusReflex (конфликтуют только зарезервированные верхнеуровневые ключи:
+    // id, params, selectors...). PoiReflex#update использует poi_params[:id].
+    return params
   }
 
   /**

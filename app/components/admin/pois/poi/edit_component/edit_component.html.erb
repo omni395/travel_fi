@@ -12,6 +12,10 @@
                   method: poi.persisted? ? :patch : :post,
                   data: { controller: "admin--pois--poi--edit-component",
                           action: "submit->admin--pois--poi--edit-component#handleSubmit" } do |f| %>
+      <%# Скрытый id: нужен для детекции режима update в JS и поиска записи в Reflex %>
+      <% if poi.persisted? %>
+        <%= f.hidden_field :id, value: poi.id %>
+      <% end %>
 
       <%# Name (локализованные поля) %>
       <div class="mb-6">
@@ -128,7 +132,7 @@
             <i class="mdi mdi-map-marker mr-1"></i>
             <%= t(".address") %>
           <% end %>
-          <%= f.text_field :address, autocomplete: "address-line1", class: "field-input" %>
+          <%= f.text_field :address, autocomplete: "off", class: "field-input" %>
         </div>
         <div>
           <%= f.label :city, class: "block text-sm font-medium text-gray-700 mb-1" do %>
@@ -136,7 +140,7 @@
             <i class="mdi mdi-city mr-1"></i>
             <%= t(".city") %>
           <% end %>
-          <%= f.text_field :city, autocomplete: "address-level2", class: "field-input" %>
+          <%= f.text_field :city, autocomplete: "off", class: "field-input" %>
         </div>
         <div>
           <%= f.label :country, class: "block text-sm font-medium text-gray-700 mb-1" do %>
@@ -144,7 +148,7 @@
             <i class="mdi mdi-earth mr-1"></i>
             <%= t(".country") %>
           <% end %>
-          <%= f.text_field :country, autocomplete: "country-name", class: "field-input" %>
+          <%= f.text_field :country, autocomplete: "off", class: "field-input" %>
         </div>
         <div>
           <%= f.label :zip_code, class: "block text-sm font-medium text-gray-700 mb-1" do %>
@@ -152,7 +156,7 @@
             <i class="mdi mdi-postal-code mr-1"></i>
             <%= t(".zip_code") %>
           <% end %>
-          <%= f.text_field :zip_code, autocomplete: "postal-code", class: "field-input" %>
+          <%= f.text_field :zip_code, autocomplete: "off", class: "field-input" %>
         </div>
       </div>
 
