@@ -18,6 +18,10 @@ class Users::RegistrationsController < Devise::RegistrationsController
     process_avatar_before_save
 
     self.resource = build_resource(sign_up_params)
+    # Присваиваем рефсвязь ДО save: referred_by_id попадает в тот же INSERT,
+    # что и создание юзера (атомарно), — рефсвязь видна сразу после INSERT,
+    # устраняя гонку, когда тест-поллинг читает юзера до отдельного update!.
+    UserService.assign_referral(resource, resource.referral_code_input)
     resource.save
 
     if resource.persisted?

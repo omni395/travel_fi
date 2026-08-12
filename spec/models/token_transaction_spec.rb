@@ -83,15 +83,35 @@ RSpec.describe TokenTransaction, type: :model do
     end
 
     it 'строит ссылку на транзакцию в explorer' do
-      allow(ENV).to receive(:[]).with('CHAIN_EXPLORER_URL').and_return('https://base-sepolia.etherscan.io/')
+      allow(ENV).to receive(:[]).with('CHAIN_EXPLORER_URL').and_return('https://sepolia.etherscan.io/')
       tx = build(:token_transaction, user: user, tx_hash: '0xabc123')
-      expect(tx.explorer_url).to eq('https://base-sepolia.etherscan.io/tx/0xabc123')
+      expect(tx.explorer_url).to eq('https://sepolia.etherscan.io/tx/0xabc123')
     end
 
     it 'возвращает nil без tx_hash или без explorer URL' do
       tx = build(:token_transaction, user: user, tx_hash: '0xabc123')
       allow(ENV).to receive(:[]).with('CHAIN_EXPLORER_URL').and_return(nil)
       expect(tx.explorer_url).to be_nil
+    end
+  end
+
+  describe '#instant? / #lock_days (антифрод реферера)' do
+    it 'registration — мгновенное начисление (lock=0)' do
+      tx = build(:token_transaction, user: user, action_key: 'registration')
+      expect(tx.instant?).to be true
+      expect(tx.lock_days).to eq(0)
+    end
+
+    it 'referral_bonus_new_user — мгновенное начисление (бонус самому новичку)' do
+      tx = build(:token_transaction, user: user, action_key: 'referral_bonus_new_user')
+      expect(tx.instant?).to be true
+      expect(tx.lock_days).to eq(0)
+    end
+
+    it 'referral_bonus_referrer — НЕ мгновенное (vesting-лок; антифрод рефереру)' do
+      tx = build(:token_transaction, user: user, action_key: 'referral_bonus_referrer')
+      expect(tx.instant?).to be false
+      expect(tx.lock_days).to eq(GamificationService.pool_lock_days)
     end
   end
 end

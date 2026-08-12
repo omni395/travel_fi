@@ -16,7 +16,7 @@ contract TravelFiToken is ERC20, ERC20Permit, AccessControl, ReentrancyGuard, Pa
     bytes32 public constant OPERATOR_ROLE = keccak256("OPERATOR_ROLE");
 
     uint8 private constant _DECIMALS = 18;
-    uint256 public constant MAX_SUPPLY = 1_000_000 * 10**_DECIMALS;
+    uint256 public constant MAX_SUPPLY = 1_000_000_000 * 10**_DECIMALS;
 
     IERC20 public usdt;
     bool public initialSupplyDistributed;
@@ -44,7 +44,7 @@ contract TravelFiToken is ERC20, ERC20Permit, AccessControl, ReentrancyGuard, Pa
 
         initialSupplyDistributed = true;
 
-        uint256 amountPerContract = 50_000 * 10**_DECIMALS;
+        uint256 amountPerContract = 50_000_000 * 10**_DECIMALS;
         require(totalSupply() + (amountPerContract * 2) <= MAX_SUPPLY, "Exceeds max supply");
 
         _mint(crowdsale, amountPerContract);
