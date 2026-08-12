@@ -1,7 +1,12 @@
 <%# Ui::SidebarComponent — универсальная обёртка сайдбара %>
-<div class="flex shrink-0"
+<%# Обёртка ВСЕГДА в flex-потоке и имеет ФИКСИРОВАННУЮ ширину полоски (шеврона).
+    Поэтому контейнер карты (flex-1 справа) не меняет позицию/размер при
+    переключении состояния → bounds не пересчитываются.
+    При раскрытии панель и кнопка уходят в absolute-оверлей поверх карты:
+    панель — от левого края, кнопка — справа от панели (едут вместе). %>
+<div class="ui-sidebar--wrapper <%= state_class %>"
      data-controller="<%= controller_names %>"
-     data-ui--sidebar-component-hidden-class="ui-sidebar--hidden">
+     data-ui--sidebar-component-target="wrapper">
   <aside class="ui-sidebar <%= @width_class %>"
          data-ui--sidebar-component-target="sidebar">
     <%= content %>
@@ -10,9 +15,10 @@
   <!-- Кнопка переключения сайдбара (шеврон) -->
   <button type="button"
           data-action="click->ui--sidebar-component#sidebarToggle"
+          data-ui--sidebar-component-target="chevron"
           aria-label="<%= t(".toggle") %>"
-          class="bg-white border border-l-0 border-gray-200 px-1 py-2 flex items-center justify-center
-                 hover:bg-gray-50 transition-colors cursor-pointer self-stretch shrink-0">
+          class="ui-sidebar--chevron bg-white border border-l-0 border-gray-200 px-1 py-2 flex items-center justify-center
+                 hover:bg-gray-50 transition-colors cursor-pointer">
     <%# MDI: chevron-double-right — скрыт, показывает направление "открыть" %>
     <i class="mdi mdi-chevron-double-right text-gray-500"></i>
   </button>

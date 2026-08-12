@@ -1,12 +1,12 @@
 default: &default
-  
   encoding: unicode
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   username: <%= ENV.fetch("POSTGRES_USER") { 'user' } %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD") { 'password' } %>
-  # Для локальной разработки: без DATABASE_HOST — localhost
-  # Для запуска в контейнерах: DATABASE_HOST=postgres
   host: <%= ENV.fetch("DATABASE_HOST") { 'localhost' } %>
+  # 1. ОТКЛЮЧАЕМ PREPARED STATEMENTS ВО ВСЕХ БАЗАХ:
+  # Это гарантированно убирает Segmentation Fault (connect_start) в геме pg при многопоточной/многопроцессной работе Solid Queue.
+  prepared_statements: false
 
 development:
   primary:
@@ -16,18 +16,24 @@ development:
     schema_search_path: public,postgis
   queue:
     <<: *default
-    adapter: postgresql
+    # 2. ИСПОЛЬЗУЕМ POSTGIS ВМЕСТО POSTGRESQL:
+    # У тебя для primary используется адаптер postgis. Если у других баз стоял postgresql, 
+    # ActiveRecord создает разные типы соединений в одном приложении, что тоже приводит к конфликтам C-расширений.
+    adapter: postgis
     database: travel_fi_dev_queue
+    schema_search_path: public,postgis
     database_tasks: false
   cache:
     <<: *default
-    adapter: postgresql
+    adapter: postgis
     database: travel_fi_dev_cache
+    schema_search_path: public,postgis
     database_tasks: false
   cable:
     <<: *default
-    adapter: postgresql
+    adapter: postgis
     database: travel_fi_dev_cable
+    schema_search_path: public,postgis
     database_tasks: false
 
 test:
@@ -38,18 +44,21 @@ test:
     schema_search_path: public,postgis
   queue: &test_queue
     <<: *default
-    adapter: postgresql
+    adapter: postgis
     database: travel_fi_test_queue
+    schema_search_path: public,postgis
     database_tasks: false
   cache:
     <<: *default
-    adapter: postgresql
+    adapter: postgis
     database: travel_fi_test_cache
+    schema_search_path: public,postgis
     database_tasks: false
   cable:
     <<: *default
-    adapter: postgresql
+    adapter: postgis
     database: travel_fi_test_cable
+    schema_search_path: public,postgis
     database_tasks: false
 
 production:
@@ -61,16 +70,16 @@ production:
     schema_search_path: public,postgis
   queue:
     <<: *default
-    adapter: postgresql
+    adapter: postgis
     database: travel_fi_prod_queue
     schema_search_path: public,postgis
   cache:
     <<: *default
-    adapter: postgresql
+    adapter: postgis
     database: travel_fi_prod_cache
     schema_search_path: public,postgis
   cable:
     <<: *default
-    adapter: postgresql
+    adapter: postgis
     database: travel_fi_prod_cable
     schema_search_path: public,postgis

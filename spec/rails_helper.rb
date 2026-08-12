@@ -32,6 +32,33 @@ Capybara.server = :puma, { Silent: true }
 # увеличиваем время ожидания для live-обновлений «браузер А → браузер Б».
 Capybara.default_max_wait_time = 30
 
+# --- Полный запрет создания скриншотов (Capybara/Selenium) ---
+# В проекте скриншоты system-тестов НИКОГДА не должны писаться в tmp/capybara.
+# Категорический запрет чтения PNG как изображений (см. .roo/rules/01-INSTRUCTIONS.md).
+# Блокируем тремя уровнями:
+#   1) save_path — направляем в несуществующую папку, чтобы гемы-обёртки
+#      (capybara-screenshot и т.п.) не могли записать файл в tmp/capybara;
+#   2) save_screenshot / save_page — перезаписываем на no-op через prepend;
+#   3) RSpec failure-hook — защита от любых иных генераторов PNG.
+Capybara.save_path = Rails.root.join('tmp/capybara_disabled')
+
+# Глушилка драйвера: любая попытка сохранить страницу/скриншот игнорируется.
+module CapybaraScreenshotBlocker
+  # Запрет сохранения скриншота: no-op вместо записи PNG.
+  # @raise [void] ничего не делает — метод вызов не пишет файл
+  def save_screenshot(*, **)
+    nil
+  end
+
+  # Запрет сохранения страницы: no-op вместо записи HTML.
+  # @raise [void] ничего не делает — метод вызов не пишет файл
+  def save_page(*, **)
+    nil
+  end
+end
+Capybara::Session.prepend(CapybaraScreenshotBlocker)
+Capybara::Selenium::Driver.prepend(CapybaraScreenshotBlocker)
+
 RSpec.configure do |config|
   # Потоковая индикация: печатаем [START] для каждого примера ДО его выполнения
   # и сразу сбрасываем буфер ($stdout.flush). Без этого в pipe/CI имена примеров
