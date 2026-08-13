@@ -6,7 +6,12 @@
     Содержит элементы с data-poi-id/data-poi-lat/data-poi-lng для _loadPois().
     НЕ зависит от DOM сайдбара. %>
 <%# compact — мини-карта формы (без фильтров/кнопки добавления/features/тултипа) %>
-<div class="relative h-full">
+<%# В single-режиме (админка: map-таб/show ?edit, мини-карта) контроллер ставится прямо
+    на корень компонента — на публичной карте index.html.erb он вешается на родителе.
+    Это чинит баг 6: мини-карта не инициализировалась в админ-форме (нет доступа к
+    map_component_controller из-за отсутствия data-controller на обёртке). %>
+<div class="relative h-full"
+     <% if own_controller? %>data-controller="poi--map-component"<% end %>>
   <%# Карта %>
   <div class="poi-map h-full"
        <% if poi.present? %>

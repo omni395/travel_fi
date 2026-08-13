@@ -47,7 +47,7 @@
               <button type="button" data-action="ui--dropdown-component#toggle"
                       class="w-full flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-50 transition-colors text-left cursor-pointer focus:ring-emerald-500 focus:border-emerald-500">
                 <span class="mdi mdi-shape-outline text-gray-400 shrink-0"></span>
-                <span data-poi--form-component-target="categoryName" class="flex-1 truncate text-gray-700"><%= t(".category_prompt") %></span>
+                <span data-poi--form-component-target="categoryName" class="flex-1 truncate text-gray-700"><%= edit_mode? ? poi.poi_category&.localized_name : t(".category_prompt") %></span>
                 <span class="mdi mdi-chevron-down text-gray-400 shrink-0"></span>
               </button>
             <% end %>
@@ -73,7 +73,13 @@
 
     <%# Динамические поля категории %>
     <%# data-poi-form-fields — цель inner_html для PoiReflex#load_category_fields %>
-    <div data-poi-form-fields class="mb-4"></div>
+    <%# В edit-режиме поля выбранной категории рендерятся сразу (без доп. рефлекса),
+        иначе из-за пустого контейнера динамические поля не подтягиваются (баг 2). %>
+    <div data-poi-form-fields class="mb-4">
+      <% if edit_mode? && poi.poi_category.present? %>
+        <%= render Poi::FormFieldsComponent.new(category: poi.poi_category) %>
+      <% end %>
+    </div>
 
     <%# Row 2: Map %>
     <div class="mb-4">

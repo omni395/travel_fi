@@ -143,8 +143,9 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       broadcast_pois_panel(category) if processed.positive? && (processed % 10).zero?
     end
 
-    # Отправляем результат + обновляем UI категории + триггерим перезагрузку карты
-    OsmImportBroadcaster.call(user: current_user, stats: stats, category: category)
+    # Отправляем результат + обновляем UI категории + триггерим перезагрузку карты.
+    # bbox передаётся для гео-фильтрации reload карты (баг 4).
+    OsmImportBroadcaster.call(user: current_user, stats: stats, category: category, bbox: loc[:bbox])
 
     Rails.logger.info "[OsmImport] complete for category##{category.id} (#{category.slug}): " \
                       "#{stats[:created]} created, #{stats[:skipped_duplicate]} duplicate, " \

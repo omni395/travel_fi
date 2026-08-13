@@ -16,7 +16,10 @@ module SystemHelpers
   # @yield блок с действиями в браузере А
   #
   def browser_a(&block)
-    using_session(:browser_a, &block)
+    using_session(:browser_a) do
+      prepare_session_window
+      yield
+    end
   end
 
   #
@@ -25,7 +28,25 @@ module SystemHelpers
   # @yield блок с действиями в браузере Б
   #
   def browser_b(&block)
-    using_session(:browser_b, &block)
+    using_session(:browser_b) do
+      prepare_session_window
+      yield
+    end
+  end
+
+  #
+  # Выполняет блок в сеансе браузера С (третий пользователь / окно).
+  # Используется для сценариев «браузер А → браузер Б → браузер С»
+  # (например, гео-фильтрация OSM-импорта, баг 4: А импортирует в Берлин,
+  # Б смотрит Берлин и видит новые POI, С смотрит Париж и НЕ получает их).
+  #
+  # @yield блок с действиями в браузере С
+  #
+  def browser_c(&block)
+    using_session(:browser_c) do
+      prepare_session_window
+      yield
+    end
   end
 
   #
@@ -45,6 +66,9 @@ module SystemHelpers
     Timeout.timeout(timeout) do
       loop do
         begin
+          # Защита: page.driver или browser могут быть nil, если драйвер не инициализирован.
+          raise Selenium::WebDriver::Error::WebDriverError, 'driver not available' if page.driver.nil? || page.driver.browser.nil?
+
           handles = page.driver.browser.window_handles
           return handles.first if handles && handles.any?
         rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::WebDriverError
@@ -54,7 +78,7 @@ module SystemHelpers
       end
     end
   rescue Timeout::Error
-    raise "Session window did not become available within #{timeout}s"
+    raise "Session window did not become available within #{timeout}s -- check Selenium driver initialization and CHROMEDRIVER_PATH"
   end
 
   #
@@ -75,6 +99,9 @@ module SystemHelpers
     Timeout.timeout(timeout) do
       loop do
         begin
+          # Защита: убедиться, что драйвер и browser готовы
+          raise Selenium::WebDriver::Error::WebDriverError, 'driver not available' if page.driver.nil? || page.driver.browser.nil?
+
           page.driver.browser.execute_cdp(
             'Emulation.setGeolocationOverride',
             latitude: latitude,
@@ -82,7 +109,7 @@ module SystemHelpers
             accuracy: accuracy
           )
           return
-        rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::InvalidArgumentError
+        rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::InvalidArgumentError, Selenium::WebDriver::Error::WebDriverError
           # CDP-таргет окна ещё не готов — повторяем
         end
         sleep 0.2

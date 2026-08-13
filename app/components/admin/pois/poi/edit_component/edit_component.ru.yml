@@ -10,6 +10,7 @@ ru:
           map_hint: Перетащите или кликните по карте для установки координат
           description: Описание
           category: Категория
+          category_prompt: Выберите категорию
           status: Статус
           latitude: Широта
           longitude: Долгота
@@ -22,6 +23,7 @@ ru:
           price_info: Информация о ценах
           wheelchair_accessible: Доступно для инвалидных колясок
           rating: Рейтинг
+          rating_hint: вычисляемое значение (не редактируется)
           opening_hours: Часы работы
           opening_hours_hint: 'Формат OSM: Пн-Пт 09:00-18:00'
           osm_id: OSM ID

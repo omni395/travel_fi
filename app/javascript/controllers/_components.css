@@ -8,6 +8,75 @@
   /* Стили Tailwind используются напрямую в шаблоне; кастомные правила не требуются */
 }
 
+/* === poi/map_component/map_component.css === */
+/* poi/map_component — контейнер OpenLayers карты */
+.poi-map {
+  height: 100%;
+  width: 100%;
+  min-height: 300px;
+}
+
+/* На маленьких экранах карта занимает весь экран */
+@media (max-width: 768px) {
+  .poi-map {
+    min-height: calc(100vh - 4rem);
+  }
+}
+
+/* GPS кнопка наследует стили .ol-zoom button */
+
+/* Маркер пользователя: булавка с пульсирующим кольцом (зелено-голубая гамма sky-600) */
+.poi-user-pin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+/* Пульсирующее кольцо вокруг булавки */
+.poi-user-pin__ping {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 9999px;
+  background: rgba(2, 132, 199, 0.35); /* sky-600 @ 35% */
+  animation: poi-user-pin-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Корпус булавки — центрированный круг sky-600 с белой обводкой */
+.poi-user-pin__body {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: #0284c7; /* sky-600 */
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+  color: #ffffff;
+}
+
+/* MDI-иконка внутри булавки */
+.poi-user-pin__icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+@keyframes poi-user-pin-ping {
+  0% {
+    transform: scale(0.6);
+    opacity: 1;
+  }
+  75%, 100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
 /* === ui/avatar_component/avatar_component.css === */
 /* ui/avatar_component — стили аватара (без @apply) */
 .avatar-ui {

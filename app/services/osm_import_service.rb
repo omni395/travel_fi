@@ -249,7 +249,8 @@ class OsmImportService
         wheelchair_accessible: tags["wheelchair"] == "yes",
         price_info: tags["fee"].presence,
         opening_hours: tags["opening_hours"] ? { osm: tags["opening_hours"] } : nil,
-        status: :approved,
+        # Статус OSM-точки — imported (отображается на карте как approved, см. Poi.visible)
+        status: :imported,
         source: :osm,
         metadata: tags.except(*%w[name operator phone website wheelchair opening_hours fee
                                   addr:street addr:housenumber addr:city addr:postcode])

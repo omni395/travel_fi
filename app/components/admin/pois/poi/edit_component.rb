@@ -79,4 +79,31 @@ class Admin::Pois::Poi::EditComponent < ApplicationComponent
   def field_options(field)
     (field.options['values'] || field.options[:values] || []).map { |v| [v, v] }
   end
+
+  #
+  # Локализованное название выбранной категории (для DropdownComponent)
+  #
+  # @return [String]
+  #
+  def category_name
+    poi.poi_category&.localized_name || I18n.t("admin.pois.poi.edit_component.category_prompt")
+  end
+
+  #
+  # Локализованная подпись текущего статуса (для DropdownComponent)
+  #
+  # @return [String]
+  #
+  def status_label
+    I18n.t("admin.pois.poi.row_component.status.#{poi.status}", default: poi.status.humanize)
+  end
+
+  #
+  # Опции статусов для DropdownComponent
+  #
+  # @return [Array<Array(String, String)>] массив [label, value]
+  #
+  def status_options
+    Poi.statuses.keys.map { |s| [I18n.t("admin.pois.poi.row_component.status.#{s}", default: s.humanize), s] }
+  end
 end

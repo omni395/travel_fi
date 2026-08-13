@@ -23,4 +23,16 @@ class Poi::MapComponent < ApplicationComponent
   private
 
   attr_reader :categories, :poi, :interactive, :compact
+
+  #
+  # Нужен ли собственный Stimulus-контроллер на корне компонента.
+  # В single-режиме (админка: show ?edit / map-таб / мини-карта формы) контроллер
+  # вешается прямо на корень, т.к. на публичной карте index.html.erb он ставится
+  # на родительском контейнере. Без этого мини-карта не инициализируется (баг 6).
+  #
+  # @return [Boolean]
+  #
+  def own_controller?
+    poi.present?
+  end
 end

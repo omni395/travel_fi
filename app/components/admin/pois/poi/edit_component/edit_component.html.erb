@@ -76,8 +76,34 @@
             <i class="mdi mdi-shape-outline mr-1"></i>
             <%= t(".category") %>
           <% end %>
-          <%= f.collection_select :poi_category_id, categories, :id, :localized_name,
-                                  {}, class: "field-input" %>
+          <%# Скрытый input — значение уходит в FormData как poi[poi_category_id] %>
+          <%= f.hidden_field :poi_category_id, data: { admin__pois__poi__edit_component_target: "categoryInput" } %>
+          <%= render Ui::DropdownComponent.new(position: "left", menu_classes: "w-full max-h-60 overflow-y-auto bg-white border border-gray-200") do |dropdown| %>
+            <% dropdown.with_trigger do %>
+              <button type="button" data-action="ui--dropdown-component#toggle"
+                      class="w-full flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-50 transition-colors text-left cursor-pointer">
+                <span class="mdi mdi-shape-outline text-gray-400 shrink-0"></span>
+                <%# Иконка: mdi-shape-outline %>
+                <span data-admin--pois--poi--edit-component-target="categoryText"
+                      class="flex-1 truncate text-gray-700"><%= category_name %></span>
+                <span class="mdi mdi-chevron-down text-gray-400 shrink-0"></span>
+                <%# Иконка: mdi-chevron-down %>
+              </button>
+            <% end %>
+            <% dropdown.with_menu do %>
+              <% categories.each do |cat| %>
+                <div class="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+                     data-action="click->admin--pois--poi--edit-component#selectCategory click->ui--dropdown-component#toggle"
+                     data-value="<%= cat.id %>">
+                  <span class="w-5 h-5 flex items-center justify-center text-emerald-500">
+                    <i class="mdi <%= cat.icon || 'mdi-map-marker' %> text-sm"></i>
+                    <%# Иконка: динамическая из cat.icon %>
+                  </span>
+                  <span class="text-sm text-gray-700"><%= cat.localized_name %></span>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
         </div>
         <div>
           <%= f.label :status, class: "block text-sm font-medium text-gray-700 mb-1" do %>
@@ -85,8 +111,29 @@
             <i class="mdi mdi-flag-outline mr-1"></i>
             <%= t(".status") %>
           <% end %>
-          <%= f.select :status, Poi.statuses.keys.map { |s| [t("admin.pois.poi.row_component.status.#{s}", default: s.humanize), s] },
-                       {}, class: "field-input" %>
+          <%= f.hidden_field :status, data: { admin__pois__poi__edit_component_target: "statusInput" } %>
+          <%= render Ui::DropdownComponent.new(position: "left", menu_classes: "w-full bg-white border border-gray-200") do |dropdown| %>
+            <% dropdown.with_trigger do %>
+              <button type="button" data-action="ui--dropdown-component#toggle"
+                      class="w-full flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm bg-white hover:bg-gray-50 transition-colors text-left cursor-pointer">
+                <span class="mdi mdi-flag-outline text-gray-400 shrink-0"></span>
+                <%# Иконка: mdi-flag-outline %>
+                <span data-admin--pois--poi--edit-component-target="statusText"
+                      class="flex-1 truncate text-gray-700"><%= status_label %></span>
+                <span class="mdi mdi-chevron-down text-gray-400 shrink-0"></span>
+                <%# Иконка: mdi-chevron-down %>
+              </button>
+            <% end %>
+            <% dropdown.with_menu do %>
+              <% status_options.each do |label, val| %>
+                <div class="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 cursor-pointer border-b border-gray-50 last:border-b-0"
+                     data-action="click->admin--pois--poi--edit-component#selectStatus click->ui--dropdown-component#toggle"
+                     data-value="<%= val %>">
+                  <span class="text-sm text-gray-700"><%= label %></span>
+                </div>
+              <% end %>
+            <% end %>
+          <% end %>
         </div>
       </div>
 
@@ -191,13 +238,19 @@
           <%= f.text_field :price_info, autocomplete: "off", class: "field-input" %>
         </div>
         <div>
-          <%= f.label :rating, class: "block text-sm font-medium text-gray-700 mb-1" do %>
+          <%# rating — консолидируемое вычисляемое поле (агрегация голосований PoiRating),
+              НЕ редактируется вручную. Показываем только readonly-значение (ROADMAP).
+              hidden_field не нужен — rating не передаётся в update (см. PoiService.update). %>
+          <label class="block text-sm font-medium text-gray-700 mb-1">
             <!-- mdi: star -->
             <i class="mdi mdi-star text-yellow-400 mr-1"></i>
             <%# Иконка: mdi-star %>
             <%= t(".rating") %>
-          <% end %>
-          <%= f.number_field :rating, step: 0.1, min: 0, max: 5, class: "field-input w-32" %>
+          </label>
+          <div class="px-3 py-2 rounded-md bg-gray-50 border border-gray-200 text-sm text-gray-700 flex items-center gap-2">
+            <span class="text-yellow-400"><%= poi.rating&.to_f || 0 %></span>
+            <span class="text-xs text-gray-400"><%= t(".rating_hint") %></span>
+          </div>
         </div>
         <div class="flex items-center gap-2 mt-6">
           <%= f.check_box :wheelchair_accessible, class: "toggle-input" %>

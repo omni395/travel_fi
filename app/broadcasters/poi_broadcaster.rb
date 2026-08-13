@@ -77,9 +77,12 @@ class PoiBroadcaster
       )
     end
 
-    # 5. Триггерим перезагрузку маркеров на карте — ВСЕГДА
+    # 5. Триггерим перезагрузку маркеров на карте — ВСЕГДА.
+    #    В detail передаём координаты POI: клиент перезагружает только если
+    #    его видимые границы содержат точку.
     cable_ready["UserChannel"].dispatch_event(
-      name: "poi:reload-features"
+      name: "poi:reload-features",
+      detail: { type: "single", lat: poi.latitude, lng: poi.longitude }
     )
 
     # Применяем изменения — ВСЕГДА

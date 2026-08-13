@@ -46,11 +46,15 @@ class Poi < ApplicationRecord
   has_many_attached :photos
 
   # Enum для статусов
+  # imported (4) — точка, загруженная из OpenStreetMap. Отображается на карте
+  # так же, как approved (источник OSM-импорта). Добавлен в конец без сдвига
+  # существующих integer-значений в БД (0/1/2/3).
   enum :status, {
     pending: 0,
     approved: 1,
     rejected: 2,
-    archived: 3
+    archived: 3,
+    imported: 4
   }, validate: true
 
   # Enum для источника: OSM или ручное создание
@@ -72,9 +76,9 @@ class Poi < ApplicationRecord
   scope :pending, -> { where(status: :pending) }
   scope :recent, -> { order(created_at: :desc) }
 
-  # Скоуп: видимые на карте (approved + только из активных категорий)
+  # Скоуп: видимые на карте (approved + imported из OSM-импорта, только из активных категорий)
   scope :visible, -> {
-    joins(:poi_category).where(status: :approved, poi_categories: { active: true })
+    joins(:poi_category).where(status: %i[approved imported], poi_categories: { active: true })
   }
 
   # PostGIS: POI в радиусе N метров от точки
