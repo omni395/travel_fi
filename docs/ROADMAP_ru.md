@@ -109,12 +109,15 @@ Travel Fi
 - 🔴 Галерея: сетка + lightbox/слайдер
 - 🔴 OSRM: построение маршрута к POI + линия на карте
 - 🔴 Offline-режим (PWA): тайлы + список (IndexedDB)
+- 🔴 Разобраться с тегами, которые загружаются из ОСМ для каждой категории. Например, для Тултов/Душевых - Level, Access, Source, Amenity и так далее. Для каждого тег сделать карты переводов, доступные для управления через админку. На данный момент эти данные не совпадают с полями категории. админке.
 
 **Баги/Долги:**
 - ⚠️ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart — отдельная задача
 - ⚠️ Карточка POI: полировка UI (фокус-трап, aria, скролл-блокировка) - отдельная задача
 - ✅ Автозаполнение адреса браузером отключено: `autocomplete="off"` на address/city/country/zip_code в `Poi::FormComponent` и админ-`EditComponent`
 - ✅ Админка. Форма редактирования: `Ui::DropdownComponent` для категории/статуса (вместо `<select>`), мини-карта инициализируется (`data-controller` на корне в single-режиме), `rating` — консолидируемое вычисляемое поле (НЕ редактируется: убрано из формы и из `PoiService.update`). Покрыто request-спекой `spec/controllers/admin/pois_controller_spec.rb` и system-спекой `spec/system/admin/pois_spec.rb`.
+- ✅ Админка. Форма редактирования: обратный геокодинг по координатам (`map_component_controller.js#_setupInteractiveMode` вызывает `PoiReflex#reverse_geocode` при инициализации/клике/moveend → автозаполнение address/city/country/zip); редирект на просмотр точки после сохранения (`Admin::PoisReflex#update` → `cable_ready.redirect_to(admin_poi_path)`). Покрыто system-спекой `spec/system/admin/pois_spec.rb`.
+- ✅ Карта POI: булавка пользователя `.poi-user-pin` отображается после геолокации; набор точек на карте (`#poi-map-features`) синхронизирован с сайдбаром (`#poi-list`) — оба из одного `PoiReflex#load_pois_in_bounds`. Покрыто system-спекой `spec/system/user/poi_map_spec.rb`.
 - ✅ Регрессии карты POI: клик по точке в сайдбаре открывает модалку деталей; категория и динамические поля подтягиваются в форме редактирования; гео-фильтрация `poi:reload-features` (detail `{type:"osm", bbox}` / `{type:"single", lat, lng}`) — только браузеры, чьи видимые границы пересекают зону изменения, перезагружают маркеры. Покрыто `spec/broadcasters/osm_import_broadcaster_spec.rb`, `spec/broadcasters/poi_broadcaster_spec.rb`, `spec/components/poi/form_component_spec.rb`, `spec/system/user/poi_interaction_spec.rb`, `spec/system/user/poi_osm_import_spec.rb`.
 - ⚠️ Фильтры. Компонент. Разобраться. - отдельная задача.
 ---
@@ -301,12 +304,14 @@ Travel Fi
 **Сделано:**
 - ✅ Список + поиск + фильтры (статус/категория) + сортировка + пагинация
 - ✅ Детальная страница: Details / Map / Audit Log
-- ✅ Модерация статуса (pending/approved/rejected/archived)
+- ✅ Модерация статуса (pending/approved/rejected/archived/imported)
 - ✅ Мультиязычные JSONB name/description + dynamic fields в metadata
 - ✅ `Admin::PoisReflex#update`/`change_status` — `morph :nothing` + тост; зона `#poi-detail` рендерится `PoiBroadcaster` (live у ВСЕХ админов)
 - ✅ Мини-карта при редактировании: `form_component_controller.js` инициализирует карту через MutationObserver (порядок CableReady-операций не «зависает»)
 - ✅ Бейджи `first_poi`/`contributor` (связь `User#pois`)
 - ✅ После создания POI через админку точка появляется на карте (`poi:reload-features` + fallback-загрузка маркеров)
+- ✅ Админ-форма редактирования: обратный геокодинг по координатам (`map_component_controller.js#_setupInteractiveMode` → `PoiReflex#reverse_geocode` автозаполняет address/city/country/zip); редирект на просмотр точки после сохранения (`Admin::PoisReflex#update` → `cable_ready.redirect_to(admin_poi_path)`). Покрыто `spec/system/admin/pois_spec.rb`
+- ✅ **Статус OSM-точек `imported`:** точки из OSM-импорта получают отдельный статус `imported` (вместо `approved`); `Poi.visible` включает `[:approved, :imported]` — отображаются на карте наравне с одобренными. Backfill существующих `source:osm,status:approved` → `imported` — rake `pois:backfill_osm_imported_status` (с `update!`, PaperTrail-версии). Бейдж/переводы `status.imported` в `RowComponent`. Покрыто: `spec/models/poi_spec.rb`, `spec/services/osm_import_service_spec.rb`.
 
 **Хотелки:**
 - 🔴 Карточка POI по единому паттерну: табы Details/Comments/Ratings/Gallery/Audit
@@ -344,8 +349,9 @@ Travel Fi
 **Статус:** 🔴 В планах (см. слой 4.2)
 
 **Хотелки:**
-- 🔴 Mint/rate/pause/награды через админку
+- 🔴 Mint/rate/pause/награды через админку - настроить полноценную систему управления контрактми через дминку.
 - 🔴 `ContractSnapshot` (мониторинг контрактов): модель `contract_type`/`data jsonb`/`created_at` с ротацией (в коде мониторинга пока нет)
+
 
 **Баги/Долги:**
 - ⚠️ —
@@ -378,7 +384,8 @@ Travel Fi
 - 🔴 EIP-2771 forwarder + admin hot-wallet; Jetton TON + bridge
 - 🔴 Token Spend (premium-фичи), Contract Mgmt в админке
 - 🔴 **Уровни от `token_balance`**: сколько TFT накопил юзер → уровень (репутация/прогрессия в профиле); пороги — продукт-задача
-- ⚠️ **Курс ETH/USDT и TON/USDT:** разработать в сервисе транзакций метод получения актуального курса и вызывать перед каждой конвертацией. Токен фиксированный (1 TFT = 1 USDT) — курс нужен для понимания реальной рыночной ситуации и установки курса обмена.
+- 🔴 Продумать систему для превода хранения кастодиальных кошельков на рапределенную систеу, что предотвратит утерю базы и защитит от взлома.
+- 🔴  **Курс ETH/USDT и TON/USDT:** разработать в сервисе транзакций метод получения актуального курса и вызывать перед каждой конвертацией. Токен фиксированный (1 TFT = 1 USDT) — курс нужен для понимания реальной рыночной ситуации и установки курса обмена.
 - ✅ **Лок-блокировка начислений (антифрод реферера):** `referral_bonus_referrer` исключён из `INSTANT_ACTION_KEYS` — реферер идёт по vesting-лок-периоду (`updated_at + lock_days`), маркер получения — булево `claimed`. Бонус новичку и welcome — мгновенно (lock=0).
 - 🔴 **Целевая on-chain схема начислений (двухэтапная off-chain → on-chain, блокировка в БД):**
   - **Этап 1 (off-chain, сразу, через Сервис→Джоб):** действие → `UserReward` + `TokenTransaction` в единой транзакции. Баланс/бейджи/уровни обновляются сразу — заблокированные TFT виртуальные (внутренний счёт в БД), on-chain `relay` уходит в очередь только в момент разблокировки/claim.

@@ -115,7 +115,9 @@ Travel Fi
 - ⚠️ POI card: UI polish (focus trap, aria, scroll locking) — a separate task
 - ✅ Browser address autofill disabled: `autocomplete="off"` on address/city/country/zip_code in `Poi::FormComponent` and the admin `EditComponent`
 - ✅ Admin. Edit form: `Ui::DropdownComponent` for category/status (instead of `<select>`), the mini map is initialized (single-POI `data-controller` on root), `rating` is a consolidated computed field (NOT editable — removed from the form and from `PoiService.update`). Covered by request spec `spec/controllers/admin/pois_controller_spec.rb` and system spec `spec/system/admin/pois_spec.rb`.
+- ✅ Admin. Edit form: reverse geocoding by coordinates (`map_component_controller.js#_setupInteractiveMode` calls `PoiReflex#reverse_geocode` on init/click/moveend → autofills address/city/country/zip); redirect to the POI detail page after save (`Admin::PoisReflex#update` → `cable_ready.redirect_to(admin_poi_path)`). Covered by system spec `spec/system/admin/pois_spec.rb`.
 - ✅ POI map regressions: sidebar click opens the detail modal; category + dynamic fields load in edit form; geo-filtered `poi:reload-features` (detail `{type:"osm", bbox}` / `{type:"single", lat, lng}`) so only browsers whose visible bounds intersect the change zone reload markers. Covered by `spec/broadcasters/osm_import_broadcaster_spec.rb`, `spec/broadcasters/poi_broadcaster_spec.rb`, `spec/components/poi/form_component_spec.rb`, `spec/system/user/poi_interaction_spec.rb`.
+- ✅ POI map: the user pin `.poi-user-pin` renders after geolocation; the set of points on the map (`#poi-map-features`) is synchronized with the sidebar (`#poi-list`) — both come from one `PoiReflex#load_pois_in_bounds`. Covered by `spec/system/user/poi_map_spec.rb`.
 - ⚠️ Filters. Component. Figure out. — a separate task.
 ---
 
@@ -301,9 +303,11 @@ Travel Fi
 **Done:**
 - ✅ List + search + filters (status/category) + sorting + pagination
 - ✅ Detail page: Details / Map / Audit Log
-- ✅ Status moderation (pending/approved/rejected/archived)
+- ✅ Status moderation (pending/approved/rejected/archived/imported)
 - ✅ Multilingual JSONB name/description + dynamic fields in metadata
 - ✅ `Admin::PoisReflex#update`/`change_status` — `morph :nothing` + toast; the `#poi-detail` zone is rendered by `PoiBroadcaster` (live for ALL admins)
+- ✅ **OSM POI status `imported`:** points from OSM import get the separate `imported` status (instead of `approved`); `Poi.visible` includes `[:approved, :imported]` — displayed on the map like approved points. Backfill of existing `source:osm,status:approved` → `imported` — rake `pois:backfill_osm_imported_status` (with `update!`, PaperTrail versions). Badge/translations `status.imported` in `RowComponent`. Covered by `spec/models/poi_spec.rb`, `spec/services/osm_import_service_spec.rb`.
+- ✅ Admin edit form: reverse geocoding by coordinates (`map_component_controller.js#_setupInteractiveMode` → `PoiReflex#reverse_geocode` autofills address/city/country/zip); redirect to the POI detail page after save (`Admin::PoisReflex#update` → `cable_ready.redirect_to(admin_poi_path)`). Covered by `spec/system/admin/pois_spec.rb`.
 - ✅ Mini map on editing: `form_component_controller.js` initializes the map via MutationObserver (the CableReady operation order does not "hang")
 - ✅ Badges `first_poi`/`contributor` (relation `User#pois`)
 - ✅ After creating a POI via the admin, the point appears on the map (`poi:reload-features` + fallback marker loading)

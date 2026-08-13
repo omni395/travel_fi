@@ -3,7 +3,9 @@ ru:
     pois:
       row_component:
         missing_translations: Нет перевода
-        status_pending: Ожидает
-        status_approved: Одобрено
-        status_rejected: Отклонено
-        status_archived: Архив
+        status:
+          pending: Ожидает
+          approved: Одобрено
+          rejected: Отклонено
+          archived: Архив
+          imported: Загружено из OSM

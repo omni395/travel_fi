@@ -3,7 +3,9 @@ zh:
     pois:
       row_component:
         missing_translations: 缺少翻译
-        status_pending: 待审核
-        status_approved: 已通过
-        status_rejected: 已拒绝
-        status_archived: 已归档
+        status:
+          pending: 待审核
+          approved: 已通过
+          rejected: 已拒绝
+          archived: 已归档
+          imported: 已从OSM导入

@@ -354,9 +354,20 @@
           <i class="mdi mdi-close"></i>
           <%= t(".cancel") %>
         <% end %>
-        <%= f.submit t(".save"),
-                     class: "btn-ui btn-ui--primary btn-ui--md",
-                     data: { "admin--pois--poi--edit-component_target" => "submitButton" } %>
+        <%# Submit через Ui::BtnComponent (рендерит <button type="submit">), а не f.submit
+            (<input type="submit">) — единый паттерн кнопок по догме проекта. %>
+        <%= render Ui::BtnComponent.new(
+              color: :primary,
+              size: :md,
+              html: {
+                type: "submit",
+                data: { "admin--pois--poi--edit-component_target" => "submitButton" }
+              }
+            ) do %>
+          <!-- mdi: content-save -->
+          <i class="mdi mdi-content-save mr-1"></i>
+          <%= t(".save") %>
+        <% end %>
       </div>
     <% end %>
   <% end %>

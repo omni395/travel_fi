@@ -12,7 +12,7 @@ RSpec.describe OsmImportService, type: :service do
   let(:location) { { city: 'London', country: 'United Kingdom', bbox: [ 51.3, -0.5, 51.7, 0.3 ] } }
 
   describe '.import' do
-    it 'создаёт POI, отдаёт прогресс и статистику' do
+    it 'создаёт POI со статусом imported (загружен из OSM), отдаёт прогресс и статистику' do
       elements = [
         { 'id' => 900_000_001, 'lat' => 51.5, 'lon' => -0.12, 'tags' => { 'name' => 'Fountain' } }
       ]
@@ -26,7 +26,12 @@ RSpec.describe OsmImportService, type: :service do
       expect(stats[:created]).to eq(1)
       expect(progresses.first).to eq([ 0, 1, 0 ]) # первичный прогресс: found/уже в БД
       expect(progresses.last).to eq([ 1, 1, nil ]) # финальный прогресс обработки
-      expect(Poi.find_by(osm_id: 900_000_001)).to be_present
+      poi = Poi.find_by(osm_id: 900_000_001)
+      expect(poi).to be_present
+      # OSM-точки получают статус imported (отображаются на карте как approved)
+      expect(poi.status).to eq('imported')
+      expect(poi.source).to eq('osm')
+      expect(poi).to be_imported
     end
 
     it 'не дублирует уже существующие POI по osm_id' do

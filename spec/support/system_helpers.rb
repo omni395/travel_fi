@@ -70,7 +70,20 @@ module SystemHelpers
           raise Selenium::WebDriver::Error::WebDriverError, 'driver not available' if page.driver.nil? || page.driver.browser.nil?
 
           handles = page.driver.browser.window_handles
-          return handles.first if handles && handles.any?
+
+          # Окно ещё не создано в Selenium 4.46: window_handles возвращает nil или [].
+          # Пассивное ожидание не помогает — окно Chrome открывается только при навигации.
+          # Форсируем создание окна: `navigate.to('about:blank')` инициализирует таргет
+          # нативно (минуя Capybara-сервер и visit), после чего window_handles отдаёт
+          # валидный handle. Без этого reset!/switch_to_window Capybara падают на
+          # `undefined method 'slice' for nil` (симптом: NoMethodError в драйвере).
+          if handles.nil? || handles.empty?
+            navigate = page.driver.browser.navigate
+            navigate.to('about:blank')
+            next
+          end
+
+          return handles.first
         rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::WebDriverError
           # окно ещё не готово — повторяем
         end
