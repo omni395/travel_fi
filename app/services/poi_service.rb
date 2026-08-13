@@ -138,7 +138,9 @@ class PoiService
     allowed = params.slice(:poi_category_id, :address, :city, :country,
                            :zip_code, :phone, :website, :wheelchair_accessible,
                            :opening_hours, :price_info, :metadata,
-                           :slug, :rating, :status)
+                           :slug, :status)
+    # NOTE: rating — консолидируемое вычисляемое поле (агрегация голосований
+    # PoiRating), НЕ редактируется вручную (ROADMAP). Исключено из allowed.
     poi.assign_attributes(allowed)
     assign_localized_fields(poi, params)
     if params[:latitude].present? && params[:longitude].present?

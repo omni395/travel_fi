@@ -139,10 +139,68 @@ export default class extends ApplicationController {
    * ВАЖНО: вызываем _loadPoisInBounds() (перезапрос с сервера), а не _loadPois() —
    * скрытый контейнер #poi-map-features ещё не содержит новых POI, поэтому
    * перечитывание DOM не покажет свежие маркеры/список.
+   *
+   * Гео-фильтрация (баг 4): dispatch_event может нести detail с зоной изменения —
+   *   { type: "osm", bbox: [south, west, north, east], category_id }
+   *   { type: "single", lat, lng }
+   * Перезагружаем POI только если видимые границы карты пересекаются с этой зоной.
+   * Локальные события (apply/reset фильтров из filters_component) приходят без detail —
+   * обрабатываются всегда (это реакция самого пользователя).
+   *
+   * @param {CustomEvent} event - событие с detail.zone
    */
-  _onReloadFeatures() {
+  _onReloadFeatures(event) {
+    if (event && event.detail) {
+      const detail = event.detail
+      if (!this._detailIntersectsView(detail)) {
+        console.log('[POI MAP] _onReloadFeatures: zone outside current view, skipping reload')
+        return
+      }
+    }
     console.log('[POI MAP] _onReloadFeatures: reloading POIs in bounds from server')
     this._loadPoisInBounds()
+  }
+
+  /**
+   * Проверяет, пересекается ли зона изменения (detail события poi:reload-features)
+   * с текущими видимыми границами карты.
+   *
+   * @param {Object} detail - detail события { type, bbox|lat, lng, category_id }
+   * @return {boolean} true — зона в пределах видимости (или тип неизвестен → reload)
+   */
+  _detailIntersectsView(detail) {
+    if (!this._map) return true
+    const size = this._map.getSize()
+    if (!size || size[0] === undefined || size[1] === undefined) return true
+
+    // Текущие видимые границы карты в lon/lat (слегка расширены запасом)
+    const extent = this._map.getView().calculateExtent(size)
+    const sw = toLonLat([extent[0], extent[1]])
+    const ne = toLonLat([extent[2], extent[3]])
+    const viewSouth = Math.min(sw[1], ne[1])
+    const viewNorth = Math.max(sw[1], ne[1])
+    const viewWest = Math.min(sw[0], ne[0])
+    const viewEast = Math.max(sw[0], ne[0])
+
+    // Зона по типу события
+    let bbox = null
+    if (detail.type === "osm" && Array.isArray(detail.bbox) && detail.bbox.length === 4) {
+      // bbox: [south, west, north, east]
+      bbox = { south: detail.bbox[0], west: detail.bbox[1], north: detail.bbox[2], east: detail.bbox[3] }
+    } else if (detail.type === "single" && detail.lat != null && detail.lng != null) {
+      bbox = { south: detail.lat, north: detail.lat, west: detail.lng, east: detail.lng }
+    }
+
+    // Нет зоны/типа — считаем релевантным (не ограничиваем)
+    if (!bbox) return true
+
+    // Пересечение прямоугольников
+    return !(
+      bbox.north < viewSouth ||
+      bbox.south > viewNorth ||
+      bbox.east < viewWest ||
+      bbox.west > viewEast
+    )
   }
 
   // ============================================================
@@ -665,11 +723,19 @@ export default class extends ApplicationController {
 
     const center = fromLonLat([lng, lat])
 
-    // Маркер пользователя — простая точка (кружок sky-600 с белой обводкой)
-    const dotEl = document.createElement("div")
-    dotEl.className = "w-3 h-3 rounded-full bg-sky-600 border-2 border-white shadow"
+    // Маркер пользователя — стилизованная булавка с MDI-иконкой (mdi-navigation)
+    // и пульсирующим кольцом. Зелено-голубая гамма (sky-600), белая обводка.
+    // Иконка: mdi-navigation
+    const wrapperEl = document.createElement("div")
+    wrapperEl.className = "poi-user-pin"
+    wrapperEl.innerHTML = `
+      <span class="poi-user-pin__ping"></span>
+      <span class="poi-user-pin__body">
+        <span class="mdi mdi-navigation poi-user-pin__icon"></span>
+      </span>
+    `
     this._userPinOverlay = new Overlay({
-      element: dotEl,
+      element: wrapperEl,
       positioning: "center-center",
       offset: [0, 0],
       stopEvent: false

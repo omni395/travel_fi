@@ -10,6 +10,7 @@ en:
           map_hint: Drag or click the map to set coordinates
           description: Description
           category: Category
+          category_prompt: Select category
           status: Status
           latitude: Latitude
           longitude: Longitude
@@ -22,6 +23,7 @@ en:
           price_info: Price info
           wheelchair_accessible: Wheelchair accessible
           rating: Rating
+          rating_hint: computed value (not editable)
           opening_hours: Opening Hours
           opening_hours_hint: 'OSM format: Mo-Fr 09:00-18:00'
           osm_id: OSM ID

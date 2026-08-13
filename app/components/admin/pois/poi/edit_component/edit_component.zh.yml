@@ -10,6 +10,7 @@ zh:
           map_hint: 拖动或点击地图以设置坐标
           description: 描述
           category: 分类
+          category_prompt: 选择分类
           status: 状态
           latitude: 纬度
           longitude: 经度
@@ -22,6 +23,7 @@ zh:
           price_info: 价格信息
           wheelchair_accessible: 轮椅通道
           rating: 评分
+          rating_hint: 计算值（不可编辑）
           opening_hours: 营业时间
           opening_hours_hint: 'OSM格式: 周一-周五 09:00-18:00'
           osm_id: OSM ID

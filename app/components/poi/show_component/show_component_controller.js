@@ -58,18 +58,29 @@ export default class extends ApplicationController {
   /**
    * Показывает детальную информацию о POI в модалке.
    * Вызывается при клике на маркер карты или элемент списка.
+   *
+   * Idempotency-защита от дублирующего trigger: клик по элемент сайдбара
+   * может сработать дважды — через документ-делегирование (_onDocumentClick)
+   * и через CustomEvent poi:show-detail (list_item_component). Повторный
+   * stimulate того же poiId блокируется, чтобы не слать дублирующий Reflex.
+   *
    * @param {CustomEvent|Object} event - событие/объект с poiId в event.detail.poiId
    */
   showDetail(event) {
     const poiId = event.detail?.poiId
     if (!poiId) return
+    if (this._lastPoiId === poiId) return
+    this._lastPoiId = poiId
     this.stimulate("PoiReflex#show_detail_modal", poiId)
   }
 
   /**
    * Закрыть модалку просмотра (скрывает оверлей)
+   * Сбрасывает idempotency-флаг, чтобы повторный клик на ту же точку
+   * после закрытия снова открывал её.
    */
   close() {
+    this._lastPoiId = null
     const overlay = this.element.closest("[data-poi--show-component-target='overlay']")
     if (overlay) overlay.classList.add("hidden")
   }

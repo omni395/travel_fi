@@ -39,9 +39,11 @@ class OsmImportBroadcaster
   # @param user [User] админ, инициировавший импорт
   # @param stats [Hash] статистика { created:, skipped_duplicate:, skipped_modified:, errors: }
   # @param category [PoiCategory] категория, для которой выполнялся импорт
+  # @param bbox [Array<Float>, nil] границы импорта [south, west, north, east] —
+  #   используется для гео-фильтрации reload карты (баг 4)
   #
-  def self.call(user:, stats:, category:)
-    new(user: user).broadcast(stats: stats, category: category)
+  def self.call(user:, stats:, category:, bbox: nil)
+    new(user: user).broadcast(stats: stats, category: category, bbox: bbox)
   end
 
   attr_reader :user
@@ -97,7 +99,12 @@ class OsmImportBroadcaster
   # веб-контекста (VersionObserverJob в SolidQueue worker'е).
   # Если упадёт — osmImportComplete уже ушёл клиенту.
   #
-  def broadcast(stats:, category:)
+  # @param stats [Hash] статистика импорта
+  # @param category [PoiCategory] категория импорта
+  # @param bbox [Array<Float>, nil] границы [south, west, north, east] для
+  #   гео-фильтрации reload карты (баг 4). Если nil — reload у всех подписанных.
+  #
+  def broadcast(stats:, category:, bbox: nil)
     Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast START: stats=#{stats.inspect}"
 
     # 1. Отправляем событие с результатами импорта — НЕМЕДЛЕННО
@@ -114,11 +121,16 @@ class OsmImportBroadcaster
     )
     Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: osmImportComplete queued for user_#{user.id}"
 
-    # 2. Триггерим перезагрузку маркеров на карте — тоже немедленно
+    # 2. Триггерим перезагрузку маркеров на карте — тоже немедленно.
+    #    В detail передаём bbox импорта: клиент перезагружает POI только если
+    #    его видимые границы пересекаются с областью импорта (баг 4).
+    reload_detail = { type: "osm", category_id: category.id }
+    reload_detail[:bbox] = bbox if bbox
     cable_ready["UserChannel"].dispatch_event(
-      name: "poi:reload-features"
+      name: "poi:reload-features",
+      detail: reload_detail
     )
-    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: poi:reload-features queued for UserChannel"
+    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: poi:reload-features queued for UserChannel (bbox=#{bbox.inspect})"
 
     # Отправляем эти события сразу (гарантированная доставка)
     cable_ready.broadcast

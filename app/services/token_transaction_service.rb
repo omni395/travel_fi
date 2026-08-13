@@ -7,24 +7,65 @@ require "json"
 # TokenTransactionService — единый сервис сущности TokenTransaction (журнал токенов).
 #
 # Отвечает за on-chain отправку начислений: серверный relay, который вызывает
-# `transfer(to, amountWei)` на reward pool-контракте (TravelFiRewards) — токены
-# берутся ИЗ БАЛАНСА контракта, а не минятся. Газ спонсирует оператор
-# (подпись EIP-155 ключом OPERATOR_PRIVATE_KEY) → для юзера это gasless и
-# без лок-периода (сразу на custodial-адрес).
+# `sendReward(to, amountWei)` на reward pool-контракте TravelFiRewards
+# (REWARDS_CONTRACT_ADDRESS) — токены берутся ИЗ БАЛАНСА пула, а не минятся.
+# Газ спонсирует оператор (подпись EIP-155 ключом OPERATOR_PRIVATE_KEY,
+# у пула OPERATOR_ROLE) → для юзера это gasless и без лок-периода.
 #
 # Флоу:
 #   1. Берём custodial-адрес юзера (user.wallet.address)
-#   2. Собираем calldata transfer(address,uint256) (ABI) для POOL_CONTRACT_ADDRESS
+#   2. Собираем calldata sendReward(address,uint256) (ABI) для REWARDS_CONTRACT_ADDRESS
 #   3. Подписываем транзакцию EIP-155 приватным ключом оператора (OPERATOR_PRIVATE_KEY)
 #   4. eth_sendRawTransaction → tx_hash
-#   5. Обновляем TokenTransaction через update! (PaperTrail → broadcast): tx_hash + confirmed
+#   5. Верифицируем receipt (eth_getTransactionReceipt, status == 0x1)
+#   6. Обновляем TokenTransaction через update! (PaperTrail → broadcast): tx_hash + confirmed
+#
+# Контракты (см. .env): TOKEN_CONTRACT_ADDRESS (TravelFiToken), REWARDS_CONTRACT_ADDRESS
+# (TravelFiRewards — пул наград), CROWDSALE_CONTRACT_ADDRESS (TravelFiCrowdsale).
+# Relay начислений идёт ТОЛЬКО на REWARDS; TOKEN/CROWDSALE используются другими
+# потоками (mint/продажи) и relay не затрагивают.
 #
 # Без OPERATOR_PRIVATE_KEY или без custodial-кошелька — транзакция пропускается
 # (остаётся pending, отправится позже после появления кошелька).
 #
 class TokenTransactionService
   DEFAULT_GAS = 120_000
-  DEFAULT_GAS_PRICE = 1_000_000_000 # 1 gwei (fallback)
+
+  # Интервал опроса receipt (eth_getTransactionReceipt) при верификации on-chain
+  # подтверждения отправленной транзакции.
+  #
+  # @return [Float] секунды между опросами
+  #
+  RECEIPT_POLL_INTERVAL = 2.0
+
+  # Максимальное время ожидания подтверждения receipt после eth_sendRawTransaction.
+  # Если за это время транзакция не получила статус (или заревертила) — failed.
+  #
+  # @return [Integer] секунды
+  #
+  RECEIPT_MAX_WAIT = 120
+
+  #
+  # Fallback цена газа для legacy транзакций (EIP-155) из ENV.
+  # Конвертируется из Gwei в wei: 50 Gwei = 50_000_000_000 wei
+  # Если ENV не задан → fallback 50 Gwei
+  #
+  # @return [Integer] цена газа в wei
+  #
+  def self.default_gas_price
+    gwei = (ENV["GAS_PRICE_FALLBACK_GWEI"] || "50").to_i
+    gwei * 1_000_000_000
+  end
+
+  #
+  # Множитель для bump'а цены газа при ретрае (replacement TX в мемпуле).
+  # Из ENV; fallback 1.25 (25% bump).
+  #
+  # @return [Float] множитель (например, 1.25)
+  #
+  def self.gas_price_bump_multiplier
+    (ENV["GAS_PRICE_BUMP_MULTIPLIER"] || "1.25").to_f
+  end
 
   #
   # Переводит сумму токенов в wei (строка целого числа) с учётом decimals.
@@ -96,11 +137,24 @@ class TokenTransactionService
     return unless wallet&.address.present?
 
     # Ретрай после failed: сбрасываем в pending перед повторной отправкой.
-    token_transaction.update!(status: :pending) if token_transaction.status == "failed"
+    # Передаём флаг is_retry=true, чтобы использовать бо́льший bump газа.
+    is_retry = token_transaction.status == "failed"
+    token_transaction.update!(status: :pending) if is_retry
 
-    signed = build_signed_transaction(wallet.address)
-    tx_hash = rpc("eth_sendRawTransaction", [ "0x#{signed[:raw]}" ])
-    return unless tx_hash
+    signed = build_signed_transaction(wallet.address, is_retry: is_retry)
+    return unless signed
+
+    # Отправляем подписанную транзакцию в сеть. Возвращается tx_hash от RPC.
+    tx_hash = send_raw_transaction(signed[:raw])
+    Rails.logger.info("TokenTransactionService: sent raw tx=#{tx_hash}")
+
+    # Верифицируем on-chain подтверждение: только receipt со status 0x1 (Success)
+    # считается успешным начислением. Revert/таймаут → failed.
+    unless wait_for_receipt(tx_hash)
+      Rails.logger.error("TokenTransactionService: tx #{tx_hash} not confirmed (reverted or timeout)")
+      mark_failed
+      return nil
+    end
 
     # Успех: confirmed + claimed=true (начисление получено). update! обновляет
     # updated_at → PaperTrail → broadcast (версии/зоны обновляются).
@@ -137,15 +191,22 @@ class TokenTransactionService
   # reward pool-контракт (токены берутся из его баланса). Газ спонсирует оператор.
   #
   # @param to_address [String] custodial-адрес юзера
+  # @param is_retry [Boolean] является ли это ретраем failed транзакции (для большего bump)
   # @return [Hash] { raw: String, tx_hash: String }
   #
-  def build_signed_transaction(to_address)
+  def build_signed_transaction(to_address, is_retry: false)
     amount_wei = self.class.to_wei(token_transaction.amount, 18)
-    data = Crypto::Ethereum.encode_transfer_data(to_address, amount_wei)
+    # Relayer-пул (TravelFiRewards) выдаёт TFT из своего баланса через sendReward(address,uint256).
+    # (transfer(address,uint256) на пул ревертит — у TravelFiRewards такого метода нет.)
+    data = Crypto::Ethereum.encode_reward_data(to_address, amount_wei)
 
     nonce = nonce_of(operator_address)
-    gas_price = gas_price_for
+    gas_price = gas_price_for(is_retry: is_retry)
     gas = estimate_gas(data)
+
+    # Логирование реальных параметров перед подписью
+    gas_price_gwei = gas_price.to_i / 1_000_000_000.0
+    Rails.logger.info("TokenTransactionService build_signed_transaction: tx_id=#{token_transaction.id}, nonce=#{nonce}, gasPrice=#{gas_price_gwei} Gwei (#{gas_price} wei), gas=#{gas}, is_retry=#{is_retry}")
 
     Crypto::Ethereum.sign_transaction(
       private_key_hex: operator_private_key,
@@ -157,6 +218,44 @@ class TokenTransactionService
       data: data,
       chain_id: chain_id
     )
+  end
+
+  #
+  # Отправляет подписанную сырую транзакцию в сеть через eth_sendRawTransaction.
+  #
+  # @param raw_tx [String] подписанная RLP-транзакция (hex, без 0x)
+  # @return [String] tx_hash от RPC (0x + 64 hex)
+  #
+  def send_raw_transaction(raw_tx)
+    rpc("eth_sendRawTransaction", [ "0x#{raw_tx}" ])
+  end
+
+  #
+  # Верифицирует on-chain подтверждение отправленной транзакции.
+  # Опрашивает eth_getTransactionReceipt до появления receipt с ненулевым
+  # blockNumber; успехом считается только status == "0x1" (Success). Revert
+  # (status "0x0") или истечение таймаута → false (транзакция НЕ засчитывается).
+  #
+  # @param tx_hash [String] хэш отправленной транзакции (0x + 64 hex)
+  # @return [Boolean] true если транзакция подтверждена успешно
+  #
+  def wait_for_receipt(tx_hash)
+    deadline = Time.now + self.class::RECEIPT_MAX_WAIT
+
+    loop do
+      receipt = rpc("eth_getTransactionReceipt", [ tx_hash ])
+      # Ранние RPC возвращают null → ждём следующие блоки.
+      unless receipt.nil? || receipt["blockNumber"].nil? || receipt["blockNumber"].empty?
+        return receipt["status"].to_s == "0x1"
+      end
+
+      return false if Time.now >= deadline
+
+      sleep self.class::RECEIPT_POLL_INTERVAL
+    end
+  rescue StandardError => e
+    Rails.logger.error("TokenTransactionService wait_for_receipt error: #{e.class} #{e.message}")
+    false
   end
 
   #
@@ -216,31 +315,57 @@ class TokenTransactionService
   end
 
   #
-  # Возвращает текущий nonce отправителя (учёт pending-транзакций в mempool).
+  # Возвращает безопасный nonce отправителя.
+  # Использует максимум между "latest" (подтвержденные TX) и "pending" (в мемпуле),
+  # чтобы избежать "nonce too low" ошибки при рассинхронизме RPC.
   #
   # @param address [String] адрес отправителя
   # @return [Integer] nonce
   #
   def nonce_of(address)
-    rpc("eth_getTransactionCount", [ address, "pending" ]).to_i(16)
+    latest = rpc("eth_getTransactionCount", [ address, "latest" ]).to_i(16)
+    pending = rpc("eth_getTransactionCount", [ address, "pending" ]).to_i(16)
+
+    # Берем больший nonce для безопасности (гарантирует >= всех обработанных TX)
+    safe_nonce = [ latest, pending ].max
+    Rails.logger.info("TokenTransactionService nonce_of(#{address}): latest=#{latest}, pending=#{pending}, using=#{safe_nonce}")
+    safe_nonce
+  rescue StandardError => e
+    Rails.logger.error("TokenTransactionService nonce_of error: #{e.class} #{e.message}")
+    # Fallback: вернуть хотя бы latest если что-то упало
+    rpc("eth_getTransactionCount", [ address, "latest" ]).to_i(16)
   end
 
   #
-  # Возвращает текущую цену газа; при сбое — fallback (1 gwei).
+  # Возвращает текущую цену газа с bump'ом. При ошибке RPC — fallback из ENV.
   #
-  # @return [Integer] цена газа (wei)
+  # Bump-запас нужен, чтобы транзакция прошла в мемпул при росте цены газа
+  # (иначе legacy-подпись с ровно рыночной ценой зависает в Pending и не майнится).
   #
-  # Возвращает цену газа на 15% выше текущей рыночной. Bump-запас нужен, чтобы
-  # транзакция прошла в мемпул при росте цены газа (иначе legacy-подпись с ровно
-  # рыночной ценой зависает в Pending и не майнится).
+  # При ретрае (replacement TX) использует бо́льший bump (GAS_PRICE_BUMP_MULTIPLIER),
+  # потому что мемпул требует цены выше оригинальной для замены.
   #
+  # @param is_retry [Boolean] является ли это ретраем failed транзакции
   # @return [Integer] цена газа в wei
   #
-  def gas_price_for
+  def gas_price_for(is_retry: false)
     base = rpc("eth_gasPrice").to_i(16)
-    (base * 1.15).ceil
-  rescue StandardError
-    DEFAULT_GAS_PRICE
+    bump = is_retry ? self.class.gas_price_bump_multiplier : 1.15
+    result = (base * bump).ceil
+
+    result_gwei = result / 1_000_000_000.0
+    Rails.logger.info("TokenTransactionService gas_price_for: base=#{base / 1_000_000_000.0} Gwei, bump=#{bump}, result=#{result_gwei} Gwei, is_retry=#{is_retry}")
+    result
+  rescue StandardError => e
+    # Fallback: используем параметр из ENV, с применением bump если ретрай
+    fallback = self.class.default_gas_price
+    bump = is_retry ? self.class.gas_price_bump_multiplier : 1.0
+    result = is_retry ? (fallback * self.class.gas_price_bump_multiplier).ceil : fallback
+
+    result_gwei = result / 1_000_000_000.0
+    fallback_gwei = fallback / 1_000_000_000.0
+    Rails.logger.warn("TokenTransactionService gas_price_for FALLBACK: error=#{e.class}, fallback=#{fallback_gwei} Gwei, bump=#{bump}, result=#{result_gwei} Gwei, is_retry=#{is_retry}")
+    result
   end
 
   #

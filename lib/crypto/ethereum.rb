@@ -221,8 +221,7 @@ module Crypto
       end
 
       #
-      # Формирует calldata вызова transfer(address,uint256) на ERC-20
-      # (начисления из reward pool: токены берутся с баланса контракта).
+      # Формирует calldata вызова transfer(address,uint256) на ERC-20.
       #
       # @param to [String] адрес получателя
       # @param amount_wei [Integer, String] сумма в wei
@@ -230,6 +229,19 @@ module Crypto
       #
       def encode_transfer_data(to, amount_wei)
         "0x#{function_selector('transfer(address,uint256)')}#{encode_address(to)}#{encode_uint256(amount_wei)}"
+      end
+
+      #
+      # Формирует calldata вызова sendReward(address,uint256) на reward pool-контракт
+      # TravelFiRewards. Токены переводятся ИЗ БАЛАНСА ПУЛА получателю (НЕ mint),
+      # газ спонсирует оператор (caller обязан иметь OPERATOR_ROLE/админ-роль пула).
+      #
+      # @param to [String] адрес получателя (custodial-кошелёк юзера)
+      # @param amount_wei [Integer, String] сумма в wei
+      # @return [String] calldata (0x + hex)
+      #
+      def encode_reward_data(to, amount_wei)
+        "0x#{function_selector('sendReward(address,uint256)')}#{encode_address(to)}#{encode_uint256(amount_wei)}"
       end
 
       #

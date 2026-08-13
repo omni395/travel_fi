@@ -45,8 +45,14 @@ RSpec.describe PoiBroadcaster, type: :service do
   end
 
   describe '#broadcast' do
-    it 'отправляет poi:reload-features в UserChannel (обновление карты)' do
-      expect(cable_mock).to receive(:dispatch_event).with(name: 'poi:reload-features')
+    it 'отправляет poi:reload-features в UserChannel с detail (single, координаты POI)' do
+      # Баг 4: dispatch_event несёт гео-detail, чтобы клиент перезагружал карту
+      # только если его видимые границы содержат точку.
+      poi = broadcaster.send(:poi)
+      expect(cable_mock).to receive(:dispatch_event).with(
+        name: 'poi:reload-features',
+        detail: { type: 'single', lat: poi.latitude, lng: poi.longitude }
+      )
 
       broadcaster.broadcast
     end

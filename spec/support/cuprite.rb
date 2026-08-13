@@ -33,9 +33,18 @@ Capybara.register_driver :selenium_chrome_visible do |app|
     options.add_argument('--disable-gpu')
   end
 
+  # If a local chromedriver binary path is provided via ENV, use it and
+  # avoid Selenium Manager (which may fail on macOS due to permissions).
+  service = if ENV['CHROMEDRIVER_PATH'] && !ENV['CHROMEDRIVER_PATH'].empty?
+              Selenium::WebDriver::Service.chrome(path: ENV['CHROMEDRIVER_PATH'])
+  else
+              nil
+  end
+
   Capybara::Selenium::Driver.new(
     app,
     browser: :chrome,
-    options: options
+    options: options,
+    service: service
   )
 end

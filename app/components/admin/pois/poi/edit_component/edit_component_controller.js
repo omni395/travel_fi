@@ -7,7 +7,7 @@ import ApplicationController from '../../../../../javascript/controllers/applica
  *   handleSubmit — отправляет форму через StimulusReflex
  */
 export default class extends ApplicationController {
-  static targets = ["submitButton"]
+  static targets = ["submitButton", "categoryInput", "categoryText", "statusInput", "statusText"]
 
   /**
    * Собирает вложенный хэш параметров формы из FormData.
@@ -51,6 +51,34 @@ export default class extends ApplicationController {
       this.stimulate("Admin::PoisReflex#update", { poi: params.poi })
     } else {
       this.stimulate("Admin::PoisReflex#create", { poi: params.poi })
+    }
+  }
+
+  /**
+   * Выбор категории из Ui::DropdownComponent.
+   * Обновляет скрытый input poi[poi_category_id] и текст кнопки.
+   *
+   * @param {Event} event - событие click по опции меню
+   */
+  selectCategory(event) {
+    const value = event.currentTarget.dataset.value
+    if (this.hasCategoryInputTarget) this.categoryInputTarget.value = value
+    if (this.hasCategoryTextTarget) {
+      this.categoryTextTarget.textContent = event.currentTarget.textContent.trim()
+    }
+  }
+
+  /**
+   * Выбор статуса из Ui::DropdownComponent.
+   * Обновляет скрытый input poi[status] и текст кнопки.
+   *
+   * @param {Event} event - событие click по опции меню
+   */
+  selectStatus(event) {
+    const value = event.currentTarget.dataset.value
+    if (this.hasStatusInputTarget) this.statusInputTarget.value = value
+    if (this.hasStatusTextTarget) {
+      this.statusTextTarget.textContent = event.currentTarget.textContent.trim()
     }
   }
 }
