@@ -246,6 +246,15 @@ export default class extends ApplicationController {
     console.log(`[POI MAP] Geolocation error: ${err.message}`)
     console.log(`[POI MAP] Fallback to London (${this.constructor.LONDON_FALLBACK.lat},${this.constructor.LONDON_FALLBACK.lng})`)
     this.stimulate("PoiReflex#show_geolocation_toast")
+
+    // Fallback-центр (Лондон) становится «позицией пользователя» для UI: карта
+    // уже центрируется на него, поэтому булавка пользователя обязана присутствовать
+    // и при fallback (ранее добавлялась только при _onGeolocationSuccess — баг:
+    // при ошибке геолокации .poi-user-pin отсутствовал на карте).
+    this._userLocation = {
+      lat: this.constructor.LONDON_FALLBACK.lat,
+      lng: this.constructor.LONDON_FALLBACK.lng
+    }
     this._initWithCenter(
       this.constructor.LONDON_FALLBACK.lat,
       this.constructor.LONDON_FALLBACK.lng
@@ -342,7 +351,8 @@ export default class extends ApplicationController {
     this._hideLoader()
 
     if (interactive) {
-      this._setupInteractiveMode()
+      // Передаём координаты точки: интер. режим сразу запускает обратный геокодинг
+      this._setupInteractiveMode(lat, lng)
     }
   }
 
@@ -350,22 +360,47 @@ export default class extends ApplicationController {
    * Настраивает интерактивный режим (для формы редактирования):
    * - Клик по карте → центрирование + обновление полей
    * - Перемещение карты (moveend) → обновление полей lat/lng
+   * - Обратный геокодинг по координатам (автозаполнение address/city/country/zip)
+   *   при инициализации и каждом перемещении/клике (с debounce).
    */
-  _setupInteractiveMode() {
+  _setupInteractiveMode(singleLat, singleLng) {
     if (!this._map) return
 
-    // При каждом перемещении карты обновляем поля координат
+    // При каждом перемещении карты обновляем поля координат и адрес по координатам
     this._map.on("moveend", () => {
       const center = toLonLat(this._map.getView().getCenter())
       this._updateCoordFields(center[1], center[0])
+      this._debouncedReverseGeocode(center[1], center[0])
     })
 
-    // Клик по карте → центрирование
+    // Клик по карте → центрирование + обновление координат и адреса
     this._map.on("click", (evt) => {
       const coords = toLonLat(evt.coordinate)
       this._map.getView().setCenter(fromLonLat([coords[0], coords[1]]))
       this._updateCoordFields(coords[1], coords[0])
+      this._debouncedReverseGeocode(coords[1], coords[0])
     })
+
+    // Обратный геокодинг сразу при открытии формы (если координаты валидны) — по
+    // аналогии с Poi::FormComponent#initMiniMap (заполнение адресных полей).
+    if (!isNaN(singleLat) && !isNaN(singleLng) && singleLat !== 0 && singleLng !== 0) {
+      this._debouncedReverseGeocode(singleLat, singleLng)
+    }
+  }
+
+  /**
+   * Debounced reverse geocoding через PoiReflex#reverse_geocode.
+   * Заполняет поля city/country/address/zip_code в форме редактирования POI.
+   *
+   * @param {number} lat - широта
+   * @param {number} lng - долгота
+   */
+  _debouncedReverseGeocode(lat, lng) {
+    clearTimeout(this._reverseGeocodeTimer)
+    this._reverseGeocodeTimer = setTimeout(() => {
+      if (!lat || !lng || (lat === 0 && lng === 0)) return
+      this.stimulate("PoiReflex#reverse_geocode", { lat, lng })
+    }, 400)
   }
 
   /**

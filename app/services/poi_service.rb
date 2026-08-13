@@ -104,7 +104,8 @@ class PoiService
   def self.create(params:, current_user:)
     allowed = params.slice(:poi_category_id, :address, :city, :country,
                            :zip_code, :phone, :website, :wheelchair_accessible,
-                           :opening_hours, :price_info, :metadata, :osm_id, :status)
+                           :opening_hours, :price_info, :metadata, :osm_id,
+                           :status, :source)
     poi = Poi.new(allowed)
     assign_localized_fields(poi, params)
     poi.user = current_user
@@ -138,7 +139,7 @@ class PoiService
     allowed = params.slice(:poi_category_id, :address, :city, :country,
                            :zip_code, :phone, :website, :wheelchair_accessible,
                            :opening_hours, :price_info, :metadata,
-                           :slug, :status)
+                           :slug, :status, :source)
     # NOTE: rating — консолидируемое вычисляемое поле (агрегация голосований
     # PoiRating), НЕ редактируется вручную (ROADMAP). Исключено из allowed.
     poi.assign_attributes(allowed)

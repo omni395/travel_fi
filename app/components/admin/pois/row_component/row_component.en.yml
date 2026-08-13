@@ -3,7 +3,9 @@ en:
     pois:
       row_component:
         missing_translations: Missing translations
-        status_pending: Pending
-        status_approved: Approved
-        status_rejected: Rejected
-        status_archived: Archived
+        status:
+          pending: Pending
+          approved: Approved
+          rejected: Rejected
+          archived: Archived
+          imported: Imported from OSM

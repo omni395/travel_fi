@@ -80,10 +80,11 @@ RSpec.describe Poi, type: :model do
   end
 
   describe 'enum' do
-    it 'status: pending/approved/rejected/archived' do
-      expect(described_class.statuses.keys).to match_array(%w[pending approved rejected archived])
+    it 'status: pending/approved/rejected/archived/imported' do
+      expect(described_class.statuses.keys).to match_array(%w[pending approved rejected archived imported])
       expect(create(:poi, :pending)).to be_pending
       expect(create(:poi)).to be_approved
+      expect(create(:poi, status: :imported)).to be_imported
     end
 
     it 'source: manual/osm' do
@@ -129,6 +130,17 @@ RSpec.describe Poi, type: :model do
         create(:poi, status: :approved, poi_category: inactive_cat)
 
         expect(described_class.visible).to contain_exactly(visible_poi)
+      end
+
+      it 'включает imported POI (загруженные из OSM) наравне с approved' do
+        active_cat = create(:poi_category)
+
+        approved_poi = create(:poi, status: :approved, poi_category: active_cat)
+        imported_poi = create(:poi, status: :imported, source: :osm, osm_id: 555_001, poi_category: active_cat)
+        create(:poi, :rejected, poi_category: active_cat)
+        create(:poi, :archived, poi_category: active_cat)
+
+        expect(described_class.visible).to contain_exactly(approved_poi, imported_poi)
       end
     end
 

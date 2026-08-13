@@ -59,6 +59,23 @@ end
 Capybara::Session.prepend(CapybaraScreenshotBlocker)
 Capybara::Selenium::Driver.prepend(CapybaraScreenshotBlocker)
 
+# --- Гард против nil из window_handles (Selenium 4.46) ---
+# На неинициализированной/мёртвой сессии Selenium WebDriver 4.46 метод
+# browser.window_handles возвращает nil (а не []). Capybara вызывает его и в
+# reset!(teardown): `window_handles.slice(1..).each { close_window }`, и внутри
+# переключений окна при навигации/has_css?:
+#   - `undefined method 'slice' for nil`   (reset!, reset_sessions)
+#   - `undefined method 'map' for nil`     (switch_to_window)
+# Возврат Array(super) нормализует nil → [], устраняя падение в обоих местах.
+module CapybaraWindowHandlesGuard
+  # Возвращает список handle окон, гарантированно не-nil.
+  # @return [Array<String>] handle-ы окон (пустой массив, если окна нет)
+  def window_handles
+    Array(super)
+  end
+end
+Capybara::Selenium::Driver.prepend(CapybaraWindowHandlesGuard)
+
 RSpec.configure do |config|
   # Потоковая индикация: печатаем [START] для каждого примера ДО его выполнения
   # и сразу сбрасываем буфер ($stdout.flush). Без этого в pipe/CI имена примеров

@@ -33,8 +33,12 @@ class Admin::PoisReflex < ApplicationReflex
       current_user: current_user
     )
 
-    # Reflex НЕ рендерит DOM после сохранения (эталон). Обновление страницы
-    # show/списка/карты выполняет VersionObserverJob → PoiBroadcaster.
+    # Редирект на детальную страницу точки (симметрично #create). Инициатор
+    # сразу переходит на просмотр; показ/список/карту у других обновляет
+    # VersionObserverJob → PoiBroadcaster.
+    cable_ready.redirect_to(url: admin_poi_path(id: poi))
+    cable_ready.broadcast
+
     send_success(I18n.t("reflexes.admin.pois.update_success"))
   rescue Pundit::NotAuthorizedError => e
     send_error(I18n.t("reflexes.admin.pois.update_unauthorized"))
