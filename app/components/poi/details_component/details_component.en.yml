@@ -15,3 +15,7 @@ en:
       unknown: Unknown
       true: "Yes"
       false: "No"
+      no_location_title: Location unavailable
+      no_location_message: "Your current location is required to interact with this point. Enable location services to proceed."
+      proximity_warning_title: You are too far away
+      proximity_warning_message: "You need to be within 100 meters of the point to interact with it."

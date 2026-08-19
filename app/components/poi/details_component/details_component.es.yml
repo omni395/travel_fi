@@ -15,3 +15,7 @@ es:
       unknown: Desconocido
       true: "Sí"
       false: "No"
+      no_location_title: Ubicación no disponible
+      no_location_message: "Se requiere tu ubicación actual para interactuar con este punto. Habilita los servicios de ubicación para continuar."
+      proximity_warning_title: Estás demasiado lejos
+      proximity_warning_message: "Debes estar a menos de 100 metros del punto para interactuar con él."

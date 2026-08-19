@@ -148,20 +148,39 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
         # Исходный статус — pending (hidden input poi[status])
         expect(find("input[name='poi[status]'][type='hidden']", visible: false).value).to eq('pending')
 
-        # Открываем статусный Dropdown и выбираем Approved (hidden input + selectStatus)
-        find('button[data-action="ui--dropdown-component#toggle"]', text: 'Pending').click
+        # Открываем СТАТУСНЫЙ Dropdown и выбираем Approved (hidden input + selectStatus).
+        # В форме ДВА Dropdown (категория + статус) с одинаковым триггером
+        # button[data-action="ui--dropdown-component#toggle"] — поэтому триггер статуса
+        # ищем точечно: кнопка, содержащая span data-target="statusText".
+        status_trigger = 'button[data-action="ui--dropdown-component#toggle"]'
+        find("#{status_trigger} [data-admin--pois--poi--edit-component-target='statusText']").click
         find("div[data-action*='edit-component#selectStatus'][data-value='approved']", visible: false).click
 
-        # Hidden input обновил выбор — текст кнопки-триггера сменился на Approved
+        # Hidden input обновил выбор — текст кнопки-триггера сменился на Approved.
+        # Ждём реального срабатывания Stimulus selectStatus (hidden input + text),
+        # а не только клика по пункту меню (флак в headful-Selenium).
+        wait_until = Time.now + 5
+        approved = false
+        while Time.now < wait_until && !approved
+          approved = find("input[name='poi[status]'][type='hidden']", visible: false).value == 'approved'
+          sleep 0.2
+        end
         expect(find("input[name='poi[status]'][type='hidden']", visible: false).value).to eq('approved')
-        expect(find('button[data-action="ui--dropdown-component#toggle"]')).to have_text('Approved')
+        expect(find("#{status_trigger} [data-admin--pois--poi--edit-component-target='statusText']")).to have_text('Approved')
       end
 
-      # Submit (Admin::PoisReflex#update → redirect на просмотр точки)
-      within(edit) do
-        find("button[type='submit']").click
+      # Submit (Admin::PoisReflex#update → redirect на просмотр точки).
+      # Редирект перерисовывает страницу: форма EditComponent исчезает, показывается
+      # просмотр (#poi-detail уже присутствует и на edit-странице, поэтому ждём
+      # именно исчезновения формы редактирования как финального признака редиректа).
+      edit_selector = '[data-controller="admin--pois--poi--edit-component"]'
+      find("button[type='submit']").click
+      Timeout.timeout(90) do
+        loop do
+          break unless page.has_css?(edit_selector, visible: false)
+          sleep 0.2
+        end
       end
-      wait_for_selector('#poi-detail', timeout: 90)
       expect(page).to have_current_path(%r{\A/admin-panel/pois/[^/]+\z}, wait: 30)
     end
 

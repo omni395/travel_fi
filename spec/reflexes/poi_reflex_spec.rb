@@ -179,4 +179,50 @@ RSpec.describe PoiReflex, type: :reflex do
       expect(poi.user).to eq(user)
     end
   end
+
+  describe '#edit_poi (антифрод)' do
+    let(:poi) { create(:poi, user: user, poi_category: category, status: :approved) }
+
+    describe 'переводы предупреждения (баг «Translation missing»)' do
+      # Баг A: render_proximity_warning обращался к неймспейсу poi.detail_component,
+      # тогда как sidecar YAML объявляет poi.details_component. Проверяем, что все 4
+      # ключа существуют во всех локалях и не возвращают 'Translation missing'.
+      it 'резолвит no_location_* и proximity_warning_* во всех 4 локалях' do
+        %i[en ru es zh].each do |locale|
+          I18n.with_locale(locale) do
+            %w[no_location_title no_location_message
+               proximity_warning_title proximity_warning_message].each do |key|
+              value = I18n.t("poi.details_component.#{key}")
+              expect(value).to be_present
+              expect(value).not_to include('Translation missing')
+              expect(value).not_to include('translation missing')
+            end
+          end
+        end
+      end
+    end
+
+    describe 'без координат пользователя' do
+      before do
+        allow(ApplicationController).to receive(:render).and_return('')
+      end
+
+      it 'рендерит предупреждение no_location и НЕ открывает форму (шаг 5)' do
+        reflex = build_reflex(described_class, :edit_poi, user: user)
+
+        # session пуст → check_proximity! ветка :no_location → внутренний html + broadcast.
+        # Негативное mock-ожидание (мок установлен ДО вызова): если форма была бы
+        # отрендерена в #poi-detail-modal-body, RSpec упадёт на вызове inner_html.
+        expect(cable_ready_mock).to receive(:inner_html).with(
+          hash_including(selector: '#poi-auth-dialog')
+        )
+        expect(cable_ready_mock).not_to receive(:inner_html).with(
+          hash_including(selector: '#poi-detail-modal-body')
+        )
+        expect(cable_ready_mock).to receive(:broadcast)
+
+        reflex.edit_poi(poi.id)
+      end
+    end
+  end
 end

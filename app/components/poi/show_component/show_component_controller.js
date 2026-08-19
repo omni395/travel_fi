@@ -22,7 +22,7 @@ export default class extends ApplicationController {
     // двойной stimulate("PoiReflex#show_detail_modal") при клике на маркер.
     if (this.element.matches("[data-poi--show-component-target='overlay']")) {
       this._showDetailHandler = this.showDetail.bind(this)
-      this._closeHandler = this.close.bind(this)
+      this._closeHandler = this._handleClose.bind(this)
       this._documentClickHandler = this._onDocumentClick.bind(this)
       document.addEventListener("poi:show-detail", this._showDetailHandler)
       document.addEventListener("poi:close-detail", this._closeHandler)
@@ -75,11 +75,27 @@ export default class extends ApplicationController {
   }
 
   /**
-   * Закрыть модалку просмотра (скрывает оверлей)
-   * Сбрасывает idempotency-флаг, чтобы повторный клик на ту же точку
-   * после закрытия снова открывал её.
+   * Публичный метод закрытия модалки (кнопка X в шапке карточки, бэкдроп, ESC).
+   *
+   * Диспатчит глобальное событие poi:close-detail, которое обрабатывает ТОЛЬКО
+   * "оверлейный" экземпляр (_handleClose). Это критично: кнопка X живёт во
+   * вставленном контенте (#poi-detail-modal-body), т.е. на вложенном экземпляре
+   * контроллера, у которого нет своего _lastPoiId. Если скрывать/сбрасывать флаг
+   * здесь (на вложенном), idempotency-флаг оверлея останется = poiId и повторный
+   * клик по той же точке будет заблокирован (баг «второй раз точка не открывается»).
+   * Единое место сброса флага и скрытия — _handleClose на оверлее.
    */
   close() {
+    document.dispatchEvent(new CustomEvent("poi:close-detail"))
+  }
+
+  /**
+   * Единый обработчик закрытия на "оверлейном" экземпляре.
+   * Слушает poi:close-detail (приходит от кнопки X / бэкдропа / карты) и
+   * вызывается напрямую из close() вложенного экземпляра.
+   * Сбрасывает idempotency-флаг и скрывает оверлей.
+   */
+  _handleClose() {
     this._lastPoiId = null
     const overlay = this.element.closest("[data-poi--show-component-target='overlay']")
     if (overlay) overlay.classList.add("hidden")

@@ -29,10 +29,13 @@ RSpec.describe 'POI OSM Import — точки появляются на карт
   let!(:user_b) { create(:user, :with_setting) }
   let!(:category) { create(:poi_category) }
 
-  # Точки в Лондоне (fallback-центр карты)
+  # Точки в Лондоне (fallback-центр карты 51.5074, -0.1278).
+  # ОБЕ точки должны попадать в видимые bounds карты при zoom 17 (область ~100-200м):
+  # прошлая версия ставила London Bridge на -0.0877 (~3.5км восточнее) — точка была
+  # вне bounds, не попадала в #poi-map-features, тест флакал по таймауту.
   LONDON_POINTS = [
-    { lat: 51.5074, lng: -0.1278, name: 'London Fountain' },
-    { lat: 51.5079, lng: -0.0877, name: 'London Bridge' }
+    { lat: 51.50740, lng: -0.12780, name: 'London Fountain' },
+    { lat: 51.50745, lng: -0.12770, name: 'London Bridge' }
   ].freeze
 
   it 'А импортирует POI в Лондоне → Б на карте видит их сразу (баг 4)' do
@@ -59,6 +62,11 @@ RSpec.describe 'POI OSM Import — точки появляются на карт
       prepare_session_window
       retry_cdp_geolocation(latitude: 51.5074, longitude: -0.1278, accuracy: 100)
       visit pois_path
+      # Ждём инициализацию карты: #poi-map-features наполняется ТОЛЬКО после
+      # первого кадра OpenLayers (postrender → load_pois_in_bounds). Ожидание по
+      # data-poi-id (как в poi_spec.rb) надёжнее сайта-by-name — оно ловит
+      # момент, когда маркеры уже отрисованы, и убирает флак «карта не инициализировалась».
+      wait_for_selector('#poi-map-features [data-poi-id]', timeout: 90)
       # Появляются без ручного сдвига карты
       wait_for_selector('#poi-map-features [data-poi-name="London Bridge"]', timeout: 90)
       expect(page).to have_css('#poi-map-features [data-poi-name="London Fountain"]', visible: false)
