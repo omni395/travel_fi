@@ -61,6 +61,7 @@ Rails.application.routes.draw do
     get ":id", to: "users#show", as: :user,
               constraints: ->(req) { req.path_parameters[:id] !~ /\A(favicon|robots|sitemap)\z/ }
     get ":id/edit", to: "users#edit", as: :edit_user
+    patch ":id", to: "users#update", as: :update_user
     get ":id/settings", to: "users/settings#show", as: :user_settings
   end
 end

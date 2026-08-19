@@ -1,0 +1,13 @@
+---
+es:
+  admin:
+    pois:
+      poi:
+        header_component:
+          missing_translations: 'Faltan traducciones: %{locales}'
+          edit: Editar
+          status:
+            pending: "Pendiente"
+            approved: "Aprobado"
+            rejected: "Rechazado"
+            archived: "Archivado"

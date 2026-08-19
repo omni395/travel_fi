@@ -1,138 +1,98 @@
-<%# Admin::Pois::Poi::ShowComponent - детальная страница POI %>
-<div id="poi-detail">
-  <div class="bg-white shadow rounded-lg p-6">
-    <%# Алерт о незаполненных переводах %>
-    <% if poi.missing_translations? %>
-      <div class="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
-        <div class="flex items-center gap-2 text-amber-800 text-sm">
-          <%# MDI: translate %>
-          <i class="mdi mdi-translate text-lg"></i>
-          <span><%= missing_translations_message %></span>
+<%# Admin::Pois::Poi::ShowComponent - детальная информация POI (контент таба Details) %>
+<div class="bg-white shadow rounded-lg p-6" data-controller="admin--pois--poi--show-component">
+  <div class="grid grid-cols-2 gap-6">
+    <div>
+      <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+        <%= t(".details") %>
+      </h3>
+      <dl class="space-y-3">
+        <% if poi.localized_description.present? %>
+          <div>
+            <dt class="text-xs text-gray-400"><%= t(".description") %></dt>
+            <dd class="text-sm text-gray-900"><%= poi.localized_description %></dd>
+          </div>
+        <% end %>
+        <div>
+          <dt class="text-xs text-gray-400"><%= t(".address") %></dt>
+          <dd class="text-sm text-gray-900"><%= [poi.address, poi.city, poi.country].compact.join(", ") %></dd>
         </div>
-      </div>
-    <% end %>
-
-    <div class="flex items-center justify-between mb-6">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900"><%= poi.localized_name %></h1>
-        <p class="text-sm text-gray-500 mt-1">
-          <%= poi.poi_category.localized_name %>
-          <% if poi.slug.present? %>
-            · <code class="bg-gray-100 px-1 py-0.5 rounded"><%= poi.slug %></code>
-          <% end %>
-          <% if poi.osm_id.present? %>
-            · OSM ID: <%= poi.osm_id %>
-          <% end %>
-        </p>
-      </div>
-
-      <div class="flex items-center gap-2">
-        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full <%= status_badge_class %>">
-          <%= t(".status.#{poi.status}") %>
-        </span>
-        <%= link_to admin_poi_path(id: poi, edit: true),
-                    class: "btn-ui btn-ui--ghost btn-ui--sm" do %>
-          <!-- mdi: pencil -->
-          <i class="mdi mdi-pencil"></i>
-          <%= t(".edit") %>
+        <% if poi.phone.present? %>
+          <div>
+            <dt class="text-xs text-gray-400"><%= t(".phone") %></dt>
+            <dd class="text-sm text-gray-900"><%= poi.phone %></dd>
+          </div>
         <% end %>
-      </div>
+        <% if poi.website.present? %>
+          <div>
+            <dt class="text-xs text-gray-400"><%= t(".website") %></dt>
+            <dd class="text-sm text-gray-900"><%= link_to poi.website, poi.website, target: "_blank", class: "text-emerald-600 hover:text-emerald-800" %></dd>
+          </div>
+        <% end %>
+        <% if poi.price_info.present? %>
+          <div>
+            <dt class="text-xs text-gray-400"><%= t(".price_info") %></dt>
+            <dd class="text-sm text-gray-900"><%= poi.price_info %></dd>
+          </div>
+        <% end %>
+        <div>
+          <dt class="text-xs text-gray-400"><%= t(".coordinates") %></dt>
+          <dd class="text-sm text-gray-900"><%= poi.latitude %>, <%= poi.longitude %></dd>
+        </div>
+      </dl>
     </div>
 
-    <div class="grid grid-cols-2 gap-6">
-      <div>
-        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
-          <%= t(".details") %>
-        </h3>
-        <dl class="space-y-3">
-          <% if poi.localized_description.present? %>
+    <div>
+      <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
+        <%= t(".metadata") %>
+      </h3>
+      <% if metadata_fields.any? %>
+        <dl class="space-y-2">
+          <% metadata_fields.each do |field| %>
             <div>
-              <dt class="text-xs text-gray-400"><%= t(".description") %></dt>
-              <dd class="text-sm text-gray-900"><%= poi.localized_description %></dd>
+              <dt class="text-xs text-gray-400"><%= field[:label] %></dt>
+              <dd class="text-sm text-gray-900">
+                <% if field[:value].is_a?(Array) %>
+                  <%= field[:value].join(", ") %>
+                <% elsif [true, false].include?(field[:value]) %>
+                  <%= field[:value] ? t(".true") : t(".false") %>
+                <% else %>
+                  <%= field[:value] %>
+                <% end %>
+              </dd>
             </div>
           <% end %>
-          <div>
-            <dt class="text-xs text-gray-400"><%= t(".address") %></dt>
-            <dd class="text-sm text-gray-900"><%= [poi.address, poi.city, poi.country].compact.join(", ") %></dd>
-          </div>
-          <% if poi.phone.present? %>
-            <div>
-              <dt class="text-xs text-gray-400"><%= t(".phone") %></dt>
-              <dd class="text-sm text-gray-900"><%= poi.phone %></dd>
-            </div>
-          <% end %>
-          <% if poi.website.present? %>
-            <div>
-              <dt class="text-xs text-gray-400"><%= t(".website") %></dt>
-              <dd class="text-sm text-gray-900"><%= link_to poi.website, poi.website, target: "_blank", class: "text-emerald-600 hover:text-emerald-800" %></dd>
-            </div>
-          <% end %>
-          <% if poi.price_info.present? %>
-            <div>
-              <dt class="text-xs text-gray-400"><%= t(".price_info") %></dt>
-              <dd class="text-sm text-gray-900"><%= poi.price_info %></dd>
-            </div>
-          <% end %>
-          <div>
-            <dt class="text-xs text-gray-400"><%= t(".coordinates") %></dt>
-            <dd class="text-sm text-gray-900"><%= poi.latitude %>, <%= poi.longitude %></dd>
-          </div>
         </dl>
-      </div>
+      <% else %>
+        <p class="text-sm text-gray-400"><%= t(".no_metadata") %></p>
+      <% end %>
 
-      <div>
-        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
-          <%= t(".metadata") %>
-        </h3>
-        <% if metadata_fields.any? %>
-          <dl class="space-y-2">
-            <% metadata_fields.each do |field| %>
-              <div>
-                <dt class="text-xs text-gray-400"><%= field[:label] %></dt>
-                <dd class="text-sm text-gray-900">
-                  <% if field[:value].is_a?(Array) %>
-                    <%= field[:value].join(", ") %>
-                  <% elsif [true, false].include?(field[:value]) %>
-                    <%= field[:value] ? t(".true") : t(".false") %>
-                  <% else %>
-                    <%= field[:value] %>
-                  <% end %>
-                </dd>
-              </div>
-            <% end %>
-          </dl>
-        <% else %>
-          <p class="text-sm text-gray-400"><%= t(".no_metadata") %></p>
-        <% end %>
+      <% if poi.rating.present? && poi.rating > 0 %>
+        <div class="mt-4">
+          <dt class="text-xs text-gray-400"><%= t(".rating") %></dt>
+          <dd class="text-sm text-gray-900 flex items-center gap-1">
+            <%# Иконка: mdi-star %>
+            <i class="mdi mdi-star text-yellow-400"></i>
+            <%= poi.rating %>
+          </dd>
+        </div>
+      <% end %>
 
-        <% if poi.rating.present? && poi.rating > 0 %>
-          <div class="mt-4">
-            <dt class="text-xs text-gray-400"><%= t(".rating") %></dt>
-            <dd class="text-sm text-gray-900 flex items-center gap-1">
-              <i class="mdi mdi-star text-yellow-400"></i>
-              <%# Иконка: mdi-star %>
-              <%= poi.rating %>
-            </dd>
-          </div>
-        <% end %>
-
-        <% if poi.opening_hours.present? %>
-          <div class="mt-4">
-            <dt class="text-xs text-gray-400"><%= t(".opening_hours") %></dt>
-            <dd class="text-sm text-gray-900"><%= poi.opening_hours.is_a?(Hash) ? poi.opening_hours.to_json : poi.opening_hours %></dd>
-          </div>
-        <% end %>
-      </div>
+      <% if poi.opening_hours.present? %>
+        <div class="mt-4">
+          <dt class="text-xs text-gray-400"><%= t(".opening_hours") %></dt>
+          <dd class="text-sm text-gray-900"><%= poi.opening_hours.is_a?(Hash) ? poi.opening_hours.to_json : poi.opening_hours %></dd>
+        </div>
+      <% end %>
     </div>
+  </div>
 
-    <div class="mt-6 pt-6 border-t border-gray-200">
-      <div class="flex items-center gap-4 text-sm text-gray-500">
-        <span><%= t(".created_by") %>: <%= poi.user.name %></span>
-        <span><%= t(".created_at") %>: <%= render Ui::DateComponent.new(poi.created_at, format: :long) %></span>
-        <% if poi.verification_count > 0 %>
-          <span><%= t(".verified_count", count: poi.verification_count) %></span>
-        <% end %>
-      </div>
+  <div class="mt-6 pt-6 border-t border-gray-200">
+    <div class="flex items-center gap-4 text-sm text-gray-500">
+      <span><%= t(".created_by") %>: <%= poi.user.name %></span>
+      <span><%= t(".created_at") %>: <%= render Ui::DateComponent.new(poi.created_at, format: :long) %></span>
+      <% if poi.verification_count > 0 %>
+        <span><%= t(".verified_count", count: poi.verification_count) %></span>
+      <% end %>
     </div>
   </div>
 </div>

@@ -160,7 +160,7 @@ Travel Fi — Rails 8.1 приложение для туристических �
 - Контейнер-цель (`[data-...]`) — на обёртке в `show.html.erb`, корень компонента без неё.
 
 ### 2. Reflex (`app/reflexes/admin/<entity>_reflex.rb`)
-- `create` / `update` / `destroy` — `morph :nothing` → `deep_symbolize_keys(params)` → `authorize_with_pundit!` → Service → `send_success`/`send_error` (dispatch_event в `user_#{id}`).
+- `create` / `update` / `destroy` — `morph :nothing` → `deep_symbolize_keys(params)` → `authorize_with_pundit!` → Service → `send_success`/`send_error` (dispatch_event в `admin_#{id}`).
 - `filter` / `<entity>_page` (пагинация) — чтение, рендер через `ApplicationController.render(Component)` + `inner_html` + `broadcast`.
 
 ### 3. Service (`app/services/<entity>_service.rb`)
@@ -171,10 +171,11 @@ Travel Fi — Rails 8.1 приложение для туристических �
 - `include CableReady::Broadcaster`, `include Pagy::Method` (+ mock `request` для pagy).
 - `broadcast` — рендер зон по одной (`inner_html` по селектору-обёртке), каждая зона в `rescue`.
 - Вложенные ViewComponent из job — только через `<%= render %>`/`helpers.render`.
-- Результат: `cable_ready["AdminChannel"]` → `.broadcast`.
+- Результат: `cable_ready["admin_feed"]` → `.broadcast` (общий стрим админки).
 
 ### 5. Канал
-`AdminChannel` (`app/channels/admin_channel.rb`) — подписка `admin` ИЛИ `moderator`.
+`AdminChannel` (`app/channels/admin_channel.rb`) — подписка `admin` ИЛИ `moderator` на стримы
+`admin_<id>` (личный) + `admin_feed` (общий).
 
 ### 6. VersionObserverJob (`app/jobs/version_observer_job.rb`)
 - Для каждого `item_type` — ветка `handle_<model>_update(version)` → `XxxBroadcaster.call(<entity>: version.item || version.reify)`.

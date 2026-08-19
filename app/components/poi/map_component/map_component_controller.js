@@ -157,6 +157,13 @@ export default class extends ApplicationController {
         return
       }
     }
+    // Сбрасываем кэш bounds-ключа: без этого _loadPoisInBounds() при неизменённых
+    // границах карты упирается в страж `_lastBoundsKey === currentBoundsKey` и
+    // возвращается, НЕ отправляя серверный запрос. В результате новая одобренная
+    // точка (шаг «админ одобрил → пользователь live видит») НЕ появлялась бы ни
+    // на карте, ни в сайдбаре без перезагрузки. Сброс форсирует повторный
+    // `PoiReflex#load_pois_in_bounds`, который рендерит и маркеры, и список.
+    this._lastBoundsKey = null
     console.log('[POI MAP] _onReloadFeatures: reloading POIs in bounds from server')
     this._loadPoisInBounds()
   }
@@ -348,12 +355,56 @@ export default class extends ApplicationController {
   _initMapWithLocation(lat, lng, interactive = false) {
     this._initMap(lat, lng)
     this._loadPois()
+    // Маркер редактируемой/просматриваемой точки на мини-карте edit-show.
+    // В single-режиме (админка) карта центрируется на POI, но кластер/features
+    // отсутствуют (compact-режим не рендерит #poi-map-features) — потому точка
+    // не отображалась. Добавляем маркер-точку напрямую в vector source (аналог
+    // Poi::FormComponent#initMiniMap). Антифрод-круг для админа не нужен.
+    this._addSinglePoiMarker(lat, lng)
     this._hideLoader()
 
     if (interactive) {
       // Передаём координаты точки: интер. режим сразу запускает обратный геокодинг
       this._setupInteractiveMode(lat, lng)
     }
+  }
+
+  /**
+   * Добавляет маркер-точку (CircleStyle Feature) для одиночного POI.
+   * Используется в single-режиме мини-карты (админка: show-детали/edit-форма),
+   * где кластерные фичи не загружаются (compact → нет #poi-map-features).
+   *
+   * @param {number} lat - широта
+   * @param {number} lng - долгота
+   */
+  _addSinglePoiMarker(lat, lng) {
+    if (!this._vectorSource) return
+    const projected = fromLonLat([lng, lat])
+    this._singleMarkerFeature = new Feature({
+      geometry: new Point(projected)
+    })
+    this._singleMarkerFeature.setStyle(
+      new Style({
+        image: new CircleStyle({
+          radius: 8,
+          fill: new Fill({ color: "#10b981" }),
+          stroke: new Stroke({ color: "#ffffff", width: 2 })
+        })
+      })
+    )
+    this._vectorSource.addFeature(this._singleMarkerFeature)
+    console.log(`[POI MAP] single POI marker added at ${lat}, ${lng}`)
+  }
+
+  /**
+   * Перемещает маркер одиночного POI на новые координаты (клик/панорамирование).
+   *
+   * @param {number} lat - широта
+   * @param {number} lng - долгота
+   */
+  _moveSinglePoiMarker(lat, lng) {
+    if (!this._singleMarkerFeature) return
+    this._singleMarkerFeature.getGeometry().setCoordinates(fromLonLat([lng, lat]))
   }
 
   /**
@@ -366,18 +417,20 @@ export default class extends ApplicationController {
   _setupInteractiveMode(singleLat, singleLng) {
     if (!this._map) return
 
-    // При каждом перемещении карты обновляем поля координат и адрес по координатам
+    // При каждом перемещении карты обновляем поля координат, маркер и адрес
     this._map.on("moveend", () => {
       const center = toLonLat(this._map.getView().getCenter())
       this._updateCoordFields(center[1], center[0])
+      this._moveSinglePoiMarker(center[1], center[0])
       this._debouncedReverseGeocode(center[1], center[0])
     })
 
-    // Клик по карте → центрирование + обновление координат и адреса
+    // Клик по карте → центрирование + обновление координат, маркера и адреса
     this._map.on("click", (evt) => {
       const coords = toLonLat(evt.coordinate)
       this._map.getView().setCenter(fromLonLat([coords[0], coords[1]]))
       this._updateCoordFields(coords[1], coords[0])
+      this._moveSinglePoiMarker(coords[1], coords[0])
       this._debouncedReverseGeocode(coords[1], coords[0])
     })
 

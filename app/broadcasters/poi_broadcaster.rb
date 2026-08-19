@@ -37,57 +37,76 @@ class PoiBroadcaster
     # Рендерим компоненты (могут упасть — возвращаем пустую строку)
     card_html = render_poi_list_item_component
     toast_html = render_toast
+    admin_table_html = render_admin_table
 
-    # 1. Обновление элемента POI в списке сайдбара
+    # 1. Админка: live-обновление таблицы POI [data-admin-pois-list] (create
+    #    и change_status). Админ Б видит новый pending-рядо и смену статуса
+    #    без перезагрузки — аналогично Admin::UserBroadcaster.
+    if admin_table_html.present?
+      cable_ready["admin_feed"].inner_html(
+        selector: "[data-admin-pois-list]",
+        html: admin_table_html
+      )
+    end
+
+    # 1b. Обновление элемента POI в списке сайдбара пользовательской карты.
     # inner_html (НЕ morph — morph падает на undefined.dispatchEvent в CableReady).
+    # Уходит в общий поток карты "pois_map": каждый пользователь на карте
+    # (через UserChannel: stream_from "pois_map") получает live-обновление.
     if card_html.present?
-      cable_ready[UserChannel].inner_html(
+      cable_ready["pois_map"].inner_html(
         selector: "[data-poi-id='#{poi.id}']",
         html: card_html
       )
     end
 
-    # 2. Toast-уведомление (если удалось отрендерить)
-    if toast_html.present?
-      cable_ready[UserChannel].insert_adjacent_html(
-        selector: "#notifications",
-        position: "beforeend",
-        html: toast_html
+    # 2. Toast-уведомление (не сохраняем здесь — тосты адресуются персонально
+    #    в user_N через ToastBroadcaster; общая карта не должна спамить тостами).
+
+    # 3. Шапка POI для админов ("admin_feed") — обёртка #poi-detail в show.html.erb.
+    #    Раньше это делал Reflex через morph "#poi-detail"; теперь — только через
+    #    Broadcaster, чтобы live-обновление видели ВСЕ подписанные админы.
+    header_html = render_poi_header_component
+    if header_html.present?
+      cable_ready["admin_feed"].inner_html(
+        selector: "#poi-detail",
+        html: header_html
       )
     end
 
-    # 3. Детальная карточка POI для админов (AdminChannel) — обёртка #poi-detail
-    # в show.html.erb. Раньше это делал Reflex через morph "#poi-detail"
-    # (нарушение эталона); теперь — только через Broadcaster, чтобы live-обновление
-    # видели ВСЕ подписанные админы, а не только инициатор.
+    # 3b. Содержимое таба Details (ShowComponent) — отдельная обёртка
+    #    [data-poi-detail-body] в show.html.erb. inner_html (НЕ morph — падает
+    #    на undefined.dispatchEvent в CableReady). Два селектора-цели НЕ вложены
+    #    друг в друга (догма), поэтому обновляются независимо.
     show_html = render_poi_show_component
     if show_html.present?
-      cable_ready["AdminChannel"].inner_html(
-        selector: "#poi-detail",
+      cable_ready["admin_feed"].inner_html(
+        selector: "[data-poi-detail-body]",
         html: show_html
       )
     end
 
-    # 4. Лента аудита POI для админов (AdminChannel)
+    # 4. Лента аудита POI для админов ("admin_feed")
     audit_html = render_audit_component
     if audit_html.present?
-      cable_ready["AdminChannel"].inner_html(
+      cable_ready["admin_feed"].inner_html(
         selector: "[data-audit-log]",
         html: audit_html
       )
     end
 
-    # 5. Триггерим перезагрузку маркеров на карте — ВСЕГДА.
-    #    В detail передаём координаты POI: клиент перезагружает только если
-    #    его видимые границы содержат точку.
-    cable_ready["UserChannel"].dispatch_event(
+    # 5. Триггерим перезагрузку маркеров на карте у ВСЕХ пользователей карты —
+    #    через общий поток "pois_map" (не мёртвый "UserChannel"). В detail
+    #    передаём координаты POI: клиент перезагружает только если его видимые
+    #    границы содержат точку (_detailIntersectsView).
+    cable_ready["pois_map"].dispatch_event(
       name: "poi:reload-features",
       detail: { type: "single", lat: poi.latitude, lng: poi.longitude }
     )
 
     # Применяем изменения — ВСЕГДА
-    cable_ready[UserChannel].broadcast
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["pois_map"].broadcast
+    cable_ready["admin_feed"].broadcast
 
     Rails.logger.info("PoiBroadcaster: Sent update for POI #{poi.id} (#{poi.name})")
   rescue StandardError => e
@@ -103,8 +122,10 @@ class PoiBroadcaster
   # @return [String] HTML строка компонента
   #
   def render_poi_list_item_component
-    component = Poi::ListItemComponent.new(list_item: poi)
-    ApplicationController.renderer.render(component)
+    # Рендер верхнего уровня в SolidQueue worker: ApplicationController.render с
+    # layout:false (вложенные компоненты внутри рендерятся через view_context).
+    # renderer.render (layout по умолчанию) без request возвращает "" в worker.
+    ApplicationController.render(Poi::ListItemComponent.new(list_item: poi), layout: false)
   rescue StandardError => e
     Rails.logger.error("Failed to render Poi::ListItemComponent: #{e.class} #{e.message}")
     ""
@@ -117,25 +138,56 @@ class PoiBroadcaster
   # @return [String] HTML строка тоста
   #
   def render_toast
-    ApplicationController.renderer.render(Ui::ToastComponent.new(
+    ApplicationController.render(Ui::ToastComponent.new(
       message: I18n.t("notifications.poi_updated", name: poi.name)
-    ))
+    ), layout: false)
   rescue StandardError => e
     Rails.logger.error("Failed to render toast: #{e.class} #{e.message}")
     ""
   end
 
   #
-  # Рендерит детальную карточку POI для админки (AdminChannel, #poi-detail).
+  # Рендерит шапку POI для админки (AdminChannel, #poi-detail).
+  # Одиночный рендер через renderer допустим (аналог ShowComponent);
+  # сбой — пустая строка, broadcast продолжается.
+  #
+  # @return [String] HTML строка HeaderComponent
+  #
+  def render_poi_header_component
+    ApplicationController.render(Admin::Pois::Poi::HeaderComponent.new(poi: poi), layout: false)
+  rescue StandardError => e
+    Rails.logger.error("Failed to render Admin::Pois::Poi::HeaderComponent: #{e.class} #{e.message}")
+    ""
+  end
+
+  #
+  # Рендерит содержимое таба Details POI для админки (AdminChannel,
+  # [data-poi-detail-body]).
   # Одиночный рендер через renderer допустим (аналог ListItemComponent);
   # сбой — пустая строка, broadcast продолжается.
   #
   # @return [String] HTML строка ShowComponent
   #
   def render_poi_show_component
-    ApplicationController.renderer.render(Admin::Pois::Poi::ShowComponent.new(poi: poi))
+    ApplicationController.render(Admin::Pois::Poi::ShowComponent.new(poi: poi), layout: false)
   rescue StandardError => e
     Rails.logger.error("Failed to render Admin::Pois::Poi::ShowComponent: #{e.class} #{e.message}")
+    ""
+  end
+
+  #
+  # Рендерит актуальную таблицу POI для админки (AdminChannel).
+  # Список соответствует дефолтному индексу (свежие сверху) — пагинация не
+  # применяется в фоновом job (нет request); рендерим без pagy.
+  # Рендер из SolidQueue worker через ApplicationController.render верхнего уровня.
+  #
+  # @return [String] HTML таблицы POI
+  #
+  def render_admin_table
+    pois = Poi.includes(:poi_category, :user).order(created_at: :desc).limit(20)
+    ApplicationController.render(Admin::Pois::TableComponent.new(pois: pois, pagy: nil), layout: false)
+  rescue StandardError => e
+    Rails.logger.error("PoiBroadcaster render_admin_table: #{e.class} #{e.message}")
     ""
   end
 

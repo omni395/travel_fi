@@ -60,6 +60,17 @@ RSpec.describe 'Реферальные начисления TFT', type: :system 
     expect(user.token_transactions.count).to eq(2)
     expect(referrer.token_transactions.count).to eq(1)
 
+    # Начисление новому — БЕЗ лок-периода (БАГ A): welcome + рефбонус новому
+    # мгновенно доступны, в Locked их НЕТ. Рефереру — с vesting-локом (антифрод).
+    expect(user.reload.token_transactions.available.sum(:amount)).to eq(15)
+    expect(user.reload.token_transactions.locked.sum(:amount)).to eq(0)
+    expect(user.reload.token_transactions.map(&:action_key)).to contain_exactly(
+      'registration', 'referral_bonus_new_user'
+    )
+    # Реферер: 15 мгновенно НЕ доступны (заблокированы на lock-период).
+    expect(referrer.reload.token_transactions.available.sum(:amount)).to eq(0)
+    expect(referrer.reload.token_transactions.locked.sum(:amount)).to eq(15)
+
     # ---------- Профиль А: баланс + история начислений ----------
     browser_a do
       visit user_path(id: user)
@@ -67,6 +78,12 @@ RSpec.describe 'Реферальные начисления TFT', type: :system 
       expect(page).to have_content('15')
       wait_for_selector('[data-user-rewards]', timeout: 90)
       expect(page).to have_content(I18n.t('users.rewards_component.title'))
+      # Начисления доступны сразу (БАГ A): Available: 15, Locked: 0 — без лока.
+      # Локализованные подписи плашек балансов из rewards_component.
+      expect(page).to have_content("#{I18n.t('users.rewards_component.available_balance')}: 15 TFT")
+      expect(page).to have_content("#{I18n.t('users.rewards_component.locked_balance')}: 0 TFT")
+      # Кнопка claim доступна, т.к. есть available-начисления.
+      expect(page).to have_button(I18n.t('users.rewards_component.claim_button'))
     end
 
     # ---------- Админ Б: вкладка Wallet ----------

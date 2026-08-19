@@ -25,15 +25,18 @@
         <span class="font-semibold"><%= t(".loading") %></span>
       </div>
 
-      <!-- Form Element with Stimulus Reflex Integration -->
+      <!-- Аватар (бинарный File) не передаётся через StimulusReflex/WebSocket —
+           используется классический HTTP multipart (PATCH update_user_path).
+           После save PaperTrail триггерит live-обновление у админа. -->
       <form
         id="user-edit-form"
-        data-action="submit->users--form-component#handleSubmit"
-        data-user-id="<%= @user.id %>"
-        data-reflex-serialize-form="true"
+        method="post"
+        enctype="multipart/form-data"
+        action="<%= update_user_path(id: @user) %>"
         class="space-y-6">
 
         <!-- CSRF Token -->
+        <input type="hidden" name="_method" value="patch">
         <input type="hidden" name="authenticity_token" value="<%= form_authenticity_token %>">
 
         <!-- Name Field -->
@@ -74,7 +77,7 @@
         <div class="field-group">
           <label class="flex justify-between">
             <span class="field-label"><%= t(".avatar") %></span>
-            <span class="text-xs text-gray-500">(JPG, PNG, WebP, Max 5MB)</span>
+            <span class="text-xs text-gray-500">(JPG, PNG, WebP)</span>
           </label>
 
           <!-- Avatar Preview -->

@@ -111,6 +111,10 @@
             <i class="mdi mdi-flag-outline mr-1"></i>
             <%= t(".status") %>
           <% end %>
+          <%# Статус — DropdownComponent со скрытым input name="poi[status]"
+              и обновляемой надписью на триггере (по образцу категории).
+              value уходит в FormData как poi[status], выбранный пункт виден
+              на кнопке сразу после выбора. %>
           <%= f.hidden_field :status, data: { admin__pois__poi__edit_component_target: "statusInput" } %>
           <%= render Ui::DropdownComponent.new(position: "left", menu_classes: "w-full bg-white border border-gray-200") do |dropdown| %>
             <% dropdown.with_trigger do %>
@@ -129,6 +133,10 @@
                 <div class="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 cursor-pointer border-b border-gray-50 last:border-b-0"
                      data-action="click->admin--pois--poi--edit-component#selectStatus click->ui--dropdown-component#toggle"
                      data-value="<%= val %>">
+                  <span class="w-5 h-5 flex items-center justify-center text-emerald-500">
+                    <i class="mdi mdi-flag-outline text-sm"></i>
+                    <%# Иконка: mdi-flag-outline %>
+                  </span>
                   <span class="text-sm text-gray-700"><%= label %></span>
                 </div>
               <% end %>

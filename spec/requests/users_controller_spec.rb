@@ -52,4 +52,29 @@ RSpec.describe UsersController, type: :request do
       expect(response).to have_http_status(:redirect)
     end
   end
+
+  describe 'PATCH /users/:id (update)' do
+    it 'обновляет имя владельцу и редиректит на профиль (redirect)' do
+      sign_in owner
+      patch update_user_path(id: owner), params: { name: 'Updated Name' }
+      expect(response).to have_http_status(:found)
+      # friendly_id перегенерирует slug при смене имени — редирект на актуальный профиль
+      expect(response).to redirect_to(user_path(id: owner.reload))
+      expect(owner.name).to eq('Updated Name')
+    end
+
+    it 'редирект для чужого пользователя (без права update)' do
+      sign_in stranger
+      patch update_user_path(id: owner), params: { name: 'Hacked' }
+      expect(response).to have_http_status(:redirect)
+      expect(owner.reload.name).to eq('Owner User')
+    end
+
+    it '422 при коротком имени (ошибка валидации)' do
+      sign_in owner
+      patch update_user_path(id: owner), params: { name: 'A' }
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(owner.reload.name).to eq('Owner User')
+    end
+  end
 end

@@ -114,4 +114,52 @@ RSpec.describe TokenTransaction, type: :model do
       expect(tx.lock_days).to eq(GamificationService.pool_lock_days)
     end
   end
+
+  describe 'скоупы available / locked (учитывают мгновенные начисления, БАГ A)' do
+    let(:lock_days) { GamificationService.pool_lock_days }
+
+    it 'available: мгновенное начисление (registration) доступно сразу, без ожидания лок-периода' do
+      tx = create(:token_transaction, user: user, action_key: 'registration')
+
+      expect(TokenTransaction.available).to include(tx)
+      expect(user.token_transactions.available).to include(tx)
+    end
+
+    it 'available: vesting-начисление появляется только после истечения лок-периода' do
+      tx = create(:token_transaction, user: user, action_key: 'poi_create')
+      expect(TokenTransaction.available).not_to include(tx)
+
+      # Передвигаем created_at за границу lock-периода — начисление разблокируется.
+      tx.update_column(:created_at, (lock_days + 1).days.ago)
+      expect(TokenTransaction.available).to include(tx)
+    end
+
+    it 'locked: мгновенное начисление НЕ попадает в Locked (даже свежесозданное)' do
+      tx = create(:token_transaction, user: user, action_key: 'referral_bonus_new_user')
+
+      expect(TokenTransaction.locked).not_to include(tx)
+      expect(user.token_transactions.locked).not_to include(tx)
+    end
+
+    it 'locked: vesting-начисление попадает в Locked, пока не истёк лок-период' do
+      tx = create(:token_transaction, user: user, action_key: 'poi_create')
+
+      expect(TokenTransaction.locked).to include(tx)
+    end
+
+    it 'available/locked суммарно не пересекаются и согласованы с методами инстанса' do
+      instant = create(:token_transaction, user: user, action_key: 'registration')
+      vesting = create(:token_transaction, user: user, action_key: 'poi_create')
+
+      expect(instant.available?).to be(true)
+      expect(instant.locked?).to be(false)
+      expect(vesting.available?).to be(false)
+      expect(vesting.locked?).to be(true)
+
+      expect(TokenTransaction.available).to include(instant)
+      expect(TokenTransaction.available).not_to include(vesting)
+      expect(TokenTransaction.locked).to include(vesting)
+      expect(TokenTransaction.locked).not_to include(instant)
+    end
+  end
 end

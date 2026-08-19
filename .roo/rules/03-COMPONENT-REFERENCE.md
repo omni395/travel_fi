@@ -153,6 +153,7 @@ PaperTrail → VersionObserverJob → Broadcaster → CableReady → ActionCable
 - Service использует `Model.save!` внутри транзакции
 - `ApplicationReflex` включает `Rails.application.routes.url_helpers` — route helpers доступны в любом Reflex
 - Для `cable_ready.redirect_to(url: ...)` всегда использовать именованные маршруты (`admin_poi_path(id: poi)`)
+- **Канальная модель (2 канала, адресные стримы):** `UserChannel` → `user_#{id}` (личный) + `pois_map` (общий карты); `AdminChannel` → `admin_#{id}` (личный) + `admin_feed` (общий админки). Бродкастеры адресуют по имени стрима. Noticed (`stream: :user_stream` → `user_#{id}`) продолжает работать.
 
 ---
 

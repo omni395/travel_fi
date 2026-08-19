@@ -82,10 +82,11 @@ class Admin::UserBroadcaster
     # Обновляем таблицу целиком через inner_html на контейнер [data-admin-users-list].
     # Точечная замена одной <tr> (morph падает, inner_html на tr создаёт вложенность)
     # на клиенте ненадёжна — рендерим актуальный список.
+    # Общий поток админки "admin_feed".
     users = Admin::UserService.search_users(query: nil, status: nil).limit(20)
     table_html = ApplicationController.render(Admin::Users::TableComponent.new(users: users, pagy: nil), layout: false)
 
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-users-list]",
       html: table_html
     )
@@ -93,7 +94,7 @@ class Admin::UserBroadcaster
     # Обновляем ленту аудита пользователя (если админ на его show-странице)
     audit_html = render_audit_component(user)
     if audit_html.present?
-      cable_ready["AdminChannel"].inner_html(
+      cable_ready["admin_feed"].inner_html(
         selector: "[data-audit-log]",
         html: audit_html
       )
@@ -104,14 +105,14 @@ class Admin::UserBroadcaster
     # (покрывает live-правку профиля самим пользователем).
     profile_html = render_show_component(user)
     if profile_html.present?
-      cable_ready["AdminChannel"].inner_html(
+      cable_ready["admin_feed"].inner_html(
         selector: "#user-profile",
         html: profile_html
       )
     end
 
     # Отправляем уведомление об успехе
-    cable_ready["AdminChannel"].dispatch_event(
+    cable_ready["admin_feed"].dispatch_event(
       name: "adminUserUpdateSuccess",
       detail: {
         user_id: user.id,
@@ -119,7 +120,7 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   #
@@ -127,13 +128,13 @@ class Admin::UserBroadcaster
   # Удаляет строку пользователя из списка
   #
   def send_user_destroy(user)
-    # Удаляем строку пользователя из списка
-    cable_ready["AdminChannel"].remove(
+    # Удаляем строку пользователя из списка (общий поток админки "admin_feed")
+    cable_ready["admin_feed"].remove(
       selector: "[data-admin-user-id='#{user.id}']"
     )
 
     # Отправляем уведомление об успехе
-    cable_ready["AdminChannel"].dispatch_event(
+    cable_ready["admin_feed"].dispatch_event(
       name: "adminUserDestroySuccess",
       detail: {
         user_id: user.id,
@@ -141,7 +142,7 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   #
@@ -150,14 +151,14 @@ class Admin::UserBroadcaster
   #
   def send_status_change(user, old_status, new_status)
     # Обновляем бейдж статуса в детальной информации (inner_html)
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-user-status='#{user.id}']",
       html: render_status_badge(user)
     )
 
     # Отправляем уведомление об успехе
     status_message = I18n.t("admin.users.#{new_status}_success")
-    cable_ready["AdminChannel"].dispatch_event(
+    cable_ready["admin_feed"].dispatch_event(
       name: "adminUserStatusChangeSuccess",
       detail: {
         user_id: user.id,
@@ -167,7 +168,7 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   #
@@ -176,17 +177,17 @@ class Admin::UserBroadcaster
   #
   def send_role_change(user, role_name, action)
     # Обновляем список ролей в детальной информации (inner_html)
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-user-roles='#{user.id}']",
       html: render_user_roles(user)
     )
 
     # Отправляем уведомление об успехе
-    role_message = action == :add ? 
-      I18n.t('admin.users.role_added') : 
+    role_message = action == :add ?
+      I18n.t('admin.users.role_added') :
       I18n.t('admin.users.role_removed')
 
-    cable_ready["AdminChannel"].dispatch_event(
+    cable_ready["admin_feed"].dispatch_event(
       name: "adminUserRoleChangeSuccess",
       detail: {
         user_id: user.id,
@@ -196,7 +197,7 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   #
@@ -204,14 +205,14 @@ class Admin::UserBroadcaster
   # Препендикс строку нового пользователя в начало таблицы админки
   #
   def send_user_created(user)
-    # Препендикс строку нового пользователя в таблицу
-    cable_ready["AdminChannel"].prepend(
+    # Препендикс строку нового пользователя в таблицу (общий поток "admin_feed")
+    cable_ready["admin_feed"].prepend(
       selector: "[data-admin-users-list] tbody",
       html: render_user_row_component(user)
     )
 
     # Отправляем уведомление об успехе
-    cable_ready["AdminChannel"].dispatch_event(
+    cable_ready["admin_feed"].dispatch_event(
       name: "adminUserCreatedSuccess",
       detail: {
         user_id: user.id,
@@ -219,7 +220,7 @@ class Admin::UserBroadcaster
       }
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   private

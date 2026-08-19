@@ -24,9 +24,11 @@ VersionObserverJob (Background Process - Triggered by PaperTrail):
     ↓
 Broadcaster (app/broadcasters/):
   ├─ Рендерит зоны (helpers.render)
-  └─ cable_ready["AdminChannel"].inner_html(selector:, html:) → .broadcast
+  └─ cable_ready["admin_feed"].inner_html(selector:, html:) / cable_ready["pois_map"] / cable_ready["admin_#{id}"] / cable_ready["user_#{id}"] → .broadcast
     ↓
-ActionCable (SolidCable): Доставляет команды в стрим (AdminChannel / user_N)
+ActionCable (SolidCable): Доставляет команды в адресные стримы
+    (UserChannel: user_#{id} личный + pois_map общий карты;
+     AdminChannel: admin_#{id} личный + admin_feed общий админки)
     ↓
 DOM обновляется (Инициатор — мгновенно/redirect, остальные — через broadcast без перезагрузки)
 
@@ -55,3 +57,4 @@ DOM обновляется (Инициатор — мгновенно/redirect, 
 - **Чекбоксы (Rails check_box)**: генерирует hidden(value=0)+checkbox с одним `name`. В JS выбирай `input[name='...'][type='checkbox']`, иначе всегда читается hidden (false) → в БД не сохраняется true.
 - **Таймауты system-тестов — ТОЛЬКО 60с**: Selenium headful при длинных прогонах грузит страницы медленно; меньшие таймауты дают флаки «элемент не появился» (data-admin-users-list, #user-profile, data-admin-user-wallet и т.д.). Дефолт `wait_for_selector` — 60с (spec/support/system_helpers.rb). НЕ снижать и НЕ добавлять мелкие таймауты (30/35/20) в новых тестах.
 - **Route helpers в scope "(:locale)"**: маршрут `get ":id"` внутри `scope "(:locale)"` имеет ДВА динамических сегмента — позиционный объект (`user_path(user)`) мапится в `:locale` и падает `UrlGenerationError: missing required keys: [:id]`. Всегда передавай keyword: `user_path(id: user)`, `edit_user_path(id: user)`, `admin_user_path(id: user)`.
+- **System-тесты: ОБЯЗАТЕЛЬНЫЙ precompile перед каждым прогоном**: system-тесты берут JS/CSS ассеты из `public/assets` (precompile), а НЕ из `app/assets/builds` (esbuild вне тестов пишет только в builds). После любого изменения фронтенда (ViewComponent JS-контроллер, CSS, шаблон) перед прогоном system-тестов обязательно выполнять `RAILS_ENV=test bin/rails assets:precompile`. Запускать system-тесты ТОЛЬКО через `bundle exec rspec <путь>`. Иначе браузер получает устаревший бандл (старый контроллер/метод) и тест падает «на пустом месте» (например, новый метод `selectStatus` не вызван, hidden не обновлён) — это НЕ баг приложения, а незапущенный precompile.

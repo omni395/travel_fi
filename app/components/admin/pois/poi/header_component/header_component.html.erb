@@ -1,0 +1,40 @@
+<%# Admin::Pois::Poi::HeaderComponent - шапка детальной страницы POI %>
+<div class="bg-white shadow rounded-lg p-6" data-controller="admin--pois--poi--header-component">
+  <%# Алерт о незаполненных переводах %>
+  <% if poi.missing_translations? %>
+    <div class="mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="flex items-center gap-2 text-amber-800 text-sm">
+        <%# Иконка: mdi-translate %>
+        <i class="mdi mdi-translate text-lg"></i>
+        <span><%= missing_translations_message %></span>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900"><%= poi.localized_name %></h1>
+      <p class="text-sm text-gray-500 mt-1">
+        <%= poi.poi_category.localized_name %>
+        <% if poi.slug.present? %>
+          · <code class="bg-gray-100 px-1 py-0.5 rounded"><%= poi.slug %></code>
+        <% end %>
+        <% if poi.osm_id.present? %>
+          · OSM ID: <%= poi.osm_id %>
+        <% end %>
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full <%= status_badge_class %>">
+        <%= t(".status.#{poi.status}") %>
+      </span>
+      <%= link_to admin_poi_path(id: poi, edit: true),
+                  class: "btn-ui btn-ui--ghost btn-ui--sm" do %>
+        <%# Иконка: mdi-pencil %>
+        <i class="mdi mdi-pencil"></i>
+        <%= t(".edit") %>
+      <% end %>
+    </div>
+  </div>
+</div>

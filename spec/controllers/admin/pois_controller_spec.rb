@@ -35,6 +35,18 @@ RSpec.describe Admin::PoisController, type: :request do
       expect(response.body).not_to include('<select')
     end
 
+    it 'статус рендерится как radio name="poi[status]" внутри Dropdown (без hidden-input)' do
+      get admin_poi_path(id: poi.id, edit: 'true')
+
+      body = response.body
+      # Статус — радио-опции в меню dropdown; выбранного значения нет в hidden
+      expect(body).to include('input')
+      expect(body).to include('name="poi[status]"')
+      expect(body).to include('type="radio"')
+      # Нет скрытого input статуса, который не обновлялся (баг: статус не сохранялся)
+      expect(body).not_to include('name="poi[status]" type="hidden"')
+    end
+
     it 'отображает выбранную категорию в тексте дропдауна' do
       get admin_poi_path(id: poi.id, edit: 'true')
 
@@ -67,6 +79,16 @@ RSpec.describe Admin::PoisController, type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).not_to include('admin--pois--poi--edit-component')
+    end
+
+    it 'не дублирует секцию деталей: шапка отдельно (HeaderComponent), детали — в табе (ShowComponent)' do
+      get admin_poi_path(id: poi.id)
+
+      body = response.body
+      # Шапка рендерится ОДИН раз через HeaderComponent
+      expect(body).to include('admin--pois--poi--header-component').once
+      # Содержимое таба Details — через ShowComponent в обёртке [data-poi-detail-body]
+      expect(body).to include('data-poi-detail-body').once
     end
   end
 end

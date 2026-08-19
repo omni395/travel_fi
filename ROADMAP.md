@@ -475,17 +475,19 @@ VersionObserverJob (SolidQueue) — branch handle_<model>_update
    ▼
 Broadcaster (helpers.render + cable_ready.inner_html by wrapper selectors)
    ▼
-CableReady + ActionCable (SolidCable) → stream user_N / AdminChannel
+CableReady + ActionCable (SolidCable) → addressed streams
+(UserChannel: user_#id личный + pois_map общий карты;
+ AdminChannel: admin_#id личный + admin_feed общий админки)
    ▼
 The DOM updates selectively in all subscribed browsers
 ```
 
 ### 5.3 Data flows between sections
 
-- **User Profile ↔ Admin Users:** user change → PaperTrail → `VersionObserverJob#handle_user_update` → `Admin::UserBroadcaster` (AdminChannel) + `UserBroadcaster` (user_N) + `UserProfileNotification` (Noticed, filter by `Setting`).
-- **POI Map ↔ Admin Pois:** POI creation/change → `VersionObserverJob#handle_poi_update` → `PoiBroadcaster` (list + toast + `poi:reload-features` → map) + `Admin::DashboardBroadcaster.broadcast_stats_update`.
-- **PoiCategories ↔ POI Map:** category/field change → `PoiCategoryBroadcaster` (AdminChannel, card/fields/POI/audit); POI visibility on the map depends on `poi_categories.active` (scope `Poi.visible`).
-- **OSM import ↔ POI Map:** `Admin::PoiCategoriesReflex#import_from_osm` → `OsmImportBroadcaster` (progress/result in user_N) + `poi:reload-features` → reload of map markers.
+- **User Profile ↔ Admin Users:** user change → PaperTrail → `VersionObserverJob#handle_user_update` → `Admin::UserBroadcaster` (admin_feed) + `UserBroadcaster` (user_N) + `UserProfileNotification` (Noticed, filter by `Setting`).
+- **POI Map ↔ Admin Pois:** POI creation/change → `VersionObserverJob#handle_poi_update` → `PoiBroadcaster` (list + `poi:reload-features` → pois_map; admin zones → admin_feed) + `Admin::DashboardBroadcaster.broadcast_stats_update`.
+- **PoiCategories ↔ POI Map:** category/field change → `PoiCategoryBroadcaster` (admin_feed, card/fields/POI/audit); POI visibility on the map depends on `poi_categories.active` (scope `Poi.visible`).
+- **OSM import ↔ POI Map:** `Admin::PoiCategoriesReflex#import_from_osm` → `OsmImportBroadcaster` (progress/result in user_N; `poi:reload-features` → pois_map) → reload of map markers.
 - **Settings ↔ Notifications:** `SettingsReflex` → `SettingService` → `SettingBroadcaster` (user_N); `Setting` filters are applied when sending Noticed.
 - **Gamification ↔ Wallet/TokenTransaction:** `GamificationService.award!` → `UserReward` + `TokenTransaction` (in one transaction) → `TokenTransactionRelayJob` (SolidQueue) → on-chain mint.
 

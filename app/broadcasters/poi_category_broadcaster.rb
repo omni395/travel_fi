@@ -43,14 +43,15 @@ class PoiCategoryBroadcaster
   end
 
   #
-  # Выполняет broadcast обновления всех зон категории в AdminChannel
+  # Выполняет broadcast обновления всех зон категории в общий поток админки
+  # "admin_feed" (все подписанные админы; см. README «Канальная модель»).
   #
   def broadcast
     # 1. Карточка категории
     # inner_html в #poi-category-detail (безопасен: не использует parent.children[idx])
     show_html = render_show_component
     if show_html.present?
-      cable_ready["AdminChannel"].inner_html(
+      cable_ready["admin_feed"].inner_html(
         selector: "#poi-category-detail",
         html: show_html
       )
@@ -59,7 +60,7 @@ class PoiCategoryBroadcaster
     # 2. Список динамических полей категории
     fields_html = render_fields_component
     if fields_html.present?
-      cable_ready["AdminChannel"].inner_html(
+      cable_ready["admin_feed"].inner_html(
         selector: "[data-poi-category-fields]",
         html: fields_html
       )
@@ -68,7 +69,7 @@ class PoiCategoryBroadcaster
     # 3. Список POI категории (первая страница)
     pois_html = render_pois_component
     if pois_html.present?
-      cable_ready["AdminChannel"].inner_html(
+      cable_ready["admin_feed"].inner_html(
         selector: "[data-poi-category-pois]",
         html: pois_html
       )
@@ -77,13 +78,13 @@ class PoiCategoryBroadcaster
     # 4. Лента аудита (версии категории и её полей)
     audit_html = render_audit_component
     if audit_html.present?
-      cable_ready["AdminChannel"].inner_html(
+      cable_ready["admin_feed"].inner_html(
         selector: "[data-audit-log]",
         html: audit_html
       )
     end
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
 
     # Рассылаем уведомления (мультикаст) для событий с настроенными каналами
     notify_recipients if NOTIFICATION_EVENTS.include?(event_type)

@@ -153,6 +153,17 @@ RSpec.configure do |config|
   # Nominatim) в тестах мокаются (allow(OsmImportService) / WebMock.stub_request).
   WebMock.disable_net_connect!(allow_localhost: true)
 
+  # Страховка от утечек политики WebMock из других спеков: integration-спеки
+  # (blockchain/on-chain relay) в before(:all)/after(:all) переопределяют политику
+  # disable_net_connect! БЕЗ allow_localhost (см. token_transaction_service_integration_spec).
+  # Их after(:all) сбрасывает allow_localhost в false ГЛОБАЛЬНО на процесс RSpec, после
+  # чего любой system-тест падает на калибровочном запросе Capybara-сервера
+  # GET http://127.0.0.1:PORT/__identify__ (WebMock::NetConnectNotAllowedError).
+  # Переустановка политики ПЕРЕД каждым примером гарантирует полную изоляцию.
+  config.before(:each) do
+    WebMock.disable_net_connect!(allow_localhost: true)
+  end
+
   # --- ActiveJob ---
   # В тестах очередь ставится в :test, джобы проигрываются явно
   # (perform_enqueued_jobs) — предсказуемость для Noticed/VersionObserverJob.

@@ -13,6 +13,7 @@ import './admin_poi_categories_poi_category_show_component_show_component_contro
 import './admin_poi_categories_row_component_row_component_controller.js'
 import './admin_poi_categories_table_component_table_component_controller.js'
 import './admin_pois_poi_edit_component_edit_component_controller.js'
+import './admin_pois_poi_header_component_header_component_controller.js'
 import './admin_pois_poi_show_component_show_component_controller.js'
 import './admin_pois_row_component_row_component_controller.js'
 import './admin_pois_table_component_table_component_controller.js'

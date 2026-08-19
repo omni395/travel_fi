@@ -31,8 +31,8 @@
               </span>
             </div>
             <% if available? %>
-              <%= render Ui::BtnComponent.new(size: :sm, scheme: :primary, data: {
-                    action: "click->users--rewards-component#claim"
+              <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: {
+                    data: { action: "click->users--rewards-component#claim" }
                   }) do %>
                 <%# Иконка: mdi-wallet-plus %>
                 <i class="mdi mdi-wallet-plus mr-1"></i>

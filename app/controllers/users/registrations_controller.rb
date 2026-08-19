@@ -74,11 +74,15 @@ class Users::RegistrationsController < Devise::RegistrationsController
     self.resource = resource_class.to_adapter.get!(send(:"current_#{resource_name}").to_key)
     prev_unconfirmed_email = resource.unconfirmed_email if resource.respond_to?(:unconfirmed_email)
 
-    # Проверяем, меняется ли email (для unconfirmed_email)
+    # Проверяем, меняется ли email (для unconfirmed_email).
+    # ВАЖНО: сам перенос email → unconfirmed_email + генерация токена + отправка
+    # письма выполняются Devise-механизмом reconfirmable через
+    # `before_update :postpone_email_change_until_confirmation...` при
+    # resource.update ниже. Мануальная установка unconfirmed_email ДО update
+    # конфликтует с этим callback (двойная установка) и ломает применение
+    # нового email после confirm (остаётся старый). Поэтому только фиксируем
+    # факт смены для логирования, а не присваиваем атрибут вручную.
     email_changed = account_update_params[:email].present? && resource.email != account_update_params[:email]
-    if email_changed
-      resource.unconfirmed_email = account_update_params[:email]
-    end
 
     # Проверяем, меняется ли пароль
     password_changed = account_update_params[:password].present? && account_update_params[:password_confirmation].present?
@@ -198,7 +202,16 @@ class Users::RegistrationsController < Devise::RegistrationsController
   end
 
   def update_params
-    devise_parameter_sanitizer.sanitize(:account_update)
+    # Кастомный #update сохраняет ресурс через resource.update (без
+    # DatabaseAuthenticatable#update_with_password), поэтому ключ current_password,
+    # который sanitizer подмешивает в :account_update по умолчанию, здесь не
+    # назначается модели (`attr_reader` без writer) и роняет update на
+    # `unknown attribute 'current_password' for User`.
+    # Отбрасываем его до мутации — это ровно то, что делает update_with_password
+    # через params.delete(:current_password) на уровне модели.
+    sanitized = devise_parameter_sanitizer.sanitize(:account_update)
+    sanitized.except!(:current_password) if sanitized.is_a?(Hash)
+    sanitized
   end
 
   def process_avatar_before_update
@@ -212,7 +225,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
       processed = PhotoService.process(
         avatar_file,
         filename: "avatar_#{current_user.id}",
-        format: 'webp'
+        format: "webp"
       )
 
       if processed.respond_to?(:path)

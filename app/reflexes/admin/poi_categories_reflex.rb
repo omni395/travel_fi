@@ -180,8 +180,8 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       layout: false
     )
 
-    cable_ready["AdminChannel"].inner_html(selector: "[data-poi-category-pois]", html: html)
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].inner_html(selector: "[data-poi-category-pois]", html: html)
+    cable_ready["admin_feed"].broadcast
   rescue Pundit::NotAuthorizedError => e
     send_error(I18n.t("reflexes.admin.poi_categories.filter_unauthorized"))
   rescue StandardError => e
@@ -211,8 +211,8 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       layout: false
     )
 
-    cable_ready["AdminChannel"].inner_html(selector: "[data-audit-log]", html: html)
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].inner_html(selector: "[data-audit-log]", html: html)
+    cable_ready["admin_feed"].broadcast
   rescue Pundit::NotAuthorizedError => e
     send_error(I18n.t("reflexes.admin.poi_categories.filter_unauthorized"))
   rescue StandardError => e
@@ -252,8 +252,8 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       layout: false
     )
 
-    cable_ready["AdminChannel"].inner_html(selector: "[data-poi-category-pois]", html: html)
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].inner_html(selector: "[data-poi-category-pois]", html: html)
+    cable_ready["admin_feed"].broadcast
   rescue StandardError => e
     Rails.logger.error("PoiCategory pois panel incremental update failed: #{e.class} #{e.message}")
   end
@@ -266,7 +266,7 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   def send_error(message)
     return unless current_user
 
-    cable_ready["user_#{current_user.id}"].dispatch_event(
+    cable_ready["admin_#{current_user.id}"].dispatch_event(
       name: "adminPoiCategoriesError",
       detail: { message: message }
     )
@@ -281,7 +281,7 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   def send_success(message = nil)
     return unless current_user
 
-    cable_ready["user_#{current_user.id}"].dispatch_event(
+    cable_ready["admin_#{current_user.id}"].dispatch_event(
       name: "adminPoiCategoriesSuccess",
       detail: { message: message || I18n.t("reflexes.admin.poi_categories.operation_success") }
     )

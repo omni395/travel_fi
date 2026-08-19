@@ -5,8 +5,12 @@
 #
 # Отображает:
 # - Хлебные крошки
-# - Детальную информацию о POI (ShowComponent) или форму редактирования (EditComponent)
+# - Шапку POI (HeaderComponent) или форму редактирования (EditComponent)
 # - Табы: Details, Map, Audit Log (через Ui::TabsComponent)
+#
+# Селекторы-цели для PoiBroadcaster:
+#   #poi-detail — шапка (HeaderComponent → обновляется inner_html)
+#   [data-poi-detail-body] — содержимое таба Details (ShowComponent → inner_html)
 # %>
 
 <div class="max-w-4xl mx-auto">
@@ -16,12 +20,12 @@
     { name: @poi.localized_name }
   ]) %>
 
-  <%# Детальная информация или форма редактирования %>
+  <%# Шапка POI или форма редактирования %>
   <div id="poi-detail">
     <% if @edit_mode %>
       <%= render Admin::Pois::Poi::EditComponent.new(poi: @poi, categories: @categories) %>
     <% else %>
-      <%= render Admin::Pois::Poi::ShowComponent.new(poi: @poi) %>
+      <%= render Admin::Pois::Poi::HeaderComponent.new(poi: @poi) %>
     <% end %>
   </div>
 
@@ -36,7 +40,9 @@
           ],
           active_tab: active_tab,
           panels: {
-            details:   render(Admin::Pois::Poi::ShowComponent.new(poi: @poi)),
+            details: content_tag(:div, data: { poi_detail_body: true }) do
+              concat render(Admin::Pois::Poi::ShowComponent.new(poi: @poi))
+            end,
             map:       render(Poi::MapComponent.new(poi: @poi)),
             audit_log: content_tag(:div, data: { audit_log: true }) do
               if @versions.any?
