@@ -20,15 +20,26 @@ RSpec.describe 'TokenTransactionService (blockchain integration)', :integration 
     skip 'Set RUN_BLOCKCHAIN_INTEGRATION=1 to run blockchain integration test' unless ENV['RUN_BLOCKCHAIN_INTEGRATION'] == '1'
   end
 
-  # Реальная сеть: разрешаем только RPC-хост (не весь интернет).
-  before(:all) do
-    rpc_host = URI.parse(ENV.fetch('RPC_URL')).host
-    WebMock.disable_net_connect!(allow: rpc_host)
-  end
-
-  after(:all) do
-    # Возврат дефолтного поведения WebMock (запрет всех сетевых вызовов).
-    WebMock.disable_net_connect!
+  # Реальная сеть: разрешаем ТОЛЬКО RPC-хост (не весь интернет), и строго
+  # в локализованной области вокруг примера. Глобальные before(:all)/after(:all)
+  # ЗАПРЕЩЕНЫ: after(:all) выполняется даже при skip и безусловным
+  # disable_net_connect! (БЕЗ allow_localhost) сбрасывал allow_localhost в false
+  # на весь процесс RSpec — после него любой system-тест падал на калибровочном
+  # запросе Capybara-сервера GET http://127.0.0.1:PORT/__identify__
+  # (WebMock::NetConnectNotAllowedError). Восстановление в ensure гарантирует
+  # возврат исходной политики даже при падении примера.
+  around do |example|
+    if ENV['RUN_BLOCKCHAIN_INTEGRATION'] == '1'
+      rpc_host = URI.parse(ENV.fetch('RPC_URL')).host
+      WebMock.disable_net_connect!(allow: rpc_host)
+      example.run
+    else
+      example.run
+    end
+  ensure
+    # Возврат дефолтного поведения WebMock (запрет всех сетевых вызовов),
+    # не забывая allow_localhost — иначе ломаются следующие system-тесты.
+    WebMock.disable_net_connect!(allow_localhost: true)
   end
 
   it 'реально отправляет transfer на reward-контракт и подтверждает receipt status 0x1' do

@@ -113,8 +113,11 @@ class PoiService
     poi.status ||= :pending
     poi.save!
 
-    # Геймификация: награда TFT за создание POI (сумма из config/gamification.yml)
-    GamificationService.award!(:poi_create, current_user)
+    # Геймификация: награда TFT автору за ПОЛНОЦЕННУЮ (одобренную) точку.
+    # Здесь начисляется, только если POI создан сразу в статусе approved
+    # (админ/модератор); созданная пользователем pending-точка награждается
+    # при переводе в approved (см. .change_status).
+    award_poi_create!(poi)
 
     # Галерея: обрабатываем и прикрепляем фото через PhotoService
     if params[:photos].present?
@@ -142,6 +145,14 @@ class PoiService
                            :slug, :status, :source)
     # NOTE: rating — консолидируемое вычисляемое поле (агрегация голосований
     # PoiRating), НЕ редактируется вручную (ROADMAP). Исключено из allowed.
+
+    # Пустой slug из формы (форма очищает поле, заставляя пересгенерировать)
+    # не должен ронять валидацию `presence`. FriendlyId пересоздаёт slug по name
+    # при установке nil, поэтому нормализуем пустую строку в nil.
+    if allowed.key?(:slug) && allowed[:slug].blank?
+      allowed[:slug] = nil
+    end
+
     poi.assign_attributes(allowed)
     assign_localized_fields(poi, params)
     if params[:latitude].present? && params[:longitude].present?
@@ -178,7 +189,21 @@ class PoiService
       raise StatusError, "Invalid status: #{status}"
     end
 
-    poi.update!(status: status)
+    was_approved = poi.approved?
+    was_rewarded = poi.awarded_for_approval?
+
+    # Транзакция: смена статуса + начисление награды за одобрение — атомарно.
+    ActiveRecord::Base.transaction do
+      poi.update!(status: status)
+
+      # Награда TFT автору за полную (одобренную) точку начисляется ОДИН раз
+      # при переходе в approved (не при create pending). vesting-лок (7 дней)
+      # применяется автоматически: poi_create не входит в INSTANT_ACTION_KEYS.
+      if !was_approved && status.to_s == "approved" && !was_rewarded
+        award_poi_create!(poi)
+      end
+    end
+
     poi
   rescue ActiveRecord::RecordInvalid => e
     raise StatusError, e.message
@@ -352,6 +377,33 @@ class PoiService
   def self.parse_coordinates(lat, lng)
     factory = RGeo::Geographic.spherical_factory(srid: 4326)
     factory.point(lng.to_f, lat.to_f)
+  end
+
+  #
+  # Начисляет награду TFT автору за полную (одобренную) точку и помечает
+  # POI выданным в metadata (идемпотентность). Используется при создании
+  # сразу approved (админ/модератор) и при переводе pending → approved.
+  #
+  # @param poi [Poi] одобренная точка
+  #
+  def self.award_poi_create!(poi)
+    author = poi.user
+    return unless author
+    # Награда ТОЛЬКО за одобренную (полноценную) точку.
+    return unless poi.approved?
+    return if poi.awarded_for_approval?
+
+    begin
+      GamificationService.award!(:poi_create, author)
+    rescue StandardError => e
+      Rails.logger.error("PoiService award_poi_create! failed: #{e.class} #{e.message}")
+    end
+
+    # Флаг в metadata фиксирует выдачу (даже если геймификация сбоила — не
+    # зацикливаем повторные попытки на каждый статус; backfill вручную).
+    # update_columns: служебная метка, аудит PaperTrail для неё не создаётся
+    # (чтобы approve оставил единственную версию изменения статуса).
+    poi.update_columns(metadata: (poi.metadata || {}).merge("poi_create_awarded" => true))
   end
 
   # Custom exceptions

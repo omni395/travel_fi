@@ -39,9 +39,10 @@ class TokenTransactionBroadcaster
     user = token_transaction.user
 
     # 1. Админка: вкладка Wallet (баланс + история + реферальная инфо).
+    #    Уходит в общий поток админки "admin_feed".
     admin_wallet_html = render_admin_wallet(user)
     if admin_wallet_html.present?
-      cable_ready["AdminChannel"].inner_html(
+      cable_ready["admin_feed"].inner_html(
         selector: "[data-admin-user-wallet]",
         html: admin_wallet_html
       )

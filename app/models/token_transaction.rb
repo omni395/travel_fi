@@ -55,23 +55,53 @@ class TokenTransaction < ApplicationRecord
   # Незабранные начисления (claimed = false).
   scope :unclaimed, -> { where(claimed: false) }
 
-  # Разблокированные по лок-периоду и ещё не забранные начисления.
-  # Считается на лету по `updated_at + lock_days` — без отдельного поля.
+  # Разблокированные по лок-периоду, ещё не забранные начисления.
+  # Мгновенные начисления (registration / referral_bonus_new_user, lock=0)
+  # доступны СРАЗУ независимо от created_at; vesting-начисления — только
+  # после истечения lock-периода (created_at <= cutoff).
   #
   # @param lock_days [Integer] лок-период в днях (по умолчанию pool.lock_days)
   #
   scope :available, ->(lock_days: nil) {
     cutoff = lock_days ? lock_days.to_i.days.ago : default_lock_cutoff
-    unclaimed.where(created_at: ..cutoff)
+    unclaimed.where(action_key: INSTANT_ACTION_KEYS).or(
+      unclaimed.where(created_at: ..cutoff)
+    )
   }
 
   # Заблокированные по лок-периоду (ещё не разблокированы) начисления.
+  # Мгновенные начисления (lock=0) в Locked НИКОГДА не попадают.
   #
   # @param lock_days [Integer] лок-период в днях (по умолчанию pool.lock_days)
   #
   scope :locked, ->(lock_days: nil) {
     cutoff = lock_days ? lock_days.to_i.days.ago : default_lock_cutoff
-    unclaimed.where(created_at: cutoff..)
+    unclaimed.where.not(action_key: INSTANT_ACTION_KEYS).where(created_at: cutoff..)
+  }
+
+  # Разблокированные по лок-периоду начисления БЕЗ фильтра по claimed
+  # (для отображения баланса в UI: Available должен показывать токены,
+  # доступные к трате, включая уже забранные on-chain через relay).
+  # Задел на claim-маркер claimed — отдельно от отображаемых сумм.
+  #
+  # @param lock_days [Integer] лок-период в днях (по умолчанию pool.lock_days)
+  #
+  scope :available_all, ->(lock_days: nil) {
+    cutoff = lock_days ? lock_days.to_i.days.ago : default_lock_cutoff
+    where(action_key: INSTANT_ACTION_KEYS).or(
+      where(created_at: ..cutoff)
+    )
+  }
+
+  # Заблокированные по vesting-лок-периоду начисления БЕЗ фильтра по claimed
+  # (для UI: Locked показывает токены, ещё не разблокированные по лок-периоду,
+  # независимо от on-chain статуса). Мгновенные (lock=0) сюда не попадают.
+  #
+  # @param lock_days [Integer] лок-период в днях (по умолчанию pool.lock_days)
+  #
+  scope :locked_all, ->(lock_days: nil) {
+    cutoff = lock_days ? lock_days.to_i.days.ago : default_lock_cutoff
+    where.not(action_key: INSTANT_ACTION_KEYS).where(created_at: cutoff..)
   }
 
   class << self

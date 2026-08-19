@@ -1,0 +1,13 @@
+---
+ru:
+  admin:
+    pois:
+      poi:
+        header_component:
+          missing_translations: 'Нет перевода: %{locales}'
+          edit: Редактировать
+          status:
+            pending: "На модерации"
+            approved: "Одобрено"
+            rejected: "Отклонено"
+            archived: "Архивировано"

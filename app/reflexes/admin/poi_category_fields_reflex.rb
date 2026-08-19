@@ -131,7 +131,7 @@ class Admin::PoiCategoryFieldsReflex < ApplicationReflex
   def send_error(message)
     return unless current_user
 
-    cable_ready["user_#{current_user.id}"].dispatch_event(
+    cable_ready["admin_#{current_user.id}"].dispatch_event(
       name: "adminPoiCategoryFieldsError",
       detail: { message: message }
     )
@@ -146,7 +146,7 @@ class Admin::PoiCategoryFieldsReflex < ApplicationReflex
   def send_success(message = nil)
     return unless current_user
 
-    cable_ready["user_#{current_user.id}"].dispatch_event(
+    cable_ready["admin_#{current_user.id}"].dispatch_event(
       name: "adminPoiCategoryFieldsSuccess",
       detail: { message: message || I18n.t("reflexes.admin.poi_category_fields.operation_success") }
     )

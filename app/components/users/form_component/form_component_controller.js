@@ -6,9 +6,10 @@ import ApplicationController from '../../../javascript/controllers/application_c
  * Управляет формой редактирования профиля пользователя
  * - Перехватывает submit событие
  * - Показывает preview аватара при выборе файла
- * - Отправляет данные через WebSocket (StimulusReflex)
- * - Обрабатывает ошибки и успех
- * - Выбор статуса и роли через DropdownComponent
+ * - Отправляет форму классическим HTTP multipart-запросом (PATCH update_user_path),
+ *   т.к. бинарный File (аватар) через StimulusReflex/WebSocket не передаётся.
+ *   Серверная обработка (сжатие PhotoService) + live-обновление — в Service/конвейере.
+ * - Обрабатывает отмену
  */
 export default class extends ApplicationController {
   static targets = ["nameInput", "avatarInput", "submitButton"]
@@ -19,19 +20,6 @@ export default class extends ApplicationController {
   connect() {
     super.connect()
     console.log("Users::FormComponent controller connected")
-    this.element.addEventListener("usersError", (event) => {
-      this.showError([event.detail.message])
-    })
-
-    this.element.addEventListener("usersSuccess", (event) => {
-      this.hideLoading()
-      this.enableSubmitButton()
-      this.showSuccess(event.detail?.message || "Profile updated successfully!")
-
-      setTimeout(() => {
-        this.handleCancel({ preventDefault: () => {} })
-      }, 2000)
-    })
   }
 
   /**
@@ -44,27 +32,36 @@ export default class extends ApplicationController {
   }
 
   /**
-   * Обработчик submit события формы
-   * Отправляет все поля через StimulusReflex в Admin::UsersReflex#update
+   * Обработчик submit события формы.
+   * Аватар (бинарный File) через StimulusReflex не передаётся, поэтому форма
+   * отправляется классическим HTTP multipart-запросом на update_user_path.
+   * Оставляем нативный submit — браузер сам уйдёт на action form и после
+   * сохранения сервер сделает редирект на профиль.
+   *
+   * @param {Event} event - событие submit
    */
   handleSubmit(event) {
-    event.preventDefault()
-    this.clearErrors()
-    this.showLoading()
-    this.disableSubmitButton()
-
-    const formData = new FormData(event.target)
-    const params = {
-      // id берём из data-user-id на форме: top-level `id` поглощается
-      // getReflexOptions() в StimulusReflex 3.5.x как объект опций (args придёт пустым)
-      user_id: this.element.dataset.userId,
-      name: formData.get('user[name]') || formData.get('name'),
-      email: formData.get('user[email]') || formData.get('email'),
-      status: formData.get('user[status]') || formData.get('status'),
-      role_id: formData.get('user[role_id]') || formData.get('role_id')
+    // Валидация типа аватара (если выбран) перед отправкой.
+    const file = this.hasAvatarInputTarget ? this.avatarInputTarget.files?.[0] : null
+    if (file && !this._isAllowedType(file.type)) {
+      event.preventDefault()
+      this.showError(["Only JPG, PNG, and WebP images are allowed"])
+      this.avatarInputTarget.value = ""
+      return
     }
+    this.clearErrors()
+    // Нативный submit: не вызываем event.preventDefault()
+    this.disableSubmitButton()
+  }
 
-    this.stimulate("Admin::UsersReflex#update", params)
+  /**
+   * Проверяет допустимый тип файла аватара.
+   *
+   * @param {string} type - MIME-тип файла
+   * @return {boolean} true если тип допустим
+   */
+  _isAllowedType(type) {
+    return ["image/jpeg", "image/png", "image/webp"].includes(type)
   }
 
   /**
@@ -74,13 +71,9 @@ export default class extends ApplicationController {
     const file = event.target.files?.[0]
     if (!file) return
 
-    const maxSize = 5 * 1024 * 1024
-    if (file.size > maxSize) {
-      this.showError(["File size must be less than 5MB"])
-      event.target.value = ""
-      return
-    }
-
+    // Только проверка типа. Проверка размера файла намеренно УБРАНА:
+    // сжатие до целевого размера выполняет серверный PhotoService
+    // (app/services/photo_service.rb), поэтому большие файлы допустимы.
     const allowedTypes = ["image/jpeg", "image/png", "image/webp"]
     if (!allowedTypes.includes(file.type)) {
       this.showError(["Only JPG, PNG, and WebP images are allowed"])
@@ -124,7 +117,6 @@ export default class extends ApplicationController {
       errorsContainer.classList.remove("hidden")
     }
 
-    this.hideLoading()
     this.enableSubmitButton()
   }
 
@@ -135,26 +127,6 @@ export default class extends ApplicationController {
     const errorsContainer = document.getElementById("edit-form-errors")
     if (errorsContainer) {
       errorsContainer.classList.add("hidden")
-    }
-  }
-
-  /**
-   * Показывает индикатор загрузки
-   */
-  showLoading() {
-    const loading = document.getElementById("edit-form-loading")
-    if (loading) {
-      loading.classList.remove("hidden")
-    }
-  }
-
-  /**
-   * Скрывает индикатор загрузки
-   */
-  hideLoading() {
-    const loading = document.getElementById("edit-form-loading")
-    if (loading) {
-      loading.classList.add("hidden")
     }
   }
 
@@ -178,18 +150,6 @@ export default class extends ApplicationController {
       button.disabled = false
       button.classList.remove("opacity-50", "cursor-not-allowed")
     }
-  }
-
-  /**
-   * Показывает сообщение об успехе
-   */
-  showSuccess(message) {
-    const successEl = document.createElement("div")
-    successEl.className = "fixed top-4 right-4 px-4 py-3 rounded-lg bg-green-100 border border-green-300 text-green-700 text-sm font-medium shadow-lg z-50"
-    successEl.textContent = message
-    document.body.appendChild(successEl)
-
-    setTimeout(() => { successEl.remove() }, 4000)
   }
 
   /**

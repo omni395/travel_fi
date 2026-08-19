@@ -245,7 +245,7 @@ class Admin::PoisReflex < ApplicationReflex
   def send_error(message)
     return unless current_user
 
-    cable_ready["user_#{current_user.id}"].dispatch_event(
+    cable_ready["admin_#{current_user.id}"].dispatch_event(
       name: "adminPoisError",
       detail: { message: message }
     )
@@ -260,7 +260,7 @@ class Admin::PoisReflex < ApplicationReflex
   def send_success(message = nil)
     return unless current_user
 
-    cable_ready["user_#{current_user.id}"].dispatch_event(
+    cable_ready["admin_#{current_user.id}"].dispatch_event(
       name: "adminPoisSuccess",
       detail: { message: message || I18n.t("reflexes.admin.pois.operation_success") }
     )

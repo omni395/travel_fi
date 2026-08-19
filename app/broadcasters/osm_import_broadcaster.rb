@@ -124,13 +124,15 @@ class OsmImportBroadcaster
     # 2. Триггерим перезагрузку маркеров на карте — тоже немедленно.
     #    В detail передаём bbox импорта: клиент перезагружает POI только если
     #    его видимые границы пересекаются с областью импорта (баг 4).
+    #    Уходит в общий поток карты "pois_map" (раньше: мёртвый "UserChannel",
+    #    т.к. подписка идёт на user_N + pois_map, а не на глобальный "UserChannel").
     reload_detail = { type: "osm", category_id: category.id }
     reload_detail[:bbox] = bbox if bbox
-    cable_ready["UserChannel"].dispatch_event(
+    cable_ready["pois_map"].dispatch_event(
       name: "poi:reload-features",
       detail: reload_detail
     )
-    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: poi:reload-features queued for UserChannel (bbox=#{bbox.inspect})"
+    Rails.logger.info "[TRACE] OsmImportBroadcaster#broadcast: poi:reload-features queued for pois_map (bbox=#{bbox.inspect})"
 
     # Отправляем эти события сразу (гарантированная доставка)
     cable_ready.broadcast

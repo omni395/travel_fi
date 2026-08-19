@@ -1,6 +1,8 @@
 class Users::ConfirmationsController < Devise::ConfirmationsController
-  before_action :require_no_authentication
-
+  # ZABRANENO: require_no_authentication блокировал бы уже залогиненного юзера.
+  # reconfirmable требует подтверждения НОВОГО email через ссылку из письма даже
+  # в активной сессии; блокировка приводила к тому, что смена email никогда не
+  # применялась (оставалась в unconfirmed_email). Поэтому здесь его нет.
   skip_after_action :verify_authorized, raise: false
   skip_after_action :verify_policy_scoped, raise: false
 

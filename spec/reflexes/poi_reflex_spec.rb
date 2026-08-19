@@ -9,9 +9,9 @@ require 'rails_helper'
 # 1. set_location — сохранение координат в session и Current
 # 2. load_pois_in_bounds — загрузка visible POI в bounds + рендер списка/маркеров
 # 3. filter_by_categories — фильтрация по категориям (спецификация: не падает)
-# 4. create_comment — создание комментария с авторизацией (proximity)
-# 5. reverse_geocode — заполнение полей формы через CableReady (мок сервиса)
-# 6. show_geolocation_toast — тост геолокации
+# 4. reverse_geocode — заполнение полей формы через CableReady (мок сервиса)
+# 5. show_geolocation_toast — тост геолокации
+# 6. create — создание pending-точки + тост «появится после одобрения» (шаг 1)
 #
 RSpec.describe PoiReflex, type: :reflex do
   let(:user) { create(:user) }
@@ -131,23 +131,6 @@ RSpec.describe PoiReflex, type: :reflex do
     end
   end
 
-  describe '#create_comment' do
-    it 'создаёт комментарий при авторизации в радиусе 100м' do
-      poi = create(:poi) # 50.4501, 30.5234
-      session_mock[:user_lat] = 50.4501
-      session_mock[:user_lng] = 30.5234
-      allow(ApplicationController).to receive(:render).and_return('')
-
-      reflex = build_reflex(described_class, :create_comment, user: user)
-
-      expect { reflex.create_comment(poi_id: poi.id, body: 'Nice') }
-        .to change(PoiComment, :count).by(1)
-    ensure
-      Current.user_lat = nil
-      Current.user_lng = nil
-    end
-  end
-
   describe '#reverse_geocode' do
     it 'заполняет поля формы через CableReady при успешном ответе' do
       allow(ReverseGeocodingService).to receive(:reverse_geocode)
@@ -167,6 +150,33 @@ RSpec.describe PoiReflex, type: :reflex do
       expect(ToastBroadcaster).to receive(:call).with(hash_including(user_id: user.id, type: :warning))
 
       reflex.show_geolocation_toast
+    end
+  end
+
+  describe '#create' do
+    before do
+      allow(ApplicationController).to receive(:render).and_return('')
+    end
+
+    it 'показывает тост «появится после одобрения» и создаёт pending-точку (шаг 1)' do
+      reflex = build_reflex(described_class, :create, user: user)
+
+      expect(ToastBroadcaster).to receive(:call).with(
+        hash_including(
+          user_id: user.id,
+          message: I18n.t('pois.create_success_moderation'),
+          type: :success
+        )
+      )
+
+      expect {
+        reflex.create(poi_category_id: category.id, name: 'Moderation Target',
+                      latitude: 50.45, longitude: 30.52)
+      }.to change(Poi, :count).by(1)
+
+      poi = Poi.last
+      expect(poi.status).to eq('pending')
+      expect(poi.user).to eq(user)
     end
   end
 end

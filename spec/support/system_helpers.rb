@@ -84,8 +84,13 @@ module SystemHelpers
           end
 
           return handles.first
-        rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::WebDriverError
-          # окно ещё не готово — повторяем
+        rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::WebDriverError, NoMethodError
+          # окно ещё не готово — повторяем.
+          # NoMethodError: в Selenium 4.46 window_handles на сессии с ещё не
+          # созданным окном бросает `undefined method 'values_at' for nil` внутри
+          # Selenium-моста (не успевает отработать Array(super) из
+          # CapybaraWindowHandlesGuard). Ловим и перезапускаем итерацию — далее
+          # navigate.to('about:blank') инициализирует окно, и handles станет валидным.
         end
         sleep 0.2
       end
@@ -122,8 +127,11 @@ module SystemHelpers
             accuracy: accuracy
           )
           return
-        rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::InvalidArgumentError, Selenium::WebDriver::Error::WebDriverError
-          # CDP-таргет окна ещё не готов — повторяем
+        rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::InvalidArgumentError, Selenium::WebDriver::Error::WebDriverError, NoMethodError
+          # CDP-таргет окна ещё не готов — повторяем.
+          # NoMethodError: window_handles на неготовом окне (Selenium 4.46) бросает
+          # `undefined method 'values_at' for nil` — ловим и повторяем, пока окно
+          # не инициализируется (см. prepare_session_window).
         end
         sleep 0.2
       end
@@ -139,6 +147,12 @@ module SystemHelpers
   # @param user [User] пользователь
   #
   def sign_in_via_ui(user)
+    # Гарантия чистой сессии: сбрасываем cookies, иначе остаточный Warden-логин
+    # от предыдущего примера заставляет Devise отвечать «already signed in» →
+    # редирект прочь от формы входа → #devise_session_form не появляется → таймаут.
+    # (reset_sessions! между примерами падает на сломанной window_handles и не
+    # очищает куки при каскадном сбое Selenium.)
+    page.reset_session!
     # Явный locale: маршруты Devise в scope "(:locale)", без locale возможен редирект.
     visit new_user_session_path(locale: I18n.locale)
     # Страховка от гонки: ждём реального появления формы входа, иначе within

@@ -28,6 +28,8 @@ application.register('admin--poi-categories--table-component', () => import('../
 
 application.register('admin--pois--poi--edit-component', () => import('../../components/admin/pois/poi/edit_component/edit_component_controller.js'))
 
+application.register('admin--pois--poi--header-component', () => import('../../components/admin/pois/poi/header_component/header_component_controller.js'))
+
 application.register('admin--pois--poi--show-component', () => import('../../components/admin/pois/poi/show_component/show_component_controller.js'))
 
 application.register('admin--pois--row-component', () => import('../../components/admin/pois/row_component/row_component_controller.js'))

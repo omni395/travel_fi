@@ -1,0 +1,13 @@
+---
+zh:
+  admin:
+    pois:
+      poi:
+        header_component:
+          missing_translations: '缺少翻译: %{locales}'
+          edit: 编辑
+          status:
+            pending: "待审核"
+            approved: "已批准"
+            rejected: "已拒绝"
+            archived: "已归档"

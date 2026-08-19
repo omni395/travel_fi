@@ -402,16 +402,48 @@ RSpec.describe PoiService, type: :service do
     let(:rewards) { YAML.safe_load_file(Rails.root.join('config/gamification.yml'))['rewards'] }
 
     describe '.create' do
-      it 'вызывает GamificationService.award!(:poi_create) для автора' do
-        expect(GamificationService).to receive(:award!).with(:poi_create, user)
-
+      it 'НЕ начисляет poi_create при создании pending-точки (БАГ B: награда только после approve)' do
         described_class.create(params: valid_params, current_user: user)
+
+        expect(user.reload.token_balance).to eq(0)
+        expect(user.token_transactions).to be_empty
       end
 
-      it 'начисляет author-юзеру сумму poi_create из конфига' do
+      it 'начисляет poi_create, если точка создана сразу в статусе approved' do
         amount = rewards['poi_create'].to_d
 
-        described_class.create(params: valid_params, current_user: user)
+        described_class.create(params: valid_params(status: 'approved'), current_user: user)
+
+        expect(user.reload.token_balance).to eq(amount)
+        expect(Poi.last.awarded_for_approval?).to be(true)
+      end
+    end
+
+    describe '.change_status' do
+      let(:pending_poi) { create(:poi, user: user, status: :pending) }
+
+      it 'начисляет награду автору при переводе pending → approved (БАГ B)' do
+        amount = rewards['poi_create'].to_d
+
+        described_class.change_status(poi: pending_poi, status: :approved, current_user: user)
+
+        expect(user.reload.token_balance).to eq(amount)
+        expect(pending_poi.reload).to be_approved
+        expect(pending_poi.awarded_for_approval?).to be(true)
+      end
+
+      it 'не начисляет при переводе в rejected/archived' do
+        described_class.change_status(poi: pending_poi, status: :rejected, current_user: user)
+
+        expect(user.reload.token_balance).to eq(0)
+      end
+
+      it 'начисляет награду ТОЛЬКО один раз (идемпотентность при повторном approve)' do
+        amount = rewards['poi_create'].to_d
+
+        described_class.change_status(poi: pending_poi, status: :approved, current_user: user)
+        described_class.change_status(poi: pending_poi, status: :rejected, current_user: user)
+        described_class.change_status(poi: pending_poi, status: :approved, current_user: user)
 
         expect(user.reload.token_balance).to eq(amount)
       end

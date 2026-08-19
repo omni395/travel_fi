@@ -27,21 +27,25 @@ class Users::RewardsComponent < ApplicationComponent
   end
 
   #
-  # Разблокированные по лок-периоду, ещё не забранные начисления юзера.
+  # Разблокированные (доступные к трате) начисления юзера. Включает мгновенные
+  # (lock=0) и vesting-разблокированные, независимо от on-chain статуса claimed
+  # (relay мог уже отправить токены на кошелёк — они всё равно доступны к трате).
+  # claim-кнопка (available?) при этом опирается на ещё незабранные начисления.
   #
   # @return [ActiveRecord::Relation] available-начисления
   #
   def available_transactions
-    user.token_transactions.unclaimed.available
+    user.token_transactions.available_all
   end
 
   #
-  # Заблокированные по лок-периоду начисления юзера.
+  # Заблокированные по vesting-лок-периоду начисления юзера (не разблокированы).
+  # Мгновенные (lock=0) сюда не попадают. Независимо от on-chain статуса claimed.
   #
   # @return [ActiveRecord::Relation] locked-начисления
   #
   def locked_transactions
-    user.token_transactions.unclaimed.locked
+    user.token_transactions.locked_all
   end
 
   #
@@ -64,11 +68,13 @@ class Users::RewardsComponent < ApplicationComponent
 
   #
   # Есть ли что-то доступное к получению (показывать кнопку claim).
+  # Опирается на ЕЩЁ НЕ ЗАБРАННЫЕ (unclaimed) разблокированные начисления:
+  # если relay уже отправил токены on-chain (claimed=true), кнопка не нужна.
   #
   # @return [Boolean]
   #
   def available?
-    available_transactions.exists?
+    user.token_transactions.unclaimed.available.exists?
   end
 
   #

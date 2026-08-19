@@ -177,6 +177,16 @@ class Poi < ApplicationRecord
   end
 
   #
+  # Начислена ли награда TFT автору за одобрение этой точки.
+  # Флаг хранится в metadata (JSONB), выставляется PoiService.award_poi_create!.
+  #
+  # @return [Boolean]
+  #
+  def awarded_for_approval?
+    metadata.is_a?(Hash) && metadata["poi_create_awarded"] == true
+  end
+
+  #
   # Возвращает широту
   # Парсит из WKT-строки (POINT(lng lat)) если нет RGeo
   #

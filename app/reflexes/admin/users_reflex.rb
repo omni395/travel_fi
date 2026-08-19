@@ -203,7 +203,7 @@ class Admin::UsersReflex < ApplicationReflex
   def send_error(message)
     return unless current_user
 
-    cable_ready["user_#{current_user.id}"].dispatch_event(
+    cable_ready["admin_#{current_user.id}"].dispatch_event(
       name: "adminUsersError",
       detail: { message: message }
     )
@@ -218,7 +218,7 @@ class Admin::UsersReflex < ApplicationReflex
   def send_success(message = nil)
     return unless current_user
 
-    cable_ready["user_#{current_user.id}"].dispatch_event(
+    cable_ready["admin_#{current_user.id}"].dispatch_event(
       name: "adminUsersSuccess",
       detail: { message: message || I18n.t("reflexes.admin.users.operation_success") }
     )

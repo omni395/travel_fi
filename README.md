@@ -137,11 +137,24 @@ At present, Travel Fi is a prototype at the stage of active development. A basic
 
 Everything is sent over WebSocket — no data in the controller's JSON response.
 
-**Personal channel:** each user is subscribed to `user_<id>` (`UserChannel`).
-- `user_100` / `user_200` / `user_N` — personal updates and notifications (including admins as regular users).
+### Channel model: 2 channels with addressed streams
 
-**Admin channel:** `AdminChannel` — subscription for roles `admin` AND `moderator` (moderator has edit rights in policies).
-- Live admin updates (category fields, audit feed, statistics) are sent to `AdminChannel` (see "Unified admin entity pattern").
+A single channel class subscribes the client to **multiple streams**; broadcasters address a message by the stream name (addressed delivery). The two channels:
+
+**`UserChannel`** (`app/channels/user_channel.rb`) — user part. Subscribed to:
+- `user_<id>` — **personal** stream (profile, own toasts, replies to their comments, status of their poi). Resolves "how to single out a specific user".
+- `pois_map` — **shared** map stream (`poi:reload-features`, live marker/sidebar update for ALL users on the map). Each client filters by visible bounds (`_detailIntersectsView`).
+
+**`AdminChannel`** (`app/channels/admin_channel.rb`) — admin part, roles `admin` AND `moderator`. Subscribed to:
+- `admin_<id>` — **personal** admin stream (result of his own actions: success/error reflex events).
+- `admin_feed` — **shared** live-update stream of the admin panel (POI, users, categories, settings, dashboard stats) for ALL admins.
+
+**Delivery rules:**
+- Personal (user part) → `user_<id>`; shared map update → `pois_map`.
+- Personal (admin part) → `admin_<id>`; shared admin panel update → `admin_feed`.
+- Noticed notifications (`channel: "UserChannel", stream: :user_stream` → `"user_<id>"`) land in the personal user stream and keep working.
+
+Example mapping in broadcasters: `PoiBroadcaster` sends `poi:reload-features` + sidebar `inner_html` to `pois_map`; admin zones (`[data-admin-pois-list]`, `#poi-detail`, `[data-audit-log]`) go to `admin_feed`. Admin reflex success/error events go to `admin_<id>`.
 
 **ActionCable** — Rails WebSocket infrastructure: long-lived connection, the server sends messages to all browsers subscribed to the channel.
 
@@ -171,10 +184,11 @@ One admin entity (User, Poi, Setting, PoiCategory…) is implemented using a uni
 - `include CableReady::Broadcaster`, `include Pagy::Method` (+ `request` mock for pagy).
 - `broadcast` — render zones one by one (`inner_html` by wrapper selector), each zone in `rescue`.
 - Nested ViewComponents from a job — only via `<%= render %>`/`helpers.render`.
-- Result: `cable_ready["AdminChannel"]` → `.broadcast`.
+- Result: `cable_ready["admin_feed"]` → `.broadcast` (shared admin-panel stream).
 
 ### 5. Channel
-`AdminChannel` (`app/channels/admin_channel.rb`) — subscription `admin` OR `moderator`.
+`AdminChannel` (`app/channels/admin_channel.rb`) — subscription `admin` OR `moderator` on streams
+`admin_<id>` (personal) + `admin_feed` (shared).
 
 ### 6. VersionObserverJob (`app/jobs/version_observer_job.rb`)
 - For each `item_type` — branch `handle_<model>_update(version)` → `XxxBroadcaster.call(<entity>: version.item || version.reify)`.

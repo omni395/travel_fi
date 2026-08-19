@@ -25,49 +25,50 @@ class Admin::DashboardBroadcaster
     # Обновляем карточки статистики. inner_html (НЕ morph) — эталон Broadcaster:
     # morph падает на undefined.dispatchEvent, а также логирует ложные skip
     # на страницах, где карточки дашборда отсутствуют.
-    cable_ready["AdminChannel"].inner_html(
+    # Общий поток админки "admin_feed".
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-stats-total-users]",
       html: stats[:total_users].to_s
     )
 
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-stats-active-users]",
       html: stats[:active_users].to_s
     )
 
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-stats-suspended-users]",
       html: stats[:suspended_users].to_s
     )
 
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-stats-new-users-today]",
       html: stats[:new_users_today].to_s
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   def send_recent_users_update
     recent_users = User.order(created_at: :desc).limit(10)
 
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-recent-users]",
       html: render_recent_users_table(recent_users)
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   def send_recent_activities_update
     recent_activities = PaperTrail::Version.order(created_at: :desc).limit(20)
 
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin-recent-activities]",
       html: render_recent_activities_list(recent_activities)
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   def send_full_update
@@ -81,12 +82,12 @@ class Admin::DashboardBroadcaster
       recent_activities: recent_activities
     )
 
-    cable_ready["AdminChannel"].inner_html(
+    cable_ready["admin_feed"].inner_html(
       selector: "[data-admin--dashboard]",
       html: ApplicationController.render(component, layout: false)
     )
 
-    cable_ready["AdminChannel"].broadcast
+    cable_ready["admin_feed"].broadcast
   end
 
   private

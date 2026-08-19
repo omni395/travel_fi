@@ -20,11 +20,12 @@ import DragPan from "ol/interaction/DragPan"
  *   - Открытием/закрытием формы (create/edit)
  *   - OpenLayers мини-картой с маркером в центре (Overlay)
  *   - Круг 100м (только контур, без заливки) как Feature
+ *   - Маркером: установка кликом (ограничен кругом)
  *   - Выбором категории через Ui::DropdownComponent
  *   - Загрузкой динамических полей категории
  *   - Рендером полей (boolean/select/multiselect/number/text)
  *   - Отображением координат под картой
- *   - Reverse geocoding через HuggingFace (moveend с debounce)
+ *   - Reverse geocoding через Nominatim (по клику/перемещению маркера)
  */
 export default class extends ApplicationController {
   static targets = [
@@ -64,10 +65,11 @@ export default class extends ApplicationController {
       this._overlayObserver.disconnect()
       this._overlayObserver = null
     }
-    if (this._map) {
-      this._map.setTarget(null)
-      this._map = null
-    }
+    // Мини-карта переиспользуется между экземплярами контроллера через
+    // глобальный реестр (__poiFormMapRegistry): при inner_html-пересборке формы
+    // новый контроллер перепривязывает target (_adoptExistingMap). Поэтому здесь
+    // карту НЕ уничтожаем (setTarget(null)) — иначе повторная вставка получит
+    // отвязанную мёртвую карту и маркер перестанет обновляться.
     clearTimeout(this._reverseGeocodeTimer)
   }
 
@@ -176,6 +178,25 @@ export default class extends ApplicationController {
    * При изменении зума включается панорамирование в пределах круга.
    */
   initMiniMap() {
+    // Защита от повторной инициализации OpenLayers на одном target.
+    // Без этого connect()/open()/MutationObserver/повторная inner_html-вставка
+    // могут создать ДВА Map на одном элементе: клик двигает маркер первой
+    // (невидимой) карты, а видимая (вторая) остаётся в центре — «координаты и
+    // адрес (Nominatim) меняются, маркер нет».
+    if (this._map) return
+
+    // Глобальная защита между ЭКЗЕМПЛЯРАМИ контроллера. Комментарий выше
+    // защищает только внутри одного экземпляра; при повторной inner_html-вставке
+    // формы (PoiReflex#edit_poi) на тот же элемент подключается второй
+    // контроллер и молча создаёт вторую карту на том же target. Реестр
+    // (target DOM-элемент → метаданные карты) не даёт этого: повторная
+    // инициализация переиспользует существующую карту.
+    const registry = (window.__poiFormMapRegistry ||= new WeakMap())
+    if (registry.has(this.miniMapTarget)) {
+      this._adoptExistingMap(registry.get(this.miniMapTarget))
+      return
+    }
+
     // Берём координаты из data-атрибутов карты (установлены map_component_controller при GPS)
     const mapEl = document.querySelector('[data-controller="poi--map-component"] .poi-map')
     const userLat = mapEl?.dataset.userLat
@@ -263,9 +284,29 @@ export default class extends ApplicationController {
       // Обновляем координаты
       this.updateCoords(coords[1], coords[0])
 
+      // Диагностика для system-теста: текущие lon/lat маркера (WGS84).
+      // Раньше экспорт отдельной функции toLonLat был ненадёжен из-за повторной
+      // инициализации карты; здесь значения пишутся в момент клика напрямую.
+      window.__poiFormLastLonLat = coords
+
       // Reverse geocoding
       this._debouncedReverseGeocode(coords[1], coords[0])
     })
+
+    // Регистрируем карту в глобальном реестре для предотвращения дубликатов
+    registry.set(this.miniMapTarget, {
+      map: this._map,
+      source: this._vectorSource,
+      marker: this._markerFeature,
+      circle: this._circleFeature,
+      userCenter: this._userCenter
+    })
+
+    // Диагностическая экспозиция карты/маркера (для system-теста: маркер — это
+    // OL-feature, а не DOM-элемент, проверить его положение через DOM нельзя).
+    // Фактические lon/lat маркера пишутся в __poiFormLastLonLat внутри клика.
+    window.__poiFormMiniMap = this._map
+    window.__poiFormMarker = this._markerFeature
 
     // При изменении зума — включаем панорамирование в пределах круга
     this._map.getView().on("change:resolution", () => {
@@ -311,6 +352,29 @@ export default class extends ApplicationController {
   }
 
   /**
+   * Переиспользует уже созданную карту на том же target-элементе (защита от
+   * дубликатов между экземплярами контроллера при inner_html-вставке формы).
+   * Привязывает target заново (предыдущий контроллер мог отвязать карту при
+   * disconnect) и связывает текущий экземпляр с общей картой/маркером.
+   *
+   * Клик навешивается на объект карты один раз первым контроллером и остаётся
+   * активным при повторной вставке.
+   *
+   * @param {Object} meta { map, source, marker, circle, userCenter }
+   */
+  _adoptExistingMap(meta) {
+    this._map = meta.map
+    this._vectorSource = meta.source
+    this._markerFeature = meta.marker
+    this._circleFeature = meta.circle
+    this._userCenter = meta.userCenter
+
+    // Перепривязываем target на случай, если старый контроллер отвязал карту
+    this._map.setTarget(this.miniMapTarget)
+    this._map.updateSize()
+  }
+
+  /**
    * Обновляет hidden поля latitude/longitude и дисплей координат под картой
    *
    * @param {number} lat
@@ -324,15 +388,15 @@ export default class extends ApplicationController {
   }
 
   // ============================================================
-  // REVERSE GEOCODING (HuggingFace)
+  // REVERSE GEOCODING (Nominatim)
   // ============================================================
 
   /**
-   * Debounced reverse geocoding через StimulusReflex
-   * Вызывается при каждом moveend карты (с debounce для избежания спама)
+   * Debounced reverse geocoding через StimulusReflex.
+   * Debounce защищает от спама вызовов при серии кликов/перемещений маркера.
    *
-   * @param {number} lat
-   * @param {number} lng
+   * @param {number} lat - широта
+   * @param {number} lng - долгота
    */
   _debouncedReverseGeocode(lat, lng) {
     clearTimeout(this._reverseGeocodeTimer)
@@ -342,35 +406,14 @@ export default class extends ApplicationController {
   }
 
   /**
-   * Выполняет reverse geocoding через HuggingFaceService
-   * Заполняет поля city, country, address при успехе
+   * Выполняет reverse geocoding (PoiReflex → ReverseGeocodingService/Nominatim).
+   * Сервер через CableReady заполняет поля city/country/address формы.
+   *
+   * @param {number} lat - широта
+   * @param {number} lng - долгота
    */
   _reverseGeocode(lat, lng) {
     this.stimulate("PoiReflex#reverse_geocode", { lat, lng })
-  }
-
-  /**
-   * CableReady callback: заполняет поля результатами reverse geocoding
-   * Вызывается из PoiReflex после ответа от HuggingFace
-   *
-   * @param {Object} data { country, city, address }
-   */
-  fillReverseGeocode(data) {
-    if (!data) return
-
-    const cityInput = this.element.querySelector("[name='poi[city]']")
-    const countryInput = this.element.querySelector("[name='poi[country]']")
-    const addressInput = this.element.querySelector("[name='poi[address]']")
-
-    if (data.city && cityInput && !cityInput.value) {
-      cityInput.value = data.city
-    }
-    if (data.country && countryInput && !countryInput.value) {
-      countryInput.value = data.country
-    }
-    if (data.address && addressInput && !addressInput.value) {
-      addressInput.value = data.address
-    }
   }
 
   // ============================================================

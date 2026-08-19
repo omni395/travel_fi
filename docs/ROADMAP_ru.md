@@ -23,14 +23,14 @@ Travel Fi
 │   ├── 2.1 Landing          (/)               🔴 заглушка
 │   ├── 2.2 POI Map          (/pois)           🟡
 │   ├── 2.3 User Profile     (/:slug)          🟡
-│   ├── 2.4 User Settings    (/:slug/settings) ✅
-│   └── 2.5 Auth pages       (/users/*)        ✅
+│   ├── 2.4 User Settings    (/:slug/settings) 🟡
+│   └── 2.5 Auth pages       (/users/*)        🟡
 ├── 🛠 ADMIN SECTION         (/:locale/admin-panel)
-│   ├── 3.1 Dashboard        (/admin-panel)          ✅
-│   ├── 3.2 Users            (/admin-panel/users)    ✅
-│   ├── 3.3 PoiCategories    (/admin-panel/poi_categories)  ✅
+│   ├── 3.1 Dashboard        (/admin-panel)          🟡
+│   ├── 3.2 Users            (/admin-panel/users)    🟡
+│   ├── 3.3 PoiCategories    (/admin-panel/poi_categories)  🟡
 │   ├── 3.4 Pois             (/admin-panel/pois)     🟡
-│   ├── 3.5 Settings         (/admin-panel/settings) ✅
+│   ├── 3.5 Settings         (/admin-panel/settings) 🟡
 │   └── 3.6 Contract Mgmt    🔴 (в планах)
 ├── 4. Горизонтальные слои
 │   ├── 4.1 Auth & Roles     ✅
@@ -109,7 +109,7 @@ Travel Fi
 - 🔴 Галерея: сетка + lightbox/слайдер
 - 🔴 OSRM: построение маршрута к POI + линия на карте
 - 🔴 Offline-режим (PWA): тайлы + список (IndexedDB)
-- 🔴 Разобраться с тегами, которые загружаются из ОСМ для каждой категории. Например, для Тултов/Душевых - Level, Access, Source, Amenity и так далее. Для каждого тег сделать карты переводов, доступные для управления через админку. На данный момент эти данные не совпадают с полями категории. админке.
+- 🔴 Разобраться с тегами, которые загружаются из ОСМ для каждой категории. Например, для Тултов/Душевых - Level, Access, Source, Amenity и так далее. Для каждого тег сделать карты переводов, доступные для управления через админку. На данный момент эти данные не совпадают с полями категории в админке.
 
 **Баги/Долги:**
 - ⚠️ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart — отдельная задача

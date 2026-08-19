@@ -70,7 +70,7 @@ export default class extends ApplicationController {
 
   /**
    * Выбор статуса из Ui::DropdownComponent.
-   * Обновляет скрытый input poi[status] и текст кнопки.
+   * Обновляет скрытый input poi[status] и текст кнопки-триггера.
    *
    * @param {Event} event - событие click по опции меню
    */
@@ -81,4 +81,5 @@ export default class extends ApplicationController {
       this.statusTextTarget.textContent = event.currentTarget.textContent.trim()
     }
   }
+
 }
