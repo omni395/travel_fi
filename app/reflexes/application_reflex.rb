@@ -82,8 +82,8 @@ class ApplicationReflex < StimulusReflex::Reflex
   # @param reason [Symbol] :too_far или :no_location
   #
   def render_proximity_warning(reason)
-    title = I18n.t("poi.detail_component.#{reason == :too_far ? 'proximity_warning_title' : 'no_location_title'}")
-    message = I18n.t("poi.detail_component.#{reason == :too_far ? 'proximity_warning_message' : 'no_location_message'}")
+    title = I18n.t("poi.details_component.#{reason == :too_far ? 'proximity_warning_title' : 'no_location_title'}")
+    message = I18n.t("poi.details_component.#{reason == :too_far ? 'proximity_warning_message' : 'no_location_message'}")
 
     dialog = ApplicationController.render(Ui::ConfirmDialogComponent.new(
       title: title,

@@ -284,6 +284,49 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
     expect(page).to have_content('London Bridge', wait: 10)
   end
 
+  it 'одну и ту же точку можно открыть повторно после закрытия через кнопку X (баг B)' do
+    poi = nil
+    browser_a do
+      sign_in_via_ui(user_a)
+      poi = PoiService.create(
+        params: {
+          poi_category_id: category.id,
+          name: { 'en' => 'Reopen Bridge', 'ru' => 'Мост повторно', 'es' => 'Puente reabrir', 'zh' => '重新打开桥' },
+          latitude: 51.5079,
+          longitude: -0.0877,
+          status: 'approved'
+        },
+        current_user: user_a
+      )
+    end
+
+    sign_in_via_ui(user_b)
+    visit pois_path
+
+    # Открываем точку
+    page.execute_script(<<~JS)
+      document.dispatchEvent(new CustomEvent('poi:show-detail', { detail: { poiId: #{poi.id} } }))
+    JS
+    wait_for_selector("[data-poi--show-component-target='overlay']:not(.hidden)", timeout: 30)
+    expect(page).to have_content('Reopen Bridge', wait: 10)
+
+    # Закрываем через кнопку X (Ui::BtnComponent → click->poi--show-component#close).
+    # Кнопка живёт во вставленном контенте (#poi-detail-modal-body), т.е. на вложенном
+    # экземпляре контроллера — баг B: флаг _lastPoiId оверлея не сбрасывался → повтор.
+    overlay_selector = "[data-poi--show-component-target='overlay']"
+    button = find("#poi-detail-modal-body .mdi-close", wait: 10)
+    button.click
+    # Оверлей скрыт
+    expect(page).to have_css("#{overlay_selector}.hidden", wait: 10)
+
+    # Повторное открытие той же точки — должно сработать (оверлей без .hidden)
+    page.execute_script(<<~JS)
+      document.dispatchEvent(new CustomEvent('poi:show-detail', { detail: { poiId: #{poi.id} } }))
+    JS
+    wait_for_selector("#{overlay_selector}:not(.hidden)", timeout: 30)
+    expect(page).to have_content('Reopen Bridge', wait: 10)
+  end
+
   # PENDING (инфраструктурный блокер, аналогично админскому сценарию в admin/pois_spec.rb):
   # форма редактирования открывается через PoiReflex#edit_poi → check_proximity!.
   # Координаты пользователя пишутся в session ТОЛЬКО рефлексом set_location из JS-геолокации;

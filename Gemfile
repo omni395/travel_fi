@@ -63,6 +63,7 @@ group :development do
   gem "web-console"
   gem "foreman"
   gem "listen"
+  gem "ruby-lsp-rspec", require: false
 end
 
 # --- 1. БЕЗОПАСНОСТЬ, АУТЕНТИФИКАЦИЯ И АУДИТ ---

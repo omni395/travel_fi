@@ -15,3 +15,7 @@ zh:
       unknown: 未知
       true: "是"
       false: "否"
+      no_location_title: 位置不可用
+      no_location_message: 与这个地点互动需要您当前的位置。请启用定位服务以继续。
+      proximity_warning_title: 您离得太远
+      proximity_warning_message: 您需要在这个地点 100 米范围内才能与之互动。

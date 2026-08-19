@@ -17,15 +17,18 @@ RSpec.describe OsmImportBroadcaster, type: :service do
   let(:broadcaster) { described_class.new(user: user) }
   let(:cable_mock) { double('cable_ready') }
 
-  STATS = {
-    created: 3, skipped_duplicate: 1, skipped_modified: 0, errors: 0
-  }.freeze
+  let(:stats) do
+    { created: 3, skipped_duplicate: 1, skipped_modified: 0, errors: 0 }
+  end
 
   before do
-    # Мок CableReady: [user_N] / ['UserChannel'] возвращают один билдер
+    # Мок CableReady: [user_N] / ['pois_map'] возвращают один билдер.
+    # osmImportComplete уходит в личный стрим пользователя (["user_#{id}"]),
+    # а poi:reload-features — в общий поток карты ["pois_map"] (подписка карты
+    # идёт на user_N + pois_map, а не на "UserChannel" — см. osm_import_broadcaster.rb).
     allow(broadcaster).to receive(:cable_ready).and_return(cable_mock)
     allow(cable_mock).to receive(:[]).with("user_#{user.id}").and_return(cable_mock)
-    allow(cable_mock).to receive(:[]).with('UserChannel').and_return(cable_mock)
+    allow(cable_mock).to receive(:[]).with('pois_map').and_return(cable_mock)
     allow(cable_mock).to receive(:dispatch_event)
     allow(cable_mock).to receive(:broadcast)
     # Внутри broadcast вызывается PoiCategoryBroadcaster — изолируем (не тестируем здесь)
@@ -63,17 +66,17 @@ RSpec.describe OsmImportBroadcaster, type: :service do
         }
       )
 
-      broadcaster.broadcast(stats: STATS, category: category)
+      broadcaster.broadcast(stats: stats, category: category)
     end
 
     it 'шлёт poi:reload-features с bbox импорта в detail (гео-фильтрация, баг 4)' do
-      bbox = [52.3, 13.2, 52.7, 13.6] # [south, west, north, east] — Берлин
+      bbox = [ 52.3, 13.2, 52.7, 13.6 ] # [south, west, north, east] — Берлин
       expect(cable_mock).to receive(:dispatch_event).with(
         name: 'poi:reload-features',
         detail: { type: 'osm', category_id: category.id, bbox: bbox }
       )
 
-      broadcaster.broadcast(stats: STATS, category: category, bbox: bbox)
+      broadcaster.broadcast(stats: stats, category: category, bbox: bbox)
     end
 
     it 'шлёт poi:reload-features без bbox, если bbox не передан' do
@@ -82,7 +85,7 @@ RSpec.describe OsmImportBroadcaster, type: :service do
         detail: { type: 'osm', category_id: category.id }
       )
 
-      broadcaster.broadcast(stats: STATS, category: category)
+      broadcaster.broadcast(stats: stats, category: category)
     end
   end
 end

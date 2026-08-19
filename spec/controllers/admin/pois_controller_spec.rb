@@ -35,16 +35,20 @@ RSpec.describe Admin::PoisController, type: :request do
       expect(response.body).not_to include('<select')
     end
 
-    it 'статус рендерится как radio name="poi[status]" внутри Dropdown (без hidden-input)' do
+    it 'статус рендерится как скрытый input name="poi[status]" внутри Dropdown (не <select>, не radio)' do
       get admin_poi_path(id: poi.id, edit: 'true')
 
       body = response.body
-      # Статус — радио-опции в меню dropdown; выбранного значения нет в hidden
-      expect(body).to include('input')
+      # Статус — DropdownComponent с hidden input name="poi[status]" (обновляется
+      # через selectStatus в edit_component_controller.js) и пунктами меню с
+      # data-action="click->admin--pois--poi--edit-component#selectStatus".
+      # НЕ radio-кнопки и НЕ <select>.
       expect(body).to include('name="poi[status]"')
-      expect(body).to include('type="radio"')
-      # Нет скрытого input статуса, который не обновлялся (баг: статус не сохранялся)
-      expect(body).not_to include('name="poi[status]" type="hidden"')
+      expect(body).to include('type="hidden"')
+      expect(body).to include('data-admin--pois--poi--edit-component-target="statusInput"')
+      expect(body).to include('selectStatus')
+      expect(body).not_to include('type="radio"')
+      expect(body).not_to include('<select')
     end
 
     it 'отображает выбранную категорию в тексте дропдауна' do
