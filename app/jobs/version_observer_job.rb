@@ -122,7 +122,40 @@ class VersionObserverJob < ApplicationJob
     # Пользовательские бродкасты
     return if version.event == "destroy" || poi.nil?
 
-    PoiBroadcaster.call(poi: poi)
+    # Определяем, был ли это переход статуса (pending→approved и т.п.). При
+    # смене статуса PoiBroadcaster дополнительно рисует feature-ноду точки в
+    # #poi-map-features — иначе одобренная пользовательская точка не появлялась
+    # бы на карте без перезагрузки (маркер рисуется только из этого контейнера).
+    change_status = status_change?(version)
+
+    PoiBroadcaster.call(poi: poi, change_status: change_status)
+  end
+
+  #
+  # Определяет, был ли в версии PaperTrail переход status (колонка status
+  # изменилась в object_changes).
+  #
+  # @param version [PaperTrail::Version] версия изменения
+  # @return [Boolean] true, если статус POI изменился
+  #
+  def status_change?(version)
+    # Переход статуса имеет смысл только для UPDATE-версии: при CREATE
+    # object_changes — полный снапшот всех полей (в т.ч. status), поэтому проверка
+    # по одному только наличию ключа дала бы ложное true для pending-создания.
+    return false unless version.event == "update"
+
+    changes = version.object_changes
+    # PaperTrail::Serializers::JSON (см. config/initializers/paper_trail.rb) сериализует
+    # object_changes в JSON-строку при сохранении в колонку типа text. Поэтому при
+    # чтении версии ИЗ БД (SolidQueue worker) changes приходит как String, а не Hash.
+    # Парсим строку в Hash, чтобы корректно определить переход статуса. Иначе
+    # change_status всегда false → feature-нода не добавляется в #poi-map-features
+    # и одобренная точка не появляется на карте у пользователя без перезагрузки.
+    changes = JSON.parse(changes) if changes.is_a?(String)
+    return false unless changes.is_a?(Hash)
+    changes.key?("status") || changes.key?(:status)
+  rescue JSON::ParserError
+    false
   end
 
   #
