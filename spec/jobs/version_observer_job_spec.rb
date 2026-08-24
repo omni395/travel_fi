@@ -16,7 +16,10 @@ RSpec.describe VersionObserverJob, type: :job do
       poi = create(:poi)
       version = poi.versions.last
 
-      expect(PoiBroadcaster).to receive(:call).with(poi: poi)
+      # CREATE — статус не переходит (guard по event == "update"), поэтому
+      # change_status всегда false даже для pending-точки (иначе pending-маркер
+      # ложно попадал бы на карту).
+      expect(PoiBroadcaster).to receive(:call).with(poi: poi, change_status: false)
       expect(Admin::DashboardBroadcaster).to receive(:broadcast_stats_update)
 
       described_class.perform_now(version.id)
@@ -27,7 +30,8 @@ RSpec.describe VersionObserverJob, type: :job do
       poi.update!(city: 'Kyiv')
       version = poi.versions.last
 
-      expect(PoiBroadcaster).to receive(:call).with(poi: poi)
+      # UPDATE без смены статуса (city) → change_status: false
+      expect(PoiBroadcaster).to receive(:call).with(poi: poi, change_status: false)
       expect(Admin::DashboardBroadcaster).to receive(:broadcast_stats_update)
 
       described_class.perform_now(version.id)
@@ -40,6 +44,68 @@ RSpec.describe VersionObserverJob, type: :job do
       expect(version.event).to eq('destroy')
 
       expect(PoiBroadcaster).not_to receive(:call)
+
+      described_class.perform_now(version.id)
+    end
+  end
+
+  describe 'status_change? (#handle_poi_update, переход pending→approved)' do
+    it 'передаёт change_status: true, когда статус изменился и object_changes — строка JSON из БД' do
+      # Runtime-сценарий: SolidQueue worker перечитывает версию из БД, где
+      # object_changes (колонка text + PaperTrail::Serializers::JSON) — это СТРОКА
+      # JSON, а не Hash. Раньше status_change? проверял is_a?(Hash) → всегда false →
+      # change_status не пробрасывался → feature-нода не добавлялась в
+      # #poi-map-features → одобренная точка не появлялась на карте без перезагрузки.
+      poi = create(:poi, status: :pending)
+      # Генерируем UPDATE-версию именно со сменой статуса (переход pending→approved).
+      # CREATE-версия игнорируется (guard по event == "update"), поэтому нужна
+      # последняя версия ПОСЛЕ update! — её object_changes содержит ключ "status".
+      poi.update!(status: :approved)
+      version = poi.versions.last
+      expect(version.event).to eq('update')
+
+      # Реальный сериализованный формат колонки (text + JSON-сериализатор)
+      version.update_columns(
+        object_changes: {
+          'status' => [0, 1],
+          'name' => [{ 'en' => 'a' }, { 'en' => 'b' }]
+        }.to_json
+      )
+      # Перечитываем из БД, как это делает SolidQueue worker
+      version.reload
+      expect(version.object_changes).to be_a(String)
+
+      expect(PoiBroadcaster).to receive(:call).with(poi: poi, change_status: true)
+      expect(Admin::DashboardBroadcaster).to receive(:broadcast_stats_update)
+
+      described_class.perform_now(version.id)
+    end
+
+    it 'передаёт change_status: false, когда object_changes — строка JSON без смены статуса' do
+      poi = create(:poi, status: :approved)
+      poi.update!(city: 'Berlin')
+      version = poi.versions.last
+
+      # object_changes без ключа status (строка из БД)
+      version.update_columns(object_changes: { 'city' => ['Kyiv', 'Berlin'] }.to_json)
+      version.reload
+
+      expect(PoiBroadcaster).to receive(:call).with(poi: poi, change_status: false)
+      expect(Admin::DashboardBroadcaster).to receive(:broadcast_stats_update)
+
+      described_class.perform_now(version.id)
+    end
+
+    it 'корректно обрабатывает битую JSON-строку object_changes (rescue → false)' do
+      poi = create(:poi, status: :approved)
+      poi.update!(city: 'Berlin')
+      version = poi.versions.last
+
+      version.update_columns(object_changes: 'broken { not json')
+      version.reload
+
+      expect(PoiBroadcaster).to receive(:call).with(poi: poi, change_status: false)
+      expect(Admin::DashboardBroadcaster).to receive(:broadcast_stats_update)
 
       described_class.perform_now(version.id)
     end

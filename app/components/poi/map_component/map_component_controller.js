@@ -201,12 +201,18 @@ export default class extends ApplicationController {
     // Нет зоны/типа — считаем релевантным (не ограничиваем)
     if (!bbox) return true
 
-    // Пересечение прямоугольников
+    // Запас для одиночных точек: маркер/кластер может быть виден, даже если
+    // точка чуть за пределами "строгого" прямоугольника границ. Без запаса
+    // одобренная точка на краю видимой области не появится, т.к. _loadPoisInBounds
+    // запрашивает усечённые на 0.9×0.9 границы. 0.02° ≈ 2.2 км на экваторе.
+    const pad = detail.type === "single" ? 0.02 : 0
+
+    // Пересечение прямоугольников (с запасом pad для одиночных точек)
     return !(
-      bbox.north < viewSouth ||
-      bbox.south > viewNorth ||
-      bbox.east < viewWest ||
-      bbox.west > viewEast
+      bbox.north < viewSouth - pad ||
+      bbox.south > viewNorth + pad ||
+      bbox.east < viewWest - pad ||
+      bbox.west > viewEast + pad
     )
   }
 

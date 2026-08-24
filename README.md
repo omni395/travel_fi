@@ -4,6 +4,10 @@ Travel Fi — Rails 8.1 application for tourism services with DeFi functionality
 
 > Demo: https://noneternally-approbative-rosanne.ngrok-free.dev/ (launching the server by agreement)
 
+> Promo-demo - https://drive.google.com/file/d/1-WECv_pAtkrJqNUK_LF9o1pbySfmNgFx/view?usp=drive_link
+
+> Github Repo - https://github.com/omni395/travel_fi
+
 ## 🏗️ Technology Stack
 
 | Layer | Components |

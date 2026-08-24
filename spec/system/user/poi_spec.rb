@@ -316,8 +316,9 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
     overlay_selector = "[data-poi--show-component-target='overlay']"
     button = find("#poi-detail-modal-body .mdi-close", wait: 10)
     button.click
-    # Оверлей скрыт
-    expect(page).to have_css("#{overlay_selector}.hidden", wait: 10)
+    # Оверлей скрыт (Capybara не находит скрытые элементы без visible: false —
+    # класс hidden → display:none → невидим)
+    expect(page).to have_css("#{overlay_selector}.hidden", visible: false, wait: 10)
 
     # Повторное открытие той же точки — должно сработать (оверлей без .hidden)
     page.execute_script(<<~JS)

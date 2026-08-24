@@ -16,15 +16,26 @@ class PoiBroadcaster
   # Отправляет обновление POI через WebSocket
   #
   # @param poi [Poi] POI с обновленными данными
+  # @param change_status [Boolean] true, если это переход статуса (pending→approved
+  #   и т.п.). В этом случае дополнительно рисуем feature-ноду точки в скрытый
+  #   контейнер #poi-map-features — иначе одобренная точка долго не появляется
+  #   на карте у пользователя (подробнее: см. _onReloadFeatures в map_component_controller).
   #
-  def self.call(poi:)
-    new(poi: poi).broadcast
+  def self.call(poi:, change_status: false)
+    new(poi: poi, change_status: change_status).broadcast
   end
 
-  attr_reader :poi
+  attr_reader :poi, :change_status
 
-  def initialize(poi:)
+  #
+  # Конструктор бродкастера
+  #
+  # @param poi [Poi] POI с обновленными данными
+  # @param change_status [Boolean] флаг перехода статуса (см. self.call)
+  #
+  def initialize(poi:, change_status: false)
     @poi = poi
+    @change_status = change_status
   end
 
   #
@@ -99,6 +110,21 @@ class PoiBroadcaster
     #    через общий поток "pois_map" (не мёртвый "UserChannel"). В detail
     #    передаём координаты POI: клиент перезагружает только если его видимые
     #    границы содержат точку (_detailIntersectsView).
+    #
+    # 5b. При переходе статуса (change_status) гарантируем наличие feature-ноды
+    #     точки в скрытом контейнере #poi-map-features ДО перезапроса. Иначе
+    #     клиентский _loadPoisInBounds() перезапрашивает, а маркер рисуется только
+    #     из #poi-map-features — при сработавшем гварде _detailIntersectsView маркер
+    #     не появится без перезагрузки страницы. append (не inner_html): inner_html
+    #     по [data-poi-id] заменил бы и карточку сайдбара. Дубли здесь безопасны —
+    #     следующий load_pois_in_bounds перезапишет #poi-map-features целиком.
+    if change_status
+      cable_ready["pois_map"].append(
+        selector: "#poi-map-features",
+        html: feature_node_html
+      )
+    end
+
     cable_ready["pois_map"].dispatch_event(
       name: "poi:reload-features",
       detail: { type: "single", lat: poi.latitude, lng: poi.longitude }
@@ -218,5 +244,30 @@ class PoiBroadcaster
   rescue StandardError => e
     Rails.logger.error("Failed to render POI audit: #{e.class} #{e.message}")
     ""
+  end
+
+  #
+  # Строит HTML feature-ноды точки для скрытого контейнера #poi-map-features.
+  # Используется при change_status, чтобы гарантировать наличие маркера ДО
+  # перезапроса _loadPoisInBounds(). Формат соответствует feature_html в PoiReflex.
+  #
+  # @return [String] HTML <div> с data-атрибутами карты
+  #
+  def feature_node_html
+    data = PoiService.map_feature_data(poi)
+    escape = ->(v) { ERB::Util.html_escape(v.to_s) }
+
+    %(<div data-poi-id="#{escape.call(data[:id])}"
+           data-poi-lat="#{escape.call(data[:lat])}"
+           data-poi-lng="#{escape.call(data[:lng])}"
+           data-poi-name="#{escape.call(data[:name])}"
+           data-poi-icon="#{escape.call(data[:icon])}"
+           data-poi-category="#{escape.call(data[:category])}"
+           data-poi-category-id="#{escape.call(data[:category_id])}"
+           data-poi-rating="#{escape.call(data[:rating])}"
+           data-poi-address="#{escape.call(data[:address])}"
+           data-poi-user-id="#{escape.call(data[:user_id])}"
+           data-poi-slug="#{escape.call(data[:slug])}"
+           data-poi-photo="#{escape.call(data[:photo])}"></div>)
   end
 end

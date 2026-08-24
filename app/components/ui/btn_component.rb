@@ -11,7 +11,7 @@
 #     <i class="mdi mdi-content-save"></i>
 #     <%= t('common.save') %>
 #   <% end %>
-#
+
 # @example
 #   <%= render Ui::BtnComponent.new(color: :danger, size: :sm, html: { data: { action: "click->admin--users#destroyUser" } }) do %>
 #     <!-- mdi: delete -->
