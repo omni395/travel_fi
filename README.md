@@ -11,6 +11,8 @@ Travel Fi — Rails 8.1 application for tourism services with DeFi functionality
 > Github Repo - https://github.com/omni395/travel_fi
 
 > Support Travel Fi on Giveth: https://giveth.io/project/travel-fi
+> Support Travel Fi on Artizen: https://artizen.fund/index/p/travel-fi
+> Support Travel Fi on Karmahq: https://www.karmahq.org/project/travel-fi
 
 ## 🏗️ Technology Stack
 
