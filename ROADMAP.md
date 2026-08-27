@@ -109,6 +109,8 @@ Travel Fi
 - 🔴 Gallery: grid + lightbox/slider
 - 🔴 OSRM: route building to a POI + a line on the map
 - 🔴 Offline mode (PWA): tiles + list (IndexedDB)
+- 🔴 Understand the tags loaded from the OSM for each category. For example, for Tools/Showers - Level, Access, Source, Amenity, and so on. Create translation maps for each tag, accessible through the admin panel. Currently, this data doesn't match the category fields in the admin panel.
+- 🔴 Create a separate icon for each category to display on the map. More precisely, the category icon already exists as an MDI icon, but it needs to be displayed separately on the map.
 
 **Bugs/Debts:**
 - ⚠️ Photo upload (binaries via StimulusReflex) → HTTP/multipart — a separate task
