@@ -28,13 +28,13 @@ class Admin::DashboardComponent < ApplicationComponent
   def stat_card_class(type)
     case type
     when :total_users
-      'border-teal-500'
+      "border-teal-500"
     when :active_users
-      'border-green-500'
+      "border-green-500"
     when :suspended_users
-      'border-red-500'
+      "border-red-500"
     when :new_users_today
-      'border-blue-500'
+      "border-blue-500"
     end
   end
 
@@ -47,13 +47,13 @@ class Admin::DashboardComponent < ApplicationComponent
   def stat_icon_class(type)
     case type
     when :total_users
-      'bg-teal-100 text-teal-600'
+      "bg-teal-100 text-teal-600"
     when :active_users
-      'bg-green-100 text-green-600'
+      "bg-green-100 text-green-600"
     when :suspended_users
-      'bg-red-100 text-red-600'
+      "bg-red-100 text-red-600"
     when :new_users_today
-      'bg-blue-100 text-blue-600'
+      "bg-blue-100 text-blue-600"
     end
   end
 
@@ -66,13 +66,13 @@ class Admin::DashboardComponent < ApplicationComponent
   def stat_icon_name(type)
     case type
     when :total_users
-      'mdi-account-multiple'
+      "mdi-account-multiple"
     when :active_users
-      'mdi-account-check'
+      "mdi-account-check"
     when :suspended_users
-      'mdi-account-off'
+      "mdi-account-off"
     when :new_users_today
-      'mdi-account-plus'
+      "mdi-account-plus"
     end
   end
 
@@ -85,13 +85,13 @@ class Admin::DashboardComponent < ApplicationComponent
   def stat_label(type)
     case type
     when :total_users
-      t('admin.dashboard.total_users')
+      t("admin.dashboard.total_users")
     when :active_users
-      t('admin.dashboard.active_users')
+      t("admin.dashboard.active_users")
     when :suspended_users
-      t('admin.dashboard.suspended_users')
+      t("admin.dashboard.suspended_users")
     when :new_users_today
-      t('admin.dashboard.new_users_today')
+      t("admin.dashboard.new_users_today")
     end
   end
 
@@ -104,18 +104,18 @@ class Admin::DashboardComponent < ApplicationComponent
   #
   def user_status_class(status)
     case status.to_s
-    when 'active'
-      'bg-green-100 text-green-800'
-    when 'pending_verification'
-      'bg-yellow-100 text-yellow-800'
-    when 'suspended'
-      'bg-orange-100 text-orange-800'
-    when 'banned'
-      'bg-red-100 text-red-800'
-    when 'deleted'
-      'bg-gray-100 text-gray-800'
+    when "active"
+      "bg-green-100 text-green-800"
+    when "pending_verification"
+      "bg-yellow-100 text-yellow-800"
+    when "suspended"
+      "bg-orange-100 text-orange-800"
+    when "banned"
+      "bg-red-100 text-red-800"
+    when "deleted"
+      "bg-gray-100 text-gray-800"
     else
-      'bg-gray-100 text-gray-800'
+      "bg-gray-100 text-gray-800"
     end
   end
 
@@ -127,11 +127,11 @@ class Admin::DashboardComponent < ApplicationComponent
   #
   def stat_color(type)
     case type
-    when :total_users then 'primary'
-    when :active_users then 'success'
-    when :suspended_users then 'error'
-    when :new_users_today then 'info'
-    else 'gray'
+    when :total_users then "primary"
+    when :active_users then "success"
+    when :suspended_users then "error"
+    when :new_users_today then "info"
+    else "gray"
     end
   end
 end

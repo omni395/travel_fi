@@ -18,7 +18,7 @@ RSpec.describe 'Admin PoiCategory (браузер А → браузер Б): п�
   let!(:admin_a) { create(:user, :admin, :with_setting, email: 'admin_a@example.com') }
   let!(:admin_b) { create(:user, :admin, :with_setting, email: 'admin_b@example.com') }
 
-  let(:location) { { city: 'London', country: 'United Kingdom', bbox: [51.3, -0.5, 51.7, 0.3] } }
+  let(:location) { { city: 'London', country: 'United Kingdom', bbox: [ 51.3, -0.5, 51.7, 0.3 ] } }
 
   before do
     # Б получает и in-app, и email (по его настройкам); А — только in-app (по умолчанию).

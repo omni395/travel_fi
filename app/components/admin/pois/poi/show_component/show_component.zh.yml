@@ -20,6 +20,7 @@ zh:
           rating: 评分
           opening_hours: 营业时间
           price_info: 价格信息
+          gallery: 照片
           status:
             pending: "待审核"
             approved: "已通过"

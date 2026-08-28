@@ -121,7 +121,7 @@ class PoiService
 
     # Галерея: обрабатываем и прикрепляем фото через PhotoService
     if params[:photos].present?
-      PhotoService.attach_photos(record: poi, files: params[:photos], audit_touch: true)
+      PhotoService.attach_photos(record: poi, files: params[:photos], user: current_user, audit_touch: true)
     end
 
     poi
@@ -163,16 +163,85 @@ class PoiService
     # Галерея: удаляем отмеченные фото и прикрепляем новые через PhotoService
     if params[:remove_photos].present?
       Array(params[:remove_photos]).each do |photo_id|
-        PhotoService.remove_photo(record: poi, signed_id: photo_id, audit_touch: true)
+        PhotoService.remove_photo(record: poi, photo_id: photo_id, audit_touch: true)
       end
     end
     if params[:photos].present?
-      PhotoService.attach_photos(record: poi, files: params[:photos], audit_touch: true)
+      PhotoService.attach_photos(record: poi, files: params[:photos], user: current_user, audit_touch: true)
     end
 
     poi
   rescue ActiveRecord::RecordInvalid => e
     raise UpdateError, e.message
+  end
+
+  #
+  # Добавляет фото в галерею POI (через PhotoService).
+  #
+  # @param poi [Poi] POI
+  # @param file [ActionDispatch::Http::UploadedFile] файл фото
+  # @param current_user [User] автор фото
+  # @return [Photo] созданная запись
+  # @raise [CreateError] если ошибка валидации или файл пуст
+  #
+  def self.add_photo(poi:, file:, current_user:)
+    photo = PhotoService.add_photo(record: poi, file: file, user: current_user, audit_touch: true)
+    raise CreateError, I18n.t("pois.photo_upload_failed") unless photo
+
+    # Геймификация: награда TFT за добавленное фото (сумма из config/gamification.yml,
+    # ключ poi_photo_add). Начисляется ТОЛЬКО автору (current_user). Обёрнуто в rescue —
+    # сбой начисления не роняет загрузку фото (по образцу award_poi_create!).
+    begin
+      GamificationService.award!(:poi_photo_add, current_user)
+    rescue StandardError => e
+      Rails.logger.error("PoiService add_photo award failed: #{e.class} #{e.message}")
+    end
+
+    photo
+  end
+
+  #
+  # Удаляет фото из галереи POI (через PhotoService).
+  #
+  # Если удаляемое фото принадлежит автору (current_user) — отзываем начисленную
+  # за него награду (poi_photo_add), пока та не забрана (claimed=false, vesting).
+  # Админ/модератор, удаляя ЧУЖОЕ фото, награду его владельца НЕ трогает.
+  #
+  # @param poi [Poi] POI
+  # @param photo_id [Integer, String] id записи Photo
+  # @param current_user [User, nil] текущий пользователь (для отзыва его награды)
+  # @return [Boolean] true если удалено
+  # @raise [DestroyError] если фото не найдено (ошибка доступа уже проверена в Pundit)
+  #
+  def self.remove_photo(poi:, photo_id:, current_user: nil)
+    removed = PhotoService.remove_photo(record: poi, photo_id: photo_id, audit_touch: true)
+    raise DestroyError, I18n.t("pois.photo_remove_failed") unless removed
+
+    # Отзыв награды за фото — только если удаляем свою (награда начислялась
+    # автору при add_photo). Сбой отзыва не роняет само удаление.
+    if current_user && removed_photo_owned_by?(poi, photo_id, current_user)
+      begin
+        GamificationService.revoke!(:poi_photo_add, current_user)
+      rescue StandardError => e
+        Rails.logger.error("PoiService remove_photo revoke failed: #{e.class} #{e.message}")
+      end
+    end
+
+    removed
+  end
+
+  #
+  # Принадлежит ли удаляемое фото указанному пользователю.
+  # Используется для отзыва награды poi_photo_add при удалении своего фото.
+  #
+  # @param poi [Poi] POI
+  # @param photo_id [Integer] id записи Photo
+  # @param user [User] пользователь
+  # @return [Boolean]
+  #
+  def self.removed_photo_owned_by?(poi, photo_id, user)
+    photo = poi.photos.find_by(id: photo_id)
+    photo&.user_id == user.id
   end
 
   #

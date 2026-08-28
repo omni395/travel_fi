@@ -71,11 +71,11 @@ namespace :versions do
 
     # Пробуем JSON
     JSON.parse(stripped)
-    return stripped # уже валидный JSON, возвращаем как есть
+    stripped # уже валидный JSON, возвращаем как есть
   rescue JSON::ParserError
     # Пробуем YAML
     begin
-      yaml_data = YAML.safe_load(stripped, permitted_classes: [Symbol, Date, Time, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone])
+      yaml_data = YAML.safe_load(stripped, permitted_classes: [ Symbol, Date, Time, ActiveSupport::TimeWithZone, ActiveSupport::TimeZone ])
       if yaml_data.is_a?(Hash) || yaml_data.is_a?(Array)
         return yaml_data.to_json
       end

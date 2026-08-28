@@ -250,13 +250,16 @@ RSpec.describe Poi, type: :model do
     end
   end
 
-  describe 'галерея photos (ActiveStorage)' do
-    it 'позволяет прикреплять фото' do
+  describe 'галерея photos (модель Photo)' do
+    it 'позволяет добавить фото и упорядочить по позиции' do
       poi = create(:poi)
+      user = create(:user)
 
-      poi.photos.attach(io: StringIO.new('fake-image'), filename: 'photo.png', content_type: 'image/png')
+      photo_a = create(:photo, poi: poi, user: user, position: 0)
+      photo_b = create(:photo, poi: poi, user: user, position: 1)
 
-      expect(poi.photos).to be_attached
+      expect(poi.photos.ordered.map(&:id)).to eq([ photo_a.id, photo_b.id ])
+      expect(photo_a.image).to be_attached
     end
   end
 end

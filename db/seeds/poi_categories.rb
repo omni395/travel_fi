@@ -14,7 +14,7 @@ categories = [
     slug: "sim_esim",
     icon: "mdi-sim",
     description: { en: "Mobile operators and SIM card providers", ru: "Операторы мобильной связи и продавцы SIM-карт", es: "Operadores móviles y proveedores de tarjetas SIM", zh: "移动运营商和SIM卡提供商" },
-    osm_tags: ["shop=mobile_phone"],
+    osm_tags: [ "shop=mobile_phone" ],
     position: 1,
     fields: [
       { field_key: "operator_names", field_type: "multiselect",
@@ -33,7 +33,7 @@ categories = [
           { key: "movistar", label: { en: "Movistar", ru: "Movistar", es: "Movistar", zh: "Movistar" } },
           { key: "claro", label: { en: "Claro", ru: "Claro", es: "Claro", zh: "Claro" } },
           { key: "telcel", label: { en: "Telcel", ru: "Telcel", es: "Telcel", zh: "Telcel" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "has_esim", field_type: "boolean",
         label: { en: "eSIM available", ru: "eSIM доступна", es: "eSIM disponible", zh: "支持eSIM" },
         required: true, position: 2 },
@@ -83,7 +83,7 @@ categories = [
           { key: "potable", label: { en: "Potable", ru: "Питьевая", es: "Potable", zh: "可饮用" } },
           { key: "non_potable", label: { en: "Non-potable", ru: "Непитьевая", es: "No potable", zh: "不可饮用" } },
           { key: "recycled", label: { en: "Recycled", ru: "Очищенная", es: "Reciclada", zh: "循环水" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "is_free", field_type: "boolean",
         label: { en: "Free", ru: "Бесплатно", es: "Gratis", zh: "免费" },
         required: true, position: 2 },
@@ -109,7 +109,7 @@ categories = [
           { key: "self_service", label: { en: "Self-service", ru: "Самообслуживание", es: "Autoservicio", zh: "自助" } },
           { key: "full_service", label: { en: "Full service", ru: "Полный сервис", es: "Servicio completo", zh: "全套服务" } },
           { key: "both", label: { en: "Both", ru: "Оба варианта", es: "Ambos", zh: "两者都有" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "has_dryer", field_type: "boolean",
         label: { en: "Dryer available", ru: "Есть сушилка", es: "Secadora disponible", zh: "有烘干机" },
         required: true, position: 2 },
@@ -136,7 +136,7 @@ categories = [
           { key: "locker", label: { en: "Locker", ru: "Ячейка", es: "Taquilla", zh: "储物柜" } },
           { key: "staffed_counter", label: { en: "Staffed counter", ru: "Стойка администратора", es: "Mostrador atendido", zh: "人工柜台" } },
           { key: "automated", label: { en: "Automated", ru: "Автомат", es: "Automático", zh: "自动寄存" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "price_per_hour", field_type: "string",
         label: { en: "Price per hour", ru: "Цена за час", es: "Precio por hora", zh: "每小时价格" },
         required: false, placeholder: { en: "e.g. $2/hr", ru: "например 2$/час", es: "ej. $2/h", zh: "例如 $2/小时" },
@@ -166,7 +166,7 @@ categories = [
           { key: "wireless", label: { en: "Wireless", ru: "Беспроводная", es: "Inalámbrica", zh: "无线充电" } },
           { key: "power_outlet", label: { en: "Power outlet", ru: "Розетка", es: "Enchufe", zh: "电源插座" } },
           { key: "fast_charging", label: { en: "Fast charging", ru: "Быстрая зарядка", es: "Carga rápida", zh: "快充" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "is_free", field_type: "boolean",
         label: { en: "Free", ru: "Бесплатно", es: "Gratis", zh: "免费" },
         required: true, position: 2 },
@@ -206,7 +206,7 @@ categories = [
           { key: "try", label: { en: "TRY", ru: "TRY", es: "TRY", zh: "里拉" } },
           { key: "thb", label: { en: "THB", ru: "THB", es: "THB", zh: "泰铢" } },
           { key: "vnd", label: { en: "VND", ru: "VND", es: "VND", zh: "越南盾" } }
-        ]}, position: 3 },
+        ] }, position: 3 },
       { field_key: "has_exchange", field_type: "boolean",
         label: { en: "Currency exchange available", ru: "Обмен валют", es: "Cambio de divisas disponible", zh: "提供货币兑换" },
         required: false, position: 4 }
@@ -228,7 +228,7 @@ categories = [
           { key: "garage", label: { en: "Garage", ru: "Гараж", es: "Garaje", zh: "车库" } },
           { key: "underground", label: { en: "Underground", ru: "Подземная", es: "Subterráneo", zh: "地下" } },
           { key: "rv", label: { en: "RV", ru: "Для автодомов", es: "Para autocaravanas", zh: "房车" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "fee_amount", field_type: "string",
         label: { en: "Fee", ru: "Стоимость", es: "Tarifa", zh: "费用" },
         required: false, placeholder: { en: "e.g. Free, $5/hr", ru: "например Бесплатно, 5$/час", es: "ej. Gratis, $5/h", zh: "例如 免费, $5/小时" },
@@ -259,7 +259,7 @@ categories = [
           { key: "independent", label: { en: "Independent", ru: "Частная", es: "Independiente", zh: "独立" } },
           { key: "hospital", label: { en: "Hospital", ru: "Больничная", es: "Hospitalaria", zh: "医院" } },
           { key: "online", label: { en: "Online", ru: "Онлайн", es: "En línea", zh: "在线" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "has_prescription", field_type: "boolean",
         label: { en: "Prescription service", ru: "Рецептурный отпуск", es: "Servicio de recetas", zh: "处方药服务" },
         required: true, position: 2 },
@@ -291,7 +291,7 @@ categories = [
           { key: "post_office", label: { en: "Post office", ru: "Почта", es: "Oficina de correos", zh: "邮局" } },
           { key: "library", label: { en: "Library", ru: "Библиотека", es: "Biblioteca", zh: "图书馆" } },
           { key: "co_working", label: { en: "Co-working space", ru: "Коворкинг", es: "Espacio de coworking", zh: "共享办公空间" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "is_free", field_type: "boolean",
         label: { en: "Free", ru: "Бесплатно", es: "Gratis", zh: "免费" },
         required: true, position: 2 },
@@ -372,7 +372,7 @@ categories = [
           { key: "usb_a", label: { en: "USB-A", ru: "USB-A", es: "USB-A", zh: "USB-A" } },
           { key: "usb_c", label: { en: "USB-C", ru: "USB-C", es: "USB-C", zh: "USB-C" } },
           { key: "wireless", label: { en: "Wireless", ru: "Беспроводная", es: "Inalámbrica", zh: "无线充电" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "is_free", field_type: "boolean",
         label: { en: "Free", ru: "Бесплатно", es: "Gratis", zh: "免费" },
         required: true, position: 2 },
@@ -434,7 +434,7 @@ categories = [
           { key: "toddlers", label: { en: "Toddlers", ru: "Малышей", es: "Bebés", zh: "幼儿" } },
           { key: "children", label: { en: "Children", ru: "Детей", es: "Niños", zh: "儿童" } },
           { key: "all", label: { en: "All ages", ru: "Всех возрастов", es: "Todas las edades", zh: "所有年龄段" } }
-        ]}, position: 3 }
+        ] }, position: 3 }
     ]
   },
   # EV Charging — отдельно от зарядок для телефонов
@@ -453,7 +453,7 @@ categories = [
           { key: "ccs", label: { en: "CCS", ru: "CCS", es: "CCS", zh: "CCS" } },
           { key: "chademo", label: { en: "CHAdeMO", ru: "CHAdeMO", es: "CHAdeMO", zh: "CHAdeMO" } },
           { key: "tesla", label: { en: "Tesla Supercharger", ru: "Tesla Supercharger", es: "Tesla Supercharger", zh: "特斯拉超级充电" } }
-        ]}, position: 1 },
+        ] }, position: 1 },
       { field_key: "is_free", field_type: "boolean",
         label: { en: "Free", ru: "Бесплатно", es: "Gratis", zh: "免费" },
         required: false, position: 2 },

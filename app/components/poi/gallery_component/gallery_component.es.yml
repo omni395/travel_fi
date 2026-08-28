@@ -2,4 +2,13 @@ es:
   poi:
     gallery_component:
       title: Galería
-      coming_soon: Próximamente
+      empty_title: Aún no hay fotos
+      empty_hint: Sé el primero en añadir una foto
+      add_photo: Añadir foto
+      delete: Eliminar
+      delete_confirm: ¿Eliminar esta foto?
+      upload_failed: No se pudo subir la foto
+      upload_proximity: Debes estar a menos de 100 metros de este lugar para añadir una foto
+      close: Cerrar
+      counter: "%{current} / %{total}"
+      photo_alt: Foto del punto

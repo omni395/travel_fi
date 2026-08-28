@@ -91,6 +91,8 @@ Travel Fi
 - ✅ POI card in a modal (header + tabs)
 - ✅ POI creation/edit form + mini map + reverse geocoding (Nominatim)
 - ✅ Photo gallery via `PhotoService` (ActiveStorage)
+- ✅ Gallery: grid + lightbox/slider + add/delete photos directly in the POI card. Model `Photo` (`poi_id`/`user_id`/`position`) with `has_one_attached :image`; own photos first (`Photo.author_first`); add photo via HTTP/multipart (`Poi::PhotosController`, 100m anti-fraud `within_range?`); delete via `PoiReflex#remove_photo` (author/admin/moderator); live update via `VersionObserverJob` → `PoiBroadcaster` `inner_html [data-poi-gallery]` + `PoiReflex#refresh_gallery`. Covered by `spec/system/user/poi_spec.rb`, `spec/system/admin/pois_spec.rb`, `spec/models/photo_spec.rb`, `spec/services/poi_service_spec.rb`.
+- ✅ Photo binaries via HTTP/multipart (`Poi::PhotosController#create`, JSON) — closed debt of binaries through Reflex.
 - ✅ 100m proximity check for comments/editing (`check_proximity!`, `PoiCommentPolicy`)
 - ✅ Live comments: `PoiCommentBroadcaster` + the `PoiComment` branch in `VersionObserverJob` (to the author); correct 100m proximity-check (Boolean + SRID 4326, anti-fraud no longer "always passes")
 - ✅ TFT rewards for POI creation/comment (`GamificationService.award!(:poi_create/:comment_create)`, amounts from `config/gamification.yml`)
@@ -106,14 +108,13 @@ Travel Fi
 **Wishlist:**
 - 🔴 `PoiRating` — 5-star system + aggregation into `poi.rating`
 - 🔴 Comments: live for everyone + threaded replies
-- 🔴 Gallery: grid + lightbox/slider
 - 🔴 OSRM: route building to a POI + a line on the map
 - 🔴 Offline mode (PWA): tiles + list (IndexedDB)
 - 🔴 Understand the tags loaded from the OSM for each category. For example, for Tools/Showers - Level, Access, Source, Amenity, and so on. Create translation maps for each tag, accessible through the admin panel. Currently, this data doesn't match the category fields in the admin panel.
 - 🔴 Create a separate icon for each category to display on the map. More precisely, the category icon already exists as an MDI icon, but it needs to be displayed separately on the map.
 
 **Bugs/Debts:**
-- ⚠️ Photo upload (binaries via StimulusReflex) → HTTP/multipart — a separate task
+- ✅ Photo upload (binaries via StimulusReflex) → HTTP/multipart — resolved via `Poi::PhotosController#create` (JSON) in the gallery
 - ⚠️ POI card: UI polish (focus trap, aria, scroll locking) — a separate task
 - ✅ Browser address autofill disabled: `autocomplete="off"` on address/city/country/zip_code in `Poi::FormComponent` and the admin `EditComponent`
 - ✅ Admin. Edit form: `Ui::DropdownComponent` for category/status (instead of `<select>`), the mini map is initialized (single-POI `data-controller` on root), `rating` is a consolidated computed field (NOT editable — removed from the form and from `PoiService.update`). Covered by request spec `spec/controllers/admin/pois_controller_spec.rb` and system spec `spec/system/admin/pois_spec.rb`.

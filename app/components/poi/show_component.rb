@@ -94,7 +94,9 @@ class Poi::ShowComponent < ApplicationComponent
       "details" => render(Poi::DetailsComponent.new(poi: poi)),
       "comments" => render(Poi::CommentsComponent.new(poi: poi, current_user: current_user)),
       "ratings" => render(Poi::RatingsComponent.new(poi: poi)),
-      "gallery" => render(Poi::GalleryComponent.new(poi: poi))
+      # Контейнер-цель [data-poi-gallery] на обёртке (НЕ на корне компонента —
+      # догма inner_html без вложенности). Обновляется Broadcaster/Reflex.
+      "gallery" => content_tag(:div, render(Poi::GalleryComponent.new(poi: poi, current_user: current_user)), data: { poi_gallery: true })
     }
   end
 end

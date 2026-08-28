@@ -40,7 +40,7 @@ class CreatePois < ActiveRecord::Migration[8.0]
     # GIST-индекс для координат через raw SQL
     execute "CREATE INDEX index_pois_on_coordinates ON pois USING GIST (coordinates)"
     add_index :pois, :metadata, using: :gin
-    add_index :pois, [:status, :poi_category_id]
+    add_index :pois, [ :status, :poi_category_id ]
     add_index :pois, :osm_id, unique: true, where: "osm_id IS NOT NULL"
   end
 end

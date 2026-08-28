@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'openssl'
+require "openssl"
 
 #
 # Crypto::Ethereum — генерация Ethereum-адресов (custodial-кошельки) без внешних гемов.
@@ -54,7 +54,7 @@ module Crypto
       # @return [String] hex-дайджест (64 символа, нижний регистр)
       #
       def keccak256(data)
-        keccak256_bytes(data).unpack1('H*')
+        keccak256_bytes(data).unpack1("H*")
       end
 
       #
@@ -82,9 +82,9 @@ module Crypto
         end
 
         # Squeeze: первые 32 байта состояния (little-endian lanes).
-        out = +''.b
+        out = +"".b
         (0...(RATE / 8)).each do |i|
-          out << [state[i] & MASK64].pack('Q<')
+          out << [ state[i] & MASK64 ].pack("Q<")
         end
         out[0, 32]
       end
@@ -95,11 +95,11 @@ module Crypto
       # @return [Array(String, String)] [private_key_bytes, address_hex]
       #
       def generate_keypair
-        key = OpenSSL::PKey::EC.generate('secp256k1')
-        private_key = key.private_key.to_s(16).rjust(64, '0')
+        key = OpenSSL::PKey::EC.generate("secp256k1")
+        private_key = key.private_key.to_s(16).rjust(64, "0")
         public_key = key.public_key.to_octet_string(:uncompressed)
 
-        [[private_key].pack('H*'), address_from_public_key(public_key)]
+        [ [ private_key ].pack("H*"), address_from_public_key(public_key) ]
       end
 
       #
@@ -109,7 +109,7 @@ module Crypto
       # @return [String] EIP-55 адрес (0x + 40 символов)
       #
       def address_from_private_key(private_key_hex)
-        group = OpenSSL::PKey::EC::Group.new('secp256k1')
+        group = OpenSSL::PKey::EC::Group.new("secp256k1")
         # OpenSSL 3: ключи immutable — публичную точку получаем скалярным умножением генератора.
         point = group.generator.mul(OpenSSL::BN.new(private_key_hex, 16))
 
@@ -124,7 +124,7 @@ module Crypto
       #
       def address_from_public_key(public_key_octets)
         digest = keccak256_bytes(public_key_octets[1..]) # без префикса 0x04
-        eip55_checksum(digest[-20, 20].unpack1('H*'))
+        eip55_checksum(digest[-20, 20].unpack1("H*"))
       end
 
       # ===== Подпись EVM-транзакций (EIP-155) =====
@@ -156,7 +156,7 @@ module Crypto
         v = chain_id * 2 + 35 + parity
         raw = rlp_encode([ nonce, gas_price, gas, to_bytes, value, data_bytes, v, r, s ])
 
-        { raw: raw.unpack1('H*'), tx_hash: "0x#{keccak256(raw)}" }
+        { raw: raw.unpack1("H*"), tx_hash: "0x#{keccak256(raw)}" }
       end
 
       #
@@ -196,7 +196,7 @@ module Crypto
       # @return [String] 64 hex-символа
       #
       def encode_uint256(value)
-        value.to_i.to_s(16).rjust(64, '0')
+        value.to_i.to_s(16).rjust(64, "0")
       end
 
       #
@@ -206,7 +206,7 @@ module Crypto
       # @return [String] 64 hex-символа
       #
       def encode_address(address)
-        address.sub(/\A0x/, '').rjust(64, '0')
+        address.sub(/\A0x/, "").rjust(64, "0")
       end
 
       #
@@ -266,7 +266,7 @@ module Crypto
       def ecdsa_sign(msg_hash_hex, private_key_int)
         n = SECP256K1_ORDER
         e = msg_hash_hex.to_i(16)
-        group = OpenSSL::PKey::EC::Group.new('secp256k1')
+        group = OpenSSL::PKey::EC::Group.new("secp256k1")
         generator = group.generator
 
         loop do
@@ -275,8 +275,8 @@ module Crypto
           # OpenSSL::PKey::EC::Point в Ruby 3.4 не имеет методов #x/#y —
           # координаты извлекаем из uncompressed-сериализации (0x04 || X(32) || Y(32)).
           octet = point.to_octet_string(:uncompressed)
-          x = octet.byteslice(1, 32).unpack1('H*').to_i(16)
-          y = octet.byteslice(33, 32).unpack1('H*').to_i(16)
+          x = octet.byteslice(1, 32).unpack1("H*").to_i(16)
+          y = octet.byteslice(33, 32).unpack1("H*").to_i(16)
           r = x % n
           next if r.zero?
 
@@ -306,7 +306,7 @@ module Crypto
 
         hex = value.to_s(16)
         hex = "0#{hex}" if hex.length.odd?
-        rlp_encode_bytes([ hex ].pack('H*'))
+        rlp_encode_bytes([ hex ].pack("H*"))
       end
 
       #
@@ -349,7 +349,7 @@ module Crypto
       def length_to_bytes(len)
         hex = len.to_s(16)
         hex = "0#{hex}" if hex.length.odd?
-        [ hex ].pack('H*')
+        [ hex ].pack("H*")
       end
 
       #
@@ -361,7 +361,7 @@ module Crypto
       def address_to_bytes(address)
         return "".b if address.blank?
 
-        [ address.sub(/\A0x/, '').rjust(40, '0') ].pack('H*')
+        [ address.sub(/\A0x/, "").rjust(40, "0") ].pack("H*")
       end
 
       #
@@ -373,9 +373,9 @@ module Crypto
       def hex_to_bytes(hex)
         return "".b if hex.blank?
 
-        clean = hex.sub(/\A0x/, '')
+        clean = hex.sub(/\A0x/, "")
         clean = "0#{clean}" if clean.length.odd?
-        [ clean ].pack('H*')
+        [ clean ].pack("H*")
       end
 
       #

@@ -113,7 +113,7 @@ class Admin::UserPolicy < ApplicationPolicy
         scope.all
       elsif user.moderator?
         # Модераторы видят только активных пользователей
-        scope.where(status: 'active')
+        scope.where(status: "active")
       else
         scope.none
       end

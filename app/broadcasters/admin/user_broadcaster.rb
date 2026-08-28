@@ -116,7 +116,7 @@ class Admin::UserBroadcaster
       name: "adminUserUpdateSuccess",
       detail: {
         user_id: user.id,
-        message: I18n.t('admin.users.update_success')
+        message: I18n.t("admin.users.update_success")
       }
     )
 
@@ -138,7 +138,7 @@ class Admin::UserBroadcaster
       name: "adminUserDestroySuccess",
       detail: {
         user_id: user.id,
-        message: I18n.t('admin.users.destroy_success')
+        message: I18n.t("admin.users.destroy_success")
       }
     )
 
@@ -184,8 +184,8 @@ class Admin::UserBroadcaster
 
     # Отправляем уведомление об успехе
     role_message = action == :add ?
-      I18n.t('admin.users.role_added') :
-      I18n.t('admin.users.role_removed')
+      I18n.t("admin.users.role_added") :
+      I18n.t("admin.users.role_removed")
 
     cable_ready["admin_feed"].dispatch_event(
       name: "adminUserRoleChangeSuccess",
@@ -216,7 +216,7 @@ class Admin::UserBroadcaster
       name: "adminUserCreatedSuccess",
       detail: {
         user_id: user.id,
-        message: I18n.t('admin.users.create_success')
+        message: I18n.t("admin.users.create_success")
       }
     )
 
@@ -260,18 +260,18 @@ class Admin::UserBroadcaster
   #
   def render_status_badge(user)
     status_class = case user.status
-    when 'active'
-      'bg-green-100 text-green-800'
-    when 'pending_verification'
-      'bg-yellow-100 text-yellow-800'
-    when 'suspended'
-      'bg-orange-100 text-orange-800'
-    when 'banned'
-      'bg-red-100 text-red-800'
-    when 'deleted'
-      'bg-gray-100 text-gray-800'
+    when "active"
+      "bg-green-100 text-green-800"
+    when "pending_verification"
+      "bg-yellow-100 text-yellow-800"
+    when "suspended"
+      "bg-orange-100 text-orange-800"
+    when "banned"
+      "bg-red-100 text-red-800"
+    when "deleted"
+      "bg-gray-100 text-gray-800"
     else
-      'bg-gray-100 text-gray-800'
+      "bg-gray-100 text-gray-800"
     end
 
     ApplicationController.helpers.tag.span(
@@ -290,13 +290,13 @@ class Admin::UserBroadcaster
     roles_html = user.roles.map do |role|
       ApplicationController.helpers.tag.span(
         role.name,
-        class: 'px-2 py-1 text-xs font-medium rounded bg-teal-100 text-teal-800 mr-1'
+        class: "px-2 py-1 text-xs font-medium rounded bg-teal-100 text-teal-800 mr-1"
       )
     end.join
 
     ApplicationController.helpers.tag.div(
       roles_html,
-      class: 'flex flex-wrap gap-1'
+      class: "flex flex-wrap gap-1"
     )
   end
 

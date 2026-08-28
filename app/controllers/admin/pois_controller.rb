@@ -65,7 +65,7 @@ class Admin::PoisController < Admin::BaseController
     @poi = Poi.includes(:poi_category, :user).friendly.find(params[:id])
     authorize @poi, :show?
 
-    @edit_mode = params[:edit] == 'true'
+    @edit_mode = params[:edit] == "true"
     @categories = PoiCategory.active.by_position
     @versions = @poi.versions.order(created_at: :desc)
     @pagy_audit, @versions = pagy(@versions, limit: 10, page: params[:audit_page] || 1)

@@ -2,4 +2,13 @@ en:
   poi:
     gallery_component:
       title: Gallery
-      coming_soon: Coming soon
+      empty_title: No photos yet
+      empty_hint: Be the first to add a photo
+      add_photo: Add photo
+      delete: Delete
+      delete_confirm: Remove this photo?
+      upload_failed: Failed to upload photo
+      upload_proximity: You need to be within 100 meters of this place to add a photo
+      close: Close
+      counter: "%{current} / %{total}"
+      photo_alt: POI photo

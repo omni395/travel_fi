@@ -2,7 +2,7 @@
 
 #
 # User Broadcaster - отправляет обновления профиля пользователя через WebSocket
-# 
+#
 # Ответственность:
 # 1. Получает обновленного пользователя
 # 2. Рендерит актуальный компонент интерфейса
@@ -45,7 +45,7 @@ class UserBroadcaster
 
     # 2. Живое обновление уведомления (toast)
     toast_html = ApplicationController.renderer.render(Ui::ToastComponent.new(
-      message: I18n.t('notifications.user_updated', name: user.name)
+      message: I18n.t("notifications.user_updated", name: user.name)
     ))
 
     cable_ready[channel].insert_adjacent_html(

@@ -14,8 +14,8 @@ class Wallet < ApplicationRecord
   belongs_to :user
 
   enum :kind, {
-    custodial: 'custodial',
-    external: 'external'
+    custodial: "custodial",
+    external: "external"
   }, validate: true
 
   validates :address, presence: true, uniqueness: true
