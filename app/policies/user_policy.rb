@@ -28,7 +28,7 @@ class UserPolicy < ApplicationPolicy
   #
   def show?
     return false unless user.present?
-    
+
     user == record || user.admin?
   end
 
@@ -41,7 +41,7 @@ class UserPolicy < ApplicationPolicy
   #
   def update?
     return false unless user.present?
-    
+
     user == record || user.admin?
   end
 
@@ -63,7 +63,7 @@ class UserPolicy < ApplicationPolicy
   #
   def destroy?
     return false unless user.present?
-    
+
     user.admin?
   end
 
@@ -76,7 +76,7 @@ class UserPolicy < ApplicationPolicy
   #
   def activate?
     return false unless user.present?
-    
+
     user.admin?
   end
 
@@ -88,7 +88,7 @@ class UserPolicy < ApplicationPolicy
   #
   def suspend?
     return false unless user.present?
-    
+
     user.admin? && user != record
   end
 
@@ -100,7 +100,7 @@ class UserPolicy < ApplicationPolicy
   #
   def ban?
     return false unless user.present?
-    
+
     user.admin? && user != record
   end
 
@@ -112,7 +112,7 @@ class UserPolicy < ApplicationPolicy
   #
   def update_roles?
     return false unless user.present?
-    
+
     user.admin? && user != record
   end
 

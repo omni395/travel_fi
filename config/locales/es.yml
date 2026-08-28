@@ -283,6 +283,12 @@ es:
     create_success_moderation: "POI creado. Aparecerá en el mapa tras la aprobación de un moderador."
     no_location_toast: "Acceso a la ubicación denegado. Habilite los servicios de ubicación para añadir e interactuar con POIs cercanos."
     guest_warning: "Estás usando como invitado. Inicia sesión o regístrate para añadir y gestionar POIs."
+    photo_required: "Selecciona una foto para subir"
+    photo_upload_failed: "No se pudo subir la foto"
+    photo_remove_failed: "No se pudo eliminar la foto"
+    photo_removed: "Foto eliminada"
+    photo_remove_denied: "No tienes permiso para eliminar esta foto"
+    photo_proximity_error: "Debes estar a menos de 100 metros de este lugar para añadir una foto"
     auth_required_title: "Inicio de sesión requerido"
     auth_required_message: "Inicie sesión o regístrese para ver información detallada sobre este lugar."
     load_more:

@@ -31,6 +31,8 @@ class PoiCategoryNotification < ApplicationNotification
   required_param :event_type
   required_param :payload
 
+  ALLOWED_EVENT_TYPES = %w[osm_import create update].freeze
+
   #
   # Текст уведомления (in-app, вебсокет)
   #
@@ -135,8 +137,11 @@ class PoiCategoryNotification < ApplicationNotification
     recipient ||= self.recipient
     return false unless recipient&.setting
 
-    method_name = "#{params[:event_type]}_#{type}_enabled?"
-    recipient.setting.respond_to?(method_name) && recipient.setting.send(method_name)
+    event_type = params[:event_type].to_s
+    return false unless ALLOWED_EVENT_TYPES.include?(event_type)
+
+    method_name = "#{event_type}_#{type}_enabled?"
+    recipient.setting.respond_to?(method_name) && recipient.setting.public_send(method_name)
   rescue StandardError => e
     Rails.logger.error("PoiCategoryNotification setting check error: #{e.message}")
     false

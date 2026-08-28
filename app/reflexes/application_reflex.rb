@@ -126,4 +126,3 @@ class ApplicationReflex < StimulusReflex::Reflex
     end
   end
 end
-

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class SettingsReflex < ApplicationReflex
-
   #
   # Обновляет настройки через Reflex (WebSocket).
   # Reflex НЕ рендерит тосты напрямую — тост доставляется через broadcast
@@ -24,7 +23,7 @@ class SettingsReflex < ApplicationReflex
     # Тост об успехе — через broadcast (ToastBroadcaster → user_N)
     ToastBroadcaster.call(
       user_id: current_user.id,
-      message: t('settings.updated'),
+      message: t("settings.updated"),
       type: :success,
       auto_dismiss: 3000
     )
@@ -44,7 +43,7 @@ class SettingsReflex < ApplicationReflex
   def send_error_toast
     ToastBroadcaster.call(
       user_id: current_user&.id,
-      message: t('settings.update_error'),
+      message: t("settings.update_error"),
       type: :error,
       auto_dismiss: 5000
     )

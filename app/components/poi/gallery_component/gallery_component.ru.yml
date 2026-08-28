@@ -2,4 +2,13 @@ ru:
   poi:
     gallery_component:
       title: Галерея
-      coming_soon: Скоро
+      empty_title: Фотографий пока нет
+      empty_hint: Будьте первым, кто добавит фото
+      add_photo: Добавить фото
+      delete: Удалить
+      delete_confirm: Удалить это фото?
+      upload_failed: Не удалось загрузить фото
+      upload_proximity: Чтобы добавить фото, нужно находиться в пределах 100 метров от этого места
+      close: Закрыть
+      counter: "%{current} / %{total}"
+      photo_alt: Фото точки

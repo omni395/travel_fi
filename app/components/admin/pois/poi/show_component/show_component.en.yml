@@ -20,6 +20,7 @@ en:
           rating: Rating
           opening_hours: Opening Hours
           price_info: Price info
+          gallery: Photos
           status:
             pending: "Pending"
             approved: "Approved"

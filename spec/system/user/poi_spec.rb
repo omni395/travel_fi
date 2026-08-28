@@ -187,7 +187,7 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
           lat_marker = last_lonlat && last_lonlat[1]
 
           if lat_input != 0.0 && lng_input != 0.0 &&
-             ( (lat_marker && (lat_marker - POI_LAT).abs > 1e-6) || (lng_marker && (lng_marker - POI_LNG).abs > 1e-6) )
+             ((lat_marker && (lat_marker - POI_LAT).abs > 1e-6) || (lng_marker && (lng_marker - POI_LNG).abs > 1e-6))
             # Маркер сдвинулся и скрытые поля совпадают с маркером
             expect(lat_input.to_s).to eq(format('%.6f', lat_marker))
             expect(lng_input.to_s).to eq(format('%.6f', lng_marker))
@@ -352,6 +352,91 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
       JS
       visit pois_path
       wait_for_selector('#poi-list [data-poi-id]', timeout: 90)
+    end
+  end
+
+  describe 'галерея фотографий POI', js: true do
+    let!(:gallery_poi) do
+      create(:poi,
+             user: user_a,
+             poi_category: category,
+             status: 'approved',
+             name: { 'en' => 'Gallery POI', 'ru' => 'Галерея', 'es' => 'Galería POI', 'zh' => '画廊' },
+             coordinates: PoiService.parse_coordinates(POI_LAT, POI_LNG))
+    end
+
+    # Открывает модалку точки и активирует таб «Галерея».
+    # Клик по табу переключает панели (Ui::TabsComponent#switch). Надёжно:
+    # кликаем по кнопке таба через execute_script (Selenium-клик по кнопке таба
+    # хрупок при многократном прогоне) и ждём, пока панель галереи станет
+    # ВИДИМОЙ (visible: true учитывает hidden на предке-панели).
+    def open_gallery_tab
+      sign_in_via_ui(user_a)
+      visit pois_path
+      page.execute_script("document.dispatchEvent(new CustomEvent('poi:show-detail', { detail: { poiId: #{gallery_poi.id} } }))")
+      wait_for_selector("[data-poi--show-component-target='overlay']:not(.hidden)", timeout: 60)
+      wait_for_selector("button[data-tab='gallery']", timeout: 30)
+      # Клик по табу Gallery через JS (ui--tabs-component#switch → активная панель)
+      page.execute_script("document.querySelector(\"button[data-tab='gallery']\").click()")
+      # Ждём, пока панель галереи станет видимой (visible: true учитывает предка)
+      Timeout.timeout(30) do
+        sleep 0.2 until page.has_css?('[data-poi-gallery]', visible: true)
+      end
+      wait_for_selector('[data-poi-gallery]', timeout: 30)
+    end
+
+    it 'пустая галерея: плашка «будьте первым» + кнопка добавления' do
+      open_gallery_tab
+      expect(page).to have_content(I18n.t('poi.gallery_component.empty_title'), wait: 10)
+      expect(page).to have_content(I18n.t('poi.gallery_component.empty_hint'), wait: 10)
+      expect(page).to have_button(I18n.t('poi.gallery_component.add_photo'), wait: 10).or(have_selector('label', text: I18n.t('poi.gallery_component.add_photo')))
+    end
+
+    it 'показывает свои фото первыми (с удалением) и чужие после' do
+      create(:photo, poi: gallery_poi, user: user_a, position: 0)
+      create(:photo, poi: gallery_poi, user: user_b, position: 1)
+      create(:photo, poi: gallery_poi, user: user_b, position: 2)
+
+      open_gallery_tab
+
+      # Своё фото (от user_a) — первым в сетке (3 миниатюры)
+      thumbs = page.all('[data-poi--gallery-component-target="thumb"]', visible: false)
+      expect(thumbs.length).to eq(3)
+      # Первый thumb — фото user_a (у него есть кнопка удаления в его контейнере)
+      first_thumb_container = thumbs.first.find(:xpath, '..')
+      expect(first_thumb_container).to have_css('button[data-action="click->poi--gallery-component#remove"]', visible: false)
+      # Кнопка удаления видима (панель галереи активна)
+      wait_for_selector("button[data-action='click->poi--gallery-component#remove']", timeout: 20)
+    end
+
+    it 'добавляет своё фото и видит его без перезагрузки' do
+      open_gallery_tab
+      expect(page).to have_content(I18n.t('poi.gallery_component.empty_title'), wait: 10)
+
+      # Загружаем файл через hidden input (multipart POST)
+      attach_file('photo[image]', Rails.root.join('spec/fixtures/files/photo.png'), make_visible: true)
+
+      # После upload JS вызывает PoiReflex#refresh_gallery → сетка обновляется
+      wait_for_selector('[data-poi--gallery-component-target="thumb"]', timeout: 60)
+      expect(gallery_poi.reload.photos.count).to eq(1)
+    end
+
+    it 'удаляет своё фото без перезагрузки' do
+      photo = create(:photo, poi: gallery_poi, user: user_a, position: 0)
+      open_gallery_tab
+
+      # Кнопка удаления видима после активации таба — ждём её
+      wait_for_selector("button[data-action='click->poi--gallery-component#remove'][data-photo-id='#{photo.id}']", timeout: 20)
+      # JS-клик (execute_script) — детерминированный вызов Stimulus-действия:
+      # Selenium .click по кнопке, перекрытой обложкой (.relative img open), теряется.
+      page.execute_script("document.querySelector(\"button[data-action='click->poi--gallery-component#remove'][data-photo-id='#{photo.id}']\").click()")
+
+      # JS → DELETE /pois/:id/photos/:id → Poi::PhotosController#destroy → live inner_html
+      wait_for_selector('[data-poi-gallery]', timeout: 60)
+      expect(gallery_poi.reload.photos).to be_empty
+      # Галерея перерисована без фото — в сетке не осталось миниатюр
+      # (live-обновление без перезагрузки страницы)
+      expect(page).to have_no_css('[data-poi--gallery-component-target="thumb"]', wait: 60)
     end
   end
 end

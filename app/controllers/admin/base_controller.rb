@@ -1,4 +1,4 @@
- # frozen_string_literal: true
+# frozen_string_literal: true
 
 #
 # Admin::BaseController - базовый контроллер для админ-панели
@@ -9,7 +9,7 @@
 # - Общую логику для всех админских контроллеров
 #
 class Admin::BaseController < ApplicationController
-  layout 'admin'
+  layout "admin"
   # Отключаем CSRF защиту для API запросов
   protect_from_forgery with: :exception, unless: -> { request.format.json? }
 
@@ -32,7 +32,7 @@ class Admin::BaseController < ApplicationController
   def require_admin_or_moderator!
     return if current_user && policy(current_user).admin_panel_access?
 
-    redirect_to root_path, alert: I18n.t('admin.access_denied')
+    redirect_to root_path, alert: I18n.t("admin.access_denied")
   end
 
   #

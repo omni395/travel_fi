@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
   protect_from_forgery prepend: true
 
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
-  #allow_browser versions: :modern
+  # allow_browser versions: :modern
   allow_browser versions: { safari: 16.4, chrome: 119, firefox: 121 }
 
   # Set locale from URL params
@@ -48,7 +48,7 @@ class ApplicationController < ActionController::Base
   # Devise падает с "could not find Warden::Proxy".
   #
   def warden
-    request.env['warden'] || begin
+    request.env["warden"] || begin
       mock = Object.new
       mock.define_singleton_method(:user) { |*| nil }
       mock.define_singleton_method(:authenticate) { |*| nil }
@@ -108,7 +108,7 @@ class ApplicationController < ActionController::Base
   end
 
   def home_controller?
-    controller_name == 'home' || controller_name == 'pages'
+    controller_name == "home" || controller_name == "pages"
   end
 
   def devise_controller_or_engine?
@@ -119,7 +119,7 @@ class ApplicationController < ActionController::Base
   def set_devise_flash
     # Devise uses different flash keys for different scenarios
     # We capture all possible Devise flash messages and ensure they're set
-    devise_flash_keys = [:notice, :alert]
+    devise_flash_keys = [ :notice, :alert ]
 
     devise_flash_keys.each do |key|
       if flash[key].present?
@@ -131,8 +131,8 @@ class ApplicationController < ActionController::Base
   protected
 
   def configure_permitted_parameters
-    devise_parameter_sanitizer.permit(:sign_up, keys: [:name, :avatar])
-    devise_parameter_sanitizer.permit(:account_update, keys: [:name, :avatar])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [ :name, :avatar ])
+    devise_parameter_sanitizer.permit(:account_update, keys: [ :name, :avatar ])
   end
 
   #

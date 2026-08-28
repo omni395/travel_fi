@@ -109,7 +109,7 @@ RSpec.describe PoiService, type: :service do
       params = valid_params(photos: [ file ])
 
       expect(PhotoService).to receive(:attach_photos)
-        .with(record: an_instance_of(Poi), files: [ file ], audit_touch: true)
+        .with(record: an_instance_of(Poi), files: [ file ], user: user, audit_touch: true)
 
       described_class.create(params: params, current_user: user)
     end
@@ -456,6 +456,53 @@ RSpec.describe PoiService, type: :service do
         expect(GamificationService).to receive(:award!).with(:comment_create, user)
 
         described_class.create_comment(poi: poi, user: user, body: 'Nice place')
+      end
+    end
+
+    describe '.add_photo' do
+      let(:poi) { create(:poi) }
+      let(:uploaded_file) do
+        Rack::Test::UploadedFile.new(Rails.root.join('spec/fixtures/files/photo.png'), 'image/png')
+      end
+
+      it 'создаёт Photo с автором и позицией' do
+        photo = described_class.add_photo(poi: poi, file: uploaded_file, current_user: user)
+
+        expect(photo).to be_persisted
+        expect(photo.user).to eq(user)
+        expect(photo.poi).to eq(poi)
+        expect(photo.image).to be_attached
+      end
+
+      it 'начисляет награду TFT автору за добавленное фото (poi_photo_add)' do
+        expect(GamificationService).to receive(:award!).with(:poi_photo_add, user)
+
+        described_class.add_photo(poi: poi, file: uploaded_file, current_user: user)
+      end
+
+      it 'бросает CreateError при пустом файле' do
+        expect {
+          described_class.add_photo(poi: poi, file: nil, current_user: user)
+        }.to raise_error(PoiService::CreateError)
+      end
+    end
+
+    describe '.remove_photo' do
+      let(:poi) { create(:poi) }
+
+      it 'удаляет Photo из галереи' do
+        photo = create(:photo, poi: poi, user: user, position: 0)
+
+        result = described_class.remove_photo(poi: poi, photo_id: photo.id)
+
+        expect(result).to be(true)
+        expect(poi.reload.photos).to be_empty
+      end
+
+      it 'бросает DestroyError если фото не найдено' do
+        expect {
+          described_class.remove_photo(poi: poi, photo_id: 99_999)
+        }.to raise_error(PoiService::DestroyError)
       end
     end
   end

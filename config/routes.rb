@@ -52,7 +52,11 @@ Rails.application.routes.draw do
 
     # User-facing POI routes - карта, список и редактирование (PATCH /pois/:id из модалки).
     # Создание POI — через модалку на карте (Poi::FormComponent), отдельная страница new отсутствует.
-    resources :pois, only: [ :index, :show, :create, :update ]
+    resources :pois, only: [ :index, :show, :create, :update ] do
+      # Управление галереей фото (HTTP/multipart, JSON-ответ) — бинарники через
+      # Reflex не передаются (долг ⚠️ решён здесь). Доступ — Pundit PhotoPolicy.
+      resources :photos, only: [ :create, :destroy ], controller: "poi/photos"
+    end
 
     # User profile routes - FriendlyId slug или числовой id
     # ВАЖНО: эти маршруты должны быть ПОСЛЕ devise_for и admin namespace,

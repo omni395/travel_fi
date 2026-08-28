@@ -1,10 +1,104 @@
-<%# Poi::GalleryComponent - таб «Галерея» (ЗАГЛУШКА, реализация в ROADMAP) %>
-<%# Иконка: mdi-image-multiple-outline %>
-<div data-controller="poi--gallery-component" class="p-4">
-  <div class="text-center py-10 text-gray-400">
-    <i class="mdi mdi-image-multiple-outline text-4xl mb-3"></i>
-    <%# Иконка: mdi-image-multiple-outline %>
-    <p class="text-sm font-medium text-gray-500"><%= t(".title") %></p>
-    <p class="text-xs mt-1"><%= t(".coming_soon") %></p>
-  </div>
+<%# Poi::GalleryComponent - таб «Галерея»: сетка (свои вначале) + lightbox/слайдер + загрузка/удаление %>
+<%# Иконки: mdi-image-multiple-outline / mdi-plus / mdi-close / mdi-trash-can-outline / mdi-image-plus %>
+<div data-controller="poi--gallery-component"
+     data-poi--gallery-component-create-path="<%= photos_create_path %>"
+     data-poi--gallery-component-poi-id="<%= poi.id %>"
+     class="p-4">
+  <% if has_photos? %>
+    <%# Кнопка «Добавить фото» (multipart POST в контроллер) %>
+    <% if can_manage? %>
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider"><%= t(".title") %></h3>
+        <label class="cursor-pointer inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-600 text-white text-xs font-medium rounded-md hover:bg-emerald-700 transition-colors">
+          <%# Иконка: mdi-image-plus %>
+          <i class="mdi mdi-image-plus text-sm"></i>
+          <%= t(".add_photo") %>
+          <input type="file" name="photo[image]" accept="image/*"
+                 data-poi--gallery-component-target="fileInput"
+                 data-action="change->poi--gallery-component#upload"
+                 class="hidden">
+        </label>
+      </div>
+    <% end %>
+
+    <%# Сетка миниатюр %>
+    <div class="grid grid-cols-3 gap-2" data-poi--gallery-component-target="grid">
+      <% photos.each do |photo| %>
+        <div class="relative group aspect-square rounded-lg overflow-hidden border border-gray-200">
+          <img src="<%= thumb_url(photo) %>"
+               data-poi--gallery-component-target="thumb"
+               data-photo-id="<%= photo.id %>"
+               data-full-url="<%= medium_url(photo) %>"
+               alt="<%= t(".photo_alt") %>"
+               class="w-full h-full object-cover cursor-pointer"
+               data-action="click->poi--gallery-component#open">
+          <% if can_delete?(photo) %>
+            <button type="button"
+                    data-photo-id="<%= photo.id %>"
+                    data-action="click->poi--gallery-component#remove"
+                    class="absolute top-1 right-1 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                    title="<%= t(".delete") %>"
+                    aria-label="<%= t(".delete") %>">
+              <%# Иконка: mdi-trash-can-outline %>
+              <i class="mdi mdi-trash-can-outline text-sm"></i>
+            </button>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Lightbox/слайдер %>
+    <div data-poi--gallery-component-target="lightbox"
+         class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+         data-action="click->poi--gallery-component#closeBackdrop">
+      <div class="relative max-w-3xl w-full" data-action="click->poi--gallery-component#stopPropagation">
+        <button type="button"
+                data-action="click->poi--gallery-component#close"
+                class="absolute -top-3 -right-3 w-8 h-8 bg-white text-gray-800 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
+                aria-label="<%= t(".close") %>">
+          <%# Иконка: mdi-close %>
+          <i class="mdi mdi-close"></i>
+        </button>
+        <div class="flex items-center gap-3">
+          <button type="button"
+                  data-action="click->poi--gallery-component#prev"
+                  class="w-10 h-10 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+                  aria-label="<%= t(".prev") %>">
+            <%# Иконка: mdi-chevron-left %>
+            <i class="mdi mdi-chevron-left text-2xl"></i>
+          </button>
+          <img data-poi--gallery-component-target="lightboxImage"
+               alt="<%= t(".photo_alt") %>"
+               class="max-h-[80vh] w-auto mx-auto rounded-lg object-contain">
+          <button type="button"
+                  data-action="click->poi--gallery-component#next"
+                  class="w-10 h-10 bg-white/10 text-white rounded-full flex items-center justify-center hover:bg-white/20 transition-colors"
+                  aria-label="<%= t(".next") %>">
+            <%# Иконка: mdi-chevron-right %>
+            <i class="mdi mdi-chevron-right text-2xl"></i>
+          </button>
+        </div>
+        <div class="text-center text-white text-sm mt-3" data-poi--gallery-component-target="counter"></div>
+      </div>
+    </div>
+  <% else %>
+    <%# Empty-состояние: нет фото %>
+    <div class="text-center py-10">
+      <%# Иконка: mdi-image-multiple-outline %>
+      <i class="mdi mdi-image-multiple-outline text-4xl mb-3 text-gray-300"></i>
+      <p class="text-sm font-medium text-gray-500"><%= t(".empty_title") %></p>
+      <p class="text-xs mt-1 text-gray-400"><%= t(".empty_hint") %></p>
+      <% if can_manage? %>
+        <label class="mt-4 cursor-pointer inline-flex items-center gap-1 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-md hover:bg-emerald-700 transition-colors">
+          <%# Иконка: mdi-image-plus %>
+          <i class="mdi mdi-image-plus"></i>
+          <%= t(".add_photo") %>
+          <input type="file" name="photo[image]" accept="image/*"
+                 data-poi--gallery-component-target="fileInput"
+                 data-action="change->poi--gallery-component#upload"
+                 class="hidden">
+        </label>
+      <% end %>
+    </div>
+  <% end %>
 </div>

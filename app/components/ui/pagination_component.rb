@@ -18,7 +18,7 @@ class Ui::PaginationComponent < ApplicationComponent
   end
 
   private
- 
+
   attr_reader :pagy, :pagination_controller
 
   #
@@ -33,9 +33,9 @@ class Ui::PaginationComponent < ApplicationComponent
     total = pagy.pages
     return (1..total).to_a if total <= 7
 
-    result = [1]
+    result = [ 1 ]
     result << :gap if current > 4
-    result += ([(current - 1), 2].max..[(current + 1), total - 1].min).to_a
+    result += ([ (current - 1), 2 ].max..[ (current + 1), total - 1 ].min).to_a
     result << :gap if current < total - 3
     result << total
     result.uniq

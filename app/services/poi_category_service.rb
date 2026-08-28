@@ -171,7 +171,7 @@ class PoiCategoryService
     # object может быть nil (версия без снапшота) или уже Hash (после десериализации) —
     # безопасно обрабатываем оба варианта через parse_version_object.
     removed_field_ids = PaperTrail::Version
-                        .where(item_type: 'PoiCategoryField')
+                        .where(item_type: "PoiCategoryField")
                         .where.not(item_id: current_field_ids)
                         .pluck(:item_id, :object)
                         .filter_map do |item_id, object|
@@ -181,10 +181,10 @@ class PoiCategoryService
 
     all_field_ids = (current_field_ids + removed_field_ids).uniq
 
-    versions = PaperTrail::Version.where(item_type: 'PoiCategory', item_id: category.id)
+    versions = PaperTrail::Version.where(item_type: "PoiCategory", item_id: category.id)
     if all_field_ids.any?
       versions = versions.or(
-        PaperTrail::Version.where(item_type: 'PoiCategoryField', item_id: all_field_ids)
+        PaperTrail::Version.where(item_type: "PoiCategoryField", item_id: all_field_ids)
       )
     end
 
@@ -225,11 +225,11 @@ class PoiCategoryService
     if params[:osm_tags].present?
       result[:osm_tags] = if params[:osm_tags].is_a?(String)
                             params[:osm_tags].split(",").map(&:strip).reject(&:blank?)
-                          elsif params[:osm_tags].is_a?(Array)
+      elsif params[:osm_tags].is_a?(Array)
                             params[:osm_tags].map(&:strip).reject(&:blank?)
-                          else
+      else
                             params[:osm_tags]
-                          end
+      end
     end
 
     result

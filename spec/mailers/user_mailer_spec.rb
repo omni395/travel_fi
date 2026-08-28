@@ -48,7 +48,7 @@ RSpec.describe UserMailer, type: :mailer do
   describe '#confirmation_instructions' do
     it 'валидное письмо с именем в greeting' do
       mail = described_class.confirmation_instructions(user, 'token123')
-      expect(mail.to).to eq([user.email])
+      expect(mail.to).to eq([ user.email ])
       expect(mail.subject).to eq(I18n.t('devise.mailer.confirmation_instructions.subject'))
       expect_clean_mail(mail)
     end
@@ -57,7 +57,7 @@ RSpec.describe UserMailer, type: :mailer do
   describe '#reset_password_instructions' do
     it 'валидное письмо с именем в greeting' do
       mail = described_class.reset_password_instructions(user, 'token123')
-      expect(mail.to).to eq([user.email])
+      expect(mail.to).to eq([ user.email ])
       expect_clean_mail(mail)
     end
   end
@@ -65,7 +65,7 @@ RSpec.describe UserMailer, type: :mailer do
   describe '#email_changed' do
     it 'валидное письмо с именем в greeting' do
       mail = described_class.email_changed(user)
-      expect(mail.to).to eq([user.email])
+      expect(mail.to).to eq([ user.email ])
       expect_clean_mail(mail)
     end
   end
@@ -73,7 +73,7 @@ RSpec.describe UserMailer, type: :mailer do
   describe '#unlock_instructions' do
     it 'валидное письмо с именем в greeting' do
       mail = described_class.unlock_instructions(user, 'token123')
-      expect(mail.to).to eq([user.email])
+      expect(mail.to).to eq([ user.email ])
       expect_clean_mail(mail)
     end
   end
@@ -81,7 +81,7 @@ RSpec.describe UserMailer, type: :mailer do
   describe '#password_change' do
     it 'отправляет письмо об изменении пароля (Devise password_change)' do
       mail = described_class.password_change(user)
-      expect(mail.to).to eq([user.email])
+      expect(mail.to).to eq([ user.email ])
       expect(mail.subject).to eq(I18n.t('devise.mailer.password_change.subject'))
       expect_clean_mail(mail)
     end
@@ -90,7 +90,7 @@ RSpec.describe UserMailer, type: :mailer do
   describe '#account_deleted' do
     it 'валидное письмо с именем' do
       mail = described_class.account_deleted(user)
-      expect(mail.to).to eq([user.email])
+      expect(mail.to).to eq([ user.email ])
       expect_clean_mail(mail)
     end
   end
@@ -98,7 +98,7 @@ RSpec.describe UserMailer, type: :mailer do
   describe '#profile_updated (Noticed)' do
     it 'валидное письмо с именем' do
       mail = described_class.with(recipient: user).profile_updated
-      expect(mail.to).to eq([user.email])
+      expect(mail.to).to eq([ user.email ])
       expect_clean_mail(mail)
     end
   end
@@ -106,7 +106,7 @@ RSpec.describe UserMailer, type: :mailer do
   describe '#osm_import_complete (Noticed)' do
     it 'валидное письмо с именем' do
       mail = described_class.with(recipient: user).osm_import_complete
-      expect(mail.to).to eq([user.email])
+      expect(mail.to).to eq([ user.email ])
       expect_clean_mail(mail)
     end
   end

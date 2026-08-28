@@ -38,15 +38,15 @@ class UserAuditLogger
   # --- Audit-события без object_changes ---
 
   def self.log_login(user)
-    log_action(user, 'login')
+    log_action(user, "login")
   end
 
   def self.log_logout(user)
-    log_action(user, 'logout')
+    log_action(user, "logout")
   end
 
   def self.log_email_verified(user)
-    log_action(user, 'email_verified')
+    log_action(user, "email_verified")
   end
 
   # --- Audit-события с метаданными в object_changes ---
@@ -59,10 +59,10 @@ class UserAuditLogger
   #
   def self.log_email_changed(user, old_email = nil)
     if old_email.present?
-      changes = { email: [old_email, user.unconfirmed_email || user.email] }
-      log_action_with_changes(user, 'email_changed', changes)
+      changes = { email: [ old_email, user.unconfirmed_email || user.email ] }
+      log_action_with_changes(user, "email_changed", changes)
     else
-      log_action(user, 'email_changed')
+      log_action(user, "email_changed")
     end
   end
 
@@ -72,7 +72,7 @@ class UserAuditLogger
   # @param user [User] пользователь
   #
   def self.log_wallet_added(user)
-    log_action(user, 'wallet_added')
+    log_action(user, "wallet_added")
   end
 
   #
@@ -82,8 +82,8 @@ class UserAuditLogger
   # @param had_avatar [Boolean] был ли аватар ранее
   #
   def self.log_avatar_uploaded(user, had_avatar = false)
-    changes = { avatar: [had_avatar ? 'Attached' : 'None', 'Attached'] }
-    log_action_with_changes(user, 'avatar_uploaded', changes)
+    changes = { avatar: [ had_avatar ? "Attached" : "None", "Attached" ] }
+    log_action_with_changes(user, "avatar_uploaded", changes)
   end
 
   #
@@ -94,10 +94,10 @@ class UserAuditLogger
   #
   def self.log_name_changed(user, old_name = nil)
     if old_name.present?
-      changes = { name: [old_name, user.name] }
-      log_action_with_changes(user, 'name_changed', changes)
+      changes = { name: [ old_name, user.name ] }
+      log_action_with_changes(user, "name_changed", changes)
     else
-      log_action(user, 'name_changed')
+      log_action(user, "name_changed")
     end
   end
 
@@ -111,9 +111,9 @@ class UserAuditLogger
   #
   def self.log_registration(user, attributes = {})
     if attributes.any?
-      log_action_with_changes(user, 'registration', attributes)
+      log_action_with_changes(user, "registration", attributes)
     else
-      log_action(user, 'registration')
+      log_action(user, "registration")
     end
   end
 
@@ -124,7 +124,7 @@ class UserAuditLogger
   # @param changes [Hash] изменения в формате PaperTrail: { field: [old, new] }
   #
   def self.log_user_updated_by_user(user, changes)
-    log_action_with_changes(user, 'user_updated_by_user', changes)
+    log_action_with_changes(user, "user_updated_by_user", changes)
   end
 
   #
@@ -135,7 +135,7 @@ class UserAuditLogger
   # @param admin_id [Integer, nil] ID администратора
   #
   def self.log_user_updated_by_admin(user, changes, admin_id: nil)
-    log_action_with_changes(user, 'user_updated_by_admin', changes, admin_id: admin_id)
+    log_action_with_changes(user, "user_updated_by_admin", changes, admin_id: admin_id)
   end
 
   #
@@ -145,7 +145,7 @@ class UserAuditLogger
   # @param admin_id [Integer, nil] ID администратора
   #
   def self.log_user_deleted_by_admin(user, admin_id: nil)
-    log_action(user, 'user_deleted_by_admin', admin_id: admin_id)
+    log_action(user, "user_deleted_by_admin", admin_id: admin_id)
   end
 
   #
@@ -156,7 +156,7 @@ class UserAuditLogger
   # @param admin_id [Integer, nil] ID администратора
   #
   def self.log_user_created_by_admin(user, attributes, admin_id: nil)
-    log_action_with_changes(user, 'user_created_by_admin', attributes, admin_id: admin_id)
+    log_action_with_changes(user, "user_created_by_admin", attributes, admin_id: admin_id)
   end
 
   #
@@ -272,22 +272,22 @@ class UserAuditLogger
 
     changes.each_with_object({}) do |(key, value), result|
       result[key] = case value
-                    when Hash
-                      if value.key?(:old) || value.key?('old')
+      when Hash
+                      if value.key?(:old) || value.key?("old")
                         # Legacy-формат: { old: ..., new: ... }
-                        old_val = sanitize_value(value[:old] || value['old'])
-                        new_val = sanitize_value(value[:new] || value['new'])
-                        [old_val, new_val]
+                        old_val = sanitize_value(value[:old] || value["old"])
+                        new_val = sanitize_value(value[:new] || value["new"])
+                        [ old_val, new_val ]
                       else
                         # Обычный Hash — оставляем как есть
                         value.to_json
                       end
-                    when Array
+      when Array
                       # PaperTrail-формат: [old, new]
-                      [sanitize_value(value[0]), sanitize_value(value[1])]
-                    else
+                      [ sanitize_value(value[0]), sanitize_value(value[1]) ]
+      else
                       value
-                    end
+      end
     end
   end
 

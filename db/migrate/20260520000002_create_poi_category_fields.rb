@@ -21,7 +21,7 @@ class CreatePoiCategoryFields < ActiveRecord::Migration[8.0]
       t.timestamps
     end
 
-    add_index :poi_category_fields, [:poi_category_id, :field_key], unique: true
+    add_index :poi_category_fields, [ :poi_category_id, :field_key ], unique: true
     add_index :poi_category_fields, :position
   end
 end

@@ -1,12 +1,11 @@
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
-
   #
   # Обработчик Google OAuth2 callback
   # Вызывается когда пользователь возвращается с Google аутентификации
   #
   def google_oauth2
     # Рефкод берём из query (?ref=) либо из session (если был передан до старта OAuth).
-    @user = User.from_google_oauth(request.env['omniauth.auth'], referral_code_input)
+    @user = User.from_google_oauth(request.env["omniauth.auth"], referral_code_input)
 
     if @user.persisted?
       # Рефкод истрачен после обработки — не размазываем по сессии.
@@ -20,7 +19,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       # Перенаправляем на главную со сбережением локали
       redirect_to after_sign_in_path_for(@user), allow_other_host: false
     else
-      session['devise.google_data'] = request.env['omniauth.auth'].except(:extra)
+      session["devise.google_data"] = request.env["omniauth.auth"].except(:extra)
       redirect_to new_user_registration_url, alert: @user.errors.full_messages.join("\n")
     end
   end
@@ -35,13 +34,13 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def referral_code_input
     params[:ref].presence || session[:referral_code].presence
   end
-  
+
   #
   # Обработчик ошибок при OAuth2 аутентификации
   # Вызывается если пользователь отклонил доступ или произошла ошибка
   #
   def failure
-    redirect_to root_path, alert: 'Authentication failed'
+    redirect_to root_path, alert: "Authentication failed"
   end
 
   protected

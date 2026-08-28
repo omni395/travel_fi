@@ -19,7 +19,7 @@ RSpec.describe Poi::FormComponent, type: :helper do
   # Рендер компонента вне браузера — как в broadcaster-контексте
   def render_form(poi)
     ApplicationController.render(
-      described_class.new(poi: poi, current_user: user, categories: [category]),
+      described_class.new(poi: poi, current_user: user, categories: [ category ]),
       layout: false
     )
   end
