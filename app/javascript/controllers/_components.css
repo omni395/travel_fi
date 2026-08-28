@@ -8,6 +8,13 @@
   /* Стили Tailwind используются напрямую в шаблоне; кастомные правила не требуются */
 }
 
+/* === poi/gallery_component/gallery_component.css === */
+/* Poi::GalleryComponent — стили галереи (зелёно-голубая гамма). */
+/* Тонкая настройка lightbox вынесена в Tailwind-классы шаблона. */
+.poi--gallery-component {
+  /* резерв для кастомных стилей при необходимости */
+}
+
 /* === poi/map_component/map_component.css === */
 /* poi/map_component — контейнер OpenLayers карты */
 .poi-map {

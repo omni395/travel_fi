@@ -37,7 +37,7 @@ class Admin::Users::User::EditComponent < ApplicationComponent
   #
   def status_options
     User.statuses.keys.map do |s|
-      [t("activerecord.attributes.user.statuses.#{s}"), s]
+      [ t("activerecord.attributes.user.statuses.#{s}"), s ]
     end
   end
 
@@ -48,7 +48,7 @@ class Admin::Users::User::EditComponent < ApplicationComponent
   #
   def role_options
     roles.map do |r|
-      [t("admin.roles.#{r.name}", default: r.name), r.id]
+      [ t("admin.roles.#{r.name}", default: r.name), r.id ]
     end
   end
 
@@ -67,8 +67,8 @@ class Admin::Users::User::EditComponent < ApplicationComponent
   # @return [String] название роли
   #
   def current_role_name
-    role_name = user.roles.first&.name || 'user'
-    t("admin.roles.#{role_name}", default: 'User')
+    role_name = user.roles.first&.name || "user"
+    t("admin.roles.#{role_name}", default: "User")
   end
 
   #
@@ -77,6 +77,6 @@ class Admin::Users::User::EditComponent < ApplicationComponent
   # @return [Integer] ID роли
   #
   def default_role_id
-    Role.find_by(name: 'user')&.id
+    Role.find_by(name: "user")&.id
   end
 end

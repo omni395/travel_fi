@@ -54,7 +54,7 @@ class WalletService
     # @return [String] id сети
     #
     def default_chain_id
-      (ENV['CHAIN_ID'] || '0x14a34').to_i(16).to_s
+      (ENV["CHAIN_ID"] || "0x14a34").to_i(16).to_s
     end
 
     #
@@ -65,7 +65,7 @@ class WalletService
     #
     def encrypt(private_key_bytes)
       # Приватный ключ сериализуем в hex (ASCII) — бинарные байты не проходят JSON в MessageEncryptor.
-      encryptor.encrypt_and_sign(private_key_bytes.unpack1('H*'))
+      encryptor.encrypt_and_sign(private_key_bytes.unpack1("H*"))
     end
 
     #
@@ -94,8 +94,8 @@ class WalletService
     # @return [String] 32-байтовый ключ
     #
     def encryption_key
-      key_hex = ENV['WALLET_ENCRYPTION_KEY']
-      return [key_hex].pack('H*') if key_hex.present?
+      key_hex = ENV["WALLET_ENCRYPTION_KEY"]
+      return [ key_hex ].pack("H*") if key_hex.present?
 
       Digest::SHA256.digest(Rails.application.secret_key_base)
     end

@@ -39,7 +39,7 @@ class Admin::PoiCategoriesController < Admin::BaseController
     @category = PoiCategory.friendly.find(params[:id])
     authorize @category, :show?
 
-    @edit_mode = params[:edit] == 'true'
+    @edit_mode = params[:edit] == "true"
     @fields = @category.poi_category_fields.by_position
     # Аудити категории и её полей (PoiCategoryField) — единая лента изменений
     @versions = PoiCategoryService.audit_versions(category: @category).order(created_at: :desc)

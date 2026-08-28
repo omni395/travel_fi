@@ -20,6 +20,7 @@ es:
           rating: Valoración
           opening_hours: Horario
           price_info: Precios
+          gallery: Fotos
           status:
             pending: "Pendiente"
             approved: "Aprobado"

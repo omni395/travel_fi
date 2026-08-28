@@ -47,11 +47,11 @@ module TravelFi
     config.active_record.schema_format = :ruby
 
     ActiveRecord::SchemaDumper.ignore_tables |= %w[
-      geometry_columns    # PostGIS system table for geometry column info
-      geography_columns   # PostGIS system table for geography column info  
-      spatial_ref_sys     # PostGIS coordinate reference system definitions (most important to ignore)
-      layer               # postgis_topology extension system table
-      topology            # postgis_topology schema marker table
+      geometry_columns # PostGIS system table for geometry column info
+      geography_columns # PostGIS system table for geography column info
+      spatial_ref_sys # PostGIS coordinate reference system definitions (most important to ignore)
+      layer # postgis_topology extension system table
+      topology # postgis_topology schema marker table
     ]
 
     # Configuration for the application, engines, and railties goes here.

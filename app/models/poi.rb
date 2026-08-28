@@ -39,11 +39,11 @@ class Poi < ApplicationRecord
   belongs_to :user
   has_many :poi_comments, dependent: :destroy
 
-  # Галерея фотографий POI (ActiveStorage)
-  # Первый attachment — обложка (cover) для тултипа и деталей.
-  # Фото НЕ трекаются PaperTrail напрямую: PoiPhotoService фиксирует
-  # изменение галереи через poi.touch (создаёт версию обновления).
-  has_many_attached :photos
+  # Галерея фотографий POI — отдельная модель Photo (poi_id, user_id, position)
+  # с has_one_attached :image. Первое фото по position — обложка (cover) для
+  # тултипа и деталей. Фото НЕ трекаются PaperTrail напрямую: PoiService
+  # фиксирует изменение галереи через poi.touch (создаёт версию обновления).
+  has_many :photos, dependent: :destroy
 
   # Enum для статусов
   # imported (4) — точка, загруженная из OpenStreetMap. Отображается на карте

@@ -8,7 +8,7 @@ gem "rails", "~> 8.1.3"
 gem "propshaft"
 # Use postgresql as the database for Active Record
 gem "puma", ">= 5.0"
-gem 'pg', '>= 1.5.9' # Use the Puma web server [https://github.com/puma/puma]
+gem "pg", ">= 1.5.9" # Use the Puma web server [https://github.com/puma/puma]
 
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"

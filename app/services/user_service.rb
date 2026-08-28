@@ -191,7 +191,7 @@ class UserService
   # @return [User]
   #
   def handle_google_oauth(auth, referral_code_input = nil)
-    user = User.find_or_initialize_by(provider: 'google_oauth2', uid: auth.uid)
+    user = User.find_or_initialize_by(provider: "google_oauth2", uid: auth.uid)
     is_new_user = user.new_record?
 
     if is_new_user

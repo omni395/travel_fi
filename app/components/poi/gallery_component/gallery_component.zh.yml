@@ -1,5 +1,14 @@
 zh:
   poi:
     gallery_component:
-      title: 图库
-      coming_soon: 即将推出
+      title: 相册
+      empty_title: 暂无照片
+      empty_hint: 成为第一个添加照片的人
+      add_photo: 添加照片
+      delete: 删除
+      delete_confirm: 删除此照片？
+      upload_failed: 照片上传失败
+      upload_proximity: 您需要在此地点 100 米范围内才能添加照片
+      close: 关闭
+      counter: "%{current} / %{total}"
+      photo_alt: 地点照片

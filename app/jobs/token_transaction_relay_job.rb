@@ -36,12 +36,15 @@ class TokenTransactionRelayJob < ApplicationJob
 
     # БД-блокировка: только одна Job за раз может войти в этот блок
     # (гарантирует последовательный nonce без конфликтов в мемпуле)
-    ActiveRecord::Base.connection.execute("SELECT pg_advisory_lock(#{lock_id})")
+    sql_lock = ActiveRecord::Base.sanitize_sql_array(["SELECT pg_advisory_lock(?)", lock_id])
+    ActiveRecord::Base.connection.execute(sql_lock)
+
     begin
       Rails.logger.info("TokenTransactionRelayJob: acquired lock (tx_id=#{token_transaction_id})")
       TokenTransactionService.relay!(transaction)
     ensure
-      ActiveRecord::Base.connection.execute("SELECT pg_advisory_unlock(#{lock_id})")
+      sql_unlock = ActiveRecord::Base.sanitize_sql_array(["SELECT pg_advisory_unlock(?)", lock_id])
+      ActiveRecord::Base.connection.execute(sql_unlock)
       Rails.logger.info("TokenTransactionRelayJob: released lock (tx_id=#{token_transaction_id})")
     end
   end

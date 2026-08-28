@@ -4,7 +4,7 @@
 # User Reflex - обработчик WebSocket событий для обновления профиля пользователя
 # Получает RPC вызовы от Stimulus контроллера и обрабатывает их через WebSocket
 #
-# Поток: Stimulus (браузер) → Reflex (WebSocket RPC) → Service (бизнес-логика) → 
+# Поток: Stimulus (браузер) → Reflex (WebSocket RPC) → Service (бизнес-логика) →
 #        Model.save! → after_commit → Broadcaster (CableReady морфинг)
 #
 class UserReflex < ApplicationReflex

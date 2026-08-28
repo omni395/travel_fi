@@ -67,8 +67,8 @@ RSpec.describe VersionObserverJob, type: :job do
       # Реальный сериализованный формат колонки (text + JSON-сериализатор)
       version.update_columns(
         object_changes: {
-          'status' => [0, 1],
-          'name' => [{ 'en' => 'a' }, { 'en' => 'b' }]
+          'status' => [ 0, 1 ],
+          'name' => [ { 'en' => 'a' }, { 'en' => 'b' } ]
         }.to_json
       )
       # Перечитываем из БД, как это делает SolidQueue worker
@@ -87,7 +87,7 @@ RSpec.describe VersionObserverJob, type: :job do
       version = poi.versions.last
 
       # object_changes без ключа status (строка из БД)
-      version.update_columns(object_changes: { 'city' => ['Kyiv', 'Berlin'] }.to_json)
+      version.update_columns(object_changes: { 'city' => [ 'Kyiv', 'Berlin' ] }.to_json)
       version.reload
 
       expect(PoiBroadcaster).to receive(:call).with(poi: poi, change_status: false)

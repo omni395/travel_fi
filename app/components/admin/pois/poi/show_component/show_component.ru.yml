@@ -20,6 +20,7 @@ ru:
           rating: Рейтинг
           opening_hours: Часы работы
           price_info: Информация о ценах
+          gallery: Фотографии
           status:
             pending: "Ожидание"
             approved: "Одобрено"

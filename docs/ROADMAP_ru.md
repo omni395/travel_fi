@@ -91,6 +91,8 @@ Travel Fi
 - ✅ Карточка POI в модалке (шапка + табы)
 - ✅ Форма создания/редактирования POI + мини-карта + обратный геокодинг (Nominatim)
 - ✅ Галерея фото через `PhotoService` (ActiveStorage)
+- ✅ Галерея: сетка + lightbox/слайдер + добавление/удаление фото прямо в карточке POI. Модель `Photo` (`poi_id`/`user_id`/`position`) с `has_one_attached :image`; свои фото первыми (`Photo.author_first`); добавление через HTTP/multipart (`Poi::PhotosController`, антифрод 100м `within_range?`); удаление через `PoiReflex#remove_photo` (автор/admin/moderator); live-обновление через `VersionObserverJob` → `PoiBroadcaster` `inner_html [data-poi-gallery]` + `PoiReflex#refresh_gallery`. Покрыто `spec/system/user/poi_spec.rb`, `spec/system/admin/pois_spec.rb`, `spec/models/photo_spec.rb`, `spec/services/poi_service_spec.rb`.
+- ✅ Бинарники фото через HTTP/multipart (`Poi::PhotosController#create`, JSON) — закрыт долг загрузки через Reflex.
 - ✅ Проксимити-проверка 100м для комментариев/редактирования (`check_proximity!`, `PoiCommentPolicy`)
 - ✅ Live-комментарии: `PoiCommentBroadcaster` + ветка `PoiComment` в `VersionObserverJob` (автору); proximity-check 100м корректный (Boolean + SRID 4326, антифрод больше не «всегда проходит»)
 - ✅ Награды TFT за создание POI/комментарий (`GamificationService.award!(:poi_create/:comment_create)`, суммы из `config/gamification.yml`)
@@ -106,14 +108,13 @@ Travel Fi
 **Хотелки:**
 - 🔴 `PoiRating` — 5-звёздная система + агрегация в `poi.rating`
 - 🔴 Комментарии: live для всех + threaded-ответы
-- 🔴 Галерея: сетка + lightbox/слайдер
 - 🔴 OSRM: построение маршрута к POI + линия на карте
 - 🔴 Offline-режим (PWA): тайлы + список (IndexedDB)
 - 🔴 Разобраться с тегами, которые загружаются из ОСМ для каждой категории. Например, для Тултов/Душевых - Level, Access, Source, Amenity и так далее. Для каждого тег сделать карты переводов, доступные для управления через админку. На данный момент эти данные не совпадают с полями категории в админке.
 - 🔴 Для кждой категории сделать отдельную пиктограмку для отображения на карте. Вернее пиктограмка категории уже есть в виде мди-икон но нужно на карте отдельно отображать.
 
 **Баги/Долги:**
-- ⚠️ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart — отдельная задача
+- ✅ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart — решена через `Poi::PhotosController#create` (JSON) в галерее
 - ⚠️ Карточка POI: полировка UI (фокус-трап, aria, скролл-блокировка) - отдельная задача
 - ✅ Автозаполнение адреса браузером отключено: `autocomplete="off"` на address/city/country/zip_code в `Poi::FormComponent` и админ-`EditComponent`
 - ✅ Админка. Форма редактирования: `Ui::DropdownComponent` для категории/статуса (вместо `<select>`), мини-карта инициализируется (`data-controller` на корне в single-режиме), `rating` — консолидируемое вычисляемое поле (НЕ редактируется: убрано из формы и из `PoiService.update`). Покрыто request-спекой `spec/controllers/admin/pois_controller_spec.rb` и system-спекой `spec/system/admin/pois_spec.rb`.
@@ -319,7 +320,7 @@ Travel Fi
 - 🔴 Массовая модерация
 
 **Баги/Долги:**
-- ⚠️ Галерея: просмотр `Poi#photos` (сетка + lightbox) не реализован
+- ✅ Галерея: просмотр `Poi#photos` (сетка + lightbox) реализован — см. секцию 2.2
 
 ---
 

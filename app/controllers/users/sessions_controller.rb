@@ -2,7 +2,7 @@ class Users::SessionsController < Devise::SessionsController
   skip_after_action :verify_authorized, raise: false
   skip_after_action :verify_policy_scoped, raise: false
 
-  before_action :redirect_if_signed_in, only: [:new]
+  before_action :redirect_if_signed_in, only: [ :new ]
 
   def create
     super do |resource|
@@ -26,7 +26,7 @@ class Users::SessionsController < Devise::SessionsController
     super
     # Override Devise's default notice with success flash
     flash.delete(:notice)
-    flash[:success] = I18n.t('devise.sessions.signed_out', default: 'Signed out successfully.')
+    flash[:success] = I18n.t("devise.sessions.signed_out", default: "Signed out successfully.")
   end
 
   #
@@ -57,9 +57,8 @@ class Users::SessionsController < Devise::SessionsController
 
   def redirect_if_signed_in
     if user_signed_in?
-      flash[:notice] = I18n.t('devise.sessions.already_signed_in', default: 'You are already signed in.')
+      flash[:notice] = I18n.t("devise.sessions.already_signed_in", default: "You are already signed in.")
       redirect_to(root_path(locale: I18n.locale))
     end
   end
-
 end

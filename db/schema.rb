@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_10_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_27_164529) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
@@ -78,6 +78,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_000000) do
     t.datetime "updated_at", null: false
     t.index ["event_id"], name: "index_noticed_notifications_on_event_id"
     t.index ["recipient_type", "recipient_id"], name: "index_noticed_notifications_on_recipient"
+  end
+
+  create_table "photos", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "poi_id", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["poi_id", "position"], name: "index_photos_on_poi_id_and_position"
+    t.index ["poi_id"], name: "index_photos_on_poi_id"
+    t.index ["user_id"], name: "index_photos_on_user_id"
   end
 
   create_table "poi_categories", force: :cascade do |t|
@@ -323,6 +334,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_10_000000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "gamifications", "users"
+  add_foreign_key "photos", "pois"
+  add_foreign_key "photos", "users"
   add_foreign_key "poi_category_fields", "poi_categories"
   add_foreign_key "poi_comments", "poi_comments", column: "parent_id", on_delete: :cascade
   add_foreign_key "poi_comments", "pois", on_delete: :cascade

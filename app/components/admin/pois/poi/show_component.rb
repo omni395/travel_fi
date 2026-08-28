@@ -29,11 +29,11 @@ class Admin::Pois::Poi::ShowComponent < ApplicationComponent
   #
   def status_badge_class
     case poi.status
-    when 'approved' then 'bg-green-100 text-green-800'
-    when 'pending' then 'bg-yellow-100 text-yellow-800'
-    when 'rejected' then 'bg-red-100 text-red-800'
-    when 'archived' then 'bg-gray-100 text-gray-800'
-    else 'bg-gray-100 text-gray-800'
+    when "approved" then "bg-green-100 text-green-800"
+    when "pending" then "bg-yellow-100 text-yellow-800"
+    when "rejected" then "bg-red-100 text-red-800"
+    when "archived" then "bg-gray-100 text-gray-800"
+    else "bg-gray-100 text-gray-800"
     end
   end
 

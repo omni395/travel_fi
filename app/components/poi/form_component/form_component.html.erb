@@ -188,9 +188,9 @@
       <%# Превью: существующие фото (edit) + новые (JS) %>
       <div data-poi--form-component-target="photosPreview" class="flex flex-wrap gap-2 mt-2">
         <% if edit_mode? && poi.photos.any? %>
-          <% poi.photos.each do |photo| %>
+          <% poi.photos.ordered.each do |photo| %>
             <div class="relative w-20 h-20 rounded-md overflow-hidden border border-gray-200 group">
-              <img src="<%= begin url_for(photo.variant(PhotoService::THUMB)) rescue asset_path('no-image.png') end %>"
+              <img src="<%= begin url_for(photo.image.variant(PhotoService::THUMB) ) rescue asset_path('no-image.png') end %>"
                    alt="<%= t('.photo_alt') %>"
                    class="w-full h-full object-cover">
               <%= render Ui::BtnComponent.new(size: :sm, html: { class: "absolute top-0 right-0 w-5 h-5 bg-red-500 text-white rounded-bl-md p-0 flex items-center justify-center hover:bg-red-600", data: { action: "click->poi--form-component#removeExistingPhoto", photo_id: photo.id } }) do %>

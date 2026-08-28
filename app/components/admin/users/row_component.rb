@@ -25,18 +25,18 @@ class Admin::Users::RowComponent < ApplicationComponent
   #
   def status_badge_class(status)
     case status.to_s
-    when 'active'
-      'badge-success'
-    when 'pending_verification'
-      'badge-warning'
-    when 'suspended'
-      'badge-warning'
-    when 'banned'
-      'badge-error'
-    when 'deleted'
-      'badge-neutral'
+    when "active"
+      "badge-success"
+    when "pending_verification"
+      "badge-warning"
+    when "suspended"
+      "badge-warning"
+    when "banned"
+      "badge-error"
+    when "deleted"
+      "badge-neutral"
     else
-      'badge-neutral'
+      "badge-neutral"
     end
   end
 end
