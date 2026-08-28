@@ -22,7 +22,7 @@ class PaperTrailAuditService
       return unless user&.persisted?
 
       user.versions.create!(
-        event: 'login',
+        event: "login",
         whodunnit: user.id.to_s
       )
     rescue StandardError => e
@@ -39,7 +39,7 @@ class PaperTrailAuditService
       return unless user&.persisted?
 
       user.versions.create!(
-        event: 'logout',
+        event: "logout",
         whodunnit: user.id.to_s
       )
     rescue StandardError => e
@@ -57,7 +57,7 @@ class PaperTrailAuditService
 
       # Для регистрации object_changes не передаётся — это audit-событие
       user.versions.create!(
-        event: 'registration',
+        event: "registration",
         whodunnit: user.id.to_s,
         object: user.attributes.to_json
       )
@@ -75,7 +75,7 @@ class PaperTrailAuditService
 
       # Для email_confirmation object_changes не передаётся
       user.versions.create!(
-        event: 'email_confirmed',
+        event: "email_confirmed",
         whodunnit: user.id.to_s
       )
     rescue StandardError => e
@@ -95,7 +95,7 @@ class PaperTrailAuditService
       normalized = normalize_changes(changes)
 
       user.versions.create!(
-        event: 'profile_update',
+        event: "profile_update",
         whodunnit: user.id.to_s,
         object_changes: normalized.to_json
       )
@@ -113,7 +113,7 @@ class PaperTrailAuditService
       return unless user&.persisted?
 
       user.versions.create!(
-        event: 'password_changed',
+        event: "password_changed",
         whodunnit: user.id.to_s
       )
     rescue StandardError => e
@@ -131,7 +131,7 @@ class PaperTrailAuditService
       return unless user&.persisted?
 
       user.versions.create!(
-        event: 'oauth_login',
+        event: "oauth_login",
         whodunnit: user.id.to_s
       )
     rescue StandardError => e
@@ -154,19 +154,19 @@ class PaperTrailAuditService
 
       changes.each_with_object({}) do |(key, value), result|
         result[key] = case value
-                      when Hash
-                        if value.key?(:old) || value.key?('old')
+        when Hash
+                        if value.key?(:old) || value.key?("old")
                           # Конвертируем legacy { old:, new: } → [old, new]
-                          [value[:old] || value['old'], value[:new] || value['new']]
+                          [ value[:old] || value["old"], value[:new] || value["new"] ]
                         else
                           value.to_json
                         end
-                      when Array
+        when Array
                         # Уже PaperTrail-формат
                         value
-                      else
+        else
                         value
-                      end
+        end
       end
     end
   end

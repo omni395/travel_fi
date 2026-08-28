@@ -9,7 +9,7 @@ require 'rails_helper'
 RSpec.describe Crypto::Ethereum do
   describe '.keccak256' do
     it 'совпадает с эталонным вектором для пустой строки' do
-      # Известный вектор: keccak256("") 
+      # Известный вектор: keccak256("")
       expect(described_class.keccak256('')).to eq(
         'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470'
       )

@@ -38,10 +38,10 @@ module AdminHelper
   #
   def user_status_options
     [
-      [t("activerecord.attributes.user.statuses.pending_verification"), "pending_verification"],
-      [t("activerecord.attributes.user.statuses.active"), "active"],
-      [t("activerecord.attributes.user.statuses.suspended"), "suspended"],
-      [t("activerecord.attributes.user.statuses.banned"), "banned"]
+      [ t("activerecord.attributes.user.statuses.pending_verification"), "pending_verification" ],
+      [ t("activerecord.attributes.user.statuses.active"), "active" ],
+      [ t("activerecord.attributes.user.statuses.suspended"), "suspended" ],
+      [ t("activerecord.attributes.user.statuses.banned"), "banned" ]
     ]
   end
 

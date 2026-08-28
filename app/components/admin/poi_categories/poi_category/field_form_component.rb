@@ -35,7 +35,7 @@ class Admin::PoiCategories::PoiCategory::FieldFormComponent < ApplicationCompone
   #
   def field_type_options
     %w[string text number boolean select multiselect].map { |t|
-      [I18n.t("admin.poi_categories.poi_category.field_form_component.field_types.#{t}"), t]
+      [ I18n.t("admin.poi_categories.poi_category.field_form_component.field_types.#{t}"), t ]
     }
   end
 
@@ -66,7 +66,7 @@ class Admin::PoiCategories::PoiCategory::FieldFormComponent < ApplicationCompone
     values.map do |v|
       key = v.is_a?(Hash) ? (v["key"] || v[:key]) : v.to_s
       label = v.is_a?(Hash) ? (v["label"] || v[:label] || {}) : {}
-      parts = [key.to_s]
+      parts = [ key.to_s ]
       locales.each do |locale|
         value = label[locale].to_s
         parts << value unless value.blank?

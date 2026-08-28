@@ -183,9 +183,9 @@ class Admin::PoisReflex < ApplicationReflex
     current_direction = session[:admin_pois_sort_direction]
 
     if current_column == column
-      new_direction = current_direction == 'asc' ? 'desc' : 'asc'
+      new_direction = current_direction == "asc" ? "desc" : "asc"
     else
-      new_direction = 'asc'
+      new_direction = "asc"
     end
 
     session[:admin_pois_sort_column] = column

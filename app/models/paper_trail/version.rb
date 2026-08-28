@@ -24,7 +24,7 @@ class PaperTrail::Version < ActiveRecord::Base
   # Вызывает VersionObserverJob после фиксации транзакции
   # Это гарантирует, что данные уже в БД перед бродкастом
   #
-  after_commit :broadcast_changes, on: [:create, :update, :destroy]
+  after_commit :broadcast_changes, on: [ :create, :update, :destroy ]
 
   private
 

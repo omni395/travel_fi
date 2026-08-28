@@ -131,10 +131,10 @@ class Admin::UsersReflex < ApplicationReflex
 
     if current_column == column
       # Переключаем направление
-      new_direction = current_direction == 'asc' ? 'desc' : 'asc'
+      new_direction = current_direction == "asc" ? "desc" : "asc"
     else
       # Новая колонка — начинаем с asc
-      new_direction = 'asc'
+      new_direction = "asc"
     end
 
     session[:admin_users_sort_column] = column

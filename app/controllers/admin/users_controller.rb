@@ -82,7 +82,7 @@ class Admin::UsersController < Admin::BaseController
   def filtered_users
     # Единое правило: в «All Statuses» deleted скрыт; виден при выборе статуса deleted.
     users = User.all
-    users = users.where.not(status: 'deleted') unless params[:status] == 'deleted'
+    users = users.where.not(status: "deleted") unless params[:status] == "deleted"
 
     # Применяем scope из политики Admin::UserPolicy
     users = Admin::UserPolicy::Scope.new(current_user, users).resolve

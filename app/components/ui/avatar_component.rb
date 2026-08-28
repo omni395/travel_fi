@@ -64,7 +64,7 @@ class Ui::AvatarComponent < ApplicationComponent
 
     blob = user.avatar
     begin
-      rails_representation_url(blob.variant(resize_to_fill: [120, 120]))
+      rails_representation_url(blob.variant(resize_to_fill: [ 120, 120 ]))
     rescue StandardError => e
       Rails.logger.warn("AvatarComponent: variant URL failed for user #{user.id}: #{e.class} #{e.message}")
       rails_blob_url(blob)

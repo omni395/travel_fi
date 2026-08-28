@@ -26,12 +26,12 @@ class Admin::Users::User::ShowComponent < ApplicationComponent
   #
   def status_badge_class
     case user.status
-    when 'active' then 'bg-green-100 text-green-800'
-    when 'pending_verification' then 'bg-yellow-100 text-yellow-800'
-    when 'suspended' then 'bg-orange-100 text-orange-800'
-    when 'banned' then 'bg-red-100 text-red-800'
-    when 'deleted' then 'bg-gray-100 text-gray-800'
-    else 'bg-gray-100 text-gray-800'
+    when "active" then "bg-green-100 text-green-800"
+    when "pending_verification" then "bg-yellow-100 text-yellow-800"
+    when "suspended" then "bg-orange-100 text-orange-800"
+    when "banned" then "bg-red-100 text-red-800"
+    when "deleted" then "bg-gray-100 text-gray-800"
+    else "bg-gray-100 text-gray-800"
     end
   end
 

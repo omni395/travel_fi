@@ -5,4 +5,3 @@
 # а не терялись в STDOUT foreman.
 ActionCable.server.config.logger = Rails.logger
 ActionCable.server.config.logger.level = Logger::DEBUG
-

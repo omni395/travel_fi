@@ -60,15 +60,19 @@ class PhotoService
   end
 
   #
-  # Обрабатывает и прикрепляет один или несколько файлов в галерею записи
-  # (ожидает ассоциацию has_many_attached :photos).
+  # Обрабатывает и прикрепляет один или несколько файлов в галерею POI.
+  # Создаёт записи Photo (с автором и позицией) с привязанным :image.
   #
-  # @param record [ApplicationRecord] запись с has_many_attached :photos
+  # @param record [Poi] POI
   # @param files [Array<ActionDispatch::Http::UploadedFile>, ActionDispatch::Http::UploadedFile] файлы фото
-  # @param audit_touch [Boolean] вызвать record.touch для фиксации в PaperTrail (если трекается)
+  # @param user [User] автор фото
+  # @param audit_touch [Boolean] вызвать record.touch для фиксации в PaperTrail
   # @return [Boolean] true если прикреплено хотя бы одно фото
   #
-  def self.attach_photos(record:, files:, audit_touch: false)
+  def self.attach_photos(record:, files:, user:, audit_touch: false)
+    added = false
+    max_position = record.photos.maximum(:position) || -1
+
     Array(files).each do |file|
       next if file.blank?
 
@@ -82,31 +86,74 @@ class PhotoService
       )
 
       ActiveRecord::Base.transaction do
-        record.photos.attach(io: processed, filename: filename, content_type: "image/webp")
-        record.touch if audit_touch
+        max_position += 1
+        photo = record.photos.build(user: user, position: max_position)
+        photo.image.attach(io: processed, filename: filename, content_type: "image/webp")
+        photo.save!
+        added = true
       end
     end
 
-    true
+    record.touch if audit_touch && added
+    added
   rescue ActiveRecord::RecordInvalid => e
     Rails.logger.warn("PhotoService: attach_photos failed: #{e.message}")
     false
   end
 
   #
-  # Удаляет одно фото из галереи записи (purge_later — асинхронно через SolidQueue).
+  # Добавляет одно фото в галерею POI (создаёт Photo). Обёртка над attach_photos
+  # для одного файла (удобно для HTTP/multipart-энпоинта и Reflex).
   #
-  # @param record [ApplicationRecord] запись с has_many_attached :photos
-  # @param signed_id [String, Integer] id или signed_id удаляемого attachment
+  # @param record [Poi] POI
+  # @param file [ActionDispatch::Http::UploadedFile] файл фото
+  # @param user [User] автор фото
+  # @param audit_touch [Boolean] вызвать record.touch для фиксации в PaperTrail
+  # @return [Photo, nil] созданная запись или nil при ошибке
+  #
+  def self.add_photo(record:, file:, user:, audit_touch: false)
+    return nil if file.blank?
+
+    filename = "photo_#{record.class.name.underscore}_#{record.id}_#{SecureRandom.hex(4)}.webp"
+    processed = process(
+      file,
+      filename: filename,
+      max_size: PHOTO_MAX_SIZE,
+      max_dimension: PHOTO_MAX_DIMENSION,
+      format: "webp"
+    )
+
+    photo = nil
+    ActiveRecord::Base.transaction do
+      max_position = record.photos.maximum(:position) || -1
+      photo = record.photos.build(user: user, position: max_position + 1)
+      photo.image.attach(io: processed, filename: filename, content_type: "image/webp")
+      photo.save!
+      record.touch if audit_touch
+    end
+    photo
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.warn("PhotoService: add_photo failed: #{e.message}")
+    nil
+  end
+
+  #
+  # Удаляет одно фото из галереи POI (Photo + purge_later асинхронно через SolidQueue).
+  # Позиции оставшихся фото пересчитываются (плотная нумерация от 0).
+  #
+  # @param record [Poi] POI
+  # @param photo_id [Integer, String] id удаляемой записи Photo
   # @param audit_touch [Boolean] вызвать record.touch для фиксации в PaperTrail
   # @return [Boolean] true если фото найдено и удалено
   #
-  def self.remove_photo(record:, signed_id:, audit_touch: false)
-    attachment = record.photos.find_by(id: signed_id) || ActiveStorage::Attachment.find_by(id: signed_id)
-    return false unless attachment
+  def self.remove_photo(record:, photo_id:, audit_touch: false)
+    photo = record.photos.find_by(id: photo_id)
+    return false unless photo
 
     ActiveRecord::Base.transaction do
-      attachment.purge_later
+      photo.image.purge_later
+      photo.destroy!
+      record.photos.ordered.each_with_index { |p, i| p.update_column(:position, i) }
       record.touch if audit_touch
     end
 
@@ -117,32 +164,26 @@ class PhotoService
   end
 
   #
-  # Возвращает cover-фото записи (первый attachment в галерее :photos)
+  # Возвращает cover-фото записи (первая запись Photo по position)
   #
-  # @param record [ApplicationRecord] запись с has_many_attached :photos
-  # @return [ActiveStorage::Attachment, nil]
+  # @param record [Poi] POI
+  # @return [Photo, nil]
   #
   def self.cover_photo(record)
-    record.photos.first
+    record.photos.ordered.first
   end
 
   #
   # Возвращает URL cover-фото записи для заданного варианта (относительный путь).
   # Если фото нет — nil (fallback на no-image.png решает шаблон/JS).
   #
-  # @param record [ApplicationRecord] запись с has_many_attached :photos
+  # @param record [Poi] POI
   # @param variant [Hash] опции ресайза (THUMB/MEDIUM)
   # @return [String, nil] URL изображения или nil
   #
   def self.cover_photo_url(record, variant: THUMB)
     cover = cover_photo(record)
-    return nil unless cover
-
-    if cover.image? && variant
-      Rails.application.routes.url_helpers.rails_representation_path(cover.variant(variant), only_path: true)
-    else
-      Rails.application.routes.url_helpers.rails_blob_path(cover, only_path: true)
-    end
+    cover&.url(variant: variant)
   rescue StandardError => e
     Rails.logger.warn("PhotoService: cover_photo_url failed for #{record.class}##{record.id}: #{e.message}")
     nil
@@ -151,18 +192,12 @@ class PhotoService
   #
   # Возвращает URL всех фото записи для заданного варианта (для галереи)
   #
-  # @param record [ApplicationRecord] запись с has_many_attached :photos
+  # @param record [Poi] POI
   # @param variant [Hash] опции ресайза (THUMB/MEDIUM)
   # @return [Array<String>] массив URL
   #
   def self.photo_urls(record, variant: MEDIUM)
-    record.photos.filter_map do |photo|
-      if photo.image? && variant
-        Rails.application.routes.url_helpers.rails_representation_path(photo.variant(variant), only_path: true)
-      else
-        Rails.application.routes.url_helpers.rails_blob_path(photo, only_path: true)
-      end
-    end
+    record.photos.ordered.filter_map { |photo| photo.url(variant: variant) }
   rescue StandardError => e
     Rails.logger.warn("PhotoService: photo_urls failed for #{record.class}##{record.id}: #{e.message}")
     []

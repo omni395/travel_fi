@@ -53,5 +53,19 @@
             end
           }
         ) %>
+
+    <%# Галерея фото POI (админ). Контейнер-цель [data-poi-gallery-admin] на обёртке
+        (НЕ на корне GalleryComponent — догма inner_html без вложенности).
+        Зона вынесена ИЗ ShowComponent: галерея контекстно-зависима (сортировка
+        «свои вначале» + кнопки удаления у разных зрителей различаются), поэтому
+        Обновляется через PoiReflex#refresh_gallery с current_user (inner_html в
+        оба селектора [data-poi-gallery] / [data-poi-gallery-admin]), а НЕ через
+        PoiBroadcaster (в SolidQueue-воркере current_user=nil → кнопки пропали бы). %>
+    <div class="mt-6 pt-6 border-t border-gray-200">
+      <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3"><%= t("admin.pois.poi.show_component.gallery") %></h3>
+      <div data-poi-gallery-admin>
+        <%= render Poi::GalleryComponent.new(poi: @poi, current_user: current_user) %>
+      </div>
+    </div>
   <% end %>
 </div>

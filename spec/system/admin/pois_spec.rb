@@ -188,4 +188,67 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
     pending_poi.reload
     expect(pending_poi.status).to eq('approved')
   end
+
+  describe 'галерея фотографий POI (админ)', js: true do
+    let!(:gallery_poi) do
+      create(:poi,
+             user: admin_a,
+             poi_category: category,
+             status: 'approved',
+             name: { 'en' => 'Admin Gallery POI', 'ru' => 'Админ галерея', 'es' => 'POI galería admin', 'zh' => '管理画廊' },
+             coordinates: PoiService.parse_coordinates(50.4501, 30.5234))
+    end
+
+    # Открывает просмотр точки в админке (загружает зону [data-poi-gallery-admin]).
+    # НЕ оборачивает в using_session сам: вызывается ВНУТРИ browser_a, чтобы
+    # ассерты страницы выполнялись в той же активной сессии :browser_a (после
+    # выхода из using_session активная сессия возвращается к дефолтной, и page
+    # снаружи ссылается на пустую незагруженную сессию → have_content видит "").
+    def open_admin_poi_show
+      sign_in_via_ui(admin_a)
+      visit admin_poi_path(id: gallery_poi.id)
+      wait_for_selector('#poi-detail', timeout: 90)
+      wait_for_selector('[data-poi-gallery-admin]', timeout: 30)
+    end
+
+    it 'админ видит кнопку добавления фото и может добавить фотку без перезагрузки' do
+      browser_a do
+        open_admin_poi_show
+        # empty-состояние → плашка и кнопка Add photo
+        expect(page).to have_content(I18n.t('poi.gallery_component.empty_title'), wait: 10)
+
+        attach_file('photo[image]', Rails.root.join('spec/fixtures/files/photo.png'), make_visible: true)
+
+        # После upload — live-обновление зоны через PoiReflex#refresh_gallery
+        # (inner_html [data-poi-gallery-admin] с current_user); фото появляется
+        # без перезагрузки страницы
+        wait_for_selector('[data-poi--gallery-component-target="thumb"]', timeout: 60)
+        expect(gallery_poi.reload.photos.count).to eq(1)
+      end
+    end
+
+    it 'админ видит добавление и может удалить любое фото без перезагрузки' do
+      photo_mine = create(:photo, poi: gallery_poi, user: admin_a, position: 0)
+      photo_other = create(:photo, poi: gallery_poi, user: create(:user), position: 1)
+
+      browser_a do
+        open_admin_poi_show
+
+        # Админ видит обе фотки; у каждой есть кнопка удаления (может удалить любые)
+        thumbs = page.all('[data-poi--gallery-component-target="thumb"]', visible: false)
+        expect(thumbs.length).to eq(2)
+        expect(page).to have_css("button[data-action='click->poi--gallery-component#remove'][data-photo-id='#{photo_other.id}']", visible: false)
+
+        # Удаляем чужое фото (кнопка видима при полном рендере с current_user).
+        # JS-клик (execute_script) — детерминированный вызов Stimulus-действия:
+        # Selenium .click по кнопке, перекрытой обложкой (.relative img open), теряется.
+        wait_for_selector("button[data-action='click->poi--gallery-component#remove'][data-photo-id='#{photo_other.id}']", timeout: 20)
+        page.execute_script("document.querySelector(\"button[data-action='click->poi--gallery-component#remove'][data-photo-id='#{photo_other.id}']\").click()")
+
+        # JS → DELETE /pois/:id/photos/:id → Poi::PhotosController#destroy → live inner_html
+        wait_for_selector('[data-poi-gallery-admin]', timeout: 30)
+        expect(gallery_poi.reload.photos.map(&:id)).to eq([ photo_mine.id ])
+      end
+    end
+  end
 end

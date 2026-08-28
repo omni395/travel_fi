@@ -8,6 +8,12 @@ en:
     no_location_description: "Enable location services in your browser settings to see points of interest near you."
     no_location_toast: "Location access denied. Enable location services to add and interact with nearby POIs."
     guest_warning: "Using as guest. Sign in or register to add and manage POIs."
+    photo_required: "Select a photo to upload"
+    photo_upload_failed: "Failed to upload photo"
+    photo_remove_failed: "Failed to remove photo"
+    photo_removed: "Photo removed"
+    photo_remove_denied: "You are not allowed to remove this photo"
+    photo_proximity_error: "You need to be within 100 meters of this place to add a photo"
     auth_required_title: "Sign in required"
     auth_required_message: "Please sign in or create an account to view detailed information about this place."
     load_more:

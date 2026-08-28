@@ -724,6 +724,46 @@ class PoiReflex < ApplicationReflex
     morph :nothing
   end
 
+  #
+  # Читает актуальную галерею фото POI и обновляет зоны [data-poi-gallery]
+  # (пользовательская модалка) и [data-poi-gallery-admin] (админка).
+  # Вызывается из gallery_component_controller.js ПОСЛЕ успешной upload/remove (HTTP).
+  # Это операция ЧТЕНИЯ (не сохранение): рендерится актуальный GalleryComponent
+  # с current_user (сортировка «свои вначале» + кнопки удаления) и доставляется
+  # селекторным inner_html в обе целевые обёртки.
+  #
+  # ВАЖНО: галерея НЕ перезаписывается из PoiBroadcaster (в SolidQueue-воркере
+  # current_user=nil → у админа пропали бы кнопки удаления). Обновление только
+  # здесь, с real current_user, по обоим селекторам (любой из них может
+  # отсутствовать в конкретной странице — inner_html по отсутствующему селектору
+  # безопасно игнорируется клиентом CableReady).
+  #
+  # @param params [Hash] { poi_id: Integer }
+  #
+  def refresh_gallery(params = {})
+    poi_id = params[:poi_id].to_i
+    poi = Poi.find(poi_id)
+    authorize_with_pundit!(poi, :show?)
+
+    html = ApplicationController.render(
+      Poi::GalleryComponent.new(poi: poi, current_user: current_user),
+      layout: false
+    )
+
+    cable_ready.inner_html(selector: "[data-poi-gallery]", html: html)
+    cable_ready.inner_html(selector: "[data-poi-gallery-admin]", html: html)
+    cable_ready.broadcast
+    morph :nothing
+
+    Rails.logger.info("PoiReflex: Refreshed gallery for POI #{poi_id}")
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("PoiReflex: POI not found for gallery refresh - #{e.message}")
+    morph :nothing
+  rescue Pundit::NotAuthorizedError
+    Rails.logger.warn("PoiReflex: Not authorized to refresh gallery")
+    morph :nothing
+  end
+
   private
 
   #

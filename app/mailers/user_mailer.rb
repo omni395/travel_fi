@@ -8,7 +8,7 @@ class UserMailer < ApplicationMailer
     @confirmation_url = user_confirmation_url(confirmation_token: @token, locale: I18n.locale)
     # Inline logo for email clients (use app/assets/images/logo-1.png)
     begin
-      attachments.inline['logo-1.png'] = File.read(Rails.root.join('app', 'assets', 'images', 'logo-1.png')) if File.exist?(Rails.root.join('app', 'assets', 'images', 'logo-1.png'))
+      attachments.inline["logo-1.png"] = File.read(Rails.root.join("app", "assets", "images", "logo-1.png")) if File.exist?(Rails.root.join("app", "assets", "images", "logo-1.png"))
     rescue => e
       Rails.logger.info("Could not attach logo-1.png inline: #{e.class}: #{e.message}") if defined?(Rails)
     end
@@ -24,7 +24,7 @@ class UserMailer < ApplicationMailer
     @password_reset_url = edit_user_password_url(reset_password_token: @token, locale: I18n.locale)
     # Inline logo for email clients (use app/assets/images/logo-1.png)
     begin
-      attachments.inline['logo-1.png'] = File.read(Rails.root.join('app', 'assets', 'images', 'logo-1.png')) if File.exist?(Rails.root.join('app', 'assets', 'images', 'logo-1.png'))
+      attachments.inline["logo-1.png"] = File.read(Rails.root.join("app", "assets", "images", "logo-1.png")) if File.exist?(Rails.root.join("app", "assets", "images", "logo-1.png"))
     rescue => e
       Rails.logger.info("Could not attach logo-1.png inline: #{e.class}: #{e.message}") if defined?(Rails)
     end

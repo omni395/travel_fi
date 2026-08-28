@@ -10,8 +10,8 @@ class CreateVersions < ActiveRecord::Migration[8.1]
       t.datetime :created_at
       t.integer  :user_id
     end
-    add_index :versions, %i(item_type item_id)
-    add_index :versions, [:whodunnit]
-    add_index :versions, [:user_id]
+    add_index :versions, %i[item_type item_id]
+    add_index :versions, [ :whodunnit ]
+    add_index :versions, [ :user_id ]
   end
 end
