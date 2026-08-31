@@ -103,6 +103,14 @@ class PoiReflex < ApplicationReflex
   # @param params [Hash] { lat: Float, lng: Float }
   #
   def set_location(params = {})
+    # StimulusReflex 3.x сериализует объект-аргумент в JSON: ключи приходят
+    # СТРОКОВЫМИ ("lat"/"lng"), а не символьными. Без нормализации params[:lat]
+    # возвращает nil → session пишется (0.0, 0.0) → check_proximity! для обычного
+    # юзера блокирует голосование/комментарий/редактирование («вне 100м»).
+    # Аналогично VoteReflex#cast. (При прямом Ruby-вызове ключи уже символьные —
+    # deep_symbolize_keys идемпотентен.)
+    params = deep_symbolize_keys(params) if params.is_a?(Hash)
+
     session[:user_lat] = params[:lat].to_f
     session[:user_lng] = params[:lng].to_f
     Current.user_lat = session[:user_lat]
@@ -405,6 +413,7 @@ class PoiReflex < ApplicationReflex
            data-poi-lng="#{escape.call(data[:lng])}"
            data-poi-name="#{escape.call(data[:name])}"
            data-poi-icon="#{escape.call(data[:icon])}"
+           data-poi-category-image="#{escape.call(data[:category_image])}"
            data-poi-category="#{escape.call(data[:category])}"
            data-poi-category-id="#{escape.call(data[:category_id])}"
            data-poi-rating="#{escape.call(data[:rating])}"

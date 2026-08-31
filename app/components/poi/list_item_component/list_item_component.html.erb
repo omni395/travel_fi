@@ -16,11 +16,15 @@
      class="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150">
 
   <div class="flex items-start gap-3">
-    <!-- Иконка категории -->
+    <!-- Иконка/картинка-маркер категории (картинка приоритетнее, fallback — MDI) -->
     <div class="shrink-0 mt-0.5">
-      <% if poi.poi_category.icon.present? %>
+      <% if poi.poi_category.category_icon_url.present? %>
+        <img src="<%= poi.poi_category.category_icon_url %>"
+             alt="<%= t('.icon_alt') %>"
+             class="w-6 h-6 object-cover rounded">
+      <% elsif poi.poi_category.icon.present? %>
         <i class="mdi <%= poi.poi_category.icon %> text-emerald-500 text-lg"></i>
-        <%# Иконка: динамическая из poi_category.icon %>
+        <%# Иконка: динамическая из poi_category.icon (fallback) %>
       <% else %>
         <i class="mdi mdi-map-marker text-emerald-500 text-lg"></i>
         <%# Иконка: mdi-map-marker %>

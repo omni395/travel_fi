@@ -99,6 +99,19 @@ RSpec.describe PoiReflex, type: :reflex do
       expect(reflex.session[:user_lng]).to eq(30.52)
       expect(Current.user_lat).to eq(50.45)
     end
+
+    it 'нормализует СТРОКОВЫЕ ключи из браузерной геолокации (регрессия: сессия 0,0)' do
+      reflex = build_reflex(described_class, :set_location, user: user)
+
+      # StimulusReflex 3.x сериализует объект-аргумент в JSON → на сервере ключи
+      # строковые ("lat"/"lng"). Без deep_symbolize_keys session писалась бы (0,0).
+      reflex.set_location('lat' => 52.52, 'lng' => 13.405)
+
+      expect(reflex.session[:user_lat]).to eq(52.52)
+      expect(reflex.session[:user_lng]).to eq(13.405)
+      expect(Current.user_lat).to eq(52.52)
+      expect(Current.user_lng).to eq(13.405)
+    end
   end
 
   describe '#load_pois_in_bounds' do

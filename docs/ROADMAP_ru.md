@@ -80,7 +80,7 @@ Travel Fi
 
 **Цепочка:** `PoisController` (index/просмотр) → [`PoiReflex`](app/reflexes/poi_reflex.rb:16) (load_pois_in_bounds, load_more_pois, filter_by_categories, apply_filters, reset_filters, show_detail, show_detail_modal, edit_poi, create_comment, reverse_geocode, set_location, show_geolocation_toast) → [`PoiService`](app/services/poi_service.rb:12) → PostGIS (`within_bounds`/`within_meters`) → [`PoiBroadcaster`](app/broadcasters/poi_broadcaster.rb:12) / `ToastBroadcaster` → `UserChannel` / `AdminChannel`
 
-**Компоненты:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Модалки: `Poi::DetailsComponent`, `Poi::GalleryComponent`, `Poi::RatingsComponent` (заглушки).
+**Компоненты:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Модалки: `Poi::DetailsComponent`, `Poi::GalleryComponent`; таб голосования — `Poi::RatingsComponent` (readonly-рейтинг + `Vote::VoteComponent`).
 
 **Статус:** 🟡 Частично
 
@@ -104,6 +104,8 @@ Travel Fi
 - ✅ Создание/редактирование POI с карты — через модалку `Poi::FormComponent` на Reflex-флоу (`PoiReflex#create/#update` → `PoiService` → PaperTrail → `PoiBroadcaster`); без перезагрузки страницы, без JSON в ответе контроллера; тост пользователю через `ToastBroadcaster` (WebSocket); автозаполнение адреса отключено (`autocomplete="off"`)
 - ✅ Динамические поля категории в форме POI: `PoiReflex#load_category_fields` рендерит `Poi::FormFieldsComponent` по field_type (string/text/number/boolean/select/multiselect) в обёртку `[data-poi-form-fields]` через CableReady (`inner_html`), неймспейс `poi[metadata][field_key]`
 - ✅ Sidebar-оверлей: `Ui::SidebarComponent` раскрывается ПОВЕРХ карты (absolute), не выталкивая flex-поток — bounds карты не пересчитываются (`poi:reload-features` не дублируется, `_loadPoisInBounds` guard по `_lastBoundsKey`)
+- ✅ MDI-иконки категорий на глобальной карте: одиночный POI рисуется глифом MDI категории (вместо булавки/точки, ранее — зелёный круг) без подложки. `map_component_controller.js` извлекает реальный глиф из загруженного MDI CSS в рантайме (`getComputedStyle(el, "::before").content`), кэширует по имени класса (object-хэш, т.к. `Map` затенён импортом `ol/Map`); белая обводка (`stroke width: 3`) для читаемости; перерисовка после `document.fonts.ready` (CDN-шрифт асинхронный). Кластеры остаются кружками с числом. `poiIcon` уже доходит до фронтенда через `PoiService.map_feature_data`. Стиль-колбэк берёт исходную фичу из кластер-обёртки (`features[0]`), где лежат свойства.
+- ✅ Картинки-маркеры категорий на карте: категория может иметь свою картинку-маркер (`PoiCategory#category_icon`, `has_one_attached`), которая рендерится маркером вместо MDI-глифа. Загрузка/удаление — HTTP/multipart из формы админки (`Admin::PoiCategoriesController#update_category_icon/#remove_category_icon` → `PoiCategoryService.attach/remove_category_icon` → `PoiCategoryBroadcaster` с event_type `category_icon`), который обновляет карточку в админке и шлёт `poi:reload-features` в `pois_map` — видимые маркеры перерисовываются live. `PoiService.map_feature_data` теперь несёт `category_image` (`category_icon_url`) в `#poi-map-features`, а `map_component_controller.js#iconStyle` использует `ol/style Icon`, когда картинка есть. Пока картинки нет — маркер-фолбэк на MDI-иконку (атрибут `icon` остаётся обязательным и служит fallback маркера).
 
 **Хотелки:**
 - 🔴 `PoiRating` — 5-звёздная система + агрегация в `poi.rating`
@@ -111,7 +113,6 @@ Travel Fi
 - 🔴 OSRM: построение маршрута к POI + линия на карте
 - 🔴 Offline-режим (PWA): тайлы + список (IndexedDB)
 - 🔴 Разобраться с тегами, которые загружаются из ОСМ для каждой категории. Например, для Тултов/Душевых - Level, Access, Source, Amenity и так далее. Для каждого тег сделать карты переводов, доступные для управления через админку. На данный момент эти данные не совпадают с полями категории в админке.
-- 🔴 Для кждой категории сделать отдельную пиктограмку для отображения на карте. Вернее пиктограмка категории уже есть в виде мди-икон но нужно на карте отдельно отображать.
 
 **Баги/Долги:**
 - ✅ Загрузка фото (бинарники через StimulusReflex) → HTTP/multipart — решена через `Poi::PhotosController#create` (JSON) в галерее
@@ -320,11 +321,46 @@ Travel Fi
 - 🔴 Массовая модерация
 
 **Баги/Долги:**
-- ✅ Галерея: просмотр `Poi#photos` (сетка + lightbox) реализован — см. секцию 2.2
+- ✅ Галерея: просмотр `Poi#photos` (сетка + lightbox) реализован — grid + lightbox/слайдер через `Poi::GalleryComponent`; награда `poi_photo_add` (TFT) при загрузке фото и `GamificationService.revoke!(:poi_photo_add)` при удалении своего фото (только не отправленные `claimed=false`) — см. `PoiService.add_photo`/`remove_photo`
 
 ---
 
-### 3.5 Settings (настройки уведомлений админа)
+### 3.5 Голосования / Community Moderation (одобрение сообществом)
+
+**Статус:** 🟡 Реализовано ядро (модель `Vote`, сервисы, рефлекс, политика, бродкаст, компонент — покрыто тестами). **Голосование встроено в таб Ratings карточки POI** (`Poi::RatingsComponent` рендерит `Vote::VoteComponent` в таргет-обёртке `[data-vote-zone="poi-<id>"]`; live-апдейт счётчика по стриму `pois_map` через `VoteBroadcaster`).
+
+**Семантика (строго, согласовано):**
+- **Статус POI ставит ТОЛЬКО админ** (модерация: матюки, дозаполнение полей). `pending` НЕ отображается и НЕ голосуется. Голоса юзеров НЕ меняют `poi.status` и НЕ влияют на видимость.
+- Голоса вешают ТОЛЬКО **бейджи** на уже видимые точки (`approved`/`imported`):
+  - `ups >= threshold` → бейдж **«Одобрено сообществом»**;
+  - `downs >= threshold` → бейдж **«Отклонено сообществом»** (сигнал админу; точка остаётся на карте, НЕ скрывается).
+- Фото/комменты: сейчас только сбор голосов через ту же полиморфную `Vote`; скрыть/показать/удалить — **отложено TODO** (см. ниже).
+
+**Алгоритм подсчёта бейджа (`ModerationService#badge_state`):**
+```
+ups   = votes.ups.count
+downs = votes.downs.count
+approved = ups   >= threshold
+rejected = downs >= threshold
+return :approved if approved && !rejected
+return :rejected if rejected && !approved
+net = ups - downs
+net.positive? ? :approved : :rejected   # конфликт/паритет (net<=0) → :rejected
+```
+- **Абсолютный порог** по каждой стороне (не `net`), из `Setting`/конфига (`community_moderation_threshold`, дефолт 10) — меняется без кода. Один юзер = один голос (unique index `[votable_type, votable_id, user_id]`); повторное голосование = toggle `value` (`+1`/`-1`) без роста числа уникальных голосов.
+
+**Цепочка:** `Vote::VoteComponent` (браузер) → `this.stimulate("VoteReflex#cast", params)` → `morph :nothing` + `deep_symbolize_keys` + `VotePolicy` (авторизация; антифрод: не автор, проксимити 100м через `PoiService.within_range?`) → `VoteService.cast!` (toggle/upsert в транзакции, `save!`, PaperTrail, награда TFT `poi_vote`) → `VersionObserverJob#handle_vote_update` → `ModerationService.evaluate!` (бейдж + `poi.moderation_source = :community`) + `ReputationService.reckon!` (репутация автора) + `VoteBroadcaster`/`PoiBroadcaster` (`cable_ready.inner_html` по селектору-обёртке) → SolidCable → DOM.
+
+**Компоненты (sidecar 7 файлов, 4 локали):** `Vote::VoteComponent` (апрув/дизлайк, MDI `mdi-thumb-up-outline`/`mdi-thumb-down-outline`, live-счётчик), `Ui::BadgeComponent` («Одобрено/Отклонено сообществом»).
+
+**TODO / долги:**
+- 🔴 Поведение фото/комментов при отклонении сообществом (скрыть/показать/удалить) — отложено (сейчас только сбор голосов + репутация).
+- 🔴 Привязка репутации к уровням геймификации (бейджи) — поверх `ReputationService.reckon!` (репутация автора копится; `suspended`/`banned` — решает ТОЛЬКО админ через существующий `Admin::UserService`).
+- ⚠️ Голосование фото/комментариев в UI — **фото уже встроено в галерею** (`Poi::GalleryComponent` рендерит `Vote::VoteComponent` в таргет `[data-vote-zone="photo-<id>"]`; live по стриму `pois_map`). Отложено только голосование комментариев (`PoiComment` — таргет `[data-vote-zone="poi_comment-<id>"]` в списке комментариев требует встройки).
+
+---
+
+### 3.6 Settings (настройки уведомлений админа)
 
 **Маршрут:** `/admin-panel/settings` (resource :settings, only: show) — [`Admin::SettingsController`](app/controllers/admin/settings_controller.rb:1)
 
@@ -346,7 +382,7 @@ Travel Fi
 
 ---
 
-### 3.6 Contract Mgmt (управление контрактами)
+### 3.7 Contract Mgmt (управление контрактами)
 
 **Статус:** 🔴 В планах (см. слой 4.2)
 
@@ -459,6 +495,8 @@ Travel Fi
 | 10 | `PoiCategory` | 1 — N | `PoiCategoryField` | категория определяет набор динамических полей |
 | 11 | `PoiCategory` | 1 — N | `Poi` | категория содержит точки |
 | 12 | `Poi` | 1 — N | `PoiComment` | комментарии к точке (self-join `parent_id` — ответы) |
+| 12a | `User` | 1 — N | `Vote` | голоса сообщества (votable полиморфный: `Poi`/`Photo`/`PoiComment`) |
+| 12b | `Poi`/`Photo`/`PoiComment` | 1 — N | `Vote` | полиморфный votable; unique `[votable_type, votable_id, user_id]` |
 | 13 | `Poi` | 1 — N | `Photo` | галерея фото (ActiveStorage) |
 | 14 | `Poi` | 1 — N | `PoiRating` | 5-звёздные оценки (🔴 в планах) |
 | 15 | *(все)* | — | `PaperTrail::Version` | аудит изменений всех моделей с `has_paper_trail` |
@@ -546,7 +584,7 @@ spec/system/
 
 ### Недоделано → чинить, затем тест
 - ⚠️ `PoiComment` live для всех (сейчас только автор) — баг
-- ⚠️ Загрузка фото (бинарники через Reflex) — баг
+- ✅ Загрузка фото (бинарники через Reflex) — решена через HTTP/multipart (`Poi::PhotosController#create`, JSON) в галерее; награда `poi_photo_add` + отзыв при удалении (задокументировано в 3.4/2.2)
 
 ### Бэклог-связки
 - 🔴 Конвейер broadcast реально доставляет (SolidQueue worker, cable-БД, подписка клиента)

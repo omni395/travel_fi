@@ -80,7 +80,7 @@ Travel Fi
 
 **Chain:** `PoisController` (index/view) → [`PoiReflex`](app/reflexes/poi_reflex.rb:16) (load_pois_in_bounds, load_more_pois, filter_by_categories, apply_filters, reset_filters, show_detail, show_detail_modal, edit_poi, create_comment, reverse_geocode, set_location, show_geolocation_toast) → [`PoiService`](app/services/poi_service.rb:12) → PostGIS (`within_bounds`/`within_meters`) → [`PoiBroadcaster`](app/broadcasters/poi_broadcaster.rb:12) / `ToastBroadcaster` → `UserChannel` / `AdminChannel`
 
-**Components:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Modals: `Poi::DetailsComponent`, `Poi::GalleryComponent`, `Poi::RatingsComponent` (stubs).
+**Components:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Modals: `Poi::DetailsComponent`, `Poi::GalleryComponent`; the voting tab — `Poi::RatingsComponent` (readonly rating + `Vote::VoteComponent`).
 
 **Status:** 🟡 Partial
 
@@ -104,6 +104,8 @@ Travel Fi
 - ✅ POI creation/editing from the map — via the `Poi::FormComponent` modal on the Reflex flow (`PoiReflex#create/#update` → `PoiService` → PaperTrail → `PoiBroadcaster`); without page reload, without JSON in the controller response; toast to the user via `ToastBroadcaster` (WebSocket); address autofill disabled (`autocomplete="off"`)
 - ✅ Dynamic category fields in the POI form: `PoiReflex#load_category_fields` renders `Poi::FormFieldsComponent` by field_type (string/text/number/boolean/select/multiselect) into the `[data-poi-form-fields]` wrapper via CableReady (`inner_html`), namespace `poi[metadata][field_key]`
 - ✅ Sidebar overlay: `Ui::SidebarComponent` expands OVER the map (absolute), without pushing the flex flow — map bounds are not recalculated (`poi:reload-features` is not duplicated, `_loadPoisInBounds` guard by `_lastBoundsKey`)
+- ✅ Category MDI icons on the global map: a single POI is drawn as the category MDI glyph (no pin/point) instead of a green circle. `map_component_controller.js` resolves the real glyph codepoint at runtime from the loaded MDI CSS (`getComputedStyle(el, "::before").content`), cached per class name (object-hash, since `Map` is shadowed by the `ol/Map` import); white outline (`stroke width: 3`) for readability; re-renders after `document.fonts.ready` (async CDN font). Clusters stay as numbered circles. The `poiIcon` already reaches the frontend via `PoiService.map_feature_data`. The style callback reads the source feature from the cluster wrapper (`features[0]`), where the properties live.
+- ✅ Category map image markers: a category can have a custom map marker image (`PoiCategory#category_icon`, `has_one_attached`) rendered by the marker instead of the MDI glyph. The image is uploaded/removed via HTTP/multipart from the admin edit form (finite via fetch; binaries are not sent through Reflex) — `Admin::PoiCategoriesController#update_category_icon/#remove_category_icon` → `PoiCategoryService.attach/remove_category_icon` → `PoiCategoryBroadcaster` (event_type `category_icon`) which both refreshes the admin card and dispatches `poi:reload-features` on `pois_map` so visible markers are re-rendered live. `PoiService.map_feature_data` now carries `category_image` (`category_icon_url`) into `#poi-map-features`, and `map_component_controller.js#iconStyle` uses `ol/style Icon` when present. While no image is set, the marker falls back to the MDI icon (the category `icon` attribute is still required and doubles as the marker fallback).
 
 **Wishlist:**
 - 🔴 `PoiRating` — 5-star system + aggregation into `poi.rating`
@@ -111,7 +113,6 @@ Travel Fi
 - 🔴 OSRM: route building to a POI + a line on the map
 - 🔴 Offline mode (PWA): tiles + list (IndexedDB)
 - 🔴 Understand the tags loaded from the OSM for each category. For example, for Tools/Showers - Level, Access, Source, Amenity, and so on. Create translation maps for each tag, accessible through the admin panel. Currently, this data doesn't match the category fields in the admin panel.
-- 🔴 Create a separate icon for each category to display on the map. More precisely, the category icon already exists as an MDI icon, but it needs to be displayed separately on the map.
 
 **Bugs/Debts:**
 - ✅ Photo upload (binaries via StimulusReflex) → HTTP/multipart — resolved via `Poi::PhotosController#create` (JSON) in the gallery
@@ -320,11 +321,47 @@ Travel Fi
 - 🔴 Bulk moderation
 
 **Bugs/Debts:**
-- ⚠️ Gallery: viewing `Poi#photos` (grid + lightbox) is not implemented
+- ✅ Gallery: viewing `Poi#photos` (grid + lightbox) is implemented — grid + lightbox/slider via `Poi::GalleryComponent`; reward `poi_photo_add` (TFT) on upload and `GamificationService.revoke!(:poi_photo_add)` on self-delete (only not-yet-relayed `claimed=false`) — see `PoiService.add_photo`/`remove_photo`
 
 ---
 
-### 3.5 Settings (admin notification settings)
+### 3.5 Voting / Community Moderation (community approval)
+
+**Status:** 🟡 Core implemented (model `Vote`, services, reflex, policy, broadcaster, component — test-covered). **Voting is embedded in the Ratings tab of the POI card** (`Poi::RatingsComponent` renders `Vote::VoteComponent` in the `[data-vote-zone="poi-<id>"]` target wrapper; live counter by the `pois_map` stream via `VoteBroadcaster`).
+
+**Semantics (strict, agreed):**
+- POI **status is set ONLY by the admin** (moderation: profanity, field completion). `pending` is NOT visible and is NOT votable. User votes NEVER change the `poi.status` and NEVER affect visibility.
+- User votes ONLY attach **badges** to already visible POIs (`approved`/`imported`):
+  - `ups >= threshold` → badge **«Community approved»**;
+  - `downs >= threshold` → badge **«Community rejected»** (signal to the admin; the POI stays on the map, NOT hidden).
+- Photos/comments: currently only vote collection via the same polymorphic `Vote`; hide/show/delete behavior — **deferred TODO** (see below).
+
+**Vote counting algorithm (`ModerationService#badge_for`):**
+```
+ups   = votes.ups.count
+downs = votes.downs.count
+approved = ups   >= threshold
+rejected = downs >= threshold
+return :approved if approved && !rejected
+return :rejected if rejected && !approved
+net = ups - downs
+net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
+```
+- **Absolute threshold** per side (not `net`), from `Setting`/config (`community_moderation_threshold`, default 10) — changeable without code. One user = one vote (unique index `[votable_type, votable_id, user_id]`); re-voting toggles `value` (`+1`/`-1`) without inflating unique votes.
+
+**Chain:** `Vote::VoteComponent` (browser) → `this.stimulate("VoteReflex#cast", params)` → `morph :nothing` + `deep_symbolize_keys` + `VotePolicy` (authorize; anti-fraud: not the author, proximity 100m via `PoiService.within_range?`) → `VoteService.cast!` (toggle/upsert in a transaction, `save!`, PaperTrail, TFT reward `poi_vote`) → `VersionObserverJob#handle_vote_update` → `ModerationService.evaluate!` (badge + `poi.moderation_source = :community`) + `ReputationService.reckon!` (author reputation) + `VoteBroadcaster`/`PoiBroadcaster` (`cable_ready.inner_html` by wrapper selector) → SolidCable → DOM.
+
+**Components (sidecar 7 files, 4 locales):** `Vote::VoteComponent` (approve/dislike, MDI `mdi-thumb-up-outline`/`mdi-thumb-down-outline`, live counter), `Ui::BadgeComponent` («Community approved/rejected»).
+
+**TODO / debts:**
+- 🔴 Behavior for photos/comments on community reject (hide/show/delete) — deferred (currently only vote collection).
+- 🔴 Tie reputation to gamification levels (badges) — planned, on top of `ReputationService.reckon!` (author reputation accumulates; `suspended`/`banned` — decided ONLY by the admin via existing `Admin::UserService`).
+- ⚠️ **Photo voting is embedded in the gallery** (`Poi::GalleryComponent` renders `Vote::VoteComponent` in `[data-vote-zone="photo-<id>"]`; live by the `pois_map` stream). Deferred — only comment voting (`PoiComment` requires embedding `[data-vote-zone="poi_comment-<id>"]` in the comments list).
+- ⚠️ `reputation` field on `User` (integer) — not yet present in `db/schema.rb`.
+
+---
+
+### 3.6 Settings (admin notification settings)
 
 **Route:** `/admin-panel/settings` (resource :settings, only: show) — [`Admin::SettingsController`](app/controllers/admin/settings_controller.rb:1)
 
@@ -457,6 +494,8 @@ Travel Fi
 | 10 | `PoiCategory` | 1 — N | `PoiCategoryField` | the category defines the set of dynamic fields |
 | 11 | `PoiCategory` | 1 — N | `Poi` | the category contains points |
 | 12 | `Poi` | 1 — N | `PoiComment` | comments to a point (self-join `parent_id` — replies) |
+| 12a | `User` | 1 — N | `Vote` | community votes (votable polymorphic: `Poi`/`Photo`/`PoiComment`) |
+| 12b | `Poi`/`Photo`/`PoiComment` | 1 — N | `Vote` | polymorphic votable; unique `[votable_type, votable_id, user_id]` |
 | 13 | `Poi` | 1 — N | `Photo` | photo gallery (ActiveStorage) |
 | 14 | `Poi` | 1 — N | `PoiRating` | 5-star ratings (🔴 planned) |
 | 15 | *(all)* | — | `PaperTrail::Version` | audit of changes of all models with `has_paper_trail` |
@@ -546,7 +585,7 @@ spec/system/
 
 ### Not done → fix, then test
 - ⚠️ `PoiComment` live for everyone (currently only the author) — bug
-- ⚠️ Photo upload (binaries via Reflex) — bug
+- ✅ Photo upload (binaries via Reflex) — resolved via HTTP/multipart (`Poi::PhotosController#create`, JSON) in the gallery; reward `poi_photo_add` + revoke on delete (documented in 3.4)
 
 ### Backlog links
 - 🔴 The broadcast pipeline actually delivers (SolidQueue worker, cable DB, client subscription)

@@ -28,9 +28,13 @@
       <%# Текстовая колонка: категория / название / статус / рейтинг / адрес %>
       <div class="flex-1 min-w-0 flex flex-col gap-1">
         <div class="flex items-center gap-2">
-          <% if poi.poi_category&.icon.present? %>
+          <% if poi.poi_category&.category_icon_url.present? %>
+            <img src="<%= poi.poi_category.category_icon_url %>"
+                 alt="<%= t('.icon_alt') %>"
+                 class="w-5 h-5 object-cover rounded">
+          <% elsif poi.poi_category&.icon.present? %>
             <i class="mdi <%= poi.poi_category.icon %> text-emerald-500 text-sm"></i>
-            <%# Иконка: динамическая из poi_category.icon %>
+            <%# Иконка: динамическая из poi_category.icon (fallback) %>
           <% else %>
             <i class="mdi mdi-map-marker text-emerald-500 text-sm"></i>
             <%# Иконка: mdi-map-marker %>

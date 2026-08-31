@@ -1,0 +1,84 @@
+<%# Ui::VoteComponent — блок голосования сообщества %>
+<%# Иконка: mdi-thumb-up-outline (апрув) / mdi-thumb-down-outline (дизлайк) %>
+<div
+  class="vote-component"
+  data-controller="ui--vote-component"
+  data-vote-component-votable-type-value="<%= votable.class.name %>"
+  data-vote-component-votable-id-value="<%= votable.id %>"
+  data-vote-component-current-vote-value="<%= current_vote_value %>"
+>
+  <%# Бейджи «Одобрено/Отклонено сообществом» (только POI) %>
+  <% if community_approved? %>
+    <span class="vote-component__badge vote-component__badge--approved">
+      <%= t(".community_approved") %>
+    </span>
+  <% elsif community_rejected? %>
+    <span class="vote-component__badge vote-component__badge--rejected">
+      <%= t(".community_rejected") %>
+    </span>
+  <% end %>
+
+  <div class="vote-component__controls">
+    <%# Кнопка «Апрув» (+1) %>
+    <button
+      type="button"
+      class="vote-component__btn <%= user_voted_up? ? 'is-active' : '' %>"
+      data-action="ui--vote-component#castUp"
+      aria-label="<%= t(".up_aria") %>"
+      <% unless can_vote? %> disabled <% end %>
+    >
+      <span class="mdi mdi-thumb-up-outline" aria-hidden="true"></span>
+      <span class="vote-component__count" data-vote-counter="up"><%= ups %></span>
+    </button>
+
+    <%# Кнопка «Дизлайк» (-1) %>
+    <button
+      type="button"
+      class="vote-component__btn <%= user_voted_down? ? 'is-active--down' : '' %>"
+      data-action="ui--vote-component#castDown"
+      aria-label="<%= t(".down_aria") %>"
+      <% unless can_vote? %> disabled <% end %>
+    >
+      <span class="mdi mdi-thumb-down-outline" aria-hidden="true"></span>
+      <span class="vote-component__count" data-vote-counter="down"><%= downs %></span>
+    </button>
+  </div>
+
+  <p class="vote-component__hint" data-vote-counter="hint">
+    <%= t(".hint", total: total) %>
+  </p>
+
+  <%# Диалог «забрать голос» (повторный клик на ту же кнопку).
+      Режим без confirm_url: при подтверждении ConfirmDialog диспатчит
+      событие confirmDialogConfirmed → Ui::VoteComponent#onRemoveConfirmed. %>
+  <div
+    data-ui--vote-component-target="removeDialog"
+    data-action="confirmDialogConfirmed->ui--vote-component#onRemoveConfirmed"
+  >
+    <%= render Ui::ConfirmDialogComponent.new(
+      title: t(".remove_title"),
+      message: t(".remove_message"),
+      confirm_text: t(".remove_confirm"),
+      cancel_text: t(".cancel"),
+      confirm_variant: :danger,
+      confirm_url: nil
+    ) %>
+  </div>
+
+  <%# Диалог «изменить голос» (клик на противоположную кнопку).
+      Режим без confirm_url: при подтверждении диспатчит confirmDialogConfirmed
+      → Ui::VoteComponent#onChangeConfirmed. %>
+  <div
+    data-ui--vote-component-target="changeDialog"
+    data-action="confirmDialogConfirmed->ui--vote-component#onChangeConfirmed"
+  >
+    <%= render Ui::ConfirmDialogComponent.new(
+      title: t(".change_title"),
+      message: t(".change_message"),
+      confirm_text: t(".change_confirm"),
+      cancel_text: t(".cancel"),
+      confirm_variant: :primary,
+      confirm_url: nil
+    ) %>
+  </div>
+</div>

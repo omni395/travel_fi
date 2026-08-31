@@ -12,6 +12,12 @@ en:
           active: Active
           save: Save
           cancel: Cancel
+          map_icon_label: "Map Icon (marker image)"
+          map_icon_hint: "Upload a custom marker image for this category on the map. While no image is set, the MDI icon above is used as the marker."
+          map_icon_choose: "Choose image"
+          map_icon_upload: "Upload"
+          map_icon_remove: "Remove"
+          map_icon_alt: "Category marker image"
           osm_settings: "OSM Import Settings"
           osm_tags_label: "OpenStreetMap Tags"
           osm_tags_hint: "Enter tags separated by commas. Example: amenity=toilets, amenity=shower"

@@ -6,3 +6,4 @@ en:
       status_approved: Approved
       status_rejected: Rejected
       status_archived: Archived
+      icon_alt: "Category marker image"

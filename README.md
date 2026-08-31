@@ -314,6 +314,11 @@ Reactive components over WebSocket: the browser sends an action, the server upda
 ### CableReady
 A generator of DOM update commands. Transport layer: a command (update/replace/add/remove/notify) is sent over WebSocket and executed by the browser.
 
+### OpenLayers map & category icons
+The global POI map ([`Poi::MapComponent`](app/components/poi/map_component.rb:1), OpenLayers 10) draws a single POI as the MDI glyph of its category (no pin/point), with a white outline for readability. The real glyph codepoint is resolved at runtime from the loaded MDI CSS (`getComputedStyle(el, "::before").content`) and cached; markers re-render after the async CDN font loads (`document.fonts.ready`). Clusters stay as numbered circles. The marker reads the source feature's `poiIcon` (from the cluster wrapper `features[0]`); the icon reaches the frontend via [`PoiService.map_feature_data`](app/services/poi_service.rb:394).
+
+A category can also define a custom **map marker image** ([`PoiCategory#category_icon`](app/models/poi_category.rb:1), `has_one_attached`). When set, the marker renders the image with `ol/style Icon` instead of the MDI glyph; otherwise it falls back to the MDI icon. The image is managed from the admin category edit form via HTTP/multipart (`Admin::PoiCategoriesController#update_category_icon/#remove_category_icon` → `PoiCategoryService.attach/remove_category_icon` → `PoiCategoryBroadcaster`, event_type `category_icon`, which refreshes the admin card and dispatches `poi:reload-features` on `pois_map` so visible markers re-render live). `PoiService.map_feature_data` carries `category_image` (`category_icon_url`) into `#poi-map-features`.
+
 ---
 
 ## 📨 Notifications and background jobs
@@ -347,13 +352,31 @@ Search and filtering of data based on request parameters, without manual SQL.
 
 **TOKEN MODEL:** rewards are credited with TFT tokens (not "points").
 
-**Architecture:** the `UserReward` model (`amount` TFT, `action_key`, `wallet_id`) — off-chain crediting ledger; `User#token_balance` = sum of credits; the `GamificationService` service (`award!`, `award_referral!`, `badge_key`, `check_badges!`); badges — the `Gamification` model (event_type `badge`, reputation achievements); config [`config/gamification.yml`](config/gamification.yml) (rewards — TFT tokens, badges — achievements).
+**Architecture:** the `UserReward` model (`amount` TFT, `action_key`, `wallet_id`) — off-chain crediting ledger; `User#token_balance` = sum of credits; the `GamificationService` service (`award!`, `award_referral!`, `badge_key`, `check_badges!`, `revoke!`); badges — the `Gamification` model (event_type `badge`, reputation achievements); config [`config/gamification.yml`](config/gamification.yml) (rewards — TFT tokens, badges — achievements).
+
+**Reward revocation (`GamificationService.revoke!`):** globally revokes a not-yet-relayed reward (`claimed=false`, not sent to the blockchain) for an action (e.g. `poi_photo_add` on photo self-delete via `PoiService.remove_photo`), atomically deleting the `UserReward` + `TokenTransaction` pair (PaperTrail audit); idempotent. Already-relayed (`claimed=true`) rewards are NOT revoked on the backend.
 
 **Rewards (TFT):** registration (welcome) 10, referral (referrer) 5 — by vesting lock period (anti-fraud), referral (newcomer) 5 — instantly, POI addition 20, POI photo 5, comment 5, POI vote 2.
 
 **Badges:** `registration_complete`, `first_poi`, `contributor` (10+), `explorer` (5+ cities), `recruiter` (5+ referrals), `veteran` (balance 1000+ TFT).
 
 **I18n:** badge and reward names are localized (en, ru, es, zh).
+
+---
+
+## 🗳️ Community Moderation (Voting)
+
+Community approval/trust layer on top of admin moderation. See the «3.5 Voting / Community Moderation» section in [`ROADMAP.md`](ROADMAP.md:1) for the full plan.
+
+**UI (POI + photos):** voting is embedded in the Ratings tab of the POI card — [`Poi::RatingsComponent`](app/components/poi/ratings_component.rb:1) renders [`Vote::VoteComponent`](app/components/vote/vote_component.rb:1) in the `[data-vote-zone="poi-<id>"]` wrapper; and in the photo gallery — [`Poi::GalleryComponent`](app/components/poi/gallery_component.rb:1) renders it in `[data-vote-zone="photo-<id>"]`. The live counter updates via `VoteBroadcaster` (`inner_html` by the `pois_map` stream). Comment voting — pending.
+
+**Semantics (strict):** POI status is set ONLY by the admin (`pending` is not visible and not votable). User votes NEVER change `poi.status` and NEVER affect visibility — they ONLY attach badges to already visible POIs (`approved`/`imported`): `ups >= threshold` → «Community approved», `downs >= threshold` → «Community rejected» (signal to admin; the POI stays on the map).
+
+**Vote counting:** absolute threshold per side (from `Setting`/config, default 10); on conflict (`both >= threshold`) the `net = ups - downs` decides — `net > 0` → approved, `net <= 0` (incl. parity) → rejected. One user = one vote (unique index `[votable_type, votable_id, user_id]`); re-voting toggles `value` (`+1`/`-1`).
+
+**Chain:** `Vote::VoteComponent` → `VoteReflex#cast` (`morph :nothing`) → `VoteService.cast!` (transaction, PaperTrail, TFT `poi_vote`) → `VersionObserverJob#handle_vote_update` → `ModerationService.evaluate!` + `ReputationService.reckon!` + `VoteBroadcaster`/`PoiBroadcaster` (`inner_html`) → SolidCable → DOM.
+
+**Anti-fraud:** `VotePolicy` — logged-in, not the author, proximity 100m via `PoiService.within_range?`. Author reputation accumulates via `ReputationService.reckon!`; `suspended`/`banned` — decided ONLY by the admin (`Admin::UserService`).
 
 ---
 

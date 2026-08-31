@@ -44,7 +44,14 @@ Rails.application.routes.draw do
       resources :users, only: [ :index, :show, :update ]
 
       # Управление категориями POI
-      resources :poi_categories, only: [ :index, :show, :new, :create, :update ]
+      # member :map_icon — загрузка/удаление картинки-маркера (category_icon)
+      # через HTTP/multipart (бинарники через Reflex не передаются)
+      resources :poi_categories, only: [ :index, :show, :new, :create, :update ] do
+        member do
+          post :update_category_icon
+          delete :remove_category_icon
+        end
+      end
 
       # Управление POI
       resources :pois, only: [ :index, :show, :new, :create, :update ]

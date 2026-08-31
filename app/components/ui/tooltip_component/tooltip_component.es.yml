@@ -5,3 +5,4 @@ es:
       category: "Categoría"
       address: "Dirección"
       photo_alt: "Foto de marcador de posición del POI"
+      icon_alt: "Icono de categoría"

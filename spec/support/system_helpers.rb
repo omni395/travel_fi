@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 require 'timeout'
+# Явная загрузка единого источника координат геолокации. ВАЖНО: rails_helper
+# грузит spec/support/**/*.rb в алфавитном порядке (system_helpers идёт раньше
+# test_geolocation) — без require_relative константы TestGeolocation здесь
+# недоступны на этапе загрузки файла.
+require_relative 'test_geolocation'
 
 #
 # SystemHelpers — хелперы для system-тестов по принципу «браузер А → браузер Б».
@@ -83,6 +88,62 @@ module SystemHelpers
             next
           end
 
+          # ГЛОБАЛЬНЫЙ МОК ГЕОПОЗИЦИИ (геоконтекст system-тестов):
+          # Реально переопределяем геолокацию браузера через CDP
+          # Emulation.setGeolocationOverride — браузерный getCurrentPosition/
+          # watchPosition нативно возвращают детерминированные координаты Лондона
+          # (fallback-центр карты и матрица проксимити). Это НАДЁЖНЕЕ инъекции
+          # navigator.geolocation скриптом: карта вызывает _onGeolocationSuccess →
+          # PoiReflex#set_location → session[:user_lat/lng] заполняется, и
+          # check_proximity! при голосовании/комментарии проходит детерминированно.
+          #
+          # Настройка действует на текущий CDP-target и переживает навигацию в его
+          # рамках (pois_path → открытие карточки и т.д.). Дублируем как
+          # addScriptToEvaluateOnNewDocument (fallback) на случай потери override.
+          browser = page.driver.browser
+          if browser.respond_to?(:execute_cdp)
+            # Browser.grantPermissions (+ setGeolocationOverride) — нативно
+            # переопределяем геолокацию Chrome. БЕЗ grantPermissions getCurrentPosition
+            # может зависнуть на permission-prompt → карта уходит в fallback, который
+            # НЕ вызывает PoiReflex#set_location → session[:user_lat/lng] не заполняется
+            # → check_proximity! блокирует голосование. Оба вызова обязательны.
+            begin
+              browser.execute_cdp(
+                'Browser.grantPermissions',
+                permissions: [ 'geolocation' ]
+              )
+            rescue StandardError => e
+              Rails.logger.warn("system_helpers grantPermissions failed: #{e.class} #{e.message}")
+            end
+            begin
+              browser.execute_cdp(
+                'Emulation.setGeolocationOverride',
+                latitude: TestGeolocation::DEFAULT_TEST_LAT,
+                longitude: TestGeolocation::DEFAULT_TEST_LNG,
+                accuracy: TestGeolocation::DEFAULT_TEST_ACCURACY
+              )
+            rescue StandardError => e
+              Rails.logger.warn("system_helpers geolocation override failed: #{e.class} #{e.message}")
+            end
+            browser.execute_cdp(
+              'Page.addScriptToEvaluateOnNewDocument',
+              source: <<~JS
+                (() => {
+                  if (window.__travel_fi_geo_done) return
+                  window.__travel_fi_geo_done = true
+                  window.__travel_fi_geo_stubbed = true
+                  navigator.geolocation.getCurrentPosition = (success) => {
+                    success({ coords: { latitude: #{TestGeolocation::DEFAULT_TEST_LAT}, longitude: #{TestGeolocation::DEFAULT_TEST_LNG}, accuracy: #{TestGeolocation::DEFAULT_TEST_ACCURACY} } })
+                  }
+                  navigator.geolocation.watchPosition = (success) => {
+                    success({ coords: { latitude: #{TestGeolocation::DEFAULT_TEST_LAT}, longitude: #{TestGeolocation::DEFAULT_TEST_LNG}, accuracy: #{TestGeolocation::DEFAULT_TEST_ACCURACY} } })
+                    return 1
+                  }
+                })()
+              JS
+            )
+          end
+
           return handles.first
         rescue Selenium::WebDriver::Error::NoSuchWindowError, Selenium::WebDriver::Error::WebDriverError, NoMethodError
           # окно ещё не готово — повторяем.
@@ -138,6 +199,95 @@ module SystemHelpers
     end
   rescue Timeout::Error
     raise "CDP geolocation override did not succeed within #{timeout}s"
+  end
+
+  #
+  # Единый детерминированный гео-сетап system-теста.
+  #
+  # Применяется ПОСЛЕ реального `visit` карты (не на about:blank) и комбинирует:
+  #   1) CDP Emulation.setGeolocationOverride + Page.addScriptToEvaluateOnNewDocument
+  #      (нативная браузерная геолокация + JS-стаб navigator.geolocation на Берлин);
+  #   2) ПРЯМОЙ форс `PoiReflex#set_location` через StimulusReflex — детерминированно
+  #      заполняет session[:user_lat/lng] сервера, НЕ полагаясь на успех/тайминг
+  #      браузерного getCurrentPosition (гонка CDP оверрайда/пермишен-промпта была
+  #      причиной fallback-таймаута → session пустая → check_proximity! блокировал).
+  #
+  # Заменяет разрозненные in-spec инъекции navigator.geolocation + retry_cdp_geolocation.
+  #
+  # @param latitude [Float] широта (WGS84); по умолчанию Берлин из TestGeolocation
+  # @param longitude [Float] долгота (WGS84); по умолчанию Берлин из TestGeolocation
+  # @return [void]
+  #
+  def prepare_map_geolocation(latitude: TestGeolocation::DEFAULT_TEST_LAT,
+                              longitude: TestGeolocation::DEFAULT_TEST_LNG,
+                              accuracy: TestGeolocation::DEFAULT_TEST_ACCURACY)
+    prepare_session_window
+
+    # Каст к числу: значения подставляются в JS-стаб интерполяцией.
+    lat = latitude.to_f
+    lng = longitude.to_f
+    acc = accuracy.to_f
+
+    browser = page.driver.browser
+
+    # 1) Нативный CDP-оверрайд (для getCurrentPosition/watchPosition) — с ретраем
+    #    на случай неготового CDP-таргета.
+    retry_cdp_geolocation(latitude: lat, longitude: lng, accuracy: acc)
+
+    # 2) JS-стаб на каждый новый документ — переживает навигацию (resilient к потере
+    #    override при переходе на живой URL).
+    browser.execute_cdp(
+      'Page.addScriptToEvaluateOnNewDocument',
+      source: <<~JS
+        (() => {
+          if (window.__travel_fi_geo_done) return
+          window.__travel_fi_geo_done = true
+          window.__travel_fi_geo_stubbed = true
+          navigator.geolocation.getCurrentPosition = (success) => {
+            success({ coords: { latitude: #{lat}, longitude: #{lng}, accuracy: #{acc} } })
+          }
+          navigator.geolocation.watchPosition = (success) => {
+            success({ coords: { latitude: #{lat}, longitude: #{lng}, accuracy: #{acc} } })
+            return 1
+          }
+        })()
+      JS
+    )
+
+    # 3) ПРЯМОЙ форс set_location через StimulusReflex/RPC — детерминированная сессия.
+    force_user_location(latitude: lat, longitude: lng)
+  end
+
+  #
+  # Гарантированно заполняет session[:user_lat/lng] сервера координатами юзера.
+  #
+  # Вызывает PoiReflex#set_location через StimulusReflex из браузера (RPC over
+  # WebSocket), минуя зависимость от реального navigator.geolocation. Это страховка
+  # от недетерминированной браузерной геолокации в headful-Selenium: даже если CDP
+  # override не успел/пермишен-промпт повис, проксимити (голосование/комментарий)
+  # пройдёт, т.к. серверная сессия гарантированно содержит координаты.
+  #
+  # @param latitude [Float] широта (WGS84)
+  # @param longitude [Float] долгота (WGS84)
+  # @return [void]
+  #
+  def force_user_location(latitude:, longitude:)
+    # На публичной карте data-controller="poi--map-component" вешается на родительском
+    # контейнере (index), в single-режиме — на корне самого компонента. Ищем первый
+    # контроллер карты по всему документу и стимулируем со страховкой от отсутствия
+    # (карта не готова / not on page) — тогда деградируем без падения.
+    page.execute_script(<<~JS)
+      (() => {
+        if (!window.StimulusReflex || !window.Stimulus) return
+        const el = document.querySelector('[data-controller~="poi--map-component"]')
+        if (!el) return
+        const controller = window.Stimulus.getControllerForElementAndIdentifier(
+          el, 'poi--map-component'
+        )
+        if (!controller || typeof controller.stimulate !== 'function') return
+        controller.stimulate('PoiReflex#set_location', { lat: #{latitude}, lng: #{longitude} })
+      })()
+    JS
   end
 
   #

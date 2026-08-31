@@ -362,6 +362,28 @@ RSpec.describe PoiService, type: :service do
 
       expect(described_class.map_feature_data(poi)[:icon]).to eq('mdi-map-marker')
     end
+
+    it 'возвращает category_image, если у категории есть картинка-маркер' do
+      cat = create(:poi_category)
+      cat.category_icon.attach(
+        io: File.open(Rails.root.join('spec/fixtures/files/photo.png')),
+        filename: 'marker.png',
+        content_type: 'image/png'
+      )
+      poi = create(:poi, poi_category: cat)
+
+      data = described_class.map_feature_data(poi)
+
+      expect(data[:category_image]).to be_present
+      expect(data[:icon]).to eq(cat.icon)
+    end
+
+    it 'возвращает nil category_image, если картинки-маркера нет' do
+      cat = create(:poi_category)
+      poi = create(:poi, poi_category: cat)
+
+      expect(described_class.map_feature_data(poi)[:category_image]).to be_nil
+    end
   end
 
   describe '.parse_coordinates' do

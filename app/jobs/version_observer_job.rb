@@ -47,6 +47,8 @@ class VersionObserverJob < ApplicationJob
       handle_poi_category_field_update(version)
     when "TokenTransaction"
       handle_token_transaction_update(version)
+    when "Vote"
+      handle_vote_update(version)
     end
   end
 
@@ -181,9 +183,20 @@ class VersionObserverJob < ApplicationJob
   #
   # Маршрутизация обновлений модели PoiCategory
   #
+  # Игнорирует служебные версии, где изменился только updated_at (пустой audit):
+  # ActiveStorage detach/attach при смене картинки-маркера делают touch родителя,
+  # создавая версию с одним полем updated_at. Бродкаст такой версии рендерит
+  # show-компонент в #poi-category-detail и затирает открытую edit-форму.
+  # Настоящий edit (name/position/icon/active и др.) меняет осмысленные поля
+  # и продолжает штатно бродкастить.
+  #
   def handle_poi_category_update(version)
     category = version.item || version.reify
     return unless category
+
+    changes = version.object_changes.is_a?(Hash) ? version.object_changes : {}
+    meaningful = changes.keys.reject { |k| k.to_s == "updated_at" }
+    return if meaningful.empty?
 
     PoiCategoryBroadcaster.call(
       category: category,
@@ -216,6 +229,30 @@ class VersionObserverJob < ApplicationJob
     return unless transaction
 
     TokenTransactionBroadcaster.call(token_transaction: transaction)
+  end
+
+  #
+  # Маршрутизация голосов (Vote) — пороговая авто-модерация + live-счётчик.
+  #
+  # 1. ModerationService.evaluate! — выставляет бейджи («Одобрено/Отклонено
+  #    сообществом») и пересчитывает репутацию автора. Для POI при переходе
+  #    бейджа обновляет poi.moderation_source/community_rejected (создаёт версию
+  #    PaperTrail → отдельный broadcast через PoiBroadcaster).
+  # 2. VoteBroadcaster — live-обновление счётчика голосов на клиенте.
+  #
+  def handle_vote_update(version)
+    vote = version.item || version.reify
+    return unless vote
+
+    votable = vote.votable
+    return unless votable
+
+    # Бейджи/репутация (создаёт версию POI при смене moderation_source →
+    # отдельный handle_poi_update → PoiBroadcaster).
+    ModerationService.evaluate!(votable)
+
+    # Live-счётчик голосов.
+    safe_broadcast { VoteBroadcaster.call(votable: votable) }
   end
 
   #
