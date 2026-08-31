@@ -60,4 +60,58 @@ RSpec.describe Admin::PoiCategoriesController, type: :request do
       expect(response).to redirect_to(new_user_session_path)
     end
   end
+
+  describe 'картинка-маркер категории (category_icon)' do
+    let(:category) { create(:poi_category) }
+
+    it 'загружает картинку через POST /map_icon (update_category_icon)' do
+      sign_in admin
+      allow(PoiCategoryBroadcaster).to receive(:call)
+
+      post update_category_icon_admin_poi_category_path(id: category), params: {
+        category: { category_icon: fixture_file_upload('files/photo.png', 'image/png') }
+      }
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body['attached']).to be true
+      expect(body['url']).to be_present
+      expect(category.reload.category_icon).to be_attached
+    end
+
+    it 'возвращает 422 без файла' do
+      sign_in admin
+
+      post update_category_icon_admin_poi_category_path(id: category)
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it 'удаляет картинку через DELETE /map_icon (remove_category_icon)' do
+      sign_in admin
+      allow(PoiCategoryBroadcaster).to receive(:call)
+
+      category.category_icon.attach(
+        io: File.open(Rails.root.join('spec/fixtures/files/photo.png')),
+        filename: 'test.png',
+        content_type: 'image/png'
+      )
+
+      delete remove_category_icon_admin_poi_category_path(id: category)
+
+      expect(response).to have_http_status(:ok)
+      expect(category.reload.category_icon).not_to be_attached
+    end
+
+    it 'запрещает не-админу менять картинку' do
+      user = create(:user)
+      sign_in user
+
+      post update_category_icon_admin_poi_category_path(id: category), params: {
+        category: { category_icon: fixture_file_upload('files/photo.png', 'image/png') }
+      }
+
+      expect(response).to have_http_status(:forbidden)
+    end
+  end
 end

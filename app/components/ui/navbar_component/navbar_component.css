@@ -10,6 +10,11 @@
 .navbar-component button:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
+
+.navbar-component a.logo-link:hover {
+  background-color: transparent;
+}
+
 .navbar-component .mdi {
   font-size: 1.25rem;
   line-height: 1;

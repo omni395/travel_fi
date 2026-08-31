@@ -12,6 +12,12 @@ zh:
           active: 启用
           save: 保存
           cancel: 取消
+          map_icon_label: "地图图标（标记图片）"
+          map_icon_hint: "为该类别在地图上上传自定义标记图片。未设置图片时，使用上方的 MDI 图标作为标记。"
+          map_icon_choose: "选择图片"
+          map_icon_upload: "上传"
+          map_icon_remove: "移除"
+          map_icon_alt: "类别标记图片"
           osm_settings: "OSM导入设置"
           osm_tags_label: "OpenStreetMap标签"
           osm_tags_hint: "输入标签，用逗号分隔。例如：amenity=toilets, amenity=shower"

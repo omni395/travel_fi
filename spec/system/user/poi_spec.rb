@@ -18,45 +18,27 @@ require 'rails_helper'
 #
 # Live-карта требует ВИДИМОГО окна Chrome (spec/support/cuprite.rb: headful + slowmo) —
 # OpenLayers отрисовывает первый кадр, postrender срабатывает и #poi-map-features
-# наполняется. Детерминированная геолокация на Лондон (fallback-центр карты) — через CDP.
+# наполняется. Детерминированная геолокация на Берлин (fallback-центр карты) — через CDP.
 #
 RSpec.describe 'POI (пользователь, браузер А → браузер Б)', type: :system do
-  # Координаты Лондона (fallback-центр карты и маркер-данные)
-  POI_LAT = 51.5074
-  POI_LNG = -0.1278
+  # Координаты Берлина (fallback-центр карты и маркер-данные, TestGeolocation).
+  POI_LAT = TestGeolocation::DEFAULT_TEST_LAT
+  POI_LNG = TestGeolocation::DEFAULT_TEST_LNG
 
   let!(:user_a) { create(:user, :with_setting, email: 'poi_author@example.com') }
   let!(:user_b) { create(:user, :with_setting, email: 'poi_reader@example.com') }
   let!(:category) { create(:poi_category) }
 
   #
-  # Подготавливает браузер Б к работе с картой: гарантирует готовность окна
-  # сессии до CDP-вызова и задаёт детерминированную геолокацию на Лондон.
+  # Подготавливает браузер Б к работе с картой: единый детерминированный гео-сетап
+  # (CDP-оверрайд + JS-стаб + форс set_location) на Берлин.
   #
   def prepare_map_browser_b
     sign_in_via_ui(user_b)
-    prepare_session_window
-    # Детерминированная геолокация ДО visit pois_path: карта центрируется на Лондон,
-    # bounds покрывают POI, #poi-map-features наполняется.
-    retry_cdp_geolocation(latitude: POI_LAT, longitude: POI_LNG, accuracy: 100)
-    # Системный стаб геолокации через CDP Page.addScriptToEvaluateOnNewDocument:
-    # инжектится при КАЖДОЙ навигации и ПЕРЕЖИВАЕТ visit (в отличие от execute_script,
-    # который создаёт стаб в текущем документе и теряется при редирект/навигации).
-    # getCurrentPosition возвращает Лондон немедленно → _onGeolocationSuccess →
-    # карта инициализируется детерминированно, минуя CDP-тайминг и fallback-таймаут.
-    page.driver.browser.execute_cdp(
-      'Page.addScriptToEvaluateOnNewDocument',
-      source: <<~JS
-        if (!window.__travel_fi_geo_stubbed) {
-          window.__travel_fi_geo_stubbed = true
-          navigator.geolocation.getCurrentPosition = (success) => {
-            success({ coords: { latitude: #{POI_LAT}, longitude: #{POI_LNG}, accuracy: 100 } })
-          }
-        }
-      JS
-    )
+    prepare_map_geolocation(latitude: POI_LAT, longitude: POI_LNG)
     visit pois_path
     wait_for_selector('#poi-list [data-poi-id]', timeout: 90)
+    force_user_location(latitude: POI_LAT, longitude: POI_LNG)
   end
 
   #
@@ -85,7 +67,7 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
   end
 
   it 'А создаёт POI (pending) → в БД pending, награда не начислена; Б не видит на карте' do
-    poi = create_poi_as_a('London Pavilion', status: 'pending')
+    poi = create_poi_as_a('Berlin Pavilion', status: 'pending')
 
     expect(poi.reload.status).to eq('pending')
     # БАГ B: до одобрения награда автору НЕ начислена
@@ -94,7 +76,7 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
     # Pending-точка НЕ входит в Poi.visible (approved/imported) — сайдбар и карта
     # не наполнятся ею в принципе. Создаём approved-фон, чтобы карта/список
     # инициализировались и проверка «pending отсутствует» была осмысленной.
-    create_poi_as_a('London Visible Background', status: 'approved')
+    create_poi_as_a('Berlin Visible Background', status: 'approved')
 
     prepare_map_browser_b
     wait_for_selector('#poi-map-features [data-poi-id]', timeout: 90)
@@ -106,7 +88,7 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
   end
 
   it 'админ одобряет точку → награда автору начислена, Б (и другие в границах) видит на карте' do
-    poi = create_poi_as_a('London Approved', status: 'pending')
+    poi = create_poi_as_a('Berlin Approved', status: 'pending')
 
     # Админ заходит в точку, проверяет, ставит статус approved (модерация)
     admin = create(:user, :admin, :with_setting)
@@ -123,25 +105,14 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
   end
 
   it 'создание POI: клик по мини-карте формы ставит маркер в точку клика и заполняет координаты' do
-    # Геолокация А на Лондон → карта формы центрируется там же, круг 100м вокруг.
+    # Геолокация А на Берлин → карта формы центрируется там же, круг 100м вокруг.
     browser_a do
       sign_in_via_ui(user_a)
-      prepare_session_window
-      retry_cdp_geolocation(latitude: POI_LAT, longitude: POI_LNG, accuracy: 100)
-      page.driver.browser.execute_cdp(
-        'Page.addScriptToEvaluateOnNewDocument',
-        source: <<~JS
-          if (!window.__travel_fi_geo_stubbed) {
-            window.__travel_fi_geo_stubbed = true
-            navigator.geolocation.getCurrentPosition = (success) => {
-              success({ coords: { latitude: #{POI_LAT}, longitude: #{POI_LNG}, accuracy: 100 } })
-            }
-          }
-        JS
-      )
+      prepare_map_geolocation(latitude: POI_LAT, longitude: POI_LNG)
       # Кнопка «Add POI» рендерится только при user_signed_in?, поэтому весь
       # сценарий (клик → форма → OL-клик → проверка) остаётся внутри browser_a.
       visit pois_path
+      force_user_location(latitude: POI_LAT, longitude: POI_LNG)
 
       # Открываем форму добавления POI (кнопка Add POI → poi:open-modal)
       click_on I18n.t('poi.map_component.add_poi')
@@ -203,7 +174,7 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
   end
 
   it 'маркер пользователя (.poi-user-pin) отображается на карте после геолокации' do
-    create_poi_as_a('London Clock', status: 'approved')
+    create_poi_as_a('Berlin Clock', status: 'approved')
 
     prepare_map_browser_b
     wait_for_selector('#poi-map-features [data-poi-id]', timeout: 90)
@@ -215,11 +186,12 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
   end
 
   it 'точки на карте синхронизированы с точками в сайдбаре' do
-    # Небольшой набор в одной области — все влезают в первую страницу сайдбара
+    # Небольшой набор в одной области вокруг Берлина (fallback-центр) — все влезают
+    # в видимые bounds карты при zoom 17 (разброс ~50-300м от центра).
     [
-      [ 51.5074, -0.1278, 'London Fountain A' ],
-      [ 51.5079, -0.0877, 'London Bridge B' ],
-      [ 51.5085, -0.0970, 'London Eye C' ]
+      [ 52.5200, 13.4050, 'Berlin Fountain A' ],
+      [ 52.5207, 13.4060, 'Berlin Bridge B' ],
+      [ 52.5194, 13.4038, 'Berlin Eye C' ]
     ].each do |lat, lng, name|
       browser_a do
         sign_in_via_ui(user_a)
@@ -256,9 +228,9 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
       poi = PoiService.create(
         params: {
           poi_category_id: category.id,
-          name: { 'en' => 'London Bridge', 'ru' => 'Лондонский мост', 'es' => 'Puente de Londres', 'zh' => '伦敦桥' },
-          latitude: 51.5079,
-          longitude: -0.0877,
+          name: { 'en' => 'Berlin Bridge', 'ru' => 'Берлинский мост', 'es' => 'Puente de Berlín', 'zh' => '柏林桥' },
+          latitude: POI_LAT,
+          longitude: POI_LNG,
           status: 'approved'
         },
         current_user: user_a
@@ -281,7 +253,7 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
     JS
 
     wait_for_selector("[data-poi--show-component-target='overlay']:not(.hidden)", timeout: 30)
-    expect(page).to have_content('London Bridge', wait: 10)
+    expect(page).to have_content('Berlin Bridge', wait: 10)
   end
 
   it 'одну и ту же точку можно открыть повторно после закрытия через кнопку X (баг B)' do
@@ -292,8 +264,8 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
         params: {
           poi_category_id: category.id,
           name: { 'en' => 'Reopen Bridge', 'ru' => 'Мост повторно', 'es' => 'Puente reabrir', 'zh' => '重新打开桥' },
-          latitude: 51.5079,
-          longitude: -0.0877,
+          latitude: POI_LAT,
+          longitude: POI_LNG,
           status: 'approved'
         },
         current_user: user_a
@@ -330,10 +302,9 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
 
   # PENDING (инфраструктурный блокер, аналогично админскому сценарию в admin/pois_spec.rb):
   # форма редактирования открывается через PoiReflex#edit_poi → check_proximity!.
-  # Координаты пользователя пишутся в session ТОЛЬКО рефлексом set_location из JS-геолокации;
-  # реальная браузерная геолокация в headful-Selenium недетерминирована (CDP-оверрайд не
-  # всегда успевает к getCurrentPosition → fallback-таймаут → session пустая → форма не
-  # открывается). Форма редактирования детерминированно покрыта админским сценарием.
+  # Координаты пользователя пишутся в session рефлексом set_location. Единый
+  # prepare_map_geolocation + форс set_location решают детерминированность. Форма
+  # редактирования детерминированно покрыта админским сценарием.
   xit 'автор редактирует точку: форма + карта с маркером + все поля сохраняются' do
     poi = create(:poi,
                  user: user_a,
@@ -343,15 +314,10 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
                  coordinates: PoiService.parse_coordinates(POI_LAT, POI_LNG))
     browser_a do
       sign_in_via_ui(user_a)
-      prepare_session_window
-      retry_cdp_geolocation(latitude: POI_LAT, longitude: POI_LNG, accuracy: 100)
-      page.execute_script(<<~JS)
-        navigator.geolocation.getCurrentPosition = (success) => {
-          success({ coords: { latitude: #{POI_LAT}, longitude: #{POI_LNG}, accuracy: 100 } })
-        }
-      JS
+      prepare_map_geolocation(latitude: POI_LAT, longitude: POI_LNG)
       visit pois_path
       wait_for_selector('#poi-list [data-poi-id]', timeout: 90)
+      force_user_location(latitude: POI_LAT, longitude: POI_LNG)
     end
   end
 

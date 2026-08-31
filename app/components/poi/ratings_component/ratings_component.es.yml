@@ -1,8 +1,7 @@
 es:
   poi:
     ratings_component:
-      title: Valoraciones
-      coming_soon: Próximamente
+      community_vote: Voto de la comunidad
       verified_count:
         one: Verificado %{count} vez
         other: Verificado %{count} veces

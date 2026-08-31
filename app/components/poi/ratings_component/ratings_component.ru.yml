@@ -1,8 +1,7 @@
 ru:
   poi:
     ratings_component:
-      title: Рейтинги
-      coming_soon: Скоро
+      community_vote: Голосование сообщества
       verified_count:
         one: Подтверждено %{count} раз
         few: Подтверждено %{count} раза

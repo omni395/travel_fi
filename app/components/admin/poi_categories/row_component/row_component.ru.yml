@@ -4,3 +4,4 @@ ru:
       row_component:
         active: "Активна"
         inactive: "Неактивна"
+        icon_alt: "Картинка-маркер категории"

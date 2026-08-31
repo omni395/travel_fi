@@ -1,0 +1,15 @@
+es:
+  ui:
+    vote_component:
+      community_approved: "Aprobado por la comunidad"
+      community_rejected: "Rechazado por la comunidad"
+      up_aria: "Aprobar"
+      down_aria: "Rechazar"
+      hint: "%{total} voto(s)"
+      remove_title: "Retirar tu voto"
+      remove_message: "¿Realmente quieres retirar tu voto?"
+      remove_confirm: "Sí, retirar"
+      change_title: "Cambiar tu voto"
+      change_message: "¿Quieres cambiar tu voto?"
+      change_confirm: "Sí, cambiar"
+      cancel: "Cancelar"

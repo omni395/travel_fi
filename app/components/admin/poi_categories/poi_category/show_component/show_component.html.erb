@@ -19,21 +19,27 @@
 
         <%# Верхняя секция: иконка + информация + кнопки %>
         <div class="flex flex-col sm:flex-row items-start gap-6">
-          <%# Иконка категории %>
-          <div class="flex-shrink-0 w-16 h-16 bg-emerald-50 rounded-xl flex items-center justify-center">
-            <span class="text-emerald-500 text-3xl">
-              <% if category.icon.present? %>
+          <%# Иконка/картинка-маркер категории (картинка приоритетнее, fallback — MDI) %>
+          <div class="flex-shrink-0 w-16 h-16 bg-emerald-50 rounded-xl flex items-center justify-center overflow-hidden">
+            <% if category.category_icon_url.present? %>
+              <img src="<%= category.category_icon_url %>"
+                   alt="<%= t('.icon_alt') %>"
+                   class="w-full h-full object-cover">
+            <% else %>
+              <span class="text-emerald-500 text-3xl">
+                <% if category.icon.present? %>
 
-                <i class="mdi <%= category.icon %>"></i>
-                <%# Иконка: динамическая из category.icon %>
+                  <i class="mdi <%= category.icon %>"></i>
+                  <%# Иконка: динамическая из category.icon %>
 
-              <% else %>
+                <% else %>
 
-                <i class="mdi mdi-map-marker"></i>
-                <%# Иконка: mdi-map-marker (дефолтная) %>
+                  <i class="mdi mdi-map-marker"></i>
+                  <%# Иконка: mdi-map-marker (дефолтная) %>
 
-              <% end %>
-            </span>
+                <% end %>
+              </span>
+            <% end %>
           </div>
 
           <%# Название, slug, статус %>

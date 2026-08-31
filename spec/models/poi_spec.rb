@@ -262,4 +262,35 @@ RSpec.describe Poi, type: :model do
       expect(photo_a.image).to be_attached
     end
   end
+
+  describe 'Community Moderation (moderation_source / votes)' do
+    let(:poi) { create(:poi) }
+
+    it 'по умолчанию moderation_source = admin' do
+      expect(poi.moderation_source).to eq('admin')
+      expect(poi.community_approved?).to be false
+    end
+
+    it 'community_approved? возвращается только при moderation_source community' do
+      poi.update!(moderation_source: :community)
+      expect(poi.community_approved?).to be true
+    end
+
+    it 'community_rejected? отражает флаг дизлайков (видимость не трогается)' do
+      expect(poi.community_rejected?).to be false
+      poi.update!(community_rejected: true)
+      expect(poi.community_rejected?).to be true
+      expect(poi.status).to eq('approved') # статус админ-модерации не меняется
+    end
+
+    it 'имеет votes (полиморфный votable)' do
+      create(:vote, votable: poi, user: create(:user), value: 1)
+      expect(poi.votes.count).to eq(1)
+    end
+
+    it 'скоуп community_approved находит точки, одобренные сообществом' do
+      poi.update!(moderation_source: :community)
+      expect(described_class.community_approved.pluck(:id)).to include(poi.id)
+    end
+  end
 end

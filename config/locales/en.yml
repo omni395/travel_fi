@@ -110,6 +110,10 @@ en:
       name_too_long: "Name must be no more than 100 characters"
       invalid_avatar: "Invalid avatar file: must be JPG, PNG, or WebP"
 
+  poi_category_service:
+    errors:
+      invalid_icon: "Invalid category icon file: must be JPG, PNG, or WebP"
+
   mailer:
     profile_updated:
       subject: "Your profile has been updated"
@@ -187,6 +191,9 @@ en:
         add_category: "Add Category"
       new:
         title: "New Category"
+      category_icons:
+        file_required: "Choose an image file to upload"
+        unauthorized: "You are not authorized to change this category icon"
     pois:
       index:
         title: "POIs"

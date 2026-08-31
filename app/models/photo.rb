@@ -22,6 +22,9 @@ class Photo < ApplicationRecord
   belongs_to :poi
   belongs_to :user
 
+  # Голоса сообщества (Vote, полиморфный votable)
+  has_many :votes, as: :votable, dependent: :destroy
+
   # Валидации
   validates :image, presence: true
 

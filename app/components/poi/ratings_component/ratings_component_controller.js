@@ -2,10 +2,11 @@ import ApplicationController from '../../../javascript/controllers/application_c
 
 /**
  * Poi::RatingsComponent Controller
- * Иконка: mdi-star-outline
  *
- * ЗАГЛУШКА — контроллер пуст. Реализация голосований (в т.ч. геймификация
- * и ERC-20 токены) запланирована в ROADMAP.
+ * Таб «Рейтинги/голосования» карточки POI.
+ * Интерактивность голосования (апрув/дизлайк) обрабатывает вложенный
+ * контроллер `ui--vote-component` (Ui::VoteComponent). Здесь — только
+ * настройка при подключении; живой логики нет.
  */
 export default class extends ApplicationController {
   connect() {

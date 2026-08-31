@@ -46,45 +46,68 @@ class PoiCategoryBroadcaster
   # Выполняет broadcast обновления всех зон категории в общий поток админки
   # "admin_feed" (все подписанные админы; см. README «Канальная модель»).
   #
+  # События, для которых НЕ перерисовываем карточку (#poi-category-detail).
+  # Для "category_icon" картинка — актив: её замена уже обработана клиентом
+  # (JSON url → превью), а полный рендер show-компонента в контейнер затирает
+  # OPEN-форму редактирования (обёртка #poi-category-detail содержит либо show,
+  # либо edit в зависимости от @edit_mode).
+  SKIP_DETAIL_EVENTS = %w[category_icon].freeze
+
   def broadcast
-    # 1. Карточка категории
-    # inner_html в #poi-category-detail (безопасен: не использует parent.children[idx])
-    show_html = render_show_component
-    if show_html.present?
-      cable_ready["admin_feed"].inner_html(
-        selector: "#poi-category-detail",
-        html: show_html
-      )
+    # При смене картинки-маркера НЕ трогаем #poi-category-detail (затрёт форму),
+    # а только перерисовываем маркеры карты (ниже). Для остальных событий —
+    # полный рендер зон.
+    unless SKIP_DETAIL_EVENTS.include?(event_type)
+      # 1. Карточка категории
+      # inner_html в #poi-category-detail (безопасен: не использует parent.children[idx])
+      show_html = render_show_component
+      if show_html.present?
+        cable_ready["admin_feed"].inner_html(
+          selector: "#poi-category-detail",
+          html: show_html
+        )
+      end
+
+      # 2. Список динамических полей категории
+      fields_html = render_fields_component
+      if fields_html.present?
+        cable_ready["admin_feed"].inner_html(
+          selector: "[data-poi-category-fields]",
+          html: fields_html
+        )
+      end
+
+      # 3. Список POI категории (первая страница)
+      pois_html = render_pois_component
+      if pois_html.present?
+        cable_ready["admin_feed"].inner_html(
+          selector: "[data-poi-category-pois]",
+          html: pois_html
+        )
+      end
+
+      # 4. Лента аудита (версии категории и её полей)
+      audit_html = render_audit_component
+      if audit_html.present?
+        cable_ready["admin_feed"].inner_html(
+          selector: "[data-audit-log]",
+          html: audit_html
+        )
+      end
+
+      cable_ready["admin_feed"].broadcast
     end
 
-    # 2. Список динамических полей категории
-    fields_html = render_fields_component
-    if fields_html.present?
-      cable_ready["admin_feed"].inner_html(
-        selector: "[data-poi-category-fields]",
-        html: fields_html
-      )
-    end
-
-    # 3. Список POI категории (первая страница)
-    pois_html = render_pois_component
-    if pois_html.present?
-      cable_ready["admin_feed"].inner_html(
-        selector: "[data-poi-category-pois]",
-        html: pois_html
-      )
-    end
-
-    # 4. Лента аудита (версии категории и её полей)
-    audit_html = render_audit_component
-    if audit_html.present?
-      cable_ready["admin_feed"].inner_html(
-        selector: "[data-audit-log]",
-        html: audit_html
-      )
-    end
-
-    cable_ready["admin_feed"].broadcast
+    # 5. Перерисовываем маркеры на карте у ВСЕХ пользователей через общий поток
+    #    "pois_map" при любом изменении категории (update / смена картинки).
+    #    detail.type "category" не даёт bbox → клиентский _detailIntersectsView
+    #    считает событие релевантным и перезагружает маркеры в видимых границах
+    #    (новые category_image доедут через map_feature_data → #poi-map-features).
+    cable_ready["pois_map"].dispatch_event(
+      name: "poi:reload-features",
+      detail: { type: "category", category_id: category.id }
+    )
+    cable_ready["pois_map"].broadcast
 
     # Рассылаем уведомления (мультикаст) для событий с настроенными каналами
     notify_recipients if NOTIFICATION_EVENTS.include?(event_type)

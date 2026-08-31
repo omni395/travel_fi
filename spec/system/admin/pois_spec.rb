@@ -7,6 +7,10 @@ require 'rails_helper'
 # А создаёт POI (через сервис, как это делает Reflex) → админ Б видит его в списке.
 #
 RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :system do
+  # Координаты Берлина (fallback-центр карты и геолокация теста, TestGeolocation).
+  POI_LAT = TestGeolocation::DEFAULT_TEST_LAT
+  POI_LNG = TestGeolocation::DEFAULT_TEST_LNG
+
   let!(:admin_a) { create(:user, :admin, :with_setting) }
   let!(:admin_b) { create(:user, :admin, :with_setting) }
   let!(:category) { create(:poi_category) }
@@ -82,7 +86,7 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
     browser_a do
       sign_in_via_ui(admin_a)
       poi = create(:poi, poi_category: category, status: 'approved',
-                   coordinates: PoiService.parse_coordinates(51.5074, -0.1278))
+                   coordinates: PoiService.parse_coordinates(POI_LAT, POI_LNG))
 
       visit admin_poi_path(id: poi.id, edit: 'true')
       wait_for_selector('[data-controller="admin--pois--poi--edit-component"]', timeout: 90)
@@ -91,7 +95,7 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
       edit_component = find('[data-controller="admin--pois--poi--edit-component"]')
       within(edit_component) do
         find("input[name='poi[slug]']").fill_in(with: '')
-        find("input[name='poi[name][en]']").fill_in(with: 'London Fountain Edited')
+        find("input[name='poi[name][en]']").fill_in(with: 'Berlin Fountain Edited')
         find("button[type='submit']").click
       end
 
@@ -109,11 +113,10 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
     # Б (пользовательская карта) видит обновлённую точку наравне с approved
     browser_b do
       sign_in_via_ui(admin_b)
-      prepare_session_window
-      retry_cdp_geolocation(latitude: 51.5074, longitude: -0.1278, accuracy: 100)
+      prepare_map_geolocation(latitude: POI_LAT, longitude: POI_LNG)
       visit pois_path
-      wait_for_selector('#poi-map-features [data-poi-name="London Fountain Edited"]', timeout: 90)
-      expect(page).to have_css('#poi-map-features [data-poi-name="London Fountain Edited"]', visible: false)
+      wait_for_selector('#poi-map-features [data-poi-name="Berlin Fountain Edited"]', timeout: 90)
+      expect(page).to have_css('#poi-map-features [data-poi-name="Berlin Fountain Edited"]', visible: false)
     end
   end
 
