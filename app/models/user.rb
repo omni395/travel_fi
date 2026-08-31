@@ -95,6 +95,15 @@ class User < ApplicationRecord
   # Созданные пользователем POI (бейджи first_poi/contributor, счётчики)
   has_many :pois, dependent: :restrict_with_error
 
+  # Созданные пользователем комментарии (репутация/голоса)
+  has_many :poi_comments, dependent: :destroy
+
+  # Созданные пользователем фото (репутация/голоса)
+  has_many :photos, dependent: :destroy
+
+  # Голоса, отданные этим пользователем (Vote, полиморфный votable)
+  has_many :votes, dependent: :destroy
+
   # Кошельки (custodial — наш, external — собственный юзера)
   has_many :wallets, dependent: :destroy
 

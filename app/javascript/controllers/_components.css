@@ -320,6 +320,11 @@
 .navbar-component button:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
+
+.navbar-component a.logo-link:hover {
+  background-color: transparent;
+}
+
 .navbar-component .mdi {
   font-size: 1.25rem;
   line-height: 1;
@@ -449,6 +454,50 @@
 
 .ui-tooltip__img {
   display: block;
+}
+
+/* === ui/vote_component/vote_component.css === */
+/* Ui::VoteComponent — стили блока голосования сообщества */
+/* Палитра: только зелено-голубые оттенки Tailwind (emerald/sky/teal) */
+
+.vote-component {
+  @apply flex flex-col gap-2;
+}
+
+.vote-component__controls {
+  @apply inline-flex items-center gap-2;
+}
+
+.vote-component__btn {
+  @apply inline-flex items-center gap-1.5 rounded-md border border-emerald-200 bg-white px-3 py-1.5 text-sm text-emerald-700 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+.vote-component__btn.is-active {
+  @apply border-emerald-500 bg-emerald-500 text-white;
+}
+
+.vote-component__btn.is-active--down {
+  @apply border-sky-500 bg-sky-500 text-white;
+}
+
+.vote-component__count {
+  @apply font-semibold;
+}
+
+.vote-component__hint {
+  @apply text-xs text-gray-400;
+}
+
+.vote-component__badge {
+  @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+}
+
+.vote-component__badge--approved {
+  @apply bg-emerald-100 text-emerald-700;
+}
+
+.vote-component__badge--rejected {
+  @apply bg-sky-100 text-sky-700;
 }
 
 /* === users/rewards_component/rewards_component.css === */

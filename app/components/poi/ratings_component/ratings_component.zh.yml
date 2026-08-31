@@ -1,8 +1,7 @@
 zh:
   poi:
     ratings_component:
-      title: 评分
-      coming_soon: 即将推出
+      community_vote: 社区投票
       verified_count:
         one: 已验证 %{count} 次
         other: 已验证 %{count} 次

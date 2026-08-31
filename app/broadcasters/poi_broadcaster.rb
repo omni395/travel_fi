@@ -262,6 +262,7 @@ class PoiBroadcaster
            data-poi-lng="#{escape.call(data[:lng])}"
            data-poi-name="#{escape.call(data[:name])}"
            data-poi-icon="#{escape.call(data[:icon])}"
+           data-poi-category-image="#{escape.call(data[:category_image])}"
            data-poi-category="#{escape.call(data[:category])}"
            data-poi-category-id="#{escape.call(data[:category_id])}"
            data-poi-rating="#{escape.call(data[:rating])}"

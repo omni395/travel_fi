@@ -78,4 +78,49 @@ RSpec.describe PoiCategoryService, type: :service do
       expect(described_class.search_categories(active: true)).to include(active)
     end
   end
+
+  describe 'картинка-маркер категории (category_icon)' do
+    before do
+      allow(PoiCategoryBroadcaster).to receive(:call)
+      allow(PhotoService).to receive(:process) do |file, **|
+        File.open(file.respond_to?(:path) ? file.path : file)
+      end
+    end
+
+    it 'attach_category_icon прикрепляет картинку и шлёт broadcast (category_icon)' do
+      category = create(:poi_category)
+      file = fixture_file_upload('files/photo.png', 'image/png')
+
+      described_class.attach_category_icon(category: category, file: file, current_user: admin)
+
+      expect(category.reload.category_icon).to be_attached
+      expect(PoiCategoryBroadcaster).to have_received(:call).with(
+        category: category, event_type: 'category_icon'
+      )
+    end
+
+    it 'бросает UpdateError при невалидном типе файла' do
+      category = create(:poi_category)
+      file = fixture_file_upload('files/photo.png', 'text/plain')
+
+      expect { described_class.attach_category_icon(category: category, file: file, current_user: admin) }
+        .to raise_error(PoiCategoryService::UpdateError)
+    end
+
+    it 'remove_category_icon удаляет картинку и шлёт broadcast (category_icon)' do
+      category = create(:poi_category)
+      category.category_icon.attach(
+        io: File.open(Rails.root.join('spec/fixtures/files/photo.png')),
+        filename: 'test.png',
+        content_type: 'image/png'
+      )
+
+      described_class.remove_category_icon(category: category, current_user: admin)
+
+      expect(category.reload.category_icon).not_to be_attached
+      expect(PoiCategoryBroadcaster).to have_received(:call).with(
+        category: category, event_type: 'category_icon'
+      )
+    end
+  end
 end

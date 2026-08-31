@@ -45,6 +45,9 @@ class Poi < ApplicationRecord
   # фиксирует изменение галереи через poi.touch (создаёт версию обновления).
   has_many :photos, dependent: :destroy
 
+  # Голоса сообщества (Vote, полиморфный votable)
+  has_many :votes, as: :votable, dependent: :destroy
+
   # Enum для статусов
   # imported (4) — точка, загруженная из OpenStreetMap. Отображается на карте
   # так же, как approved (источник OSM-импорта). Добавлен в конец без сдвига
@@ -63,6 +66,37 @@ class Poi < ApplicationRecord
     osm: "osm"
   }, validate: true
 
+  # Enum для источника модерации: кто утвердил/одобрил точку.
+  #   admin     — модерация админом (по умолчанию)
+  #   community — одобрение сообществом (голоса, бейдж «Одобрено сообществом»)
+  # НЕ влияет на видимость/статус — только на бейдж (см. ModerationService).
+  enum :moderation_source, {
+    admin: 0,
+    community: 1
+  }, prefix: true, validate: true
+
+  #
+  # Одобрена ли точка сообществом (голосами) — бейдж «Одобрено сообществом».
+  # Устанавливается ModerationService при достижении порога апрув-голосов
+  # (moderation_source = :community) для уже видимой точки (approved/imported).
+  #
+  # @return [Boolean]
+  #
+  def community_approved?
+    moderation_source_community?
+  end
+
+  #
+  # Отклонена ли точка сообществом (дизлайками) — бейдж «Отклонено сообществом».
+  # Отдельный флаг (НЕ влияет на статус/видимость), выставляется ModerationService
+  # при достижении порога дизлайков — сигнал админу; решение принимает админ.
+  #
+  # @return [Boolean]
+  #
+  def community_rejected?
+    community_rejected == true
+  end
+
   # Валидации
   validates :name, presence: true
   validate :validate_name_value_length
@@ -80,6 +114,10 @@ class Poi < ApplicationRecord
   scope :visible, -> {
     joins(:poi_category).where(status: %i[approved imported], poi_categories: { active: true })
   }
+
+  # Скоуп: точки, одобренные сообществом (голоса апрува достигли порога,
+  # moderation_source = community) — для бейджа «Одобрено сообществом».
+  scope :community_approved, -> { where(moderation_source: :community) }
 
   # PostGIS: POI в радиусе N метров от точки
   # ST_MakePoint возвращает геометрию с SRID 0 — явно задаём SRID 4326 перед

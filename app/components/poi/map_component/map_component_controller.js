@@ -40,7 +40,10 @@ import Overlay from "ol/Overlay"
  */
 export default class extends ApplicationController {
   static DEFAULT_ZOOM = 17
-  static LONDON_FALLBACK = { lat: 51.5074, lng: -0.1278 }
+  // Центр карты по умолчанию (fallback при ошибке геолокации). Согласован с
+  // тестовой геолокацией (TestGeolocation::DEFAULT_TEST_LAT/LNG в spec/support)
+  // и центром OSM-импорта. Иконка: mdi-map-marker (маркер fallback-координат).
+  static DEFAULT_MAP_CENTER = { lat: 52.52, lng: 13.405 }
 
   /** @returns {HTMLElement} элемент .poi-map внутри компонента */
   get _mapElement() {
@@ -67,6 +70,7 @@ export default class extends ApplicationController {
       this._hoveredFeatureId = null
       this._initRetries = 0
       this._currentUserId = parseInt(document.body.dataset.currentUserId) || null
+      this._mdiCodepointCache = {}
 
       // Инициализируем сразу без геолокации
       this._initMapWithLocation(singleLat, singleLng, isInteractive)
@@ -86,6 +90,7 @@ export default class extends ApplicationController {
     this._initRetries = 0
     this._fallbackPoisTimer = null
     this._currentUserId = parseInt(document.body.dataset.currentUserId) || null
+    this._mdiCodepointCache = {}
     this._boundOnReloadFeatures = this._onReloadFeatures.bind(this)
     document.addEventListener("poi:reload-features", this._boundOnReloadFeatures)
 
@@ -257,21 +262,24 @@ export default class extends ApplicationController {
   _onGeolocationError(err) {
     clearTimeout(this._geolocationTimer)
     console.log(`[POI MAP] Geolocation error: ${err.message}`)
-    console.log(`[POI MAP] Fallback to London (${this.constructor.LONDON_FALLBACK.lat},${this.constructor.LONDON_FALLBACK.lng})`)
+    console.log(`[POI MAP] Fallback to map center (${this.constructor.DEFAULT_MAP_CENTER.lat},${this.constructor.DEFAULT_MAP_CENTER.lng})`)
     this.stimulate("PoiReflex#show_geolocation_toast")
 
-    // Fallback-центр (Лондон) становится «позицией пользователя» для UI: карта
-    // уже центрируется на него, поэтому булавка пользователя обязана присутствовать
-    // и при fallback (ранее добавлялась только при _onGeolocationSuccess — баг:
-    // при ошибке геолокации .poi-user-pin отсутствовал на карте).
-    this._userLocation = {
-      lat: this.constructor.LONDON_FALLBACK.lat,
-      lng: this.constructor.LONDON_FALLBACK.lng
-    }
-    this._initWithCenter(
-      this.constructor.LONDON_FALLBACK.lat,
-      this.constructor.LONDON_FALLBACK.lng
-    )
+    // Fallback-центр (DEFAULT_MAP_CENTER) становится «позицией пользователя» для UI:
+    // карта уже центрируется на него, поэтому булавка пользователя обязана
+    // присутствовать и при fallback (ранее добавлялась только при _onGeolocationSuccess
+    // — баг: при ошибке геолокации .poi-user-pin отсутствовал на карте).
+    const { lat, lng } = this.constructor.DEFAULT_MAP_CENTER
+    this._userLocation = { lat, lng }
+
+    // СИНХРОНИЗАЦИЯ СЕРВЕРА: пишем fallback-координаты в session[:user_lat/lng] через
+    // set_location. Иначе при ошибке геолокации сервер остаётся без координат →
+    // check_proximity! (голосование/комментарий/редактирование: 100м лимит) блокирует
+    // действие с «нет геолокации», хотя карта визуально центрирована. set_location —
+    // идемпотентный, дубликаты safe.
+    this.stimulate("PoiReflex#set_location", { lat, lng })
+
+    this._initWithCenter(lat, lng)
   }
 
   _hideLoader() {
@@ -414,6 +422,63 @@ export default class extends ApplicationController {
   }
 
   /**
+   * Возвращает фактический глиф (codepoint) MDI-иконки по её class-имени.
+   *
+   * Так как иконки MDI — это icon-font (подключён через CDN), в canvas OL
+   * нельзя подставить <i class="mdi">. Вместо этого извлекаем реальный символ
+   * глифа из уже загруженного CSS: создаём временный <i>, читаем
+   * getComputedStyle(el, "::before").content и парсим "\FXXXX".
+   *
+   * Результат кэшируется в this._mdiCodepointCache (обычный object-хэш: в этом
+   * модуле идентификатор Map затенён импортом OpenLayers, поэтому нативный Map
+   * тут недоступен), чтобы не дёргать getComputedStyle на каждую фичу/кадр.
+   * При сбое — fallback на mdi-map-marker.
+   *
+   * @param {string} className - имя класса иконки без префикса mdi (напр. "mdi-toilet")
+   * @returns {string} символ-глиф для использования в OL Text style
+   */
+  _mdiCodepoint(className) {
+    const safe = className || "mdi-map-marker"
+    if (this._mdiCodepointCache[safe]) return this._mdiCodepointCache[safe]
+
+    let glyph = this._mdiCodepointCache["mdi-map-marker"]
+    if (!glyph) {
+      glyph = this._mdiProbe("mdi-map-marker")
+      this._mdiCodepointCache["mdi-map-marker"] = glyph
+    }
+
+    if (safe !== "mdi-map-marker") {
+      const probed = this._mdiProbe(safe)
+      this._mdiCodepointCache[safe] = probed
+      glyph = probed
+    }
+    return glyph
+  }
+
+  /**
+   * Единичный запрос codepoint глифа через временный DOM-элемент.
+   * При недоступности CSS или невалидном content — возвращает fallback-глиф.
+   *
+   * @param {string} className - имя класса иконки MDI
+   * @returns {string} символ-глиф
+   */
+  _mdiProbe(className) {
+    const el = document.createElement("i")
+    el.className = `mdi ${className}`
+    el.style.position = "absolute"
+    el.style.visibility = "hidden"
+    document.body.appendChild(el)
+    try {
+      const content = getComputedStyle(el, "::before").content || ""
+      const match = content.match(/"(.*)"/)
+      if (match && match[1]) return match[1]
+    } finally {
+      document.body.removeChild(el)
+    }
+    return this._mdiCodepointCache["mdi-map-marker"] || ""
+  }
+
+  /**
    * Настраивает интерактивный режим (для формы редактирования):
    * - Клик по карте → центрирование + обновление полей
    * - Перемещение карты (moveend) → обновление полей lat/lng
@@ -507,13 +572,52 @@ export default class extends ApplicationController {
       })
     }
 
-    const singleStyle = new Style({
-      image: new CircleStyle({
-        radius: 10,
-        fill: new Fill({ color: "#059669" }),
-        stroke: new Stroke({ color: "#ffffff", width: 2 })
+    // Стиль одиночного POI. Приоритет — картинка-маркер категории
+    // (poiCategoryImage): если она есть — рендерим ol/style Icon (img с белой
+    // подложкой для читаемости). Иначе — чистый MDI-глиф категории (poiIcon),
+    // fallback mdi-map-marker. Иконка: mdi-map-marker (fallback категории)
+    const iconStyle = (feature) => {
+      const img = feature.get("poiCategoryImage")
+      if (img) {
+        // Картинка-маркер: исходник variant — 96×96. scale 0.5 → ~48 css-px.
+        // Круглая подложка цвета primary (emerald-600, как у кластера) с белым
+        // strok'ом для читаемости поверх базовой карты. Массив стилей: сначала
+        // подложка (CircleStyle), затем иконка поверх. Без crossOrigin:
+        // ActiveStorage representation same-origin, рендер OL без чтения canvas.
+        return [
+          new Style({
+            // 1. Белая круглая подложка с темной обводкой для контраста
+            image: new CircleStyle({
+              radius: 17, // Диаметр 34px
+              fill: new Fill({ color: '#ffffff' }),
+              stroke: new Stroke({ color: '#64748b', width: 2 }) // тёмно-серый/синий контур
+            })
+          }),
+          new Style({
+            // 2. Иконка с ручной компенсацией смещения
+            image: new Icon({
+              src: img,
+              scale: 0.22, // Слегка уменьшим (карта будет смотреться аккуратнее)
+              
+              // Смещение цента: [X, Y]
+              // Если картинка съехала влево, сдвигаем анкер чуть-чуть вправо (например, 0.54 по X)
+              anchor: [0.54, 0.5], 
+              anchorXUnits: 'fraction',
+              anchorYUnits: 'fraction'
+            })
+          })
+        ]
+      }
+      return new Style({
+        text: new Text({
+          text: this._mdiCodepoint(feature.get("poiIcon") || "mdi-map-marker"),
+          font: '22px "Material Design Icons"',
+          fill: new Fill({ color: "#059669" }),
+          stroke: new Stroke({ color: "#ffffff", width: 3 }),
+          offsetY: -2
+        })
       })
-    })
+    }
 
     this._map = new Map({
       target: el,
@@ -522,8 +626,13 @@ export default class extends ApplicationController {
         new VectorLayer({
           source: clusterSource,
           style: (feature) => {
+            // Cluster-источник оборачивает КАЖДУЮ фичу в обёртку с массивом
+            // "features". Свойства (poiIcon и др.) лежат на оригинальной фиче
+            // внутри features[0], а не на обёртке. Берём оригинал для иконки.
             const features = feature.get("features")
-            return features && features.length > 1 ? clusterStyle(feature) : singleStyle
+            if (features && features.length > 1) return clusterStyle(feature)
+            const sourceFeature = (features && features.length === 1) ? features[0] : feature
+            return iconStyle(sourceFeature)
           }
         })
       ],
@@ -538,6 +647,14 @@ export default class extends ApplicationController {
     })
 
     console.log(`[POI MAP] map created, size: ${this._map.getSize()[0]}x${this._map.getSize()[1]}`)
+
+    // MDI-шрифт (CDN) загружается асинхронно — если маркеры-иконки уже
+    // отрисованы до его готовности, глифы отображаются как .notdef.
+    // После полной загрузки шрифта пересчитываем стили вектор-источника.
+    document.fonts?.ready?.then(() => {
+      this._vectorSource?.changed()
+      console.log("[POI MAP] MDI font loaded — vector source re-rendered")
+    })
 
     // Tooltip Overlay
     const tooltipEl = document.getElementById("ui-tooltip")
@@ -623,6 +740,7 @@ export default class extends ApplicationController {
 
     const imgEl = el.querySelector(".ui-tooltip__img")
     const iconEl = el.querySelector(".ui-tooltip__category-icon")
+    const categoryImageEl = el.querySelector(".ui-tooltip__category-image")
     const categoryEl = el.querySelector(".ui-tooltip__category-name")
     const nameEl = el.querySelector(".ui-tooltip__name")
     const ratingEl = el.querySelector(".ui-tooltip__rating")
@@ -630,6 +748,7 @@ export default class extends ApplicationController {
     const addressEl = el.querySelector(".ui-tooltip__address")
 
     const poiIcon = sourceFeature.get("poiIcon") || "mdi-map-marker"
+    const poiCategoryImage = sourceFeature.get("poiCategoryImage") || ""
     const poiName = sourceFeature.get("poiName") || ""
     const poiCategory = sourceFeature.get("poiCategory") || ""
     const poiRating = sourceFeature.get("poiRating") || 0
@@ -638,7 +757,19 @@ export default class extends ApplicationController {
 
     // Фото: если есть cover — подставляем URL, иначе оставляем fallback no-image.png
     if (imgEl) imgEl.src = poiPhoto || imgEl.dataset.fallback
-    if (iconEl) iconEl.className = `ui-tooltip__category-icon mdi ${poiIcon} text-emerald-500 text-sm`
+    // Картинка категории приоритетнее MDI-иконки (паттерн list_item_component):
+    // при наличии poiCategoryImage показываем <img> и прячем <i>, иначе наоборот.
+    if (poiCategoryImage && categoryImageEl) {
+      categoryImageEl.src = poiCategoryImage
+      categoryImageEl.classList.remove("hidden")
+      if (iconEl) iconEl.classList.add("hidden")
+    } else {
+      if (categoryImageEl) { categoryImageEl.src = ""; categoryImageEl.classList.add("hidden") }
+      if (iconEl) {
+        iconEl.classList.remove("hidden")
+        iconEl.className = `ui-tooltip__category-icon mdi ${poiIcon} text-emerald-500 text-sm`
+      }
+    }
     if (categoryEl) categoryEl.textContent = poiCategory
     if (nameEl) nameEl.textContent = poiName
     if (ratingValEl) ratingValEl.textContent = poiRating > 0 ? poiRating.toFixed(1) : ""
@@ -738,6 +869,7 @@ export default class extends ApplicationController {
       feature.set("poiId", parseInt(item.dataset.poiId))
       feature.set("poiName", item.dataset.poiName || "")
       feature.set("poiIcon", item.dataset.poiIcon || "mdi-map-marker")
+      feature.set("poiCategoryImage", item.dataset.poiCategoryImage || "")
       feature.set("poiCategory", item.dataset.poiCategory || "")
       feature.set("poiCategoryId", parseInt(item.dataset.poiCategoryId) || null)
       feature.set("poiRating", parseFloat(item.dataset.poiRating) || 0)

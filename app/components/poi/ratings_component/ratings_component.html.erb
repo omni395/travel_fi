@@ -1,7 +1,7 @@
-<%# Poi::RatingsComponent - таб «Рейтинги/голосования» (ЗАГЛУШКА, реализация в ROADMAP) %>
-<%# Иконки: mdi-star-outline / mdi-check-circle %>
+<%# Poi::RatingsComponent - таб «Рейтинги/голосования» карточки POI %>
+<%# Иконки: mdi-star / mdi-check-circle / mdi-star-outline %>
 <div data-controller="poi--ratings-component" class="p-4 space-y-4">
-  <%# Текущий readonly-рейтинг %>
+  <%# Readonly-рейтинг (5-звёздная система — отдельная фича ROADMAP, пока вручную) %>
   <div class="flex items-center gap-4">
     <div class="flex items-center gap-1">
       <i class="mdi mdi-star text-yellow-400 text-2xl"></i>
@@ -9,7 +9,7 @@
       <span class="text-2xl font-bold text-gray-900"><%= poi.rating || 0 %></span>
       <span class="text-sm text-gray-400">/ 5</span>
     </div>
-    <% if poi.verification_count > 0 %>
+    <% if poi.verification_count.to_i.positive? %>
       <span class="flex items-center gap-1 text-sm text-gray-500">
         <i class="mdi mdi-check-circle text-emerald-500"></i>
         <%# Иконка: mdi-check-circle %>
@@ -18,11 +18,17 @@
     <% end %>
   </div>
 
-  <%# Заглушка голосования %>
-  <div class="text-center py-8 text-gray-400 border-t border-gray-100">
-    <i class="mdi mdi-star-outline text-4xl mb-3"></i>
-    <%# Иконка: mdi-star-outline %>
-    <p class="text-sm font-medium text-gray-500"><%= t(".title") %></p>
-    <p class="text-xs mt-1"><%= t(".coming_soon") %></p>
+  <%# Голосование сообщества (Community Moderation) %>
+  <%# Таргет-цель [data-vote-zone] на обёртке ВОКРУГ голосования (не на корне) —
+      VoteBroadcaster шлёт inner_html именно сюда, точечно заменяя только голосующий блок. %>
+  <div class="border-t border-gray-100 pt-4">
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">
+      <i class="mdi mdi-thumb-up-outline text-emerald-500 mr-1"></i>
+      <%# Иконка: mdi-thumb-up-outline %>
+      <%= t(".community_vote") %>
+    </h3>
+    <div data-vote-zone="poi-<%= poi.id %>">
+      <%= render Ui::VoteComponent.new(votable: poi, current_user: current_user) %>
+    </div>
   </div>
 </div>

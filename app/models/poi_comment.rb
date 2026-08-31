@@ -21,6 +21,9 @@ class PoiComment < ApplicationRecord
   belongs_to :user
   belongs_to :parent, class_name: "PoiComment", optional: true
 
+  # Голоса сообщества (Vote, полиморфный votable)
+  has_many :votes, as: :votable, dependent: :destroy
+
   # Валидации
   validates :body, presence: true, length: { minimum: 2, maximum: 1000 }
 

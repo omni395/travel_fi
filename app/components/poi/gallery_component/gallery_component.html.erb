@@ -24,25 +24,33 @@
     <%# Сетка миниатюр %>
     <div class="grid grid-cols-3 gap-2" data-poi--gallery-component-target="grid">
       <% photos.each do |photo| %>
-        <div class="relative group aspect-square rounded-lg overflow-hidden border border-gray-200">
-          <img src="<%= thumb_url(photo) %>"
-               data-poi--gallery-component-target="thumb"
-               data-photo-id="<%= photo.id %>"
-               data-full-url="<%= medium_url(photo) %>"
-               alt="<%= t(".photo_alt") %>"
-               class="w-full h-full object-cover cursor-pointer"
-               data-action="click->poi--gallery-component#open">
-          <% if can_delete?(photo) %>
-            <button type="button"
-                    data-photo-id="<%= photo.id %>"
-                    data-action="click->poi--gallery-component#remove"
-                    class="absolute top-1 right-1 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
-                    title="<%= t(".delete") %>"
-                    aria-label="<%= t(".delete") %>">
-              <%# Иконка: mdi-trash-can-outline %>
-              <i class="mdi mdi-trash-can-outline text-sm"></i>
-            </button>
-          <% end %>
+        <div class="border border-gray-200 rounded-lg overflow-hidden bg-white">
+          <div class="relative group aspect-square overflow-hidden">
+            <img src="<%= thumb_url(photo) %>"
+                 data-poi--gallery-component-target="thumb"
+                 data-photo-id="<%= photo.id %>"
+                 data-full-url="<%= medium_url(photo) %>"
+                 alt="<%= t(".photo_alt") %>"
+                 class="w-full h-full object-cover cursor-pointer"
+                 data-action="click->poi--gallery-component#open">
+            <% if can_delete?(photo) %>
+              <button type="button"
+                      data-photo-id="<%= photo.id %>"
+                      data-action="click->poi--gallery-component#remove"
+                      class="absolute top-1 right-1 w-6 h-6 bg-black/50 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors"
+                      title="<%= t(".delete") %>"
+                      aria-label="<%= t(".delete") %>">
+                <%# Иконка: mdi-trash-can-outline %>
+                <i class="mdi mdi-trash-can-outline text-sm"></i>
+              </button>
+            <% end %>
+          </div>
+          <%# Голосование сообщества за фото (Community Moderation).
+              Таргет-цель [data-vote-zone="photo-<id>"] на обёртке — VoteBroadcaster
+              шлёт сюда inner_html по стриму pois_map (общая карта). %>
+          <div data-vote-zone="photo-<%= photo.id %>" class="p-1.5">
+            <%= render Ui::VoteComponent.new(votable: photo, current_user: current_user) %>
+          </div>
         </div>
       <% end %>
     </div>

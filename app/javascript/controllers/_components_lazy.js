@@ -106,6 +106,8 @@ application.register('ui--toast-component', () => import('../../components/ui/to
 
 application.register('ui--tooltip-component', () => import('../../components/ui/tooltip_component/tooltip_component_controller.js'))
 
+application.register('ui--vote-component', () => import('../../components/ui/vote_component/vote_component_controller.js'))
+
 application.register('users--form-component', () => import('../../components/users/form_component/form_component_controller.js'))
 
 application.register('users--profile-component', () => import('../../components/users/profile_component/profile_component_controller.js'))

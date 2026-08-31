@@ -291,6 +291,9 @@ Rails `check_box` генерирует пару инпутов с одним `na
 ### CableReady
 Генератор команд обновления DOM. Транспортный слой: команда (обновить/заменить/добавить/удалить/уведомление) отправляется через WebSocket и выполняется браузером.
 
+### Карта OpenLayers и иконки категорий
+Глобальная карта POI ([`Poi::MapComponent`](app/components/poi/map_component.rb:1), OpenLayers 10) рисует одиночный POI глифом MDI его категории (вместо булавки/точки) с белой обводкой для читаемости. Реальный codepoint глифа извлекается в рантайме из загруженного MDI CSS (`getComputedStyle(el, "::before").content`) и кэшируется; маркеры перерисовываются после загрузки асинхронного CDN-шрифта (`document.fonts.ready`). Кластеры остаются кружками с числом. Маркер читает `poiIcon` исходной фичи (из кластер-обёртки `features[0]`); иконка доходит до фронтенда через [`PoiService.map_feature_data`](app/services/poi_service.rb:394).
+
 ---
 
 ## 📨 Уведомления и фоновые задачи
@@ -324,13 +327,31 @@ Database-backed кэш (альтернатива Redis). Инфраструкт�
 
 **ТОКЕННАЯ МОДЕЛЬ:** награды начисляются токенами TFT (не «баллами»).
 
-**Архитектура:** модель `UserReward` (`amount` TFT, `action_key`, `wallet_id`) — off-chain леджер начислений; `User#token_balance` = сумма начислений; сервис `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`); бейджи — модель `Gamification` (event_type `badge`, репутационные достижения); конфиг [`config/gamification.yml`](config/gamification.yml) (rewards — токены TFT, badges — достижения).
+**Архитектура:** модель `UserReward` (`amount` TFT, `action_key`, `wallet_id`) — off-chain леджер начислений; `User#token_balance` = сумма начислений; сервис `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`, `revoke!`); бейджи — модель `Gamification` (event_type `badge`, репутационные достижения); конфиг [`config/gamification.yml`](config/gamification.yml) (rewards — токены TFT, badges — достижения).
+
+**Отзыв награды (`GamificationService.revoke!`):** глобально отзывает не отправленное (claimed=false, ещё не ушло в блокчейн) начисление за действие (напр. `poi_photo_add` при удалении своего фото через `PoiService.remove_photo`), атомарно удаляя пару `UserReward` + `TokenTransaction` (аудит PaperTrail); идемпотентен. Уже забранное (claimed=true) на бэке не отзывается.
 
 **Награды (TFT):** регистрация (welcome) 10, реферал (реферер) 5 — по vesting-лок-периоду (антифрод), реферал (новый) 5 — мгновенно, добавление POI 20, фото POI 5, комментарий 5, голос за POI 2.
 
 **Бейджи:** `registration_complete`, `first_poi`, `contributor` (10+), `explorer` (5+ городов), `recruiter` (5+ рефералов), `veteran` (баланс 1000+ TFT).
 
 **I18n:** названия бейджей и наград локализованы (en, ru, es, zh).
+
+---
+
+## 🗳️ Community Moderation (голосования)
+
+Слой коллективного доверия поверх админ-модерации. Полный план — в секции «3.5 Голосования / Community Moderation» [`docs/ROADMAP_ru.md`](docs/ROADMAP_ru.md:1).
+
+**UI (POI + фото):** голосование встроено в таб Ratings карточки POI — [`Poi::RatingsComponent`](app/components/poi/ratings_component.rb:1) рендерит [`Vote::VoteComponent`](app/components/vote/vote_component.rb:1) в обёртке `[data-vote-zone="poi-<id>"]`; и в галерею фото — [`Poi::GalleryComponent`](app/components/poi/gallery_component.rb:1) рендерит его в `[data-vote-zone="photo-<id>"]`. Live-счётчик обновляется через `VoteBroadcaster` (`inner_html` по стриму `pois_map`). Голосование комментариев — в планах.
+
+**Семантика (строго):** Статус POI ставит ТОЛЬКО админ (`pending` не отображается и не голосуется). Голоса юзеров НЕ меняют `poi.status` и не влияют на видимость — только вешают бейджи на уже видимые точки (`approved`/`imported`): `ups >= threshold` → «Одобрено сообществом», `downs >= threshold` → «Отклонено сообществом» (сигнал админу; точка остаётся на карте).
+
+**Подсчёт голосов:** абсолютный порог по каждой стороне (из `Setting`/конфига, дефолт 10); при конфликте (оба >= порога) решает `net = ups - downs` — `net > 0` → одобрено, `net <= 0` (в т.ч. паритет) → отклонено. Один юзер = один голос (unique index `[votable_type, votable_id, user_id]`); повторное голосование переключает `value` (`+1`/`-1`).
+
+**Цепочка:** `Vote::VoteComponent` → `VoteReflex#cast` (`morph :nothing`) → `VoteService.cast!` (транзакция, PaperTrail, награда TFT `poi_vote`) → `VersionObserverJob#handle_vote_update` → `ModerationService.evaluate!` + `ReputationService.reckon!` + `VoteBroadcaster`/`PoiBroadcaster` (`inner_html`) → SolidCable → DOM.
+
+**Антифрод:** `VotePolicy` — залогинен, не автор, проксимити 100м через `PoiService.within_range?`. Репутация автора копится через `ReputationService.reckon!`; `suspended`/`banned` — решает ТОЛЬКО админ (существующий `Admin::UserService`).
 
 ---
 

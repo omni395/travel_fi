@@ -128,6 +128,9 @@ es:
         add_category: "Añadir categoría"
       new:
         title: "Nueva categoría"
+      category_icons:
+        file_required: "Elige un archivo de imagen para subir"
+        unauthorized: "No tienes permiso para cambiar el icono de esta categoría"
     pois:
       index:
         title: "POIs"

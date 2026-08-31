@@ -44,10 +44,11 @@ export default class extends ApplicationController {
       return
     }
 
-    // Координаты из скрытого data-элемента в ShowComponent
+    // Координаты из скрытого data-элемента в ShowComponent.
+    // Fallback-центр — DEFAULT_MAP_CENTER
     const poiEl = this.element.closest("[data-controller='poi--show-component']")?.querySelector("[data-poi-id]")
-    const lat = parseFloat(poiEl?.dataset?.poiLat) || 51.5074
-    const lng = parseFloat(poiEl?.dataset?.poiLng) || -0.1278
+    const lat = parseFloat(poiEl?.dataset?.poiLat) || 12.52
+    const lng = parseFloat(poiEl?.dataset?.poiLng) || 33.405
     const center = fromLonLat([lng, lat])
 
     this._map = new Map({

@@ -24,11 +24,11 @@ require 'rails_helper'
 #     _lastBoundsKey установлен первичной загрузкой) и видит точку БЕЗ перезагрузки.
 #
 RSpec.describe 'POI Moderation Live (одобрение через UI → пользователь live видит)', type: :system do
-  # Координаты Лондона (fallback-центр карты и маркер-данные)
-  POI_LAT = 51.5074
-  POI_LNG = -0.1278
+  # Координаты Берлина (fallback-центр карты и маркер-данные, TestGeolocation).
+  POI_LAT = TestGeolocation::DEFAULT_TEST_LAT
+  POI_LNG = TestGeolocation::DEFAULT_TEST_LNG
   # Название pending-точки, добавляемой через UI
-  POI_NAME = 'London Moderation Target'
+  POI_NAME = 'Berlin Moderation Target'
 
   let!(:user_a) { create(:user, :with_setting, email: 'poi_mod_author@example.com') }
   let!(:admin_b) { create(:user, :admin, :with_setting, email: 'poi_mod_admin@example.com') }
@@ -36,27 +36,17 @@ RSpec.describe 'POI Moderation Live (одобрение через UI → пол
 
   #
   # Подготавливает браузер А к работе с картой: логинится, задаёт детерминированную
-  # геолокацию на Лондон (CDP + стаб на новую навигацию), открывает карту и ждёт,
-  # пока #poi-list наполнится approved-фоном (bounds загружены, _lastBoundsKey установлен).
+  # геолокацию на Берлин (единый prepare_map_geolocation: CDP + стаб + форс
+  # set_location), открывает карту и ждёт, пока #poi-list наполнится approved-фоном
+  # (bounds загружены, _lastBoundsKey установлен).
   #
   def prepare_map_browser_a
     sign_in_via_ui(user_a)
-    prepare_session_window
-    retry_cdp_geolocation(latitude: POI_LAT, longitude: POI_LNG, accuracy: 100)
-    page.driver.browser.execute_cdp(
-      'Page.addScriptToEvaluateOnNewDocument',
-      source: <<~JS
-        if (!window.__travel_fi_geo_stubbed) {
-          window.__travel_fi_geo_stubbed = true
-          navigator.geolocation.getCurrentPosition = (success) => {
-            success({ coords: { latitude: #{POI_LAT}, longitude: #{POI_LNG}, accuracy: 100 } })
-          }
-        }
-      JS
-    )
+    prepare_map_geolocation(latitude: POI_LAT, longitude: POI_LNG)
     visit pois_path
     wait_for_selector('#poi-list [data-poi-id]', timeout: 90)
     wait_for_selector('#poi-map-features [data-poi-id]', timeout: 90)
+    force_user_location(latitude: POI_LAT, longitude: POI_LNG)
   end
 
   #
@@ -84,7 +74,7 @@ RSpec.describe 'POI Moderation Live (одобрение через UI → пол
       fill_in 'poi[name]', with: POI_NAME
 
       # Координаты должны быть заполнены из геолокации (userLat/userLng → MapController).
-      # Лондон: lat > 0, lng отрицательный (51.5074, -0.1278) — проверяем «не нуль».
+      # Берлин: lat > 0, lng положительный (52.52, 13.405) — проверяем «не нуль».
       expect(find("input[name='poi[latitude]']", visible: false).value.to_f).not_to eq(0)
       expect(find("input[name='poi[longitude]']", visible: false).value.to_f).not_to eq(0)
     end
@@ -118,7 +108,7 @@ RSpec.describe 'POI Moderation Live (одобрение через UI → пол
       PoiService.create(
         params: {
           poi_category_id: category.id,
-          name: { 'en' => 'London Approve Background', 'ru' => 'Фон', 'es' => 'Fondo', 'zh' => '背景' },
+          name: { 'en' => 'Berlin Approve Background', 'ru' => 'Фон', 'es' => 'Fondo', 'zh' => '背景' },
           latitude: POI_LAT,
           longitude: POI_LNG,
           status: 'approved'

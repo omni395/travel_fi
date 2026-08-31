@@ -4,8 +4,8 @@
     <div class="flex items-center justify-between h-16 relative z-50">
       <%# Левая группа: логотип, прижатый к левому краю (подпись скрыта на мобильных) %>
       <div class="flex items-center">
-        <%= link_to root_path(locale: I18n.locale), class: "flex items-center py-2" do %>
-          <%= image_tag "logo-2.png", class: "h-8 w-auto", alt: "Travel-Fi" %>
+        <%= link_to root_path(locale: I18n.locale), class: "group flex items-center py-2 logo-link" do %>
+          <%= image_tag "logo.webp", class: "h-8 w-auto bg-white rounded-full p-1 shadow-sm transition-transform duration-200 group-hover:scale-110", alt: "Travel-Fi" %>
           <span class="ml-2 hidden md:inline text-white text-xl font-medium">Travel-Fi</span>
         <% end %>
       </div>

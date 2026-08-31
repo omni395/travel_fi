@@ -12,7 +12,8 @@ class Admin::PoiCategoriesController < Admin::BaseController
   PER_PAGE = 20
 
   # Pundit: policy_scope не нужен для create/update/new
-  skip_after_action :verify_policy_scoped, only: %i[create update new]
+  # и для экшенов картинки-маркера (map_icon) — работа с единичным ресурсом
+  skip_after_action :verify_policy_scoped, only: %i[create update new update_category_icon remove_category_icon]
 
   #
   # Отображает список категорий POI
@@ -87,6 +88,51 @@ class Admin::PoiCategoriesController < Admin::BaseController
   rescue PoiCategoryService::UpdateError => e
     flash.now[:alert] = e.message
     render :show, status: :unprocessable_entity
+  end
+
+  #
+  # POST /admin-panel/poi_categories/:id/map_icon
+  #
+  # Загружает и прикрепляет картинку-маркер категории (category_icon).
+  # HTTP/multipart (fetch) — бинарники через Reflex не передаются.
+  # Live-обновление карточки/маркеров — через PoiCategoryBroadcaster
+  # (PaperTrail → VersionObserverJob).
+  #
+  # @return [JSON] { url:, attached: true } при успехе
+  #
+  def update_category_icon
+    @category = PoiCategory.friendly.find(params[:id])
+    authorize @category, :update?
+
+    file = params[:category][:category_icon] if params[:category].present?
+    return render json: { error: t("admin.poi_categories.category_icons.file_required") }, status: :unprocessable_entity if file.blank?
+
+    PoiCategoryService.attach_category_icon(category: @category, file: file, current_user: current_user)
+    render json: { url: @category.category_icon_url, attached: true }, status: :ok
+  rescue Pundit::NotAuthorizedError => e
+    render json: { error: t("admin.poi_categories.category_icons.unauthorized") }, status: :forbidden
+  rescue PoiCategoryService::UpdateError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  #
+  # DELETE /admin-panel/poi_categories/:id/map_icon
+  #
+  # Удаляет картинку-маркер категории. После удаления карта рендерит
+  # MDI-иконку (fallback).
+  #
+  # @return [JSON] { ok: true } при успехе
+  #
+  def remove_category_icon
+    @category = PoiCategory.friendly.find(params[:id])
+    authorize @category, :update?
+
+    PoiCategoryService.remove_category_icon(category: @category, current_user: current_user)
+    render json: { ok: true }, status: :ok
+  rescue Pundit::NotAuthorizedError => e
+    render json: { error: t("admin.poi_categories.category_icons.unauthorized") }, status: :forbidden
+  rescue PoiCategoryService::UpdateError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   private

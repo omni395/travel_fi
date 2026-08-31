@@ -1,0 +1,15 @@
+en:
+  ui:
+    vote_component:
+      community_approved: "Approved by community"
+      community_rejected: "Rejected by community"
+      up_aria: "Approve"
+      down_aria: "Disapprove"
+      hint: "%{total} vote(s)"
+      remove_title: "Remove your vote"
+      remove_message: "Do you really want to remove your vote?"
+      remove_confirm: "Yes, remove"
+      change_title: "Change your vote"
+      change_message: "Do you want to change your vote?"
+      change_confirm: "Yes, change"
+      cancel: "Cancel"
