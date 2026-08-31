@@ -1,0 +1,15 @@
+zh:
+  ui:
+    vote_component:
+      community_approved: "社区已批准"
+      community_rejected: "社区已拒绝"
+      up_aria: "批准"
+      down_aria: "拒绝"
+      hint: "共 %{total} 票"
+      remove_title: "撤回你的投票"
+      remove_message: "你真的想撤回你的投票吗？"
+      remove_confirm: "是，撤回"
+      change_title: "更改你的投票"
+      change_message: "你想更改你的投票吗？"
+      change_confirm: "是，更改"
+      cancel: "取消"

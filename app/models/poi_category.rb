@@ -19,6 +19,11 @@ class PoiCategory < ApplicationRecord
   has_many :poi_category_fields, -> { order(position: :asc) }, dependent: :destroy
   has_many :pois, dependent: :restrict_with_error
 
+  # ActiveStorage — картинка-маркер категории на карте (category_icon).
+  # Используется как маркер на глобальной карте вместо MDI-иконки:
+  # пока картинка не прикреплена — рендерится MDI-глиф (fallback).
+  has_one_attached :category_icon
+
   # Валидации
   validates :name, presence: true
   validates :slug, presence: true, uniqueness: true
@@ -71,6 +76,30 @@ class PoiCategory < ApplicationRecord
   #
   def missing_translations?
     missing_translations.any?
+  end
+
+  # Варианты ресайза картинки-маркера категории (square, для маркера на карте)
+  ICON_THUMB = { resize_to_limit: [ 96, 96 ] }.freeze
+
+  #
+  # Возвращает URL картинки-маркера категории для заданного варианта
+  # (относительный путь). Если картинка не прикреплена — nil (фолбэк
+  # на MDI-иконку решает шаблон/JS).
+  #
+  # @param variant [Hash] опции ресайза (ICON_THUMB)
+  # @return [String, nil] URL изображения или nil
+  #
+  def category_icon_url(variant: ICON_THUMB)
+    return nil unless category_icon.attached?
+
+    if category_icon.image? && variant
+      Rails.application.routes.url_helpers.rails_representation_path(category_icon.variant(variant), only_path: true)
+    else
+      Rails.application.routes.url_helpers.rails_blob_path(category_icon, only_path: true)
+    end
+  rescue StandardError => e
+    Rails.logger.warn("PoiCategory##{id} category_icon_url failed: #{e.message}")
+    nil
   end
 
   #

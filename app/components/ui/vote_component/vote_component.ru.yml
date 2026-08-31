@@ -1,0 +1,15 @@
+ru:
+  ui:
+    vote_component:
+      community_approved: "Одобрено сообществом"
+      community_rejected: "Отклонено сообществом"
+      up_aria: "Одобрить"
+      down_aria: "Отклонить"
+      hint: "Голосов: %{total}"
+      remove_title: "Забрать голос"
+      remove_message: "Вы действительно хотите забрать свой голос?"
+      remove_confirm: "Да, забрать"
+      change_title: "Изменить голос"
+      change_message: "Вы хотите изменить свой голос?"
+      change_confirm: "Да, изменить"
+      cancel: "Отмена"

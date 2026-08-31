@@ -12,6 +12,12 @@ ru:
           active: Активна
           save: Сохранить
           cancel: Отмена
+          map_icon_label: "Картинка-маркер на карте"
+          map_icon_hint: "Загрузите свою картинку-маркер для этой категории на карте. Пока картинка не задана — маркером служит MDI-иконка выше."
+          map_icon_choose: "Выбрать изображение"
+          map_icon_upload: "Загрузить"
+          map_icon_remove: "Удалить"
+          map_icon_alt: "Картинка-маркер категории"
           osm_settings: "Настройки импорта из OSM"
           osm_tags_label: "Теги OpenStreetMap"
           osm_tags_hint: "Введите теги через запятую. Пример: amenity=toilets, amenity=shower"

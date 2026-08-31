@@ -10,11 +10,15 @@
     <td class="px-2 py-1.5 whitespace-nowrap text-xs text-gray-400 font-mono">
       <%= category.id %>
     </td>
-    <%# Icon %>
+    <%# Icon (картинка-маркер, fallback — MDI-иконка категории) %>
     <td class="px-2 py-1.5 whitespace-nowrap text-center">
-      <% if category.icon.present? %>
+      <% if category.category_icon_url.present? %>
+        <img src="<%= category.category_icon_url %>"
+             alt="<%= t('.icon_alt') %>"
+             class="w-6 h-6 object-cover rounded inline-block">
+      <% elsif category.icon.present? %>
         <i class="mdi <%= category.icon %> text-emerald-500 text-lg"></i>
-        <%# Иконка: динамическая из category.icon %>
+        <%# Иконка: динамическая из category.icon (fallback) %>
       <% end %>
     </td>
     <%# Name %>

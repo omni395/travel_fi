@@ -12,6 +12,12 @@ es:
           active: Activo
           save: Guardar
           cancel: Cancelar
+          map_icon_label: "Icono de mapa (imagen de marcador)"
+          map_icon_hint: "Sube una imagen de marcador personalizada para esta categoría en el mapa. Mientras no haya imagen, el marcador es el icono MDI de arriba."
+          map_icon_choose: "Elegir imagen"
+          map_icon_upload: "Subir"
+          map_icon_remove: "Quitar"
+          map_icon_alt: "Imagen de marcador de categoría"
           osm_settings: "Configuración de importación OSM"
           osm_tags_label: "Etiquetas de OpenStreetMap"
           osm_tags_hint: "Ingrese etiquetas separadas por comas. Ej: amenity=toilets, amenity=shower"

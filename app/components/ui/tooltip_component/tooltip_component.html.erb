@@ -15,9 +15,14 @@
 
     <%# Текстовая колонка: категория / название / рейтинг / адрес построчно %>
     <div class="ui-tooltip__content flex-1 min-w-0 p-2.5 flex flex-col gap-0.5">
-      <%# Категория (иконка + название) %>
+      <%# Категория (иконка/картинка + название).
+          Картинка категории приоритетнее MDI-иконки (паттерн list_item_component):
+          JS в map_component_controller переключает .ui-tooltip__category-icon ↔
+          .ui-tooltip__category-image по наличию poiCategoryImage. %>
       <div class="flex items-center gap-1">
         <i class="ui-tooltip__category-icon mdi mdi-map-marker text-emerald-500 text-sm"></i>
+        <img class="ui-tooltip__category-image hidden w-5 h-5 object-cover rounded"
+             alt="<%= t(".icon_alt") %>">
         <span class="ui-tooltip__category-name text-[10px] font-medium text-gray-500 uppercase tracking-wider"><%= t(".category") %></span>
       </div>
       <%# Название POI %>

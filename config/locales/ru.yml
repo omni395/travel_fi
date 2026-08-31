@@ -150,6 +150,9 @@ ru:
         add_category: "Добавить категорию"
       new:
         title: "Новая категория"
+      category_icons:
+        file_required: "Выберите файл изображения для загрузки"
+        unauthorized: "У вас нет прав на изменение картинки-маркера категории"
     pois:
       index:
         title: "POI"

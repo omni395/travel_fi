@@ -209,6 +209,95 @@ class PoiCategoryService
     nil
   end
 
+  # Допустимые content_type для картинки-маркера категории
+  CATEGORY_ICON_TYPES = %w[image/jpeg image/png image/webp image/svg].freeze
+
+  #
+  # Обрабатывает, прикрепляет и заменяет картинку-маркер категории
+  # (category_icon). Использует PhotoService для resize/сжатия/webp.
+  #
+  # ВАЖНО: картинка — ActiveStorage-актив, а не поле модели. Аудит её изменений
+  # через category.touch дал бы ПУСТУЮ PaperTrail-версию (меняется только
+  # updated_at), которая бессмысленна на ленте аудита. Более того, touch →
+  # VersionObserverJob → PoiCategoryBroadcaster затирает карточку категории
+  # (#poi-category-detail) show-компонентом, что затирает форму редактирования.
+  # Поэтому картинка управляется напрямую через PoiCategoryBroadcaster с
+  # event_type "category_icon" (без полного рендера зон, см. broadcaster).
+  #
+  # @param category [PoiCategory] категория POI
+  # @param file [ActionDispatch::Http::UploadedFile] файл картинки
+  # @param current_user [User] пользователь, выполняющий действие
+  # @return [PoiCategory] обновлённая категория
+  # @raise [UpdateError] если файл невалиден или не удалось обработать
+  #
+  def self.attach_category_icon(category:, file:, current_user:)
+    raise UpdateError, I18n.t("poi_category_service.errors.invalid_icon") unless valid_category_icon_file?(file)
+
+    processed = PhotoService.process(
+      file,
+      filename: "category_icon_#{category.id}.webp",
+      max_dimension: 512,
+      format: "webp"
+    )
+
+    # Картинка-маркер — ActiveStorage-актив, а не поле модели. Отдельный аудит
+    # НЕ создаётся: пустая PaperTrail-версия от touch родителя (один updated_at)
+    # игнорируется в VersionObserverJob#handle_poi_category_update. Здесь только
+    # прикрепляем файл; маркеры карты обновляются прямым broadcast ниже.
+    ActiveRecord::Base.transaction do
+      category.category_icon.detach if category.category_icon.attached?
+      category.category_icon.attach(
+        io: processed,
+        filename: "category_icon_#{category.id}_#{SecureRandom.hex(4)}.webp",
+        content_type: "image/webp"
+      )
+    end
+
+    PoiCategoryBroadcaster.call(category: category, event_type: "category_icon")
+    category
+  rescue StandardError => e
+    Rails.logger.warn("PoiCategoryService attach_category_icon failed: #{e.message}")
+    raise UpdateError, e.message
+  end
+
+  #
+  # Удаляет картинку-маркер категории (category_icon).
+  # Аналогично attach — напрямую через PoiCategoryBroadcaster (event_type
+  # "category_icon"), без пустой PaperTrail-версии и без затирания формы.
+  # Клиент уже получил success из JSON и сбросил превью на MDI-иконку.
+  #
+  # @param category [PoiCategory] категория POI
+  # @param current_user [User] пользователь, выполняющий действие
+  # @return [Boolean] true если картинка была удалена
+  #
+  def self.remove_category_icon(category:, current_user:)
+    return false unless category.category_icon.attached?
+
+    ActiveRecord::Base.transaction do
+      category.category_icon.purge_later
+    end
+
+    PoiCategoryBroadcaster.call(category: category, event_type: "category_icon")
+    true
+  rescue StandardError => e
+    Rails.logger.warn("PoiCategoryService remove_category_icon failed: #{e.message}")
+    raise UpdateError, e.message
+  end
+
+  #
+  # Валидирует формат файла картинки-маркера категории.
+  # Допускаются: JPEG, PNG, WebP.
+  #
+  # @param file [Object] файл
+  # @return [Boolean]
+  #
+  def self.valid_category_icon_file?(file)
+    return false unless file
+    return false unless file.respond_to?(:content_type)
+
+    CATEGORY_ICON_TYPES.include?(file.content_type)
+  end
+
   private
 
   #

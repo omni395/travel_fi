@@ -13,7 +13,9 @@
                   data: { controller: "admin--poi-categories--poi-category--edit-component",
                           action: "submit->admin--poi-categories--poi-category--edit-component#handleSubmit",
                           reflex_serialize_form: false,
-                          id: category.persisted? ? category.id : nil } do |f| %>
+                          id: category.persisted? ? category.id : nil,
+                          "admin--poi-categories--poi-category--edit-component-upload-category-icon-path" => upload_category_icon_path,
+                          "admin--poi-categories--poi-category--edit-component-remove-category-icon-path" => remove_category_icon_path } do |f| %>
 
       <%# Name (локализованные поля) %>
       <div class="mb-6">
@@ -69,6 +71,71 @@
                            class: "field-input flex-1" %>
         </div>
       </div>
+
+      <%# Map icon (картинка-маркер категории). Реактивное превью через FileReader.
+          Загрузка/удаление — HTTP/multipart (не Reflex), live-обновление через Broadcaster.
+          Доступно только для сохранённой категории (нужен id для upload-маршрута).
+          Иконка: mdi-image-outline, mdi-upload, mdi-delete %>
+      <% if category.persisted? %>
+      <div class="mb-6 pt-4 border-t border-gray-200">
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          <!-- mdi: image-outline -->
+          <i class="mdi mdi-image-outline mr-1"></i>
+          <%= t(".map_icon_label") %>
+        </label>
+        <p class="mb-2 text-xs text-gray-500"><%= t(".map_icon_hint") %></p>
+
+        <div class="flex items-center gap-4">
+          <%# Текущая картинка / превью выбранного файла %>
+          <div class="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-emerald-50 flex items-center justify-center">
+            <% if category_icon_url.present? %>
+              <img src="<%= category_icon_url %>"
+                   alt="<%= t(".map_icon_alt") %>"
+                   data-admin--poi-categories--poi-category--edit-component-target="iconImage"
+                   class="w-full h-full object-cover">
+            <% else %>
+              <span class="text-emerald-500 text-3xl">
+                <i class="mdi mdi-map-marker" data-admin--poi-categories--poi-category--edit-component-target="iconPlaceholder"></i>
+                <%# Иконка: mdi-map-marker (fallback пока картинки нет) %>
+              </span>
+            <% end %>
+          </div>
+
+          <div class="flex-1 space-y-2">
+            <label class="cursor-pointer inline-flex items-center gap-2 text-sm text-emerald-700 hover:text-emerald-800">
+              <!-- mdi: upload -->
+              <i class="mdi mdi-upload"></i>
+              <%= t(".map_icon_choose") %>
+              <input type="file"
+                     accept="image/jpeg,image/png,image/webp"
+                     class="sr-only"
+                     autocomplete="off"
+                     data-action="change->admin--poi-categories--poi-category--edit-component#previewCategoryIcon">
+            </label>
+
+            <div class="flex items-center gap-2">
+              <button type="button"
+                      class="btn-ui btn-ui--primary btn-ui--sm"
+                      data-action="click->admin--poi-categories--poi-category--edit-component#uploadCategoryIcon">
+                <!-- mdi: cloud-upload -->
+                <i class="mdi mdi-cloud-upload mr-1"></i>
+                <%= t(".map_icon_upload") %>
+              </button>
+              <% if category_icon_url.present? %>
+                <button type="button"
+                        class="btn-ui btn-ui--danger btn-ui--sm"
+                        data-action="click->admin--poi-categories--poi-category--edit-component#removeCategoryIcon">
+                  <!-- mdi: delete -->
+                  <i class="mdi mdi-delete mr-1"></i>
+                  <%= t(".map_icon_remove") %>
+                </button>
+              <% end %>
+            </div>
+            <span class="text-xs text-gray-500" data-admin--poi-categories--poi-category--edit-component-target="iconStatus"></span>
+          </div>
+        </div>
+      </div>
+      <% end %>
 
       <%# Description (локализованные) %>
       <div class="mb-6">

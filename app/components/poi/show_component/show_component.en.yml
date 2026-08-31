@@ -6,6 +6,7 @@ en:
       tab_ratings: Ratings
       tab_gallery: Gallery
       photo_alt: POI photo
+      icon_alt: "Category marker image"
       edit: Edit
       close: Close
       status_pending: Pending

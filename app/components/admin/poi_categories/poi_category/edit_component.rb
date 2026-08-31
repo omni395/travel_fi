@@ -44,4 +44,33 @@ class Admin::PoiCategories::PoiCategory::EditComponent < ApplicationComponent
     tags = category.osm_tags
     tags.is_a?(Array) ? tags.join(", ") : tags.to_s
   end
+
+  #
+  # URL картинки-маркера категории (или nil, если не прикреплена)
+  #
+  # @return [String, nil]
+  #
+  def category_icon_url
+    category.category_icon_url
+  end
+
+  #
+  # URL для загрузки картинки-маркера — member POST
+  # /admin-panel/poi_categories/:id/update_category_icon (JSON).
+  #
+  # @return [String]
+  #
+  def upload_category_icon_path
+    update_category_icon_admin_poi_category_path(id: category)
+  end
+
+  #
+  # URL для удаления картинки-маркера — member DELETE
+  # /admin-panel/poi_categories/:id/remove_category_icon (JSON).
+  #
+  # @return [String]
+  #
+  def remove_category_icon_path
+    remove_category_icon_admin_poi_category_path(id: category)
+  end
 end

@@ -398,6 +398,7 @@ class PoiService
       lng: poi.longitude,
       name: poi.localized_name.to_s,
       icon: poi.poi_category&.icon.presence || "mdi-map-marker",
+      category_image: poi.poi_category&.category_icon_url,
       category: poi.poi_category&.localized_name.to_s,
       category_id: poi.poi_category_id,
       rating: poi.rating&.to_f || 0,

@@ -4,3 +4,4 @@ en:
       row_component:
         active: "Active"
         inactive: "Inactive"
+        icon_alt: "Category marker image"

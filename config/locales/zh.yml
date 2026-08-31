@@ -130,6 +130,9 @@ zh:
         add_category: "添加分类"
       new:
         title: "新类别"
+      category_icons:
+        file_required: "请选择要上传的图片文件"
+        unauthorized: "您无权更改此分类图标"
     pois:
       index:
         title: "POI"

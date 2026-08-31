@@ -1,8 +1,7 @@
 en:
   poi:
     ratings_component:
-      title: Ratings
-      coming_soon: Coming soon
+      community_vote: Community vote
       verified_count:
         one: Verified %{count} time
         other: Verified %{count} times

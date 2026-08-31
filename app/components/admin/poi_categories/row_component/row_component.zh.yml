@@ -4,3 +4,4 @@ zh:
       row_component:
         active: "启用"
         inactive: "停用"
+        icon_alt: "类别标记图片"

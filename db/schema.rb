@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_27_164529) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_29_120003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
@@ -142,12 +142,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_164529) do
   create_table "pois", force: :cascade do |t|
     t.string "address"
     t.string "city"
+    t.boolean "community_rejected", default: false, null: false
     t.geography "coordinates", limit: {srid: 4326, type: "st_point", geographic: true}, null: false
     t.string "country"
     t.datetime "created_at", null: false
     t.jsonb "description", default: {}, null: false
     t.datetime "last_verified_at"
     t.jsonb "metadata", default: {}, null: false
+    t.integer "moderation_source", default: 0, null: false
     t.jsonb "name", default: {}, null: false
     t.jsonb "opening_hours", default: {}
     t.bigint "osm_id"
@@ -274,6 +276,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_164529) do
     t.string "referral_code"
     t.bigint "referred_by_id"
     t.datetime "remember_created_at"
+    t.integer "reputation", default: 0, null: false
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
     t.string "slug"
@@ -319,6 +322,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_164529) do
     t.index ["whodunnit"], name: "index_versions_on_whodunnit"
   end
 
+  create_table "votes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.integer "value", default: 1, null: false
+    t.bigint "votable_id", null: false
+    t.string "votable_type", null: false
+    t.index ["user_id"], name: "index_votes_on_user_id"
+    t.index ["votable_type", "votable_id", "user_id"], name: "index_votes_on_votable_and_user", unique: true
+    t.index ["votable_type", "votable_id", "value"], name: "index_votes_on_votable_type_and_votable_id_and_value"
+    t.index ["votable_type", "votable_id"], name: "index_votes_on_votable"
+  end
+
   create_table "wallets", force: :cascade do |t|
     t.string "address", null: false
     t.string "chain_id", null: false
@@ -349,5 +365,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_27_164529) do
   add_foreign_key "user_rewards", "users"
   add_foreign_key "user_rewards", "wallets"
   add_foreign_key "users", "users", column: "referred_by_id"
+  add_foreign_key "votes", "users"
   add_foreign_key "wallets", "users"
 end
