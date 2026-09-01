@@ -223,6 +223,7 @@ Recorded decisions. When changing any item — update this section and the instr
 | Sidecar ViewComponents | Isolation of templates/styles/JS, 4 locales, partials forbidden |
 | PostGIS | Spatial queries (bounds, radius, ST_DWithin) |
 | Proximity Check (100m) | Anti-fraud for comments and voting via `ST_DWithin` |
+| Suggested Edits (консенсус 100м) | User suggestions apply by consensus (author / 2-3 local users / reputation) instead of direct writes |
 | ERC-20 (TFT) gamification | Utility token: rewards for activity, verification, premium |
 | EIP-2771 (ERC-2771) | Sponsored transactions — gas is paid by the platform |
 | TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton for the Telegram ecosystem |
@@ -377,6 +378,40 @@ Community approval/trust layer on top of admin moderation. See the «3.5 Voting 
 **Chain:** `Vote::VoteComponent` → `VoteReflex#cast` (`morph :nothing`) → `VoteService.cast!` (transaction, PaperTrail, TFT `poi_vote`) → `VersionObserverJob#handle_vote_update` → `ModerationService.evaluate!` + `ReputationService.reckon!` + `VoteBroadcaster`/`PoiBroadcaster` (`inner_html`) → SolidCable → DOM.
 
 **Anti-fraud:** `VotePolicy` — logged-in, not the author, proximity 100m via `PoiService.within_range?`. Author reputation accumulates via `ReputationService.reckon!`; `suspended`/`banned` — decided ONLY by the admin (`Admin::UserService`).
+
+---
+
+## ✏️ Suggested Edits (edit proposals + 100m consensus)
+
+Spam protection on top of the 100-meter Proof of Location. An **extension** over the existing `Vote` mechanics and `ReputationService` — it does not break the current flow. The idea: a direct edit is allowed **only to the POI author** within the authorship window; everyone else within 100m creates an **edit proposal** (Suggested Edit) that is applied by **consensus** — instead of chaotic direct rewriting of the database.
+
+### Three-layer field control
+
+| Layer | Fields | Who edits | Mechanics |
+|-------|--------|-----------|-----------|
+| **Quick Toggles** (soft crowdsourcing) | `is_operational`, quick flags ("Water ran out", "Queue", "Closed") | anyone within 100m | Up/Down voting via the existing `Vote`, low threshold from `Setting`; `poi.status` is NOT changed — only an indicator |
+| **Attributes** (factual) | `has_esim`, `fee_amount`/`price_info`, `opening_hours`, `metadata` | anyone within 100m | only via `SuggestedEdit` + consensus |
+| **Locked** (critical) | `coordinates`, `poi_category_id`, `slug`, `status` | admin/moderator only | regular user — only "Report an error" (signal) |
+
+### SuggestedEdit model
+- `poi_id`, `user_id` (proposer), `field_key`, `old_value` jsonb, `new_value` jsonb, `status` enum (`pending_review`/`approved`/`rejected`/`expired`), `proposal_type` enum (`attribute`/`quick_toggle`), `resolution_reason`, `confirmed_by` int[].
+- Supporting join table `suggested_edit_confirmations` (unique `[suggested_edit_id, user_id]`) — independent confirmers.
+- `has_paper_trail` (audit dogma). Index `[poi_id, field_key, status]` — excludes duplicate open proposals.
+
+### Consensus rule (`SuggestedEditService.apply_if_consensus!`)
+An edit is applied (`Poi.update!` → PaperTrail → `handle_poi_update` → `PoiBroadcaster`) if ANY holds:
+- the POI **author** confirmed it (within the authorship window), **or**
+- `confirmed_by.size + 1` reached the threshold from `Setting` (independent users within 100m), **or**
+- the proposer's `reputation >= high_reputation_threshold` from `Setting`.
+
+**Anti-fraud:** only a user within 100m (`PoiService.within_range?`, not the author) can propose/confirm; confirmers — only independent (not the author, not the proposer). One user = one confirmation.
+
+### Authorship (direct edit window)
+- The POI author (any distance) — direct edit in the first 24-48h (window from `Setting`, field `pois.edit_lock_expires_at`) or until the POI reaches X confirmations.
+- **Auto-expiry:** `SuggestedEditExpiryJob` (SolidQueue recurring) — no author response for N days → consensus without the author (`apply_if_consensus!`); otherwise the edit becomes `expired`.
+
+### Flow
+`Poi::EditComponent`/"Report an error" button → `SuggestionReflex#create` (`morph :nothing` + `deep_symbolize_keys` + Pundit) → `SuggestedEditService.create!` (transaction, PaperTrail) → `VersionObserverJob#handle_suggested_edit_update` → `SuggestedEditBroadcaster` (+ `PoiSuggestionNotification` to the author via Noticed, `Setting` filter) → SolidCable. Applying the edit on consensus — via `apply!` (POI version → `PoiBroadcaster`), optionally auto-crediting TFT (`GamificationService.award!(:suggestion_applied)`).
 
 ---
 

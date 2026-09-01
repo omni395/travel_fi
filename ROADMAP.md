@@ -113,6 +113,9 @@ Travel Fi
 - 🔴 OSRM: route building to a POI + a line on the map
 - 🔴 Offline mode (PWA): tiles + list (IndexedDB)
 - 🔴 Understand the tags loaded from the OSM for each category. For example, for Tools/Showers - Level, Access, Source, Amenity, and so on. Create translation maps for each tag, accessible through the admin panel. Currently, this data doesn't match the category fields in the admin panel.
+- 🔴 **Suggested Edits (edit proposals, 100m consensus):** a direct edit is allowed only to the POI author within the authorship window; users within 100m create an edit proposal (`SuggestedEdit`, pending_review) applied by consensus (author / 2-3 independent local users / reputation). Noticed notification to the author. Auto-expiry on the author's non-response. See the scheme in [`README.md`](README.md:384).
+- 🔴 **Quick Toggles (soft crowdsourcing):** quick binary statuses ("Works/Doesn't work", "Water ran out", "Queue", "Closed") — Up/Down voting via `Vote` with a low threshold from `Setting`; `poi.status` is not changed, only an indicator.
+- 🔴 **"Report an error"** for critical data (coordinates/category/status) — a signal to moderators without the right of direct edit for a regular user.
 
 **Bugs/Debts:**
 - ✅ Photo upload (binaries via StimulusReflex) → HTTP/multipart — resolved via `Poi::PhotosController#create` (JSON) in the gallery
@@ -354,6 +357,7 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
 **Components (sidecar 7 files, 4 locales):** `Vote::VoteComponent` (approve/dislike, MDI `mdi-thumb-up-outline`/`mdi-thumb-down-outline`, live counter), `Ui::BadgeComponent` («Community approved/rejected»).
 
 **TODO / debts:**
+- 🔴 **Suggested Edits (edit proposals, 100m consensus):** "Report an error" for non-author users within 100m → `SuggestedEdit` (pending_review) → apply by consensus (author / 2-3 independent local users / reputation) → `SuggestedEditService.apply!` via `Poi.update!` (PaperTrail → `handle_poi_update` → `PoiBroadcaster`). Modes: **Quick Toggles** (works/closed flags — Up/Down via `Vote`, low threshold from `Setting`, `poi.status` unchanged) / **Attributes** (only via proposal + consensus) / **Locked** (coordinates/category/status — admin only). Authorship window (direct edit by the author) + auto-expiry (`SuggestedEditExpiryJob`). Consensus thresholds in `Setting` (`suggestion_consensus_threshold`, `high_reputation_threshold`).
 - 🔴 Behavior for photos/comments on community reject (hide/show/delete) — deferred (currently only vote collection).
 - 🔴 Tie reputation to gamification levels (badges) — planned, on top of `ReputationService.reckon!` (author reputation accumulates; `suspended`/`banned` — decided ONLY by the admin via existing `Admin::UserService`).
 - ⚠️ **Photo voting is embedded in the gallery** (`Poi::GalleryComponent` renders `Vote::VoteComponent` in `[data-vote-zone="photo-<id>"]`; live by the `pois_map` stream). Deferred — only comment voting (`PoiComment` requires embedding `[data-vote-zone="poi_comment-<id>"]` in the comments list).
