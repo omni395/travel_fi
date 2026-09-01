@@ -200,6 +200,7 @@ Rails `check_box` генерирует пару инпутов с одним `na
 | Sidecar ViewComponents | Изоляция шаблонов/стилей/JS, 4 локали, запрет partials |
 | PostGIS | Пространственные запросы (bounds, radius, ST_DWithin) |
 | Proximity Check (100м) | Антифрод для комментариев и голосования через `ST_DWithin` |
+| Предложения правок (консенсус 100м) | Правки юзеров применяются по консенсусу (автор / 2-3 локальных юзера / репутация) вместо прямых записей в базу |
 | ERC-20 (TFT) геймификация | Utility-токен: награды за активность, верификация, premium |
 | EIP-2771 (ERC-2771) | Спонсированные транзакции — газ платит платформа |
 | TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton для Telegram экосистемы |
@@ -352,6 +353,40 @@ Database-backed кэш (альтернатива Redis). Инфраструкт�
 **Цепочка:** `Vote::VoteComponent` → `VoteReflex#cast` (`morph :nothing`) → `VoteService.cast!` (транзакция, PaperTrail, награда TFT `poi_vote`) → `VersionObserverJob#handle_vote_update` → `ModerationService.evaluate!` + `ReputationService.reckon!` + `VoteBroadcaster`/`PoiBroadcaster` (`inner_html`) → SolidCable → DOM.
 
 **Антифрод:** `VotePolicy` — залогинен, не автор, проксимити 100м через `PoiService.within_range?`. Репутация автора копится через `ReputationService.reckon!`; `suspended`/`banned` — решает ТОЛЬКО админ (существующий `Admin::UserService`).
+
+---
+
+## ✏️ Предложения правок (Suggested Edits) + консенсус 100м
+
+Защита от спама поверх 100-метрового Proof of Location. **Надстройка** над существующей `Vote`-механикой и `ReputationService`, не ломает текущий поток. Идея: прямая правка — только **автору точки** в окно авторства; все остальные в радиусе 100м создают **«предложение правки»** (Suggested Edit), которое применяется по **консенсусу** — вместо хаотичного прямого перезаписывания базы.
+
+### Трёхслойный контроль полей
+
+| Слой | Поля | Кто меняет | Механика |
+|------|------|-----------|----------|
+| **Quick Toggles** (мягкий краудсорсинг) | `is_operational`, быстрые флаги («Вода закончилась», «Очередь», «Закрыто») | любой в 100м | голосование Up/Down через существующий `Vote`, низкий порог из `Setting`; `poi.status` НЕ меняется — только индикатор |
+| **Attributes** (фактические) | `has_esim`, `fee_amount`/`price_info`, `opening_hours`, `metadata` | любой в 100м | только через `SuggestedEdit` + консенсус |
+| **Locked** (критические) | `coordinates`, `poi_category_id`, `slug`, `status` | только админ/модератор | обычный юзер — только «Сообщить об ошибке» (сигнал) |
+
+### Модель SuggestedEdit
+- `poi_id`, `user_id` (предлагающий), `field_key`, `old_value` jsonb, `new_value` jsonb, `status` enum (`pending_review`/`approved`/`rejected`/`expired`), `proposal_type` enum (`attribute`/`quick_toggle`), `resolution_reason`, `confirmed_by` int[].
+- Вспомогательная join-таблица `suggested_edit_confirmations` (unique `[suggested_edit_id, user_id]`) — независимые подтверждающие.
+- `has_paper_trail` (аудит-догма). Индекс `[poi_id, field_key, status]` — исключает дубликаты незакрытых правок.
+
+### Правило консенсуса (`SuggestedEditService.apply_if_consensus!`)
+Правка применяется (`Poi.update!` → PaperTrail → `handle_poi_update` → `PoiBroadcaster`), если выполнено ЛЮБОЕ:
+- подтвердил **автор** точки (в окне авторства), **или**
+- `confirmed_by.size + 1` достигло порога из `Setting` (независимые юзеры в 100м), **или**
+- у предлагающего `reputation >= high_reputation_threshold` из `Setting`.
+
+**Анти-фрод:** предложить/подтвердить может только юзер в 100м (`PoiService.within_range?`, не автор); подтверждающие — только независимые (не автор, не предлагающий). Один юзер — одно подтверждение.
+
+### Авторство (окно direct edit)
+- Автор точки (любое расстояние) — прямое редактирование в первые 24-48ч (окно из `Setting`, поле `pois.edit_lock_expires_at`) или пока точка не набрала X подтверждений.
+- **Авто-экспирация:** `SuggestedEditExpiryJob` (SolidQueue recurring) — нет ответа автора N дней → консенсус без автора (`apply_if_consensus!`); иначе правка `expired`.
+
+### Поток
+`Poi::EditComponent`/кнопка «Сообщить об ошибке» → `SuggestionReflex#create` (`morph :nothing` + `deep_symbolize_keys` + Pundit) → `SuggestedEditService.create!` (транзакция, PaperTrail) → `VersionObserverJob#handle_suggested_edit_update` → `SuggestedEditBroadcaster` (+ `PoiSuggestionNotification` автору через Noticed, фильтр `Setting`) → SolidCable. Применение правки при консенсусе — через `apply!` (версия POI → `PoiBroadcaster`), при необходимости автокредит TFT (`GamificationService.award!(:suggestion_applied)`).
 
 ---
 
