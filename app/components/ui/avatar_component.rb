@@ -30,7 +30,15 @@ class Ui::AvatarComponent < ApplicationComponent
   # @return [String] CSS классы
   #
   def css_class
-    "avatar-ui avatar-ui--#{size}"
+    sizes = {
+      "sm" => "w-7 h-7 text-xs",
+      "md" => "w-10 h-10 text-sm",
+      "lg" => "w-16 h-16 text-xl",
+      "xl" => "w-28 h-28 text-3xl"
+    }
+
+    size_class = sizes.fetch(size, sizes["md"])
+    "inline-block rounded-full object-cover shrink-0 overflow-hidden ring-1 ring-slate-900/10 shadow-sm #{size_class}"
   end
 
   #
@@ -39,7 +47,15 @@ class Ui::AvatarComponent < ApplicationComponent
   # @return [String] CSS классы
   #
   def fallback_class
-    "avatar-ui--fallback avatar-ui--#{size}"
+    sizes = {
+      "sm" => "w-7 h-7 text-xs",
+      "md" => "w-10 h-10 text-sm",
+      "lg" => "w-16 h-16 text-xl",
+      "xl" => "w-28 h-28 text-3xl"
+    }
+
+    size_class = sizes.fetch(size, sizes["md"])
+    "inline-flex items-center justify-center rounded-full bg-slate-800 text-white font-bold shrink-0 select-none ring-1 ring-slate-900/10 shadow-sm #{size_class}"
   end
 
   #
@@ -48,7 +64,7 @@ class Ui::AvatarComponent < ApplicationComponent
   # @return [String] инициалы
   #
   def initials
-    user.name.first.upcase
+    user&.name.presence ? user.name.first.upcase : "?"
   end
 
   #
@@ -60,7 +76,10 @@ class Ui::AvatarComponent < ApplicationComponent
   # @return [String, nil] URL аватара
   #
   def avatar_url
-    return nil unless user.avatar.attached?
+    return nil unless user&.avatar&.attached?
+
+    # Поддержка прямого URL из мока Lookbook
+    return user.avatar.url if user.avatar.respond_to?(:url)
 
     blob = user.avatar
     begin

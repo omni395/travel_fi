@@ -89,7 +89,9 @@ RSpec.describe PoiCategoryService, type: :service do
 
     it 'attach_category_icon прикрепляет картинку и шлёт broadcast (category_icon)' do
       category = create(:poi_category)
-      file = fixture_file_upload('files/photo.png', 'image/png')
+      # Rack::Test::UploadedFile с явным абсолютным путём вместо fixture_file_upload
+      # (резолв которого по file_fixture_path в service-спеке не гарантирован).
+      file = Rack::Test::UploadedFile.new(Rails.root.join('spec/fixtures/files/photo.png'), 'image/png')
 
       described_class.attach_category_icon(category: category, file: file, current_user: admin)
 
@@ -101,7 +103,7 @@ RSpec.describe PoiCategoryService, type: :service do
 
     it 'бросает UpdateError при невалидном типе файла' do
       category = create(:poi_category)
-      file = fixture_file_upload('files/photo.png', 'text/plain')
+      file = Rack::Test::UploadedFile.new(Rails.root.join('spec/fixtures/files/photo.png'), 'text/plain')
 
       expect { described_class.attach_category_icon(category: category, file: file, current_user: admin) }
         .to raise_error(PoiCategoryService::UpdateError)

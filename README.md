@@ -206,8 +206,13 @@ One admin entity (User, Poi, Setting, PoiCategory…) is implemented using a uni
 ### 7. Live audit (feed)
 - Unified `Ui::AuditEntryComponent` for all entities: `changes` filters "empty→empty", readable JSONB, `field_key_from_version` fallback to `version.object`.
 - The audit tab panel — a component with its own Stimulus controller on the root (ancestor controller for pagination), `goToPage` → Reflex `<entity>_page`.
+- **Author guarantee:** `PaperTrail.request.whodunnit` is set in `ApplicationReflex#before_reflex` AND, as a safety net, in the service layer (`PoiCategoryService.create_field/update_field/destroy_field`) so audit entries always carry the author instead of "System".
+- **Non-model assets audit:** image markers are ActiveStorage attachments (no model field) — explicit audit-only PaperTrail versions are written via `PaperTrailAuditService.log_category_icon_uploaded/removed` (events `category_icon_uploaded`/`category_icon_removed`), which land in the feed but do not re-render the open edit form.
 
-### 8. Forms (checkboxes!)
+### 8. Child CRUD embedded into the edit form
+For entities whose child records are managed via a modal (e.g. category fields), the CRUD lives inside the edit form, while the detail tab keeps only read-only/reorder actions. The modal follows `Ui::ConfirmDialogComponent` (header+close on one line, scrollable body, pinned footer with Cancel/Save/Delete). A single page holds exactly one target container — either the show-tab wrapper (`[data-poi-category-fields]`) or the edit-form wrapper (`[data-poi-category-fields-edit]`) — so the Broadcaster's `inner_html` re-renders whichever one exists without duplication.
+
+### 9. Forms (checkboxes!)
 Rails `check_box` generates a pair of inputs with one `name` (hidden `value="0"` + checkbox). In JS select `input[name='...'][type='checkbox']`, otherwise the hidden input (false) is read. Example: `form.querySelector("[name='poi_category_field[required]'][type='checkbox']")`.
 
 ---

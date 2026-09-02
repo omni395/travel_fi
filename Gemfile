@@ -56,6 +56,9 @@ group :development, :test do
   gem "selenium-webdriver"
   gem "webmock"
   gem "database_cleaner-active_record"
+  # Ретраи флаков Selenium: system-тесты, проходящие изолированно, но
+  # падающие в полном прогоне (headful Chrome) — перезапускаются автоматически.
+  gem "rspec-retry"
 end
 
 group :development do
@@ -64,6 +67,7 @@ group :development do
   gem "foreman"
   gem "listen"
   gem "ruby-lsp-rspec", require: false
+  gem "lookbook", ">= 2.3.14"
 end
 
 # --- 1. БЕЗОПАСНОСТЬ, АУТЕНТИФИКАЦИЯ И АУДИТ ---

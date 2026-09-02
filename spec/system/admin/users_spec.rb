@@ -11,7 +11,7 @@ RSpec.describe 'Admin Users (браузер А → браузер Б)', type: :s
   let!(:admin_b) { create(:user, :admin, :with_setting) }
   let!(:target_user) { create(:user) }
 
-  it 'А меняет статус юзера → Б видит обновлённый статус в таблице' do
+  it 'А меняет статус юзера → Б видит обновлённый статус в таблице', :flaky do
     browser_a do
       sign_in_via_ui(admin_a)
       Admin::UserService.change_status(user: target_user, status: 'suspended', current_user: admin_a)

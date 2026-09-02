@@ -5,6 +5,8 @@ zh:
       created: "创建"
       updated: "更新"
       deleted: "删除"
+      category_icon_uploaded: "图标已上传"
+      category_icon_removed: "图标已删除"
       by: "操作人"
       system: "系统"
       field: "字段"

@@ -20,6 +20,19 @@ es:
           options: Opciones
           options_placeholder: "clave;en;ru;es;zh"
           options_hint: "Cada línea: clave;en;ru;es;zh (etiquetas opcionales)"
+          osm_section: Mapeo OSM
+          osm_hint: "Vincula este campo a etiquetas de OpenStreetMap para importación automática."
+          osm_keys_label: Claves OSM
+          osm_keys_hint: "Claves de etiquetas OSM separadas por comas (p. ej. wheelchair, disabled:wheelchair)"
+          osm_value_map_label: Mapa de valores OSM
+          osm_value_map_hint: "Mapa JSON de «valor OSM crudo» a «valor de la app», por ejemplo { \"yes\": true, \"no\": false }"
+          osm_transform_label: Transformación
+          osm_transform_hint: "Cómo convertir el valor OSM crudo (booleano / extraer número / dividir lista)"
+          osm_transforms:
+            none: Sin transformación
+            boolean: Booleano
+            extract_number: Extraer número
+            split_array: Dividir lista
           field_types:
             string: Texto
             text: Texto largo

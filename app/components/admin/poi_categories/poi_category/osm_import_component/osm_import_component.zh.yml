@@ -15,4 +15,11 @@ zh:
           import: 导入
           close: 关闭
           fetching: 正在从OpenStreetMap获取数据...
-          of: / 
+          of: /
+          pbf_section: 从.pbf文件导入
+          pbf_hint: "上传OpenStreetMap区域提取文件(.osm.pbf)。将在后台解析。"
+          pbf_upload: 上传并解析
+          pbf_file_required: 请选择.pbf文件
+          pbf_no_route: 导入路由不可用
+          pbf_upload_failed: 文件上传失败
+          pbf_import_failed: 导入失败

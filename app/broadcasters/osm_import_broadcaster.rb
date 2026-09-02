@@ -46,6 +46,28 @@ class OsmImportBroadcaster
     new(user: user).broadcast(stats: stats, category: category, bbox: bbox)
   end
 
+  #
+  # Отправляет промежуточный прогресс импорта из .pbf файла.
+  # В PBF-режиме общее количество записей заранее неизвестно (стриминг),
+  # поэтому передаётся только счётчик обработанных.
+  #
+  # @param user [User] админ, инициировавший импорт
+  # @param processed [Integer] сколько записей обработано
+  #
+  def self.pbf_progress(user:, processed:)
+    new(user: user).pbf_progress(processed: processed)
+  end
+
+  #
+  # Отправляет сообщение об ошибке импорта
+  #
+  # @param user [User, nil] админ, инициировавший импорт
+  # @param message [String] текст ошибки
+  #
+  def self.failed(user:, message:)
+    new(user: user).failed(message: message) if user
+  end
+
   attr_reader :user
 
   def initialize(user:)
@@ -89,6 +111,36 @@ class OsmImportBroadcaster
     Rails.logger.info "[TRACE] OsmImportBroadcaster#progress sent: #{processed}/#{total} already_in_db=#{already_in_db}"
   rescue StandardError => e
     Rails.logger.error "[TRACE] OsmImportBroadcaster#progress error: #{e.class} #{e.message}"
+  end
+
+  #
+  # Отправляет промежуточный прогресс импорта из .pbf (только каунтер обработанных)
+  #
+  # @param processed [Integer] сколько записей обработано
+  #
+  def pbf_progress(processed:)
+    cable_ready["user_#{user.id}"].dispatch_event(
+      name: "osmPbfProgress",
+      detail: { processed: processed }
+    )
+    cable_ready.broadcast
+  rescue StandardError => e
+    Rails.logger.error "[TRACE] OsmImportBroadcaster#pbf_progress error: #{e.class} #{e.message}"
+  end
+
+  #
+  # Отправляет сообщение об ошибке импорта
+  #
+  # @param message [String] текст ошибки
+  #
+  def failed(message:)
+    cable_ready["user_#{user.id}"].dispatch_event(
+      name: "osmImportFailed",
+      detail: { message: message }
+    )
+    cable_ready.broadcast
+  rescue StandardError => e
+    Rails.logger.error "[TRACE] OsmImportBroadcaster#failed error: #{e.class} #{e.message}"
   end
 
   #
