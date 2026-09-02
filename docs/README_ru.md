@@ -183,8 +183,13 @@ Travel Fi — Rails 8.1 приложение для туристических �
 ### 7. Живой аудит (лента)
 - Единый `Ui::AuditEntryComponent` для всех сущностей: `changes` фильтрует «пусто→пусто», читаемый JSONB, `field_key_from_version` fallback на `version.object`.
 - Панель таба аудита — компонент с собственным Stimulus-контроллером на корне (контроллер-предок для пагинации), `goToPage` → Reflex `<entity>_page`.
+- **Гарантия автора:** `PaperTrail.request.whodunnit` ставится в `ApplicationReflex#before_reflex` И, как страховка, в сервисном слое (`PoiCategoryService.create_field/update_field/destroy_field`), чтобы записи аудита всегда несли автора, а не «System».
+- **Аудит активов вне модели:** картинка-маркер — ActiveStorage-актив (не поле модели). Явные audit-only записи PaperTrail пишутся через `PaperTrailAuditService.log_category_icon_uploaded/removed` (события `category_icon_uploaded`/`category_icon_removed`) — попадают в ленту, но не перерисовывают открытую edit-форму.
 
-### 8. Формы (чекбоксы!)
+### 8. Дочерний CRUD, встроенный в edit-форму
+Для сущностей, чьи дочерние записи управляются через модалку (например, поля категории), CRUD живёт внутри edit-формы, а вкладка детальной страницы оставляет только read-only/реордер-действия. Модалка следует `Ui::ConfirmDialogComponent` (заголовок + закрытие в одну строку, прокручиваемое тело, закреплённый футер с Отмена/Сохранить/Удалить). На странице всегда ровно один контейнер-цель — либо show-вкладка (`[data-poi-category-fields]`), либо edit-форма (`[data-poi-category-fields-edit]`) — поэтому `inner_html` Broadcaster перерисовывает тот, что существует, без дублирования.
+
+### 9. Формы (чекбоксы!)
 Rails `check_box` генерирует пару инпутов с одним `name` (hidden `value="0"` + checkbox). В JS выбирай `input[name='...'][type='checkbox']`, иначе читается hidden (false). Пример: `form.querySelector("[name='poi_category_field[required]'][type='checkbox']")`.
 
 ---

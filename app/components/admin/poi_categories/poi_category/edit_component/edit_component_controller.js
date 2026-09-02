@@ -7,7 +7,52 @@ import ApplicationController from '../../../../../javascript/controllers/applica
  * Если нет (новая запись) → Admin::PoiCategoriesReflex#create
  */
 export default class extends ApplicationController {
-  static targets = ["iconInput", "iconPreview", "submitButton", "iconImage", "iconPlaceholder", "iconStatus"]
+  static targets = ["iconInput", "iconPreview", "submitButton", "iconImage", "iconPlaceholder", "iconStatus", "slugInput"]
+
+  /**
+   * Автоматически заполняет slug из английского названия (name[en]),
+   * пока пользователь не начал вводить slug вручную. Реактивно при вводе.
+   */
+  autoFillSlug() {
+    const slugInput = this.hasSlugInputTarget ? this.slugInputTarget : null
+    // Если пользователь уже редактировал slug вручную — не перезаписываем
+    if (!slugInput || this._slugManuallyEdited) return
+    const nameInput = this.element.querySelector("[name='poi_category[name][en]']")
+    if (!nameInput) return
+    slugInput.value = this._toSlug(nameInput.value)
+  }
+
+  /**
+   * Помечает, что slug редактируется пользователем вручную (авто-заполнение отключается)
+   */
+  markSlugEdited() {
+    this._slugManuallyEdited = true
+  }
+
+  /**
+   * Преобразует строку в URL-friendly slug:
+   * транслитерация кириллицы, lowercase, пробелы → дефис, удаление спецсимволов.
+   *
+   * @param {String} str входная строка
+   * @return {String} slug
+   */
+  _toSlug(str) {
+    const translit = {
+      а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "yo", ж: "zh", з: "z",
+      и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
+      с: "s", т: "t", у: "u", ф: "f", х: "h", ц: "ts", ч: "ch", ш: "sh", щ: "sch",
+      ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya"
+    }
+    const lowered = String(str || "").toLowerCase()
+    const latin = lowered.replace(/[а-яё]/g, (ch) => translit[ch] || ch)
+    return latin
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "") // убираем диакритику
+      .replace(/[^a-z0-9\s-]/g, "")    // только латиница/цифры/дефис
+      .trim()
+      .replace(/[\s_]+/g, "-")
+      .replace(/-+/g, "-")
+  }
 
   /**
    * Обновляет превью иконки в реальном времени
@@ -257,5 +302,64 @@ export default class extends ApplicationController {
     } else {
       this.stimulate("Admin::PoiCategoriesReflex#create", params)
     }
+  }
+
+  /**
+   * Программно отправляет форму. Save-кнопка вынесена за пределы `form_with`
+   * в общую нижнюю панель (вместе с Delete), поэтому нативный submit недоступен:
+   * вызываем requestSubmit(), что инициирует submit-событие формы → handleSubmit
+   * (отправка через StimulusReflex).
+   */
+  submitForm() {
+    const form = this.element.querySelector("form")
+    if (!form) return
+    form.requestSubmit()
+  }
+
+  /**
+   * Показывает диалог подтверждения удаления категории (Ui::ConfirmDialogComponent).
+   * confirm_url: nil — само удаление выполняет Reflex после подтверждения.
+   */
+  requestDelete(event) {
+    event.preventDefault()
+    // Диалог рендерится снаружи формы (this.element) — ищем в общем предке (card body)
+    const scope = this.element.parentElement || document
+    const dialog = scope.querySelector("[data-controller='ui--confirm-dialog-component']")
+    if (dialog) {
+      this._deleteDialog = dialog
+      dialog.classList.remove("hidden")
+      document.body.classList.add("overflow-hidden")
+    }
+  }
+
+  /**
+   * Обрабатывает подтверждение из Ui::ConfirmDialogComponent и вызывает Reflex destroy.
+   * Диалог рендерится снаружи формы (this.element), поэтому сверяем его напрямую.
+   */
+  handleDialogConfirmed(event) {
+    // Откликаемся только на подтверждение именно нашего delete-диалога
+    if (!this._deleteDialog || event.target !== this._deleteDialog) return
+    const id = this.element.dataset.id
+    if (!id) return
+    this.stimulate("Admin::PoiCategoriesReflex#destroy", { id: id })
+  }
+
+  /**
+   * При подключении контроллера: если категория уже существует (есть id),
+   * slug уже задан — запрещаем авто-заполнение, чтобы не затирать существующий.
+   * Также подписываемся на подтверждение удаления из Ui::ConfirmDialogComponent.
+   */
+  connect() {
+    super.connect()
+    if (this.element.dataset.id) {
+      this._slugManuallyEdited = true
+    }
+    this._boundDialogConfirmed = (e) => this.handleDialogConfirmed(e)
+    document.addEventListener("confirmDialogConfirmed", this._boundDialogConfirmed)
+  }
+
+  disconnect() {
+    super.disconnect()
+    document.removeEventListener("confirmDialogConfirmed", this._boundDialogConfirmed)
   }
 }

@@ -2,7 +2,8 @@
 <%# Иконка: mdi-cloud-download %>
 <div class="osm-import-component"
      data-controller="admin--poi-categories--poi-category--osm-import-component"
-     data-admin--poi-categories--poi-category--osm-import-component-cities-value="<%= cities_data.to_json %>">
+     data-admin--poi-categories--poi-category--osm-import-component-cities-value="<%= cities_data.to_json %>"
+     data-admin--poi-categories--poi-category--osm-import-component-pbf-import-path="<%= pbf_import_path %>">
 
   <%# Затемнённый оверлей (скрыт по умолчанию) %>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden"
@@ -127,6 +128,42 @@
                      autocomplete="off">
             </div>
           </div>
+        </div>
+
+        <%# --- Импорт из .pbf файла --- %>
+        <%# Разделитель + переключатель режима: выбор локации (Overpass) ИЛИ .pbf файл %>
+        <div class="pt-4 border-t border-gray-200">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+              <%# MDI: file-outline %>
+              <i class="mdi mdi-file-outline text-emerald-500 mr-1"></i>
+              <%= t(".pbf_section") %>
+            </h4>
+          </div>
+
+          <p class="text-xs text-gray-500 mb-3"><%= t(".pbf_hint") %></p>
+
+          <%# Выбор файла + кнопка загрузки и парсинга %>
+          <div class="flex items-center gap-3">
+            <input type="file"
+                   accept=".pbf,.osm.pbf,.osmpbf"
+                   data-admin--poi-categories--poi-category--osm-import-component-target="pbfFileInput"
+                   class="block w-full text-sm text-gray-500
+                          file:mr-3 file:rounded-lg file:border-0
+                          file:bg-emerald-50 file:text-emerald-700
+                          file:py-2 file:px-4 file:text-sm file:font-medium
+                          hover:file:bg-emerald-100"
+                   autocomplete="off">
+            <%= render Ui::BtnComponent.new(color: :primary, size: :md, html: { data: { action: "click->admin--poi-categories--poi-category--osm-import-component#startPbfImport", "admin--poi-categories--poi-category--osm-import-component-target": "pbfImportBtn" } }) do %>
+              <%# MDI: file-upload %>
+              <i class="mdi mdi-file-upload mr-1"></i>
+              <%= t(".pbf_upload") %>
+            <% end %>
+          </div>
+
+          <%# Статус PBF (ошибки/файл выбран) %>
+          <p class="text-xs mt-2 text-red-600 hidden"
+             data-admin--poi-categories--poi-category--osm-import-component-target="pbfStatus"></p>
         </div>
 
         <%# Кнопки выбора локации %>

@@ -53,4 +53,13 @@ class Admin::PoiCategories::PoiCategory::OsmImportComponent < ApplicationCompone
   def can_import?
     category.osm_tags.is_a?(Array) && category.osm_tags.any?
   end
+
+  #
+  # URL для загрузки .pbf файла (member POST import_pbf)
+  #
+  # @return [String]
+  #
+  def pbf_import_path
+    import_pbf_admin_poi_category_path(id: category)
+  end
 end

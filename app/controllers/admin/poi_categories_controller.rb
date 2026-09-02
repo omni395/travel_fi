@@ -12,8 +12,8 @@ class Admin::PoiCategoriesController < Admin::BaseController
   PER_PAGE = 20
 
   # Pundit: policy_scope не нужен для create/update/new
-  # и для экшенов картинки-маркера (map_icon) — работа с единичным ресурсом
-  skip_after_action :verify_policy_scoped, only: %i[create update new update_category_icon remove_category_icon]
+  # и для экшенов картинки-маркера (map_icon) / import_pbf — единичный ресурс
+  skip_after_action :verify_policy_scoped, only: %i[create update new update_category_icon remove_category_icon import_pbf]
 
   #
   # Отображает список категорий POI
@@ -135,6 +135,34 @@ class Admin::PoiCategoriesController < Admin::BaseController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  #
+  # POST /admin-panel/poi_categories/:id/import_pbf
+  #
+  # Принимает загруженный .osm.pbf файл, сохраняет его во временный файл
+  # и ставит фоновый OsmPbfImportJob (SolidQueue). Файл удаляется джобом в ensure.
+  #
+  # @return [JSON] { enqueued: true, file_path: String } при успехе
+  #
+  def import_pbf
+    @category = PoiCategory.friendly.find(params[:id])
+    authorize @category, :update?
+
+    file = params[:poi_category][:pbf_file] if params[:poi_category].present?
+    return render json: { error: t("admin.poi_categories.pbf_import.file_required") }, status: :unprocessable_entity if file.blank?
+
+    file_path = store_pbf_file(file)
+    OsmPbfImportJob.perform_later(@category.id, file_path, current_user.id)
+
+    render json: { enqueued: true, file_path: File.basename(file_path) }, status: :ok
+  rescue Pundit::NotAuthorizedError
+    render json: { error: t("admin.poi_categories.pbf_import.unauthorized") }, status: :forbidden
+  rescue PbfImportError => e
+    render json: { error: e.message }, status: :unprocessable_entity
+  rescue StandardError => e
+    Rails.logger.error "import_pbf error: #{e.class} #{e.message}"
+    render json: { error: t("admin.poi_categories.pbf_import.generic_error") }, status: :internal_server_error
+  end
+
   private
 
   #
@@ -171,4 +199,30 @@ class Admin::PoiCategoriesController < Admin::BaseController
 
     categories.order(position: :asc)
   end
+
+  #
+  # Сохраняет загруженный .pbf файл во временный каталог и возвращает путь.
+  # Контролирует расширение и размер (защита от мусора/гигантских файлов).
+  #
+  # @param file [ActionDispatch::Http::UploadedFile] загруженный .pbf файл
+  # @return [String] абсолютный путь к сохранённому файлу
+  # @raise [PbfImportError] если файл невалиден
+  #
+  def store_pbf_file(file)
+    unless %w[.pbf .osm.pbf .osmpbf].include?(File.extname(file.original_filename).downcase)
+      raise PbfImportError, t("admin.poi_categories.pbf_import.invalid_extension")
+    end
+
+    dir = Rails.root.join("tmp", "pbf_imports")
+    FileUtils.mkdir_p(dir)
+
+    dest = dir.join("#{SecureRandom.uuid}.osm.pbf")
+    # IO.copy_stream — стриминг без загрузки всего файла в память
+    # (региональные .pbf могут быть 10+ ГБ)
+    IO.copy_stream(file.path, dest)
+    dest.to_s
+  end
+
+  # Ошибка импорта .pbf (ограничения файла)
+  class PbfImportError < StandardError; end
 end

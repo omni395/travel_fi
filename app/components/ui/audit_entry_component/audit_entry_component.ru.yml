@@ -5,6 +5,8 @@ ru:
       created: "Создано"
       updated: "Изменено"
       deleted: "Удалено"
+      category_icon_uploaded: "Иконка загружена"
+      category_icon_removed: "Иконка удалена"
       by: "кем"
       system: "Система"
       field: "Поле"

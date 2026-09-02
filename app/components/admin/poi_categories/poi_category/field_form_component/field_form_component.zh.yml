@@ -20,6 +20,19 @@ zh:
           options: 选项
           options_placeholder: "键;en;ru;es;zh"
           options_hint: "每行: 键;en;ru;es;zh (标签可选)"
+          osm_section: OSM映射
+          osm_hint: "将此字段映射到OpenStreetMap标签以进行自动导入。"
+          osm_keys_label: OSM键
+          osm_keys_hint: "逗号分隔的OSM标签键（例如 wheelchair, disabled:wheelchair）"
+          osm_value_map_label: OSM值映射
+          osm_value_map_hint: "从OSM原始值到应用值的JSON映射，例如 { \"yes\": true, \"no\": false }"
+          osm_transform_label: 转换方式
+          osm_transform_hint: "如何转换OSM原始值（布尔 / 提取数字 / 拆分列表）"
+          osm_transforms:
+            none: 无转换
+            boolean: 布尔
+            extract_number: 提取数字
+            split_array: 拆分列表
           field_types:
             string: 字符串
             text: 文本
