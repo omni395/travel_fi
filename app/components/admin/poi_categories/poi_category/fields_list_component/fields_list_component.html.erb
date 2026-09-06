@@ -9,10 +9,12 @@
         <i class="mdi mdi-format-list-bulleted text-emerald-500 mr-2"></i>
         <%= t(".fields_title") %>
       </h2>
-      <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { data: { action: "click->admin--poi-categories--poi-category--fields-list-component#openForm" } }) do %>
-        <%# MDI: plus-circle %>
-        <i class="mdi mdi-plus-circle mr-1"></i>
-        <%= t(".add_field") %>
+      <% if add_button? %>
+        <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { data: { action: "click->admin--poi-categories--poi-category--fields-list-component#openForm" } }) do %>
+          <%# MDI: plus-circle %>
+          <i class="mdi mdi-plus-circle mr-1"></i>
+          <%= t(".add_field") %>
+        <% end %>
       <% end %>
     </div>
     <p class="text-sm text-gray-500 mb-4">
@@ -53,6 +55,9 @@
                     placeholder: field.placeholder,
                     hint: field.hint,
                     options: field.options,
+                    osm_keys: field.osm_keys,
+                    osm_value_map: field.osm_value_map,
+                    osm_transform: field.osm_transform,
                     poi_category_id: field.poi_category_id
                   }.to_json %>">
                 <%# Reorder (первая колонка) %>
@@ -119,5 +124,7 @@
   </div>
 </div>
 
-<%# Диалог создания поля %>
-<%= render Admin::PoiCategories::PoiCategory::FieldFormComponent.new(category: category) %>
+<%# Диалог создания/редактирования поля (только если with_form: true) %>
+<% if with_form? %>
+  <%= render Admin::PoiCategories::PoiCategory::FieldFormComponent.new(category: category) %>
+<% end %>

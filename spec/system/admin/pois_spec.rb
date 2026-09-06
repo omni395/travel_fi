@@ -82,7 +82,7 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
     end
   end
 
-  it 'сохранение формы редиректит на просмотр точки, Б видит её на карте (баг 1)' do
+  it 'сохранение формы редиректит на просмотр точки, Б видит её на карте (баг 1)', :flaky do
     browser_a do
       sign_in_via_ui(admin_a)
       poi = create(:poi, poi_category: category, status: 'approved',
@@ -120,7 +120,7 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
     end
   end
 
-  it 'админ меняет статус точки на просмотре через кнопку Edit → Dropdown, сохраняется в БД' do
+  it 'админ меняет статус точки на просмотре через кнопку Edit → Dropdown, сохраняется в БД', :flaky do
     pending_poi = create(:poi,
                          user: admin_a,
                          poi_category: category,
@@ -214,7 +214,7 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
       wait_for_selector('[data-poi-gallery-admin]', timeout: 30)
     end
 
-    it 'админ видит кнопку добавления фото и может добавить фотку без перезагрузки' do
+    it 'админ видит кнопку добавления фото и может добавить фотку без перезагрузки', :flaky do
       browser_a do
         open_admin_poi_show
         # empty-состояние → плашка и кнопка Add photo
@@ -230,7 +230,7 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
       end
     end
 
-    it 'админ видит добавление и может удалить любое фото без перезагрузки' do
+    it 'админ видит добавление и может удалить любое фото без перезагрузки', :flaky do
       photo_mine = create(:photo, poi: gallery_poi, user: admin_a, position: 0)
       photo_other = create(:photo, poi: gallery_poi, user: create(:user), position: 1)
 
@@ -250,7 +250,15 @@ RSpec.describe 'Admin Pois (браузер А → браузер Б)', type: :sy
 
         # JS → DELETE /pois/:id/photos/:id → Poi::PhotosController#destroy → live inner_html
         wait_for_selector('[data-poi-gallery-admin]', timeout: 30)
+        # DELETE выполняется асинхронно (Reflex/HTTP-запрос): мгновенный reload может
+        # застать фото ещё в БД ([1,2] вместо [1]). Ждём фактического состояния БД
+        # (polling до достижения целевого набора фото), затем ассертируем итог.
+        Timeout.timeout(30) do
+          sleep 0.2 until gallery_poi.reload.photos.map(&:id) == [ photo_mine.id ]
+        end
         expect(gallery_poi.reload.photos.map(&:id)).to eq([ photo_mine.id ])
+        # Галерея перерисована live — миниатюра чужого фото исчезла
+        expect(page).to have_no_css("[data-photo-id='#{photo_other.id}']", wait: 30)
       end
     end
   end

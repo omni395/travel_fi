@@ -46,5 +46,35 @@ RSpec.describe OsmImportService, type: :service do
       expect(stats[:created]).to eq(0)
       expect(stats[:skipped_duplicate]).to eq(1)
     end
+
+    it 'собирает metadata ТОЛЬКО из полей с OSM-маппингом и типизирует значение' do
+      # Поле категории с OSM-маппингом (wheelchair → boolean)
+      create(:poi_category_field, :with_osm_mapping,
+             poi_category: category, field_key: 'wheelchair_accessible')
+
+      elements = [
+        {
+          'id' => 900_000_002,
+          'lat' => 51.5,
+          'lon' => -0.12,
+          'tags' => {
+            'name' => 'Restroom',
+            'wheelchair' => 'yes',
+            # мусорные технические теги, которые НЕ должны попасть в metadata
+            'survey:date' => '2021-05-01',
+            'source' => 'Bing',
+            'highway' => 'bus_stop'
+          }
+        }
+      ]
+      allow(described_class).to receive(:fetch_elements).and_return(elements)
+
+      described_class.import(category: category, location: location, user: user)
+
+      poi = Poi.find_by(osm_id: 900_000_002)
+      expect(poi).to be_present
+      # В metadata только зарегистрированное поле, значение типизировано в boolean
+      expect(poi.metadata).to eq({ 'wheelchair_accessible' => true })
+    end
   end
 end

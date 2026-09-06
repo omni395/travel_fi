@@ -12,6 +12,9 @@ zh:
           active: 启用
           save: 保存
           cancel: 取消
+          delete: "删除类别"
+          delete_confirm_title: "删除类别？"
+          delete_confirm_message: "该类别将与其动态字段一起被永久删除。此操作无法撤销。"
           map_icon_label: "地图图标（标记图片）"
           map_icon_hint: "为该类别在地图上上传自定义标记图片。未设置图片时，使用上方的 MDI 图标作为标记。"
           map_icon_choose: "选择图片"
