@@ -1,0 +1,11 @@
+<div class="p-8 bg-gray-50 rounded-xl">
+  <%= render Ui::FiltersComponent.new(
+        search_query: "Иван",
+        search_action: "input->dummy#filter",
+        status_filter: "active",
+        statuses: %w[pending active inactive suspended],
+        status_model: :user,
+        filter_action: "click->dummy#filter",
+        reset_action: "dummy#reset"
+      ) %>
+</div>

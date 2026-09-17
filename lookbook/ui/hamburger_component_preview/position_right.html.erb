@@ -1,0 +1,7 @@
+<%= render Ui::HamburgerComponent.new(position: "left") do |h| %>
+  <% h.with_menu do %>
+    <a href="#" class="block px-4 py-2 text-sm text-primary hover:bg-secondary/10 rounded-md transition-colors">
+      <%= t(".navigation", default: "Навигация") %>
+    </a>
+  <% end %>
+<% end %>

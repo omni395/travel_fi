@@ -1,0 +1,8 @@
+<%# test/components/previews/ui/badge_component_preview/all_colors.html.erb %>
+<div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+  <% colors.each do |color| %>
+    <%= render Ui::BadgeComponent.new(color: color, size: size) do %>
+      <%= color.to_s.capitalize %>
+    <% end %>
+  <% end %>
+</div>

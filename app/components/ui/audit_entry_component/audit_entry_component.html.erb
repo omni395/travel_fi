@@ -3,7 +3,7 @@
 <% if version_present? %>
   <div class="flex items-start gap-3 py-3 border-b border-gray-100 last:border-b-0">
     <%# Иконка события %>
-    <div class="flex-shrink-0 mt-0.5">
+    <div class="shrink-0 mt-0.5">
       <span class="inline-flex items-center justify-center w-8 h-8 rounded-full <%= event_info[:color] %>">
         <% if version.event == "create" %>
           <i class="mdi mdi-plus-circle text-lg"></i>

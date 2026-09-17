@@ -1,0 +1,23 @@
+<div class="p-8 bg-gray-50 rounded-xl">
+  <%= render Ui::FiltersComponent.new(reset_action: "dummy#reset") do |f| %>
+    <%# Кастомный поиск 1 %>
+    <% f.with_search do %>
+      <div class="relative min-w-[160px]">
+        <input type="text" placeholder="ID заказа..." class="field-input text-sm">
+      </div>
+    <% end %>
+
+    <%# Кастомный фильтр 2 (Выбор даты) %>
+    <% f.with_filter do %>
+      <input type="date" class="field-input text-sm">
+    <% end %>
+
+    <%# Кастомная кнопка экспорта %>
+    <% f.with_extra_actions do %>
+      <%= render Ui::BtnComponent.new(color: :secondary, size: :md) do %>
+        <i class="mdi mdi-download text-lg"></i>
+        <span>Экспорт</span>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

@@ -1,0 +1,75 @@
+<div class="p-12 min-h-[300px] flex flex-wrap gap-6 items-start justify-center bg-gray-50 rounded-xl">
+  
+  <%# 1. Тёмная подложка (Dark Background) %>
+  <%= render Ui::DropdownComponent.new(position: "left", menu_classes: "bg-gray-900 text-white shadow-2xl") do |dropdown| %>
+    <% dropdown.with_trigger do %>
+      <%= render Ui::BtnComponent.new(color: :secondary, size: :md, html: { data: { action: "click->ui--dropdown-component#toggle" } }) do %>
+        <i class="mdi mdi-moon-waning-crescent text-lg"></i>
+        <span>Dark Background</span>
+        <i class="mdi mdi-chevron-down"></i>
+      <% end %>
+    <% end %>
+
+    <% dropdown.with_menu do %>
+      <div class="px-4 py-2 border-b border-gray-800 text-xs text-gray-400 font-medium">
+        Тёмная тема
+      </div>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 transition-colors">
+        <i class="mdi mdi-account-outline text-gray-400"></i>
+        <span>Профиль</span>
+      </a>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-200 hover:bg-gray-800 transition-colors">
+        <i class="mdi mdi-tune text-gray-400"></i>
+        <span>Настройки</span>
+      </a>
+    <% end %>
+  <% end %>
+
+  <%# 2. Акцентная подложка (Primary Theme) %>
+  <%= render Ui::DropdownComponent.new(position: "center", menu_classes: "bg-primary text-text shadow-lg") do |dropdown| %>
+    <% dropdown.with_trigger do %>
+      <%= render Ui::BtnComponent.new(color: :primary, size: :md, html: { data: { action: "click->ui--dropdown-component#toggle" } }) do %>
+        <i class="mdi mdi-palette text-lg"></i>
+        <span>Primary Theme</span>
+        <i class="mdi mdi-chevron-down"></i>
+      <% end %>
+    <% end %>
+
+    <% dropdown.with_menu do %>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-text hover:bg-white/10 transition-colors">
+        <i class="mdi mdi-star-outline"></i>
+        <span>Добавить в избранное</span>
+      </a>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-text hover:bg-white/10 transition-colors">
+        <i class="mdi mdi-share-variant-outline"></i>
+        <span>Поделиться</span>
+      </a>
+    <% end %>
+  <% end %>
+
+  <%# 3. Опасная подложка (Error Background) %>
+  <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-error/10 border border-error/20 text-error") do |dropdown| %>
+    <% dropdown.with_trigger do %>
+      <%= render Ui::BtnComponent.new(color: :error, size: :md, html: { data: { action: "click->ui--dropdown-component#toggle" } }) do %>
+        <i class="mdi mdi-alert-circle-outline text-lg"></i>
+        <span>Danger Menu</span>
+        <i class="mdi mdi-chevron-down"></i>
+      <% end %>
+    <% end %>
+
+    <% dropdown.with_menu do %>
+      <div class="px-4 py-2 text-xs text-error/70 font-semibold border-b border-error/10">
+        Опасная зона
+      </div>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/20 transition-colors font-medium">
+        <i class="mdi mdi-archive-outline"></i>
+        <span>Заархивировать</span>
+      </a>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/30 transition-colors font-bold">
+        <i class="mdi mdi-delete-forever-outline"></i>
+        <span>Удалить навсегда</span>
+      </a>
+    <% end %>
+  <% end %>
+
+</div>

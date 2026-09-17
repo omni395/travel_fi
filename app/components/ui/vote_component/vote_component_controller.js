@@ -120,10 +120,18 @@ export default class extends ApplicationController {
 
     this.element.setAttribute("data-vote-component-current-vote-value", String(nextVote))
 
-    const upBtn = this.element.querySelector('[data-action="ui--vote-component#castUp"]')
-    const downBtn = this.element.querySelector('[data-action="ui--vote-component#castDown"]')
-    if (upBtn) upBtn.classList.toggle("is-active", nextVote === 1)
-    if (downBtn) downBtn.classList.toggle("is-active--down", nextVote === -1)
+    const upBtn = this.element.querySelector('[data-action="click->ui--vote-component#castUp"]')
+    const downBtn = this.element.querySelector('[data-action="click->ui--vote-component#castDown"]')
+    if (upBtn) {
+      upBtn.classList.toggle("is-active", nextVote === 1)
+      upBtn.classList.toggle("bg-success", nextVote === 1)
+      upBtn.classList.toggle("text-white", nextVote === 1)
+    }
+    if (downBtn) {
+      downBtn.classList.toggle("is-active--down", nextVote === -1)
+      downBtn.classList.toggle("bg-error", nextVote === -1)
+      downBtn.classList.toggle("text-white", nextVote === -1)
+    }
   }
 
   /**

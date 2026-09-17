@@ -1,15 +1,7 @@
 /* ui/badge_component — стили бейджа (без @apply) */
-.badge-ui {
-  display: inline-flex;
-  align-items: center;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-.badge-ui--sm { padding: 0.125rem 0.5rem; font-size: 0.625rem; }
-.badge-ui--md { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+.badge-ui--sm { padding: 0.125rem 0.5rem; font-size: 0.625rem; border-radius: 9999px; }
+.badge-ui--md { padding: 0.25rem 0.75rem; font-size: 0.75rem; border-radius: 9999px; }
+
 .badge-ui--primary {
   background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
   color: var(--color-primary);

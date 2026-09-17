@@ -23,7 +23,7 @@
 #   extra_controller [String, nil] доп. Stimulus-контроллер (напр. "poi--sidebar-component")
 #
 class Ui::SidebarComponent < ApplicationComponent
-  def initialize(width_class: "w-64", state: :collapsed, extra_controller: nil)
+  def initialize(width_class: "w-80", state: :collapsed, extra_controller: nil)
     @width_class = width_class
     @state = state
     @extra_controller = extra_controller

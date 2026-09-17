@@ -1,0 +1,8 @@
+<%# test/components/previews/ui/badge_component_preview/all_sizes.html.erb %>
+<div style="display: flex; gap: 12px; align-items: center;">
+  <% sizes.each do |size| %>
+    <%= render Ui::BadgeComponent.new(color: color, size: size) do %>
+      Size: <%= size %>
+    <% end %>
+  <% end %>
+</div>

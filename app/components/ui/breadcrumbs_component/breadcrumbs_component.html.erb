@@ -10,6 +10,7 @@
 
 <nav data-controller="ui--breadcrumbs-component" aria-label="<%= t('.navigation') %>" class="mb-4">
   <ol class="flex flex-wrap items-center gap-1 text-sm">
+    <% is_single = breadcrumbs.length == 1 %>
     <% breadcrumbs.each_with_index do |crumb, index| %>
       <% is_last = index == breadcrumbs.length - 1 %>
 
@@ -21,7 +22,7 @@
         <% end %>
 
         <% if is_last %>
-          <span class="text-gray-500 font-medium" aria-current="page">
+          <span class="<%= is_single ? 'text-base font-bold text-gray-700' : 'text-gray-500 font-medium' %>" aria-current="page">
             <%= crumb[:name] %>
           </span>
         <% else %>

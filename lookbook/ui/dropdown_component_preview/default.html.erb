@@ -1,0 +1,16 @@
+<div class="p-12 min-h-[250px] flex items-start justify-center bg-gray-50 rounded-xl">
+  <%= render Ui::DropdownComponent.new do |dropdown| %>
+    <% dropdown.with_menu do %>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        Профиль
+      </a>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        Настройки
+      </a>
+      <div class="border-t border-gray-100 my-1"></div>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="block px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">
+        Выйти
+      </a>
+    <% end %>
+  <% end %>
+</div>

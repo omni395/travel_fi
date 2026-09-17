@@ -1,40 +1,63 @@
-<%# UI::TooltipComponent - тултип-попап при ховере на маркер карты (OL Overlay) %>
-<%# Двухколоночная мини-карточка: фото слева на всю высоту, текст справа построчно %>
-<%# Иконки: mdi-map-marker (динамически из poi_category.icon), mdi-star (рейтинг) %>
-<div id="ui-tooltip"
-     class="ui-tooltip hidden pointer-events-none z-1000 w-75 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
-     style="box-shadow: 0 8px 24px rgba(0,0,0,0.18);">
-  <div class="ui-tooltip__inner flex min-h-0">
-    <%# Фото (обложка POI) — левая колонка на всю высоту %>
-    <div class="ui-tooltip__media w-24 shrink-0">
-      <img class="ui-tooltip__img w-full h-full object-cover"
-           src="<%= asset_path('no-image.png') %>"
-           data-fallback="<%= asset_path('no-image.png') %>"
-           alt="<%= t('.photo_alt') %>">
+<%# Ui::TooltipComponent — универсальный тултип-контейнер %>
+<% if map_overlay %>
+  <%# Режим 1: Оверлей для OpenLayers %>
+  <div id="ui-tooltip"
+       class="ui-tooltip hidden pointer-events-none z-50 w-75 bg-primary rounded-xl shadow-lg border border-secondary overflow-hidden">
+    <% if popover.present? %>
+      <%= popover %>
+    <% elsif content.present? %>
+      <%= content %>
+    <% else %>
+      <div class="ui-tooltip__inner flex min-h-0">
+        <div class="ui-tooltip__media w-24 shrink-0">
+          <img class="ui-tooltip__img w-full h-full object-cover block"
+               src="<%= asset_path('no-image.png') %>"
+               data-fallback="<%= asset_path('no-image.png') %>"
+               alt="<%= t('.photo_alt') %>">
+        </div>
+        <div class="ui-tooltip__content flex-1 min-w-0 p-2.5 flex flex-col gap-0.5">
+          <div class="flex items-center gap-1">
+            <i class="ui-tooltip__category-icon mdi mdi-map-marker text-success text-sm"></i>
+            <img class="ui-tooltip__category-image hidden w-5 h-5 object-cover rounded" alt="<%= t('.icon_alt') %>">
+            <span class="ui-tooltip__category-name text-[10px] font-medium text-secondary uppercase tracking-wider"><%= t('.category') %></span>
+          </div>
+          <div class="ui-tooltip__name text-sm font-semibold text-primary leading-tight wrap-break-word"><%= t('.loading') %></div>
+          <div class="ui-tooltip__rating flex items-center gap-0.5 mt-0.5">
+            <i class="mdi mdi-star text-accent text-xs"></i>
+            <span class="ui-tooltip__rating-value text-[11px] text-secondary font-medium"></span>
+          </div>
+          <div class="ui-tooltip__address hidden text-[10px] text-secondary truncate mt-px"><%= t('.address') %></div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% else %>
+  <%# Режим 2: Интерактивный тултип (CSS Group-Hover + Stimulus поддержка) %>
+  <div class="relative inline-block group"
+       data-controller="ui--tooltip-component"
+       data-ui--tooltip-component-trigger-value="<%= trigger_event %>">
+
+    <%# Триггер %>
+    <div class="inline-block cursor-pointer" data-action="<%= trigger_data_action %>">
+      <% if trigger_element.present? %>
+        <%= trigger_element %>
+      <% else %>
+        <%= content %>
+      <% end %>
     </div>
 
-    <%# Текстовая колонка: категория / название / рейтинг / адрес построчно %>
-    <div class="ui-tooltip__content flex-1 min-w-0 p-2.5 flex flex-col gap-0.5">
-      <%# Категория (иконка/картинка + название).
-          Картинка категории приоритетнее MDI-иконки (паттерн list_item_component):
-          JS в map_component_controller переключает .ui-tooltip__category-icon ↔
-          .ui-tooltip__category-image по наличию poiCategoryImage. %>
-      <div class="flex items-center gap-1">
-        <i class="ui-tooltip__category-icon mdi mdi-map-marker text-emerald-500 text-sm"></i>
-        <img class="ui-tooltip__category-image hidden w-5 h-5 object-cover rounded"
-             alt="<%= t(".icon_alt") %>">
-        <span class="ui-tooltip__category-name text-[10px] font-medium text-gray-500 uppercase tracking-wider"><%= t(".category") %></span>
+    <%# Выпадающая панель: открывается как по group-hover (CSS), так и по Stimulus-событиям %>
+    <div class="absolute <%= position_class %> hidden group-hover:block z-50 transition-opacity duration-150"
+         data-ui--tooltip-component-target="panel">
+      <div class="ui-tooltip__body">
+        <% if popover.present? %>
+          <%= popover %>
+        <% elsif text.present? %>
+          <div class="bg-primary text-primary text-xs rounded-lg shadow-xl p-2.5 max-w-xs border border-secondary whitespace-nowrap">
+            <%= text %>
+          </div>
+        <% end %>
       </div>
-      <%# Название POI %>
-      <div class="ui-tooltip__name text-sm font-semibold text-gray-900 leading-tight wrap-break-word"><%= t(".loading") %></div>
-      <%# Рейтинг %>
-      <div class="ui-tooltip__rating flex items-center gap-0.5 mt-0.5">
-        <i class="mdi mdi-star text-yellow-400 text-xs"></i>
-        <%# Иконка: mdi-star %>
-        <span class="ui-tooltip__rating-value text-[11px] text-gray-500 font-medium"></span>
-      </div>
-      <%# Адрес %>
-      <div class="ui-tooltip__address hidden text-[10px] text-gray-400 truncate mt-px"><%= t(".address") %></div>
     </div>
   </div>
-</div>
+<% end %>

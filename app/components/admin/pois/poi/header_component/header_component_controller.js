@@ -7,3 +7,4 @@ import ApplicationController from '../../../../../javascript/controllers/applica
  */
 export default class extends ApplicationController {
 }
+

@@ -1,0 +1,21 @@
+<%# lookbook/ui/card_component_preview/default.html.erb %>
+<%= render Ui::CardComponent.new do |c| %>
+  <% c.with_header do %>
+    <h2 class="text-xl font-bold text-gray-900"><%= title %></h2>
+  <% end %>
+
+  <% c.with_body do %>
+    <p class="text-gray-600"><%= body_text %></p>
+  <% end %>
+
+  <% c.with_footer do %>
+    <div class="flex justify-end gap-2">
+      <%= render Ui::BtnComponent.new(color: :ghost, size: :sm) do %>
+        Отмена
+      <% end %>
+      <%= render Ui::BtnComponent.new(color: :primary, size: :sm) do %>
+        Сохранить
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
