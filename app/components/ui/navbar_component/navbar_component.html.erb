@@ -2,7 +2,7 @@
 <nav class="navbar-component shadow-lg" data-controller="ui--navbar-component">
   <div class="w-full px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16 relative z-50">
-      <%# Левая группа: логотип, прижатый к левому краю (подпись скрыта на мобильных) %>
+      <%# Левая группа: логотип %>
       <div class="flex items-center">
         <%= link_to root_path(locale: I18n.locale), class: "group flex items-center py-2 logo-link" do %>
           <%= image_tag "logo.webp", class: "h-8 w-auto bg-white rounded-full p-1 shadow-sm transition-transform duration-200 group-hover:scale-110", alt: "Travel-Fi" %>
@@ -17,96 +17,89 @@
         <% end %>
       </div>
 
-      <%# Правая группа: гамбургер (мобильные) + auth + язык %>
+      <%# Правая группа: гамбургер + auth + язык %>
       <div class="flex items-center space-x-2">
-        <%# Гамбургер-меню (только мобильные) с кнопками Home/Map и пр. %>
-        <%# Мобильное меню (md:hidden): dropdown с основной навигацией (Главная/Карта).
-            Схлопывание управляется навбаром через ui--dropdown-component (гем hamburger удалён). %>
+        <%# 1. Гамбургер-меню (мобильное) %>
         <div class="md:hidden">
-          <%= render Ui::DropdownComponent.new do |dropdown| %>
+          <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-teal-600 to-sky-600 text-white border border-white/20 shadow-xl") do |dropdown| %>
             <% dropdown.with_trigger do %>
-              <button type="button" data-action="ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 p-2 rounded-md transition-colors duration-200 cursor-pointer" aria-label="<%= t(".toggle_menu") %>">
-                <%# MDI: menu %>
+              <button type="button" data-action="click->ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 p-2 rounded-md transition-colors duration-200 cursor-pointer" aria-label="<%= t(".toggle_menu") %>">
                 <i class="mdi mdi-menu text-xl"></i>
               </button>
             <% end %>
             <% dropdown.with_menu do %>
-              <div class="whitespace-nowrap navbar-component__dropdown bg-linear-to-br from-teal-600 to-sky-600">
-                <div class="py-2">
-                  <% main_menu_items.each do |item| %>
-                    <%= link_to item[:path],
-                                class: "flex items-center gap-3 px-4 py-2.5 text-sm text-white hover:bg-white/10 transition-colors duration-200",
-                                data: { action: "ui--dropdown-component#toggle" } do %>
-                      <%# Иконка: из main_menu_items (mdi-home / mdi-map-marker-multiple) %>
-                      <i class="mdi <%= item[:icon] %> text-lg"></i>
-                      <span><%= item[:label] %></span>
-                    <% end %>
-                  <% end %>
-                </div>
-              </div>
+              <% main_menu_items.each do |item| %>
+                <%= link_to item[:path],
+                            class: "flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors duration-200" do %>
+                  <i class="mdi <%= item[:icon] %> text-lg"></i>
+                  <span><%= item[:label] %></span>
+                <% end %>
+              <% end %>
             <% end %>
           <% end %>
         </div>
 
-        <%# Кнопки Логин/Регистрация — без подписей на мобильных %>
+        <%# 2. Дропдаун профиля авторизованного пользователя %>
         <% unless user_signed_in? %>
           <%= link_to new_user_session_path(locale: I18n.locale), class: "flex items-center justify-center text-white hover:bg-white/10 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200" do %>
-            <%# MDI: login %>
             <i class="mdi mdi-login text-xl"></i>
             <span class="hidden md:inline ml-1"><%= t(".login") %></span>
           <% end %>
           <%= link_to new_user_registration_path(locale: I18n.locale), class: "flex items-center justify-center bg-white text-teal-600 hover:bg-gray-100 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200" do %>
-            <%# MDI: account-plus %>
             <i class="mdi mdi-account-plus text-xl"></i>
             <span class="hidden md:inline ml-1"><%= t(".register") %></span>
           <% end %>
         <% else %>
-          <%= render Ui::DropdownComponent.new do |dropdown| %>
+          <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-teal-600 to-sky-600 text-white border border-white/20 shadow-xl") do |dropdown| %>
             <% dropdown.with_trigger do %>
-              <button type="button" data-action="ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 px-3 py-2 rounded-md transition-colors duration-200">
-                <div class="w-8 h-8 rounded-full overflow-hidden">
+              <button type="button" data-action="click->ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 px-3 py-2 rounded-md transition-colors duration-200 cursor-pointer">
+                <div class="w-8 h-8 rounded-full overflow-hidden border border-white/30">
                   <%= image_tag user_avatar_url, class: "w-full h-full object-cover", alt: @user.name %>
                 </div>
                 <span class="hidden md:inline-block text-white font-medium ml-2"><%= @user.name %></span>
               </button>
             <% end %>
             <% dropdown.with_menu do %>
-              <div class="w-48 navbar-component__dropdown bg-linear-to-br from-teal-600 to-sky-600">
-                <div class="py-1">
-                  <% if helpers.policy(@user).admin_panel_access? %>
-                    <%= link_to t(".admin_panel"), admin_root_path(locale: I18n.locale), class: "block px-4 py-2 text-sm text-white hover:bg-white/10", data: { action: "ui--dropdown-component#toggle" } %>
-                  <% end %>
-                  <%= link_to t(".profile"), user_path(@user, locale: I18n.locale), class: "block px-4 py-2 text-sm text-white hover:bg-white/10", data: { action: "ui--dropdown-component#toggle" } %>
-                  <%= link_to t(".settings"), user_settings_path(@user, locale: I18n.locale), class: "block px-4 py-2 text-sm text-white hover:bg-white/10", data: { action: "ui--dropdown-component#toggle" } %>
-                  <div class="border-t border-white/30 my-2"></div>
-                  <%= button_to destroy_user_session_path, method: :delete,
-                        data: { turbo: false },
-                        class: "block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10" do %>
-                    <%# MDI: logout %>
-                    <i class="mdi mdi-logout mr-2"></i>
-                    <%= t(".logout") %>
-                  <% end %>
-                </div>
-              </div>
+              <% if helpers.policy(@user).admin_panel_access? %>
+                <%= link_to admin_root_path(locale: I18n.locale), class: "flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors duration-200" do %>
+                  <i class="mdi mdi-shield-account text-lg"></i>
+                  <span><%= t(".admin_panel") %></span>
+                <% end %>
+              <% end %>
+
+              <%= link_to user_path(@user, locale: I18n.locale), class: "flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors duration-200" do %>
+                <i class="mdi mdi-account text-lg"></i>
+                <span><%= t(".profile") %></span>
+              <% end %>
+
+              <%= link_to user_settings_path(@user, locale: I18n.locale), class: "flex items-center gap-2 px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors duration-200" do %>
+                <i class="mdi mdi-cog text-lg"></i>
+                <span><%= t(".settings") %></span>
+              <% end %>
+
+              <div class="border-t border-white/20 my-1"></div>
+
+              <%= button_to destroy_user_session_path, method: :delete,
+                    data: { turbo: false },
+                    class: "flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors duration-200 cursor-pointer" do %>
+                <i class="mdi mdi-logout text-lg"></i>
+                <span><%= t(".logout") %></span>
+              <% end %>
             <% end %>
           <% end %>
         <% end %>
 
-        <%# Дропдаун выбора языка %>
-        <%= render Ui::DropdownComponent.new do |dropdown| %>
+        <%# 3. Дропдаун выбора языка (без иконок) %>
+        <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-teal-600 to-sky-600 text-white border border-white/20 shadow-xl") do |dropdown| %>
           <% dropdown.with_trigger do %>
-            <button type="button" data-action="ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 px-3 py-2 rounded-md transition-colors duration-200">
+            <button type="button" data-action="click->ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 px-3 py-2 rounded-md transition-colors duration-200 cursor-pointer">
               <span class="text-white font-medium"><%= t(".languages.#{I18n.locale}") %></span>
             </button>
           <% end %>
           <% dropdown.with_menu do %>
-            <div class="whitespace-nowrap navbar-component__dropdown bg-linear-to-br from-teal-600 to-sky-600">
-              <div class="py-1">
-                <% language_items.each do |item| %>
-                  <%= link_to item[:label], item[:path], class: "block px-4 py-2 text-sm text-white hover:bg-white/10", data: { action: "ui--dropdown-component#toggle" } %>
-                <% end %>
-              </div>
-            </div>
+            <% language_items.each do |item| %>
+              <%= link_to item[:label], item[:path], class: "block px-4 py-2 text-sm text-white hover:bg-white/10 transition-colors duration-200" %>
+            <% end %>
           <% end %>
         <% end %>
       </div>

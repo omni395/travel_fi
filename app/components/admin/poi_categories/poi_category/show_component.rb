@@ -38,3 +38,4 @@ class Admin::PoiCategories::PoiCategory::ShowComponent < ApplicationComponent
     category.missing_translations?
   end
 end
+

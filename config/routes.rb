@@ -11,6 +11,11 @@ Rails.application.routes.draw do
   # ActionCable WebSocket маршрут
   mount ActionCable.server => "/cable"
 
+  # Монтируем Lookbook для среды разработки
+  if Rails.env.development?
+    mount Lookbook::Engine, at: "/lookbook"
+  end
+
   # SolidQueue Dashboard — мониторинг очередей (без локали)
   authenticate :user, ->(user) { user.has_role?(:admin) } do
     mount SolidQueueDashboard::Engine, at: "/solid-queue", as: :solid_queue_dashboard
@@ -70,7 +75,7 @@ Rails.application.routes.draw do
     # чтобы Devise-пути (/sign_in, /sign_up) и админка имели приоритет
     # Исключаем зарезервированные slug-и (favicon, robots и т.д.)
     get ":id", to: "users#show", as: :user,
-              constraints: ->(req) { req.path_parameters[:id] !~ /\A(favicon|robots|sitemap)\z/ }
+              constraints: ->(req) { req.path_parameters[:id] !~ /\A(favicon|robots|sitemap|lookbook)\z/ }
     get ":id/edit", to: "users#edit", as: :edit_user
     patch ":id", to: "users#update", as: :update_user
     get ":id/settings", to: "users/settings#show", as: :user_settings

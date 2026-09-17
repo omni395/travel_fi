@@ -2,7 +2,6 @@
 // Do not edit manually
 
 import './admin_dashboard_component_dashboard_component_controller.js'
-import './admin_dashboard_stat_card_component_stat_card_component_controller.js'
 import './admin_poi_categories_poi_category_audit_log_component_audit_log_component_controller.js'
 import './admin_poi_categories_poi_category_edit_component_edit_component_controller.js'
 import './admin_poi_categories_poi_category_field_form_component_field_form_component_controller.js'

@@ -1,8 +1,19 @@
 <%# Ui::ClipboardComponent - копирование текста %>
 <%# Иконка: mdi-content-copy %>
 <div data-controller="ui--clipboard-component"
-     class="inline-flex items-center gap-1 cursor-pointer hover:opacity-80 transition-opacity">
-  <i class="mdi mdi-content-copy text-gray-400 text-sm"></i>
-  <%# Иконка: mdi-content-copy %>
-  <span data-ui--clipboard-component-target="text" class="text-sm"><%= t(".copy") %></span>
+     data-action="click->ui--clipboard-component#copy"
+     data-ui--clipboard-component-copied-text-value="<%= t('.copied', default: 'Copied!') %>"
+     <% if text.present? %>
+       data-ui--clipboard-component-text-value="<%= text %>"
+     <% end %>
+     <% if target_id.present? %>
+       data-ui--clipboard-component-target-id-value="<%= target_id %>"
+     <% end %>
+     class="inline-flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity select-none">
+
+  <!-- mdi: content-copy -->
+  <i class="mdi mdi-content-copy text-gray-400 text-sm" aria-hidden="true"></i>
+  <span data-ui--clipboard-component-target="text" class="text-sm font-medium text-teal-600">
+    <%= content.presence || t(".copy", default: "Copy") %>
+  </span>
 </div>

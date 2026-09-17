@@ -1,0 +1,9 @@
+<div class="p-20 bg-secondary flex items-center justify-center">
+  <%= render Ui::TooltipComponent.new(text: t('.hint', default: "Дефолтный текстовый тултип")) do |t| %>
+    <% t.with_trigger_element do %>
+      <%= render Ui::BtnComponent.new(color: :primary, size: :md) do %>
+        Наведи на меня
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

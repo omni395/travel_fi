@@ -1,0 +1,3 @@
+<div class="p-8 max-w-xl bg-secondary/10 rounded-xl">
+  <%= render Ui::PaginationComponent.new(pagy: Struct.new(:page, :pages, :previous, :next).new(3, 10, 2, 4)) %>
+</div>

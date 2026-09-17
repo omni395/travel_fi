@@ -1,70 +1,108 @@
 <%# frozen_string_literal: true %>
 <%#
-# app/components/ui/filters_component.html.erb
+# app/components/ui/filters_component/filters_component.html.erb
 #
 # Компонент фильтров и поиска
 # Использует Ui::BtnComponent, Ui::DropdownComponent
 # %>
-<div data-controller="ui--filters-component" class="card-ui mb-4">
-  <div class="p-3">
-    <div class="flex items-center gap-3">
-      <%# Поиск с иконкой %>
-      <div class="relative flex-1 min-w-0">
+<div data-controller="ui--filters-component" class="card-ui mb-4 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+  <div class="flex flex-wrap items-center gap-3">
+    
+    <%# Поисковый блок (Слот OR По умолчанию) %>
+    <% if search.present? %>
+      <%= search %>
+    <% elsif search_action.present? %>
+      <div class="relative flex-1 min-w-[200px]">
         <!-- mdi: magnify -->
-        <span class="mdi mdi-magnify absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></span>
-        <label for="search-input" class="sr-only"><%= t('.search_label') %></label>
+        <span class="mdi mdi-magnify absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></span>
+        <label for="search-input" class="sr-only"><%= search_placeholder || t('.search_label') %></label>
         <input id="search-input"
                type="text"
                name="q"
                value="<%= search_query %>"
-               placeholder="<%= t('.search_placeholder') %>"
+               placeholder="<%= search_placeholder || t('.search_placeholder') %>"
                autocomplete="off"
                data-action="<%= search_action %>"
-               class="field-input !pl-10">
+               class="field-input !pl-10 text-sm">
       </div>
+    <% end %>
 
-      <%# Фильтр по статусу (Ui::DropdownComponent) — только если есть статусы %>
-      <% if show_status_filter? %>
-        <%= render Ui::DropdownComponent.new(position: "left", menu_classes: "w-48 bg-white border border-gray-200") do |dropdown| %>
-          <% dropdown.with_trigger do %>
-            <button type="button" data-action="ui--dropdown-component#toggle"
-                    class="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white hover:bg-gray-50 transition-colors cursor-pointer">
-              <!-- mdi: filter-variant -->
-              <span class="mdi mdi-filter-variant text-gray-400 text-lg"></span>
-              <span class="text-gray-600 text-sm"><%= @status_filter.present? ? status_label(@status_filter) : t('.all_statuses') %></span>
-              <!-- mdi: chevron-down -->
-              <span class="mdi mdi-chevron-down text-gray-400"></span>
-            </button>
+    <%# Фильтр по статусу (Ui::DropdownComponent) — только если есть статусы %>
+    <% if show_status_filter? %>
+      <%= render Ui::DropdownComponent.new(position: "left", menu_classes: "min-w-[12rem] bg-white border border-gray-100 shadow-xl") do |dropdown| %>
+        <% dropdown.with_trigger do %>
+          <%= render Ui::BtnComponent.new(
+                color: :secondary,
+                size: :md,
+                html: { data: { action: "click->ui--dropdown-component#toggle" } }
+              ) do %>
+            <!-- mdi: filter-variant -->
+            <i class="mdi mdi-filter-variant text-gray-400 text-lg" aria-hidden="true"></i>
+            <span class="text-gray-700 font-normal">
+              <%= status_filter.present? ? status_label(status_filter) : t('.all_statuses') %>
+            </span>
+            <!-- mdi: chevron-down -->
+            <i class="mdi mdi-chevron-down text-gray-400 text-base" aria-hidden="true"></i>
           <% end %>
-          <% dropdown.with_menu do %>
-            <div class="py-1">
-              <%# All statuses option %>
-              <div class="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 cursor-pointer <%= @status_filter.blank? ? 'bg-emerald-50' : '' %>"
-                   data-action="click-><%= filter_action.gsub('change->', '') %>"
-                   data-status="">
-                <span class="text-sm text-gray-700"><%= t('.all_statuses') %></span>
-              </div>
-              <% statuses.each do |s| %>
-                <div class="flex items-center gap-2 px-3 py-2 hover:bg-emerald-50 cursor-pointer <%= @status_filter == s ? 'bg-emerald-50' : '' %>"
-                     data-action="click-><%= filter_action.gsub('change->', '') %>"
-                     data-status="<%= s %>">
-                  <span class="text-sm text-gray-700"><%= status_label(s) %></span>
-                </div>
+        <% end %>
+
+        <% dropdown.with_menu do %>
+          <%# Все статусы (All statuses option) %>
+          <button type="button"
+                  class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between transition-colors <%= 'bg-primary/5 text-primary font-medium' if status_filter.blank? %>"
+                  data-action="click->ui--dropdown-component#toggle <%= filter_action %>"
+                  data-status="">
+            <span><%= t('.all_statuses') %></span>
+            <% if status_filter.blank? %>
+              <i class="mdi mdi-check text-primary"></i>
+            <% end %>
+          </button>
+
+          <% statuses.each do |s| %>
+            <button type="button"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center justify-between transition-colors <%= 'bg-primary/5 text-primary font-medium' if status_filter.to_s == s.to_s %>"
+                    data-action="click->ui--dropdown-component#toggle <%= filter_action %>"
+                    data-status="<%= s %>">
+              <span><%= status_label(s) %></span>
+              <% if status_filter.to_s == s.to_s %>
+                <i class="mdi mdi-check text-primary"></i>
               <% end %>
-            </div>
+            </button>
           <% end %>
         <% end %>
       <% end %>
+    <% end %>
 
-      <%# Сброс фильтров %>
+    <%# Дополнительные кастомные фильтры %>
+    <% filters.each do |custom_filter| %>
       <div class="shrink-0">
-        <button data-action="click-><%= reset_action %>"
-                title="<%= t('.reset') %>"
-                class="btn-ui btn-ui--ghost btn-ui--sm">
-          <!-- mdi: filter-remove -->
-          <span class="mdi mdi-filter-remove text-lg"></span>
-        </button>
+        <%= custom_filter %>
       </div>
-    </div>
+    <% end %>
+
+    <%# Дополнительные действия %>
+    <% if extra_actions.present? %>
+      <div class="shrink-0">
+        <%= extra_actions %>
+      </div>
+    <% end %>
+
+    <%# Сброс фильтров %>
+    <% if reset_action.present? %>
+      <div class="shrink-0 ml-auto">
+        <%= render Ui::BtnComponent.new(
+              color: :ghost,
+              size: :md,
+              html: {
+                data: { action: "click->#{reset_action}" },
+                title: t('.reset')
+              }
+            ) do %>
+          <!-- mdi: filter-remove -->
+          <i class="mdi mdi-filter-remove-outline text-lg text-gray-500 hover:text-error transition-colors" aria-hidden="true"></i>
+        <% end %>
+      </div>
+    <% end %>
+
   </div>
 </div>

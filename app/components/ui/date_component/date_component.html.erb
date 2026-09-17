@@ -1,2 +1,12 @@
-<%# frozen_string_literal: true %>
-<%# Ui::DateComponent - отформатированная дата %><span class="inline"><%= formatted %></span>
+<%# Ui::DateComponent - отформатированная дата (в виде текста или бейджа) %>
+<% if badge %>
+  <%= render Ui::BadgeComponent.new(color: badge_color, size: size) do %>
+    <span data-controller="ui--date-component" class="font-mono <%= html_class %>">
+      <%= formatted %>
+    </span>
+  <% end %>
+<% else %>
+  <span data-controller="ui--date-component" class="inline font-mono text-gray-700 <%= html_class %>">
+    <%= formatted %>
+  </span>
+<% end %>

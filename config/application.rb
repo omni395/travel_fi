@@ -64,5 +64,6 @@ module TravelFi
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+    config.lookbook.preview_paths = [ Rails.root.join("lookbook") ]
   end
 end

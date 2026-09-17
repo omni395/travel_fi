@@ -2,7 +2,7 @@
 
 Travel Fi — Rails 8.1 application for tourism services with DeFi functionality and an ERC-20 token (TFT). Architecture — WebSocket-first: asynchronous updates via ActionCable (SolidCable), background jobs via SolidQueue, cache infrastructure SolidCache (caching in code temporarily disabled), audit via PaperTrail.
 
-> Demo: https://noneternally-approbative-rosanne.ngrok-free.dev/ (launching the server by agreement)
+> Demo: https://noneternally-approbative-rosanne.ngrok-free.dev/ (admin@example.com/12345678 launching the server by agreement)
 
 > Promo-demo - https://drive.google.com/file/d/1-WECv_pAtkrJqNUK_LF9o1pbySfmNgFx/view?usp=drive_link
 
@@ -39,14 +39,13 @@ Travel Fi — Rails 8.1 application for tourism services with DeFi functionality
 
 ## Project Vision & Current State
 
-**Mission:** A community-driven map for travelers — a global platform for sharing POIs (Points of Interest) critical during travel.
+**Mission:** A community-driven map for travelers and locals—a global platform for sharing critical points of interest (POIs) encountered during travel and in daily life.
 
-**Target audience:** Budget backpackers, Digital nomads, Solo travelers from developing countries, Vanlife travelers.
+**Target Audience:** Budget backpackers, digital nomads, solo travelers from developing countries, van-lifers, as well as local residents who utilize various services and public amenities.
 
-**Key advantage:** There is no single strong global player in most niches (WiFi spots are occupied by WiFi Map/Instabridge, the rest are blank spots).
+**Key Advantage:** There is no dominant global player in most niches (while Wi-Fi hotspots are covered by apps like WiFi Map and Instabridge, other categories remain largely untapped).
 
-**Current Project Stage:**
-At present, Travel Fi is a prototype at the stage of active development. A basic architectural foundation has been implemented, proving the technical viability of the concept. The prototype is not a finished product and requires codebase refinement, logic debugging, and final preparation of the architecture for Production launch.
+**Current Stage:** Prototype currently in active development. The core architecture is complete, and its technical viability has been proven. The product has not yet launched; work is currently focused on code refinement, logic debugging, and preparing the architecture for production.
 
 ## 📍 POI Categories (from the most in-demand)
 
