@@ -7,7 +7,7 @@
 #   - Кнопки «Апрув» (+1, MDI mdi-thumb-up-outline) и «Дизлайк» (-1,
 #     MDI mdi-thumb-down-outline) с активным состоянием текущего юзера.
 #   - Счётчик голосов (ups / downs).
-#   - Бейдж «Одобрено сообществом» / «Отклонено сообществом» (для POI).
+#   - Общее количество голосов.
 #
 # Live-обновление — через VoteBroadcaster (inner_html [data-vote-…]).
 # Интерактивность — через Ui::VoteComponent Stimulus-контроллер → VoteReflex.
@@ -78,7 +78,10 @@ class Ui::VoteComponent < ApplicationComponent
   # @return [Hash] { ups:, downs:, total:, net: }
   #
   def tally
-    @tally ||= VoteService.tally(votable)
+    @tally ||= begin
+      result = VoteService.tally(votable) if defined?(VoteService)
+      result.is_a?(Hash) ? result : { ups: 0, downs: 0, total: 0, net: 0 }
+    end
   end
 
   #
@@ -89,6 +92,7 @@ class Ui::VoteComponent < ApplicationComponent
   #
   def current_vote_value
     return nil unless current_user
+    return nil unless votable.respond_to?(:votes)
 
     votable.votes.where(user: current_user).pick(:value)
   end
@@ -100,6 +104,7 @@ class Ui::VoteComponent < ApplicationComponent
   #
   def user_voted_up?
     return false unless current_user
+    return false unless votable.respond_to?(:votes)
 
     votable.votes.exists?(user: current_user, value: 1)
   end
@@ -111,6 +116,7 @@ class Ui::VoteComponent < ApplicationComponent
   #
   def user_voted_down?
     return false unless current_user
+    return false unless votable.respond_to?(:votes)
 
     votable.votes.exists?(user: current_user, value: -1)
   end
@@ -118,35 +124,12 @@ class Ui::VoteComponent < ApplicationComponent
   #
   # Может ли текущий пользователь голосовать (не автор).
   #
-  # Кнопка блокируется ТОЛЬКО если залогиненный юзер является автором сущности.
-  # Гость и worker-контекст (current_user == nil при рендере из SolidQueue через
-  # VoteBroadcaster) НЕ получают disabled: иначе после первого live-обновления
-  # кнопки голосования стали бы disabled у всех — «не срабатывают». Правовую
-  # защиту (гость/автор/проксимити) обеспечивает VotePolicy на бэке.
-  #
   # @return [Boolean]
   #
   def can_vote?
     return true unless current_user
+    return true unless votable.respond_to?(:user_id)
 
     votable.user_id != current_user.id
-  end
-
-  #
-  # Для POI: одобрена ли точка сообществом (бейдж «Одобрено сообществом»).
-  #
-  # @return [Boolean]
-  #
-  def community_approved?
-    votable.is_a?(Poi) && votable.community_approved?
-  end
-
-  #
-  # Для POI: отклонена ли точка сообществом (бейдж «Отклонено сообществом»).
-  #
-  # @return [Boolean]
-  #
-  def community_rejected?
-    votable.is_a?(Poi) && votable.community_rejected?
   end
 end

@@ -12,6 +12,9 @@ en:
           active: Active
           save: Save
           cancel: Cancel
+          delete: "Delete category"
+          delete_confirm_title: "Delete category?"
+          delete_confirm_message: "The category will be permanently deleted along with its dynamic fields. This action cannot be undone."
           map_icon_label: "Map Icon (marker image)"
           map_icon_hint: "Upload a custom marker image for this category on the map. While no image is set, the MDI icon above is used as the marker."
           map_icon_choose: "Choose image"

@@ -20,6 +20,19 @@ ru:
           options: Варианты
           options_placeholder: "ключ;en;ru;es;zh"
           options_hint: "Каждая строка: ключ;en;ru;es;zh (переводы необязательны)"
+          osm_section: OSM-маппинг
+          osm_hint: "Привяжите поле к тегам OpenStreetMap для автоматического импорта."
+          osm_keys_label: OSM-ключи
+          osm_keys_hint: "Теги OSM через запятую (например, wheelchair, disabled:wheelchair)"
+          osm_value_map_label: OSM-карта значений
+          osm_value_map_hint: "JSON-карта «сырое значение OSM» → «значение приложения», например { \"yes\": true, \"no\": false }"
+          osm_transform_label: Трансформация
+          osm_transform_hint: "Как конвертировать сырое значение OSM (булево / извлечь число / разбить список)"
+          osm_transforms:
+            none: Без трансформации
+            boolean: Булево
+            extract_number: Извлечь число
+            split_array: Разбить список
           field_types:
             string: Строка
             text: Текст

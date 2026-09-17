@@ -29,6 +29,10 @@ class PoiCategoryField < ApplicationRecord
     in: %w[string text number boolean select multiselect]
   }
   validates :label, presence: true
+  validates :osm_transform, inclusion: {
+    in: [ nil, "boolean", "extract_number", "split_array" ],
+    message: :invalid_osm_transform
+  }
 
   #
   # Возвращает локализованную метку поля
@@ -57,5 +61,35 @@ class PoiCategoryField < ApplicationRecord
     return nil if hint.blank?
 
     JSON.parse(hint) rescue hint
+  end
+
+  #
+  # Хелпер: первый (одиночный) OSM-ключ из osm_keys.
+  # Упрощает обратную совместимость при указании единственного тега
+  # (например, "wheelchair" вместо ["wheelchair"]).
+  #
+  # @return [String, nil]
+  #
+  def osm_key
+    Array(osm_keys).first
+  end
+
+  #
+  # Нормализованный массив OSM-ключей (всегда массив).
+  # Пустые строки и nil отбрасываются.
+  #
+  # @return [Array<String>]
+  #
+  def normalized_osm_keys
+    Array(osm_keys).map(&:to_s).reject(&:empty?)
+  end
+
+  #
+  # Нормализованная карта соответствий OSM-значений (всегда Hash).
+  #
+  # @return [Hash]
+  #
+  def normalized_osm_value_map
+    osm_value_map.is_a?(Hash) ? osm_value_map : {}
   end
 end

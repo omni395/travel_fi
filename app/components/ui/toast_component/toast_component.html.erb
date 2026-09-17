@@ -1,12 +1,24 @@
 <div role="alert"
      data-controller="ui--toast-component"
      data-ui--toast-component-auto-dismiss-timeout-value="<%= @auto_dismiss %>"
-     class="mb-4 p-4 rounded-lg shadow-lg <%= bg_color %> text-white flex items-center justify-between pointer-events-auto">
-  <span><%= @message %></span>
+     class="mb-4 p-4 rounded-xl shadow-lg border <%= bg_classes %> flex items-center justify-between gap-3 pointer-events-auto transition-all duration-300">
+  <div class="flex items-center gap-3 min-w-0">
+    <span class="mdi <%= icon_class %> text-xl shrink-0 leading-none"></span>
+    <span class="text-sm font-medium leading-tight break-words"><%= @message %></span>
+  </div>
+
   <% if @dismissible %>
-    <button data-action="click->ui--toast-component#dismiss" class="ml-4 text-white hover:text-gray-200">
-      <%# MDI: close %>
-      <span class="mdi mdi-close"></span>
-    </button>
+    <div class="shrink-0">
+      <%= render Ui::BtnComponent.new(
+            color: :ghost,
+            size: :sm,
+            html: {
+              data: { action: "click->ui--toast-component#dismiss" },
+              aria: { label: t('.close', default: 'Закрыть') }
+            }
+          ) do %>
+        <span class="mdi mdi-close text-lg leading-none"></span>
+      <% end %>
+    </div>
   <% end %>
 </div>

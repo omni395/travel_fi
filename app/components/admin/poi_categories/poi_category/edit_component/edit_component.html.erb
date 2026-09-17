@@ -23,15 +23,19 @@
           <!-- mdi: translate -->
           <i class="mdi mdi-translate mr-1"></i>
           <%= t(".name") %>
+          <span class="text-red-500">*</span>
         </label>
         <div class="grid grid-cols-2 gap-3">
           <% locales.each do |locale| %>
             <div>
               <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
+              <%# Для en: слушаем input для авто-заполнения slug + обязательно %>
               <%= text_field_tag "poi_category[name][#{locale}]", localized_value(:name, locale),
                                  autocomplete: "off",
                                  class: "field-input mt-1",
-                                 placeholder: t("locales.#{locale}") %>
+                                 placeholder: t("locales.#{locale}"),
+                                 data: (locale == "en" ? { action: "input->admin--poi-categories--poi-category--edit-component#autoFillSlug" } : {}),
+                                 required: (locale == "en") %>
             </div>
           <% end %>
         </div>
@@ -42,14 +46,22 @@
         <%= f.hidden_field :id %>
       <% end %>
 
-      <%# Slug %>
+      <%# Slug (авто-заполняется из name[en], но перезаписывается при ручном вводе) %>
       <div class="mb-6">
         <%= f.label :slug, class: "block text-sm font-medium text-gray-700 mb-1" do %>
           <!-- mdi: link-variant -->
           <i class="mdi mdi-link-variant mr-1"></i>
           <%= t(".slug") %>
+          <span class="text-red-500">*</span>
         <% end %>
-        <%= f.text_field :slug, autocomplete: "off", class: "field-input" %>
+        <%= f.text_field :slug,
+                         autocomplete: "off",
+                         required: true,
+                         class: "field-input",
+                         data: {
+                           "admin--poi-categories--poi-category--edit-component_target": "slugInput",
+                           action: "input->admin--poi-categories--poi-category--edit-component#markSlugEdited"
+                         } %>
       </div>
 
       <%# Icon (MDI класс + превью) %>
@@ -87,7 +99,7 @@
 
         <div class="flex items-center gap-4">
           <%# Текущая картинка / превью выбранного файла %>
-          <div class="flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-emerald-50 flex items-center justify-center">
+          <div class="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-emerald-50 flex items-center justify-center">
             <% if category_icon_url.present? %>
               <img src="<%= category_icon_url %>"
                    alt="<%= t(".map_icon_alt") %>"
@@ -218,18 +230,75 @@
         </div>
       </div>
 
-      <%# Кнопки %>
-      <div class="flex items-center gap-3 pt-4 border-t border-gray-200">
-        <%= link_to category.persisted? ? admin_poi_category_path(id: category) : admin_poi_categories_path,
-                    class: "btn-ui btn-ui--ghost btn-ui--md" do %>
-          <!-- mdi: close -->
-          <i class="mdi mdi-close"></i>
-          <%= t(".cancel") %>
-        <% end %>
-        <%= f.submit t(".save"),
-                     class: "btn-ui btn-ui--primary btn-ui--md",
-                     data: { "admin--poi-categories--poi-category--edit-component_target" => "submitButton" } %>
+    <% end %>
+
+    <%# --- Поля категории (CRUD полей встроен в форму редактирования) --- %>
+    <%# Секция вынесена НАРУЖУ формы категории: вложение двух форм (форма категории +
+        форма поля) браузер игнорирует, и поле не создаётся. Контейнер
+        [data-poi-category-fields-edit] перерисовывает PoiCategoryBroadcaster
+        (inner_html) после создания/удаления/правки/реордера поля. В show-режиме
+        используется отдельный контейнер [data-poi-category-fields] во вкладке
+        "Fields" — на странице всегда ровно один из них. %>
+    <% if category.persisted? %>
+      <div class="mt-6" data-poi-category-fields-edit>
+        <%= render Admin::PoiCategories::PoiCategory::FieldsListComponent.new(
+              category: category,
+              add_button: true,
+              with_form: true
+            ) %>
       </div>
+    <% end %>
+
+    <%# Единая секция кнопок в самом низу формы: Cancel | Save ... Delete (только для админа).
+        Save — кнопка type=button, программно сабмитит форму через Reflex (см. submitForm).
+        Delete — тип button, открывает диалог подтверждения (requestDelete). %>
+    <div class="mt-6 flex items-center gap-3 pt-4 border-t border-gray-200">
+      <%= link_to category.persisted? ? admin_poi_category_path(id: category) : admin_poi_categories_path,
+                  class: "btn-ui btn-ui--ghost btn-ui--md" do %>
+        <%# MDI: close %>
+        <i class="mdi mdi-close"></i>
+        <%= t(".cancel") %>
+      <% end %>
+
+      <%= render Ui::BtnComponent.new(
+            color: :primary,
+            size: :md,
+            html: {
+              type: "button",
+              data: { action: "click->admin--poi-categories--poi-category--edit-component#submitForm" },
+              "admin--poi-categories--poi-category--edit-component_target" => "submitButton"
+            }
+          ) do %>
+        <%# MDI: content-save %>
+        <i class="mdi mdi-content-save mr-1"></i>
+        <%= t(".save") %>
+      <% end %>
+
+      <% if category.persisted? && can_destroy? %>
+        <div class="flex-1"></div>
+        <%= render Ui::BtnComponent.new(
+              color: :danger,
+              size: :md,
+              html: { data: { action: "click->admin--poi-categories--poi-category--edit-component#requestDelete" } }
+            ) do %>
+          <%# MDI: delete %>
+          <i class="mdi mdi-delete mr-1"></i>
+          <%= t(".delete") %>
+        <% end %>
+      <% end %>
+    </div>
+
+    <%# Диалог подтверждения удаления категории (действие выполняет Reflex — confirm_url: nil) %>
+    <% if category.persisted? && can_destroy? %>
+      <%= render Ui::ConfirmDialogComponent.new(
+            title: t(".delete_confirm_title"),
+            message: t(".delete_confirm_message"),
+            confirm_text: t(".delete"),
+            cancel_text: t(".cancel"),
+            confirm_variant: :danger,
+            confirm_url: nil,
+            confirm_method: :get
+          ) %>
     <% end %>
   <% end %>
 <% end %>

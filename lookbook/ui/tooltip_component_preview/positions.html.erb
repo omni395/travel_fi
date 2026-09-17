@@ -1,0 +1,25 @@
+<div class="p-20 bg-secondary flex flex-wrap items-center justify-center gap-12">
+  <%= render Ui::TooltipComponent.new(text: "Подсказка сверху", position: :top) do |t| %>
+    <% t.with_trigger_element do %>
+      <%= render Ui::BtnComponent.new(color: :secondary, size: :sm) { "Top" } %>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::TooltipComponent.new(text: "Подсказка снизу", position: :bottom) do |t| %>
+    <% t.with_trigger_element do %>
+      <%= render Ui::BtnComponent.new(color: :secondary, size: :sm) { "Bottom" } %>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::TooltipComponent.new(text: "Подсказка слева", position: :left) do |t| %>
+    <% t.with_trigger_element do %>
+      <%= render Ui::BtnComponent.new(color: :secondary, size: :sm) { "Left" } %>
+    <% end %>
+  <% end %>
+
+  <%= render Ui::TooltipComponent.new(text: "Подсказка справа", position: :right) do |t| %>
+    <% t.with_trigger_element do %>
+      <%= render Ui::BtnComponent.new(color: :secondary, size: :sm) { "Right" } %>
+    <% end %>
+  <% end %>
+</div>

@@ -27,7 +27,9 @@ export default class extends ApplicationController {
     "submitBtn",
     "submitText",
     "deleteBtn",
-    "optionsSection"
+    "optionsSection",
+    "transformInput",
+    "transformTrigger"
   ]
 
   /**
@@ -102,6 +104,15 @@ export default class extends ApplicationController {
       this.optionsSectionTarget.classList.toggle("hidden", !isSelect)
     }
 
+    // OSM Mapping
+    const osmKeysEl = form.querySelector("[name='poi_category_field[osm_keys]']")
+    if (osmKeysEl) osmKeysEl.value = (fieldData.osm_keys || []).join(", ")
+    const osmValueMapEl = form.querySelector("[name='poi_category_field[osm_value_map]']")
+    if (osmValueMapEl) osmValueMapEl.value = this._serializeValueMap(fieldData.osm_value_map)
+    if (this.hasTransformInputTarget) this.transformInputTarget.value = fieldData.osm_transform || ""
+    const transformLabel = this.element.querySelector(`[data-osm-transform="${fieldData.osm_transform || ""}"]`)?.textContent?.trim()
+    if (this.hasTransformTriggerTarget && transformLabel) this.transformTriggerTarget.textContent = transformLabel
+
     this._setMode("edit")
   }
 
@@ -143,6 +154,21 @@ export default class extends ApplicationController {
     // Показываем options-секцию только для select/multiselect
     if (this.hasOptionsSectionTarget) {
       this.optionsSectionTarget.classList.toggle("hidden", !["select", "multiselect"].includes(value))
+    }
+  }
+
+  /**
+   * Выбирает OSM-трансформер из дропдауна
+   */
+  selectTransform(event) {
+    const btn = event.currentTarget
+    const value = btn.dataset.osmTransform
+    const label = btn.textContent.trim()
+    if (this.hasTransformInputTarget) {
+      this.transformInputTarget.value = value
+    }
+    if (this.hasTransformTriggerTarget) {
+      this.transformTriggerTarget.textContent = label
     }
   }
 
@@ -215,6 +241,33 @@ export default class extends ApplicationController {
   }
 
   /**
+   * Сериализует osm_value_map (объект) в JSON-строку для textarea
+   *
+   * @param map {Object|null} карта соответствий { "yes": true }
+   * @return {String} JSON-строка или пустая строка
+   */
+  _serializeValueMap(map) {
+    if (!map || typeof map !== "object" || Object.keys(map).length === 0) return ""
+    return JSON.stringify(map, null, 2)
+  }
+
+  /**
+   * Парсит текст textarea osm_value_map в объект
+   *
+   * @param text {String} JSON-строка
+   * @return {Object} распарсенный объект или {}
+   */
+  _parseValueMap(text) {
+    if (!String(text || "").trim()) return {}
+    try {
+      const parsed = JSON.parse(text)
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {}
+    } catch (e) {
+      return {}
+    }
+  }
+
+  /**
    * Создаёт или обновляет поле через Reflex
    */
   handleSubmit(event) {
@@ -241,6 +294,20 @@ export default class extends ApplicationController {
     const optionsRaw = event.target.querySelector("[name='poi_category_field[options_raw]']")
     if (optionsRaw) params.options = this._parseOptions(optionsRaw.value)
     delete params.options_raw
+
+    // OSM Mapping: CSV-строка → массив; JSON-строка → объект; transform — из скрытого инпута.
+    const osmKeysEl = event.target.querySelector("[name='poi_category_field[osm_keys]']")
+    if (osmKeysEl) {
+      params.osm_keys = String(osmKeysEl.value).split(",").map(s => s.trim()).filter(Boolean)
+      if (params.osm_keys.length === 0) delete params.osm_keys
+    }
+    const osmValueMapEl = event.target.querySelector("[name='poi_category_field[osm_value_map]']")
+    if (osmValueMapEl) {
+      const map = this._parseValueMap(osmValueMapEl.value)
+      if (Object.keys(map).length > 0) params.osm_value_map = map
+    }
+    // osm_transform берётся из FormData через скрытый инпут (transformInput)
+    if (!params.osm_transform) delete params.osm_transform
 
     // В edit mode добавляем field_id и вызываем update
     if (editMode) {

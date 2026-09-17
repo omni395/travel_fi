@@ -138,6 +138,43 @@ class PaperTrailAuditService
       Rails.logger.error("Failed to log OAuth login: #{e.class} #{e.message}")
     end
 
+    #
+    # Логирует загрузку картинки-маркера категории (category_icon).
+    # Событие audit-only (не триггерит broadcast show-компонента, не затирает
+    # открытую форму редактирования — см. VersionObserverJob::AUDIT_ONLY_EVENTS).
+    #
+    # @param category [PoiCategory] категория POI
+    # @param admin [User] администратор, загрузивший картинку
+    #
+    def log_category_icon_uploaded(category, admin)
+      return unless category&.persisted?
+
+      category.versions.create!(
+        event: "category_icon_uploaded",
+        whodunnit: admin&.id&.to_s
+      )
+    rescue StandardError => e
+      Rails.logger.error("Failed to log category icon upload: #{e.class} #{e.message}")
+    end
+
+    #
+    # Логирует удаление картинки-маркера категории (category_icon).
+    # Событие audit-only (см. log_category_icon_uploaded).
+    #
+    # @param category [PoiCategory] категория POI
+    # @param admin [User] администратор, удаливший картинку
+    #
+    def log_category_icon_removed(category, admin)
+      return unless category&.persisted?
+
+      category.versions.create!(
+        event: "category_icon_removed",
+        whodunnit: admin&.id&.to_s
+      )
+    rescue StandardError => e
+      Rails.logger.error("Failed to log category icon removal: #{e.class} #{e.message}")
+    end
+
     private
 
     #

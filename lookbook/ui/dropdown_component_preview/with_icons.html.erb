@@ -1,0 +1,27 @@
+<div class="p-12 min-h-[250px] flex justify-center items-start bg-gray-50 rounded-xl">
+  <%= render Ui::DropdownComponent.new(position: "right") do |dropdown| %>
+    <% dropdown.with_trigger do %>
+      <%= render Ui::BtnComponent.new(color: :primary, size: :md, html: { data: { action: "click->ui--dropdown-component#toggle" } }) do %>
+        <i class="mdi mdi-cog text-lg"></i>
+        <span>Настройки записи</span>
+        <i class="mdi mdi-chevron-down"></i>
+      <% end %>
+    <% end %>
+
+    <% dropdown.with_menu do %>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        <i class="mdi mdi-pencil text-gray-400 text-base"></i>
+        <span>Редактировать</span>
+      </a>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors">
+        <i class="mdi mdi-content-copy text-gray-400 text-base"></i>
+        <span>Дублировать</span>
+      </a>
+      <div class="border-t border-gray-100 my-1"></div>
+      <a href="#" data-action="click->ui--dropdown-component#toggle" class="flex items-center gap-2 px-4 py-2 text-sm text-error hover:bg-error/10 transition-colors">
+        <i class="mdi mdi-delete text-error text-base"></i>
+        <span>Удалить</span>
+      </a>
+    <% end %>
+  <% end %>
+</div>

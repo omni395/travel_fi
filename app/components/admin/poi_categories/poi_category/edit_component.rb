@@ -10,6 +10,15 @@ class Admin::PoiCategories::PoiCategory::EditComponent < ApplicationComponent
     @category = category
   end
 
+  #
+  # Может ли текущий пользователь удалить категорию (destroy — только admin)
+  #
+  # @return [Boolean]
+  #
+  def can_destroy?
+    helpers.policy(category).destroy? rescue false
+  end
+
   private
 
   attr_reader :category
@@ -57,20 +66,27 @@ class Admin::PoiCategories::PoiCategory::EditComponent < ApplicationComponent
   #
   # URL для загрузки картинки-маркера — member POST
   # /admin-panel/poi_categories/:id/update_category_icon (JSON).
+  # Для несохранённой категории (id: nil) возвращает nil — загрузка
+  # картинки недоступна до создания (в edit-форме блок картинки скрыт).
   #
-  # @return [String]
+  # @return [String, nil]
   #
   def upload_category_icon_path
+    return nil unless category.persisted?
+
     update_category_icon_admin_poi_category_path(id: category)
   end
 
   #
   # URL для удаления картинки-маркера — member DELETE
   # /admin-panel/poi_categories/:id/remove_category_icon (JSON).
+  # Для несохранённой категории (id: nil) возвращает nil.
   #
-  # @return [String]
+  # @return [String, nil]
   #
   def remove_category_icon_path
+    return nil unless category.persisted?
+
     remove_category_icon_admin_poi_category_path(id: category)
   end
 end

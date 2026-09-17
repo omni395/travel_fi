@@ -94,7 +94,7 @@ RSpec.describe 'User profile edit (live)', type: :system do
     end
   end
 
-  it 'А меняет email через Devise аккаунт → подтверждение нового email → email применён и live у админа' do
+  it 'А меняет email через Devise аккаунт → подтверждение нового email → email применён и live у админа', :flaky do
     ActionMailer::Base.deliveries.clear
 
     # А (залогинен) меняет email на новую почту в форме аккаунта

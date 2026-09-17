@@ -1,0 +1,40 @@
+<div class="p-12 min-h-[250px] flex justify-between items-start bg-gray-50 rounded-xl">
+  <%# Слева %>
+  <%= render Ui::DropdownComponent.new(position: "left") do |dropdown| %>
+    <% dropdown.with_trigger do %>
+      <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { data: { action: "click->ui--dropdown-component#toggle" } }) do %>
+        <span>Left Align</span>
+        <i class="mdi mdi-chevron-down"></i>
+      <% end %>
+    <% end %>
+    <% dropdown.with_menu do %>
+      <span class="block px-4 py-2 text-xs text-gray-400">Меню слева</span>
+    <% end %>
+  <% end %>
+
+  <%# По центру %>
+  <%= render Ui::DropdownComponent.new(position: "center") do |dropdown| %>
+    <% dropdown.with_trigger do %>
+      <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { data: { action: "click->ui--dropdown-component#toggle" } }) do %>
+        <span>Center Align</span>
+        <i class="mdi mdi-chevron-down"></i>
+      <% end %>
+    <% end %>
+    <% dropdown.with_menu do %>
+      <span class="block px-4 py-2 text-xs text-gray-400 text-center">Меню по центру</span>
+    <% end %>
+  <% end %>
+
+  <%# Справа %>
+  <%= render Ui::DropdownComponent.new(position: "right") do |dropdown| %>
+    <% dropdown.with_trigger do %>
+      <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { data: { action: "click->ui--dropdown-component#toggle" } }) do %>
+        <span>Right Align</span>
+        <i class="mdi mdi-chevron-down"></i>
+      <% end %>
+    <% end %>
+    <% dropdown.with_menu do %>
+      <span class="block px-4 py-2 text-xs text-gray-400 text-right">Меню справа</span>
+    <% end %>
+  <% end %>
+</div>

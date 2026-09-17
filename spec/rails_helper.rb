@@ -1,5 +1,10 @@
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
+# Явный require rspec-retry (0.6.x): при загрузке автоматически выполняется
+# RSpec::Retry.setup, регистрирующий настройки (default_retry_count,
+# exceptions_to_retry, verbose_retry и т.д.) в RSpec::Core::Configuration.
+# Авто-require через Bundler в этом случае не гарантирован, поэтому явный.
+require 'rspec/retry'
 ENV['RAILS_ENV'] ||= 'test'
 require_relative '../config/environment'
 # Prevent database truncation if the environment is production
@@ -170,6 +175,25 @@ RSpec.configure do |config|
   config.before(:each) do
     ActiveJob::Base.queue_adapter = :test
   end
+
+  # --- Ретраи флаков Selenium (rspec-retry) ---
+  # System-тесты «браузер А → браузер Б» проходят изолированно, но в полном
+  # прогоне проседают из-за headful-Chrome (медленная загрузка/устаревший бандл).
+  # Реализация: config.verbose_retry — лог перезапусков; display_try_failure —
+  # печать деталей провала каждой попытки не нужна (засоряет вывод).
+  config.verbose_retry = true
+  config.display_try_failure_messages = false
+  # Ретраи применяются ТОЛЬКО к инфраструктурным Selenium/Capybara-ошибкам из
+  # exceptions_to_retry (а не к логическим провалам — иначе ретрай замаскирует
+  # реальный баг). API rspec-retry 0.6.x: default_retry_count + exceptions_to_retry.
+  config.default_retry_count = 3
+  config.exceptions_to_retry = [
+    Selenium::WebDriver::Error::WebDriverError,
+    Selenium::WebDriver::Error::TimeoutError,
+    Selenium::WebDriver::Error::UnknownError,
+    Capybara::ElementNotFound,
+    Capybara::ExpectationNotMet
+  ]
 
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!

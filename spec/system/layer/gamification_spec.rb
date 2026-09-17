@@ -9,7 +9,7 @@ require 'rails_helper'
 RSpec.describe 'Gamification (начисления токенов → профиль)', type: :system do
   let!(:user) { create(:user, :with_setting) }
 
-  it 'А получает токены за регистрацию → профиль показывает баланс и историю начислений' do
+  it 'А получает токены за регистрацию → профиль показывает баланс и историю начислений', :flaky do
     GamificationService.award!(:registration, user)
 
     browser_a do

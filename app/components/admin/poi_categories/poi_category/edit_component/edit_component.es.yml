@@ -12,6 +12,9 @@ es:
           active: Activo
           save: Guardar
           cancel: Cancelar
+          delete: "Eliminar categoría"
+          delete_confirm_title: "¿Eliminar categoría?"
+          delete_confirm_message: "La categoría se eliminará permanentemente junto con sus campos dinámicos. Esta acción no se puede deshacer."
           map_icon_label: "Icono de mapa (imagen de marcador)"
           map_icon_hint: "Sube una imagen de marcador personalizada para esta categoría en el mapa. Mientras no haya imagen, el marcador es el icono MDI de arriba."
           map_icon_choose: "Elegir imagen"

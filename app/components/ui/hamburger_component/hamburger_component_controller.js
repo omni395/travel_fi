@@ -114,12 +114,12 @@ export default class extends ApplicationController {
   // Анимация бургер-иконки (замена mdi-menu на mdi-close)
   _animateBurger() {
     if (!this.hasBurgerIconTarget) return
-    this.burgerIconTarget.className = "mdi mdi-close text-xl text-teal-700"
+    this.burgerIconTarget.className = "mdi mdi-close text-xl text-primary"
   }
 
   // Сброс бургер-иконки
   _resetBurger() {
     if (!this.hasBurgerIconTarget) return
-    this.burgerIconTarget.className = "mdi mdi-menu text-xl text-teal-700"
+    this.burgerIconTarget.className = "mdi mdi-menu text-xl text-primary"
   }
 }

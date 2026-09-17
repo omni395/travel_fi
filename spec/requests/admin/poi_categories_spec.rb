@@ -68,8 +68,15 @@ RSpec.describe Admin::PoiCategoriesController, type: :request do
       sign_in admin
       allow(PoiCategoryBroadcaster).to receive(:call)
 
+      # Rack::Test::UploadedFile с явным абсолютным путём — fixture_file_upload
+      # резолвится по file_fixture_path, который в этом спеке не гарантирован
+      # (падало: нарушенный аргумент копирования/отсутствующий файл).
+      icon_file = Rack::Test::UploadedFile.new(
+        Rails.root.join('spec/fixtures/files/photo.png'), 'image/png'
+      )
+
       post update_category_icon_admin_poi_category_path(id: category), params: {
-        category: { category_icon: fixture_file_upload('files/photo.png', 'image/png') }
+        category: { category_icon: icon_file }
       }
 
       expect(response).to have_http_status(:ok)
@@ -107,11 +114,70 @@ RSpec.describe Admin::PoiCategoriesController, type: :request do
       user = create(:user)
       sign_in user
 
+      icon_file = Rack::Test::UploadedFile.new(
+        Rails.root.join('spec/fixtures/files/photo.png'), 'image/png'
+      )
+
       post update_category_icon_admin_poi_category_path(id: category), params: {
-        category: { category_icon: fixture_file_upload('files/photo.png', 'image/png') }
+        category: { category_icon: icon_file }
       }
 
-      expect(response).to have_http_status(:forbidden)
+      # Не-админ отсекается в before_action require_admin_or_moderator!
+      # (Admin::BaseController) редиректом на root — 302, а не 403:
+      # Pundit-проверка в экшене не достигается.
+      expect(response).to have_http_status(:found)
+    end
+  end
+
+  describe 'POST /import_pbf (загрузка .pbf файла)' do
+    let(:category) { create(:poi_category, :with_osm_tags) }
+
+    it 'принимает .pbf, ставит OsmPbfImportJob и возвращает enqueued' do
+      sign_in admin
+      allow(OsmPbfImportJob).to receive(:perform_later)
+
+      # Аналогично icon: явный абсолютный путь вместо fixture_file_upload.
+      pbf_file = Rack::Test::UploadedFile.new(
+        Rails.root.join('spec/fixtures/files/photo.png'),
+        'application/octet-stream',
+        original_filename: 'test.osm.pbf'
+      )
+
+      post import_pbf_admin_poi_category_path(id: category), params: {
+        poi_category: { pbf_file: pbf_file }
+      }
+
+      expect(response).to have_http_status(:ok)
+      body = JSON.parse(response.body)
+      expect(body['enqueued']).to be true
+      expect(OsmPbfImportJob).to have_received(:perform_later)
+    end
+
+    it 'возвращает 422, если файл не передан' do
+      sign_in admin
+
+      post import_pbf_admin_poi_category_path(id: category)
+
+      expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it 'запрещает не-админу' do
+      user = create(:user)
+      sign_in user
+
+      pbf_file = Rack::Test::UploadedFile.new(
+        Rails.root.join('spec/fixtures/files/photo.png'),
+        'application/octet-stream',
+        original_filename: 'test.osm.pbf'
+      )
+
+      post import_pbf_admin_poi_category_path(id: category), params: {
+        poi_category: { pbf_file: pbf_file }
+      }
+
+      # Аналогично картинке: не-админ редиректится на root (302) в
+      # require_admin_or_moderator! до Pundit-проверки экшена.
+      expect(response).to have_http_status(:found)
     end
   end
 end

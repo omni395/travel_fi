@@ -1,0 +1,8 @@
+<div class="p-8 max-w-md bg-secondary rounded-xl">
+  <%= render Ui::ToastComponent.new(
+        message: message,
+        type: type,
+        dismissible: dismissible,
+        auto_dismiss: 0
+      ) %>
+</div>

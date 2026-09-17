@@ -16,3 +16,10 @@ es:
           close: Cerrar
           fetching: Obteniendo datos de OpenStreetMap...
           of: de
+          pbf_section: Importar desde archivo .pbf
+          pbf_hint: "Sube un extracto regional de OpenStreetMap (.osm.pbf). Se analizará en segundo plano."
+          pbf_upload: Subir y analizar
+          pbf_file_required: Selecciona un archivo .pbf
+          pbf_no_route: Ruta de importación no disponible
+          pbf_upload_failed: Error al subir el archivo
+          pbf_import_failed: Error de importación

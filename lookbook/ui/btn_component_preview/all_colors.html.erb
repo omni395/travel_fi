@@ -1,0 +1,8 @@
+<%# lookbook/ui/btn_component_preview/all_colors.html.erb %>
+<div class="flex items-center gap-3 flex-wrap">
+  <% colors.each do |color| %>
+    <%= render Ui::BtnComponent.new(color: color, size: size) do %>
+      <%= color.to_s.capitalize %>
+    <% end %>
+  <% end %>
+</div>

@@ -1,0 +1,21 @@
+<div class="p-4 space-y-3 bg-white rounded-xl border border-gray-100 shadow-sm">
+  <div class="flex items-center gap-4">
+    <span class="w-44 text-xs font-semibold text-gray-500">Нейтральный дата-бейдж:</span>
+    <%= render Ui::DateComponent.new(sample_time, badge: true, badge_color: :gray) %>
+  </div>
+
+  <div class="flex items-center gap-4">
+    <span class="w-44 text-xs font-semibold text-gray-500">Основной (Primary):</span>
+    <%= render Ui::DateComponent.new(sample_time, badge: true, badge_color: :primary) %>
+  </div>
+
+  <div class="flex items-center gap-4">
+    <span class="w-44 text-xs font-semibold text-gray-500">Успешный (Success):</span>
+    <%= render Ui::DateComponent.new(sample_time, badge: true, badge_color: :success) %>
+  </div>
+
+  <div class="flex items-center gap-4">
+    <span class="w-44 text-xs font-semibold text-gray-500">Пустой статус (Never):</span>
+    <%= render Ui::DateComponent.new(nil, badge: true, badge_color: :gray) %>
+  </div>
+</div>

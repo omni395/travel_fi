@@ -1,0 +1,7 @@
+<%# lookbook/ui/clipboard_component_preview/with_external_target.html.erb %>
+<%# Примечание: В Lookbook target_id завязан на контекст iframe. В реальном приложении рендерится на одной DOM-странице %>
+<div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+  <span class="text-xs text-gray-500">Инпут (ID: ref_code_input):</span>
+  <input id="ref_code_input" type="text" value="REF-CODE-2026" class="border rounded px-3 py-1 text-sm bg-white font-mono text-gray-800" readonly />
+  <%= render Ui::ClipboardComponent.new(target_id: "ref_code_input") %>
+</div>

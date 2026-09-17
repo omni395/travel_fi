@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_29_120003) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
@@ -115,6 +115,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_29_120003) do
     t.string "hint"
     t.jsonb "label", default: {}, null: false
     t.jsonb "options", default: {}
+    t.jsonb "osm_keys", default: []
+    t.string "osm_transform"
+    t.jsonb "osm_value_map", default: {}
     t.jsonb "placeholder", default: {}
     t.bigint "poi_category_id", null: false
     t.integer "position", default: 0

@@ -247,14 +247,14 @@ class OsmImportService
         phone: tags["phone"].presence,
         website: tags["website"].presence,
         wheelchair_accessible: tags["wheelchair"] == "yes",
-        price_info: tags["fee"].presence,
+        price_info: tags["fee"].presence || tags["charge"].presence,
         opening_hours: tags["opening_hours"] ? { osm: tags["opening_hours"] } : nil,
         # Статус OSM-точки — imported (отображается на карте как approved, см. Poi.visible)
         status: :imported,
         source: :osm,
-        metadata: tags.except(*%w[name operator phone website wheelchair opening_hours fee
-                                  addr:street addr:housenumber addr:city addr:postcode])
-                     .compact_blank
+        # В metadata кладём ТОЛЬКО поля, зарегистрированные в poi_category_fields
+        # (фильтрация + типизация через OsmValueTransformer)
+        metadata: build_metadata_for_category(tags)
       },
       current_user: user
     )
@@ -303,12 +303,33 @@ class OsmImportService
         address: [ tags["addr:street"], tags["addr:housenumber"] ].compact.join(" ").presence || poi.address,
         phone: tags["phone"].presence || poi.phone,
         website: tags["website"].presence || poi.website,
-        opening_hours: tags["opening_hours"] ? { osm: tags["opening_hours"] } : poi.opening_hours
+        opening_hours: tags["opening_hours"] ? { osm: tags["opening_hours"] } : poi.opening_hours,
+        # Пересобираем metadata по актуальным OSM-тегам (см. build_metadata_for_category)
+        metadata: build_metadata_for_category(tags)
       },
       current_user: user
     )
   rescue StandardError => e
     Rails.logger.warn "OsmImportService: update error for osm_id=#{elem['id']}: #{e.message}"
+  end
+
+  #
+  # Извлекает из OSM-тегов ТОЛЬКО те поля, которые зарегистрированы в
+  # poi_category_fields активной категории. Значения трансформируются в типы
+  # приложения через OsmValueTransformer (boolean/number/array/маппинг).
+  #
+  # @param tags [Hash] сырые OSM-теги { "key" => "value" }
+  # @return [Hash] metadata { field_key => сконвертированное значение }
+  #
+  def build_metadata_for_category(tags)
+    result = {}
+
+    category.poi_category_fields.where(active: true).each do |field|
+      transformed_val = OsmValueTransformer.call(field, tags)
+      result[field.field_key] = transformed_val unless transformed_val.nil?
+    end
+
+    result
   end
 
   #

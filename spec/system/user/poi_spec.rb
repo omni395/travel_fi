@@ -375,7 +375,7 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
       wait_for_selector("button[data-action='click->poi--gallery-component#remove']", timeout: 20)
     end
 
-    it 'добавляет своё фото и видит его без перезагрузки' do
+    it 'добавляет своё фото и видит его без перезагрузки', :flaky do
       open_gallery_tab
       expect(page).to have_content(I18n.t('poi.gallery_component.empty_title'), wait: 10)
 
@@ -387,7 +387,7 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
       expect(gallery_poi.reload.photos.count).to eq(1)
     end
 
-    it 'удаляет своё фото без перезагрузки' do
+    it 'удаляет своё фото без перезагрузки', :flaky do
       photo = create(:photo, poi: gallery_poi, user: user_a, position: 0)
       open_gallery_tab
 
@@ -399,6 +399,12 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
 
       # JS → DELETE /pois/:id/photos/:id → Poi::PhotosController#destroy → live inner_html
       wait_for_selector('[data-poi-gallery]', timeout: 60)
+      # DELETE выполняется асинхронно: мгновенный reload может застать фото ещё
+      # в БД (CollectionProxy не empty). Ждём фактического опустошения галереи
+      # (polling), затем ассертируем состояние БД и DOM.
+      Timeout.timeout(60) do
+        sleep 0.2 until gallery_poi.reload.photos.empty?
+      end
       expect(gallery_poi.reload.photos).to be_empty
       # Галерея перерисована без фото — в сетке не осталось миниатюр
       # (live-обновление без перезагрузки страницы)

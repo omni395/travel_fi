@@ -41,5 +41,12 @@ FactoryBot.define do
     trait :required do
       required { true }
     end
+
+    trait :with_osm_mapping do
+      field_type { "boolean" }
+      osm_keys { [ "wheelchair" ] }
+      osm_value_map { { "yes" => true, "no" => false } }
+      osm_transform { "boolean" }
+    end
   end
 end

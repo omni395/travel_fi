@@ -9,6 +9,12 @@
 # 3. Поиск и фильтрация категорий
 #
 class PoiCategoryService
+  # Разрешённые атрибуты поля категории (включая OSM-маппинг)
+  FIELD_PERMITTED_KEYS = %i[
+    field_key field_type label required options placeholder hint position active
+    osm_keys osm_value_map osm_transform
+  ].freeze
+
   #
   # Создаёт новую категорию POI
   #
@@ -42,6 +48,21 @@ class PoiCategoryService
   end
 
   #
+  # Удаляет категорию POI вместе с её динамическими полями (dependent: :destroy)
+  #
+  # @param category [PoiCategory] категория для удаления
+  # @param current_user [User] пользователь, выполняющий действие
+  # @raise [DestroyError] если не удалось удалить (например, есть POI — restrict_with_error)
+  #
+  def self.destroy(category:, current_user:)
+    PaperTrail.request.whodunnit = current_user&.id&.to_s
+    category.destroy!
+    true
+  rescue StandardError => e
+    raise DestroyError, e.message
+  end
+
+  #
   # Создаёт поле для категории POI
   #
   # @param category [PoiCategory] категория
@@ -52,9 +73,11 @@ class PoiCategoryService
   #
   def self.create_field(category:, params:, current_user:)
     PoiCategoryField.transaction do
-      field = category.poi_category_fields.new(
-        params.slice(:field_key, :field_type, :label, :required, :options, :placeholder, :hint, :position, :active)
-      )
+      # Страховка: гарантируем автора PaperTrail-версии независимо от контекста вызова
+      # (Reflex ставит whodunnit в before_reflex, но прямые вызовы/контроллер — нет).
+      PaperTrail.request.whodunnit = current_user&.id&.to_s
+
+      field = category.poi_category_fields.new(field_params(params))
       field.save!
       renumber_positions(category)
       field
@@ -73,7 +96,9 @@ class PoiCategoryService
   # @raise [UpdateError] если произойдет ошибка валидации
   #
   def self.update_field(field:, params:, current_user:)
-    field.update!(params.slice(:field_key, :field_type, :label, :required, :options, :placeholder, :hint, :position, :active))
+    # Страховка автора PaperTrail-версии (см. create_field)
+    PaperTrail.request.whodunnit = current_user&.id&.to_s
+    field.update!(field_params(params))
     field
   rescue ActiveRecord::RecordInvalid => e
     raise UpdateError, e.message
@@ -89,6 +114,8 @@ class PoiCategoryService
   def self.destroy_field(field:, current_user:)
     category = field.poi_category
     PoiCategoryField.transaction do
+      # Страховка автора PaperTrail-версии (см. create_field)
+      PaperTrail.request.whodunnit = current_user&.id&.to_s
       field.destroy!
       renumber_positions(category)
     end
@@ -115,7 +142,8 @@ class PoiCategoryService
     target_pos = fields[swap_idx].position
 
     # update! (а не update_all): создаёт PaperTrail-версии, что триггерит
-    # VersionObserverJob → Broadcaster (Database-Triggered Architecture из README)
+    # VersionObserverJob → Broadcaster (Database-Triggered Architecture из README).
+    # Автор (whodunnit) уже проставлен в ApplicationReflex#before_reflex.
     fields[idx].update!(position: target_pos)
     fields[swap_idx].update!(position: current_pos)
   rescue ActiveRecord::RecordInvalid => e
@@ -240,10 +268,11 @@ class PoiCategoryService
       format: "webp"
     )
 
-    # Картинка-маркер — ActiveStorage-актив, а не поле модели. Отдельный аудит
-    # НЕ создаётся: пустая PaperTrail-версия от touch родителя (один updated_at)
-    # игнорируется в VersionObserverJob#handle_poi_category_update. Здесь только
-    # прикрепляем файл; маркеры карты обновляются прямым broadcast ниже.
+    # Картинка-маркер — ActiveStorage-актив, а не поле модели. Пустая
+    # PaperTrail-версия от touch родителя (один updated_at) игнорируется в
+    # VersionObserverJob. Явную аудит-версию ("кто загрузил иконку") пишем
+    # отдельно через PaperTrailAuditService (событие audit-only, broadcast
+    # маркеров — ниже через event_type "category_icon").
     ActiveRecord::Base.transaction do
       category.category_icon.detach if category.category_icon.attached?
       category.category_icon.attach(
@@ -253,6 +282,7 @@ class PoiCategoryService
       )
     end
 
+    PaperTrailAuditService.log_category_icon_uploaded(category, current_user)
     PoiCategoryBroadcaster.call(category: category, event_type: "category_icon")
     category
   rescue StandardError => e
@@ -277,6 +307,7 @@ class PoiCategoryService
       category.category_icon.purge_later
     end
 
+    PaperTrailAuditService.log_category_icon_removed(category, current_user)
     PoiCategoryBroadcaster.call(category: category, event_type: "category_icon")
     true
   rescue StandardError => e
@@ -322,6 +353,59 @@ class PoiCategoryService
     end
 
     result
+  end
+
+  #
+  # Фильтрует и нормализует параметры поля категории.
+  # osm_keys/osm_value_map приходят из формы как JSON-строка или готовые структуры —
+  # приводятся к jsonb-типам (Array/Hash) для безопасной записи в БД.
+  #
+  # @param params [Hash]
+  # @return [Hash]
+  #
+  def self.field_params(params)
+    result = params.slice(*FIELD_PERMITTED_KEYS)
+
+    # osm_keys: строка "shower,showers" или JSON-массив → Array
+    result[:osm_keys] = parse_osm_keys(params[:osm_keys]) if params.key?(:osm_keys)
+    # osm_value_map: строка JSON {"fee":"yes"} → Hash
+    result[:osm_value_map] = parse_osm_value_map(params[:osm_value_map]) if params.key?(:osm_value_map)
+
+    result
+  end
+
+  #
+  # Приводит osm_keys к массиву строк.
+  # Поддерживает: JSON-массив (["shower","showers"]), CSV-строку ("shower, showers"),
+  # уже готовый Array.
+  #
+  # @param value [Object]
+  # @return [Array<String>]
+  #
+  def self.parse_osm_keys(value)
+    parsed = value
+    if value.is_a?(String)
+      stripped = value.strip
+      parsed = stripped.start_with?("[") ? JSON.parse(stripped) : stripped.split(",")
+    end
+
+    Array(parsed).map(&:to_s).map(&:strip).reject(&:blank?)
+  rescue JSON::ParserError
+    value.to_s.split(",").map(&:strip).reject(&:blank?)
+  end
+
+  #
+  # Приводит osm_value_map к хэшу.
+  # Поддерживает JSON-строку или уже готовый Hash.
+  #
+  # @param value [Object]
+  # @return [Hash]
+  #
+  def self.parse_osm_value_map(value)
+    return {} if value.blank?
+
+    parsed = value.is_a?(String) ? (JSON.parse(value) rescue {}) : value
+    parsed.is_a?(Hash) ? parsed : {}
   end
 
   # Custom exceptions

@@ -68,12 +68,24 @@ class PoiCategoryBroadcaster
         )
       end
 
-      # 2. Список динамических полей категории
-      fields_html = render_fields_component
-      if fields_html.present?
+      # 2. Список динамических полей категории.
+      # Два варианта рендера под два режима страницы (на странице всегда ровно
+      # один контейнер, поэтому сработает только тот inner_html, что существует):
+      #   - show-вкладка Fields: только строки + реордер (add_button: false, with_form: false)
+      #   - edit-форма: строки + кнопка Add + модалка (add_button: true, with_form: true)
+      fields_show_html = render_fields_show_component
+      if fields_show_html.present?
         cable_ready["admin_feed"].inner_html(
           selector: "[data-poi-category-fields]",
-          html: fields_html
+          html: fields_show_html
+        )
+      end
+
+      fields_edit_html = render_fields_edit_component
+      if fields_edit_html.present?
+        cable_ready["admin_feed"].inner_html(
+          selector: "[data-poi-category-fields-edit]",
+          html: fields_edit_html
         )
       end
 
@@ -167,11 +179,32 @@ class PoiCategoryBroadcaster
   #
   # @return [String] HTML компонента
   #
-  def render_fields_component
-    component = Admin::PoiCategories::PoiCategory::FieldsListComponent.new(category: category)
+  def render_fields_show_component
+    component = Admin::PoiCategories::PoiCategory::FieldsListComponent.new(
+      category: category,
+      add_button: false,
+      with_form: false
+    )
     ApplicationController.render(component, layout: false)
   rescue StandardError => e
-    Rails.logger.error("PoiCategoryBroadcaster: fields render failed: #{e.class} #{e.message}")
+    Rails.logger.error("PoiCategoryBroadcaster: fields show render failed: #{e.class} #{e.message}")
+    ""
+  end
+
+  #
+  # Рендерит список полей для режима edit-формы (с кнопкой Add и модалкой)
+  #
+  # @return [String] HTML компонента
+  #
+  def render_fields_edit_component
+    component = Admin::PoiCategories::PoiCategory::FieldsListComponent.new(
+      category: category,
+      add_button: true,
+      with_form: true
+    )
+    ApplicationController.render(component, layout: false)
+  rescue StandardError => e
+    Rails.logger.error("PoiCategoryBroadcaster: fields edit render failed: #{e.class} #{e.message}")
     ""
   end
 

@@ -40,6 +40,55 @@ class Admin::PoiCategories::PoiCategory::FieldFormComponent < ApplicationCompone
   end
 
   #
+  # Доступные OSM-трансформеры (nil/пусто = без трансформации)
+  #
+  # @return [Hash{String => String}] label → значение
+  #
+  def osm_transform_options
+    transforms = {
+      "osm_transforms.none" => "",
+      "osm_transforms.boolean" => "boolean",
+      "osm_transforms.extract_number" => "extract_number",
+      "osm_transforms.split_array" => "split_array"
+    }
+    transforms.transform_keys { |k| I18n.t("admin.poi_categories.poi_category.field_form_component.#{k}") }
+  end
+
+  #
+  # Локализованная метка выбранного OSM-трансформера (для триггера dropdown)
+  #
+  # @return [String]
+  #
+  def selected_osm_transform_label
+    current = form_field.osm_transform.to_s
+    return osm_transform_options.key("") if current.blank?
+
+    osm_transform_options.key(current) || osm_transform_options.key("")
+  end
+
+  #
+  # Сериализует osm_keys в CSV-строку ("shower, showers")
+  #
+  # @param field [PoiCategoryField, nil]
+  # @return [String]
+  #
+  def osm_keys_editor_text(field)
+    keys = field&.osm_keys
+    Array(keys).map(&:to_s).join(", ")
+  end
+
+  #
+  # Сериализует osm_value_map в JSON-строку для textarea
+  #
+  # @param field [PoiCategoryField, nil]
+  # @return [String]
+  #
+  def osm_value_map_editor_text(field)
+    map = field&.osm_value_map
+    map.is_a?(Hash) && map.any? ? JSON.pretty_generate(map) : ""
+  end
+
+  #
   # Доступные локали
   #
   def locales

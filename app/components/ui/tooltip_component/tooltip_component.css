@@ -1,6 +1,1 @@
-/* ui/tooltip_component — мини-карточка попапа при ховере на маркер карты */
-/* Основной UI — Tailwind-классы в шаблоне; здесь изолированные базовые стили */
-
-.ui-tooltip__img {
-  display: block;
-}
+/* ui/tooltip_component — мини-карточка попапа */

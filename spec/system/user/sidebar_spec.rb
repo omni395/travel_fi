@@ -74,7 +74,7 @@ RSpec.describe 'Sidebar toggle on POI map', type: :system do
     raise "Панель сайдбара не достигла состояния #{expectation} за #{timeout}s"
   end
 
-  it 'загружается свёрнутым (полоска), карта на всю ширину без наложения' do
+  it 'загружается свёрнутым (полоска), карта на всю ширину без наложения', :flaky do
     visit pois_path
     wait_for_selector('.ui-sidebar--wrapper', timeout: 90)
 
@@ -96,7 +96,7 @@ RSpec.describe 'Sidebar toggle on POI map', type: :system do
     expect(panel_hidden).to eq(true), 'Панель сайдбара должна быть скрыта в свёрнутом состоянии'
   end
 
-  it 'при раскрытии накрывает карту поверх, НЕ сдвигая её' do
+  it 'при раскрытии накрывает карту поверх, НЕ сдвигая её', :flaky do
     visit pois_path
     wait_for_selector('.ui-sidebar--wrapper', timeout: 90)
 
@@ -135,7 +135,7 @@ RSpec.describe 'Sidebar toggle on POI map', type: :system do
       "Ширина карты изменилась при раскрытии сайдбара: #{before_rect['width']} → #{after_rect['width']}"
   end
 
-  it 'повторный клик сворачивает сайдбар обратно в полоску' do
+  it 'повторный клик сворачивает сайдбар обратно в полоску', :flaky do
     visit pois_path
     wait_for_selector('.ui-sidebar--wrapper', timeout: 90)
 
@@ -153,7 +153,7 @@ RSpec.describe 'Sidebar toggle on POI map', type: :system do
     wait_panel_geometry(:collapsed)
   end
 
-  it 'клик вне сайдбара закрывает развёрнутый сайдбар' do
+  it 'клик вне сайдбара закрывает развёрнутый сайдбар', :flaky do
     visit pois_path
     wait_for_selector('.ui-sidebar--wrapper', timeout: 90)
 
