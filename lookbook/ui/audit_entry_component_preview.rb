@@ -13,9 +13,9 @@ class Ui::AuditEntryComponentPreview < Lookbook::Preview
       whodunnit: whodunnit,
       created_at: 15.minutes.ago,
       object_changes: {
-        "title" => ["Старое название", "Новое название POI"],
-        "status" => ["draft", "published"],
-        "i18n_description" => [{ "en" => "Old desc" }, { "en" => "New description", "ru" => "Новое описание" }]
+        "title" => [ "Старое название", "Новое название POI" ],
+        "status" => [ "draft", "published" ],
+        "i18n_description" => [ { "en" => "Old desc" }, { "en" => "New description", "ru" => "Новое описание" } ]
       }
     )
 
@@ -29,8 +29,8 @@ class Ui::AuditEntryComponentPreview < Lookbook::Preview
       whodunnit: "John Doe",
       created_at: 2.hours.ago,
       object_changes: {
-        "name" => [nil, "New Category"],
-        "slug" => [nil, "new-category"]
+        "name" => [ nil, "New Category" ],
+        "slug" => [ nil, "new-category" ]
       }
     )
 
@@ -45,7 +45,7 @@ class Ui::AuditEntryComponentPreview < Lookbook::Preview
       whodunnit: "System",
       created_at: 1.day.ago,
       object_changes: {
-        "position" => [1, 2]
+        "position" => [ 1, 2 ]
       },
       object: { "field_key" => "wifi_available" }.to_json
     )

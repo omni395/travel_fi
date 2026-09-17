@@ -44,7 +44,7 @@ class Poi::DetailsComponent < ApplicationComponent
   # @return [String]
   #
   def full_address
-    [poi.address, poi.city, poi.country].compact.join(", ")
+    [ poi.address, poi.city, poi.country ].compact.join(", ")
   end
 
   #

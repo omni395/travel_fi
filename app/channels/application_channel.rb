@@ -20,7 +20,7 @@ module ApplicationCable
       # ЛОГИРУЕМ ВСЕ ПОПЫТКИ подписки
       puts "[CHANNEL] ApplicationChannel.subscribed() called at #{Time.current}"
       Rails.logger.warn("[CHANNEL] ApplicationChannel.subscribed() called - current_user: #{current_user&.id}")
-      
+
       # Проверяем, аутентифицирован ли пользователь
       if !current_user
         puts "[CHANNEL] REJECTED: current_user is nil"

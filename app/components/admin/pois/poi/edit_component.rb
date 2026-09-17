@@ -77,7 +77,7 @@ class Admin::Pois::Poi::EditComponent < ApplicationComponent
   # @return [Array] массив опций
   #
   def field_options(field)
-    (field.options['values'] || field.options[:values] || []).map { |v| [v, v] }
+    (field.options["values"] || field.options[:values] || []).map { |v| [ v, v ] }
   end
 
   #
@@ -104,6 +104,6 @@ class Admin::Pois::Poi::EditComponent < ApplicationComponent
   # @return [Array<Array(String, String)>] массив [label, value]
   #
   def status_options
-    Poi.statuses.keys.map { |s| [I18n.t("admin.pois.poi.row_component.status.#{s}", default: s.humanize), s] }
+    Poi.statuses.keys.map { |s| [ I18n.t("admin.pois.poi.row_component.status.#{s}", default: s.humanize), s ] }
   end
 end
