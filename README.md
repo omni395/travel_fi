@@ -2,7 +2,7 @@
 
 Travel Fi — Rails 8.1 application for tourism services with DeFi functionality and an ERC-20 token (TFT). Architecture — WebSocket-first: asynchronous updates via ActionCable (SolidCable), background jobs via SolidQueue, cache infrastructure SolidCache (caching in code temporarily disabled), audit via PaperTrail.
 
-> Demo: https://noneternally-approbative-rosanne.ngrok-free.dev/ (launching the server by agreement)
+> Demo: https://noneternally-approbative-rosanne.ngrok-free.dev/ (admin@example.com/12345678 launching the server by agreement)
 
 > Promo-demo - https://drive.google.com/file/d/1-WECv_pAtkrJqNUK_LF9o1pbySfmNgFx/view?usp=drive_link
 
@@ -39,14 +39,13 @@ Travel Fi — Rails 8.1 application for tourism services with DeFi functionality
 
 ## Project Vision & Current State
 
-**Mission:** A community-driven map for travelers — a global platform for sharing POIs (Points of Interest) critical during travel.
+**Mission:** A community-driven map for travelers and locals—a global platform for sharing critical points of interest (POIs) encountered during travel and in daily life.
 
-**Target audience:** Budget backpackers, Digital nomads, Solo travelers from developing countries, Vanlife travelers.
+**Target Audience:** Budget backpackers, digital nomads, solo travelers from developing countries, van-lifers, as well as local residents who utilize various services and public amenities.
 
-**Key advantage:** There is no single strong global player in most niches (WiFi spots are occupied by WiFi Map/Instabridge, the rest are blank spots).
+**Key Advantage:** There is no dominant global player in most niches (while Wi-Fi hotspots are covered by apps like WiFi Map and Instabridge, other categories remain largely untapped).
 
-**Current Project Stage:**
-At present, Travel Fi is a prototype at the stage of active development. A basic architectural foundation has been implemented, proving the technical viability of the concept. The prototype is not a finished product and requires codebase refinement, logic debugging, and final preparation of the architecture for Production launch.
+**Current Stage:** Prototype currently in active development. The core architecture is complete, and its technical viability has been proven. The product has not yet launched; work is currently focused on code refinement, logic debugging, and preparing the architecture for production.
 
 ## 📍 POI Categories (from the most in-demand)
 
@@ -206,8 +205,13 @@ One admin entity (User, Poi, Setting, PoiCategory…) is implemented using a uni
 ### 7. Live audit (feed)
 - Unified `Ui::AuditEntryComponent` for all entities: `changes` filters "empty→empty", readable JSONB, `field_key_from_version` fallback to `version.object`.
 - The audit tab panel — a component with its own Stimulus controller on the root (ancestor controller for pagination), `goToPage` → Reflex `<entity>_page`.
+- **Author guarantee:** `PaperTrail.request.whodunnit` is set in `ApplicationReflex#before_reflex` AND, as a safety net, in the service layer (`PoiCategoryService.create_field/update_field/destroy_field`) so audit entries always carry the author instead of "System".
+- **Non-model assets audit:** image markers are ActiveStorage attachments (no model field) — explicit audit-only PaperTrail versions are written via `PaperTrailAuditService.log_category_icon_uploaded/removed` (events `category_icon_uploaded`/`category_icon_removed`), which land in the feed but do not re-render the open edit form.
 
-### 8. Forms (checkboxes!)
+### 8. Child CRUD embedded into the edit form
+For entities whose child records are managed via a modal (e.g. category fields), the CRUD lives inside the edit form, while the detail tab keeps only read-only/reorder actions. The modal follows `Ui::ConfirmDialogComponent` (header+close on one line, scrollable body, pinned footer with Cancel/Save/Delete). A single page holds exactly one target container — either the show-tab wrapper (`[data-poi-category-fields]`) or the edit-form wrapper (`[data-poi-category-fields-edit]`) — so the Broadcaster's `inner_html` re-renders whichever one exists without duplication.
+
+### 9. Forms (checkboxes!)
 Rails `check_box` generates a pair of inputs with one `name` (hidden `value="0"` + checkbox). In JS select `input[name='...'][type='checkbox']`, otherwise the hidden input (false) is read. Example: `form.querySelector("[name='poi_category_field[required]'][type='checkbox']")`.
 
 ---

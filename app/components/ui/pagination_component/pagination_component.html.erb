@@ -6,57 +6,103 @@
 # Кнопки используют data-action для StimulusReflex (без перезагрузки страницы)
 # %>
 <div data-controller="ui--pagination-component" class="flex justify-center py-3">
-  <nav class="inline-flex items-center gap-0.5" aria-label="<%= t('.navigation') %>">
+  <nav class="inline-flex items-center gap-1" aria-label="<%= t('.navigation') %>">
     <%# Кнопка "Назад" %>
     <% if pagy.previous %>
-      <button type="button"
-         class="btn-ui btn-ui--ghost btn-ui--sm min-w-8"
-         aria-label="<%= t('.previous') %>"
-         data-action="click-><%= pagination_controller %>#goToPage"
-         data-page="<%= pagy.previous %>">
-        <!-- mdi: chevron-left -->
-        <span class="mdi mdi-chevron-left"></span>
-      </button>
+      <%= render Ui::BtnComponent.new(
+            color: :ghost,
+            size: :sm,
+            html: {
+              aria: { label: t('.previous') },
+              data: {
+                action: "click->#{pagination_controller}#goToPage",
+                page: pagy.previous
+              }
+            }
+          ) do %>
+        <span class="mdi mdi-chevron-left text-lg leading-none"></span>
+      <% end %>
     <% else %>
-      <span class="btn-ui btn-ui--ghost btn-ui--sm min-w-8 opacity-30 cursor-not-allowed">
-        <!-- mdi: chevron-left -->
-        <span class="mdi mdi-chevron-left"></span>
-      </span>
+      <%= render Ui::BtnComponent.new(
+            color: :ghost,
+            size: :sm,
+            html: {
+              disabled: true,
+              aria: { label: t('.previous') },
+              class: "opacity-30 cursor-not-allowed"
+            }
+          ) do %>
+        <span class="mdi mdi-chevron-left text-lg leading-none"></span>
+      <% end %>
     <% end %>
 
     <%# Серия страниц %>
     <% series.each do |item| %>
       <% if item.is_a?(Integer) %>
         <% if item == pagy.page %>
-          <span class="btn-ui btn-ui--primary btn-ui--sm min-w-8"><%= item %></span>
-        <% else %>
-          <button type="button"
-             class="btn-ui btn-ui--ghost btn-ui--sm min-w-8"
-             data-action="click-><%= pagination_controller %>#goToPage"
-             data-page="<%= item %>">
+          <%= render Ui::BtnComponent.new(
+                color: :primary,
+                size: :sm,
+                html: { class: "min-w-8" }
+              ) do %>
             <%= item %>
-          </button>
+          <% end %>
+        <% else %>
+          <%= render Ui::BtnComponent.new(
+                color: :ghost,
+                size: :sm,
+                html: {
+                  class: "min-w-8",
+                  data: {
+                    action: "click->#{pagination_controller}#goToPage",
+                    page: item
+                  }
+                }
+              ) do %>
+            <%= item %>
+          <% end %>
         <% end %>
       <% elsif item == :gap %>
-        <span class="btn-ui btn-ui--ghost btn-ui--sm min-w-8 opacity-30 cursor-not-allowed">...</span>
+        <%= render Ui::BtnComponent.new(
+              color: :ghost,
+              size: :sm,
+              html: {
+                disabled: true,
+                class: "min-w-8 opacity-30 cursor-not-allowed"
+              }
+            ) do %>
+          ...
+        <% end %>
       <% end %>
     <% end %>
 
     <%# Кнопка "Вперед" %>
     <% if pagy.next %>
-      <button type="button"
-         class="btn-ui btn-ui--ghost btn-ui--sm min-w-8"
-         aria-label="<%= t('.next') %>"
-         data-action="click-><%= pagination_controller %>#goToPage"
-         data-page="<%= pagy.next %>">
-        <!-- mdi: chevron-right -->
-        <span class="mdi mdi-chevron-right"></span>
-      </button>
+      <%= render Ui::BtnComponent.new(
+            color: :ghost,
+            size: :sm,
+            html: {
+              aria: { label: t('.next') },
+              data: {
+                action: "click->#{pagination_controller}#goToPage",
+                page: pagy.next
+              }
+            }
+          ) do %>
+        <span class="mdi mdi-chevron-right text-lg leading-none"></span>
+      <% end %>
     <% else %>
-      <span class="btn-ui btn-ui--ghost btn-ui--sm min-w-8 opacity-30 cursor-not-allowed">
-        <!-- mdi: chevron-right -->
-        <span class="mdi mdi-chevron-right"></span>
-      </span>
+      <%= render Ui::BtnComponent.new(
+            color: :ghost,
+            size: :sm,
+            html: {
+              disabled: true,
+              aria: { label: t('.next') },
+              class: "opacity-30 cursor-not-allowed"
+            }
+          ) do %>
+        <span class="mdi mdi-chevron-right text-lg leading-none"></span>
+      <% end %>
     <% end %>
   </nav>
 </div>

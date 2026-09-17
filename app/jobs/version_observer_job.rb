@@ -17,6 +17,7 @@ class VersionObserverJob < ApplicationJob
     login logout email_verified email_changed
     wallet_added avatar_uploaded name_changed
     registration user_created_by_admin user_deleted_by_admin
+    category_icon_uploaded category_icon_removed
   ].freeze
 
   #

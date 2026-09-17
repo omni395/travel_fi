@@ -1,0 +1,16 @@
+<div class="p-4">
+  <button type="button"
+          onclick="document.getElementById('demo-dialog-ok').classList.remove('hidden')"
+          class="px-4 py-2 bg-gray-800 text-green-400 rounded-lg text-sm font-medium hover:bg-gray-900 cursor-pointer">
+    Кастомный вариант (ОК / Отмена)
+  </button>
+
+  <%= render Ui::ConfirmDialogComponent.new(
+        dialog_id: "demo-dialog-ok",
+        title: "Очистить кэш",
+        message: "Системный кэш будет полностью сброшен.",
+        confirm_text: "ОК",
+        cancel_text: "Отмена",
+        confirm_variant: :primary
+      ) %>
+</div>

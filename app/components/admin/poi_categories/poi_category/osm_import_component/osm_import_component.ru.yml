@@ -16,3 +16,10 @@ ru:
           close: Закрыть
           fetching: Получение данных из OpenStreetMap...
           of: из
+          pbf_section: Импорт из .pbf файла
+          pbf_hint: "Загрузите региональный срез OpenStreetMap (.osm.pbf). Файл будет распарсен в фоне."
+          pbf_upload: Загрузить и распарсить
+          pbf_file_required: Выберите .pbf файл
+          pbf_no_route: Маршрут импорта недоступен
+          pbf_upload_failed: Ошибка загрузки файла
+          pbf_import_failed: Ошибка импорта

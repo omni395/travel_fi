@@ -1,0 +1,14 @@
+<div class="relative h-[600px] w-full bg-secondary/10 overflow-hidden flex items-stretch rounded-xl border border-secondary">
+  <%= render Ui::SidebarComponent.new(width_class: "w-80", state: :expanded) do %>
+    <div class="p-4 text-primary w-80 box-border">
+      <h3 class="font-bold text-lg mb-2 truncate">Заголовок сайдбара</h3>
+      <p class="text-sm text-secondary break-words">
+        Содержимое панели сайдбара в развернутом виде.
+      </p>
+    </div>
+  <% end %>
+
+  <div class="flex-1 h-full p-6 flex items-center justify-center text-secondary select-none">
+    Основная область экрана (Карта / Контент)
+  </div>
+</div>

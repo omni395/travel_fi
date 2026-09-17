@@ -8,7 +8,7 @@ import { Controller } from "@hotwired/stimulus"
  *   panel — панели содержимого
  *
  * Values:
- *   activeTab — идентификатор активной вкладки (String, default: null)
+ *   activeTab — идентификатор активной вкладки (String, default: "")
  *
  * Использование:
  *   <div data-controller="ui--tabs-component" data-ui--tabs-component-active-tab-value="activity">
@@ -42,20 +42,23 @@ export default class extends Controller {
 
   /**
    * Активирует указанную вкладку:
-   * - обновляет стили кнопок
+   * - переключает активные CSS-классы кнопок
    * - показывает/скрывает панели
    *
    * @param {string} tab - идентификатор вкладки
    */
   _activate(tab) {
+    const activeClasses = ["is-active", "bg-primary", "text-primary", "shadow-sm", "border-secondary", "font-bold"]
+    const inactiveClasses = ["text-secondary", "hover:text-primary"]
+
     this.tabTargets.forEach(btn => {
       const isActive = btn.dataset.tab === tab
       if (isActive) {
-        btn.classList.add("tab-active", "text-emerald-700", "bg-white", "rounded-lg", "shadow-sm", "ring-1", "ring-emerald-200", "font-bold")
-        btn.classList.remove("text-slate-500", "hover:text-slate-700", "hover:bg-white/50", "font-semibold")
+        btn.classList.add(...activeClasses)
+        btn.classList.remove(...inactiveClasses)
       } else {
-        btn.classList.remove("tab-active", "text-emerald-700", "bg-white", "rounded-lg", "shadow-sm", "ring-1", "ring-emerald-200", "font-bold")
-        btn.classList.add("text-slate-500", "hover:text-teal-700", "hover:bg-white/50", "font-semibold")
+        btn.classList.remove(...activeClasses)
+        btn.classList.add(...inactiveClasses)
       }
     })
 

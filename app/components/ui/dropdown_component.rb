@@ -1,24 +1,24 @@
 # frozen_string_literal: true
 
 #
-# DropdownComponent - универсальный компонент для выпадающего меню
+# Ui::DropdownComponent - универсальный компонент для выпадающего меню
 #
-# Использует stimulus-components/dropdown для управления состоянием
 # Поддерживает:
-# - Произвольный контент в кнопке и меню
-# - Позиционирование меню (left, right, center)
-# - Анимации переходов
-# - Закрытие при клике вне меню
+# - Произвольный контент в кнопке (через слот with_trigger) и меню (через слот with_menu)
+# - Выравнивание меню (left, right, center)
+# - Закрытие при клике вне меню и при выборе пункта
+# - Использование встроенной кнопки Ui::BtnComponent по умолчанию
 #
-# Пример использования:
-#
-#   <%= render Ui::DropdownComponent.new do |dropdown| %>
+# @example
+#   <%= render Ui::DropdownComponent.new(position: "right") do |dropdown| %>
 #     <% dropdown.with_trigger do %>
-#       <button>Options</button>
+#       <%= render Ui::BtnComponent.new(color: :primary) do %>
+#         <span><%= t('.actions') %></span>
+#         <i class="mdi mdi-chevron-down"></i>
+#       <% end %>
 #     <% end %>
 #     <% dropdown.with_menu do %>
-#       <a href="#" data-action="dropdown#toggle">Option 1</a>
-#       <a href="#" data-action="dropdown#toggle">Option 2</a>
+#       <a href="#" data-action="click->ui--dropdown-component#toggle" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Action 1</a>
 #     <% end %>
 #   <% end %>
 #
@@ -30,11 +30,11 @@ class Ui::DropdownComponent < ApplicationComponent
 
   # Инициализирует компонент
   #
-  # @param position [String] позиция меню (left, right, center), по умолчанию right
-  # @param menu_classes [String] дополнительные CSS классы для меню
+  # @param position [String, Symbol] позиция меню (left, right, center), по умолчанию "right"
+  # @param menu_classes [String] дополнительные CSS классы для плашки меню
   #
   def initialize(position: "right", menu_classes: "")
-    @position = position
+    @position = position.to_s
     @menu_classes = menu_classes
   end
 
@@ -43,13 +43,13 @@ class Ui::DropdownComponent < ApplicationComponent
   # @return [String] CSS класс для позиционирования
   #
   def position_class
-    case @position
+    case position
     when "left"
-      "left-0"
+      "left-0 origin-top-left"
     when "center"
-      "left-1/2 transform -translate-x-1/2"
+      "left-1/2 -translate-x-1/2 origin-top"
     else # right
-      "right-0"
+      "right-0 origin-top-right"
     end
   end
 end

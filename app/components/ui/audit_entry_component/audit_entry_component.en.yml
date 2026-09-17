@@ -5,6 +5,8 @@ en:
       created: "Created"
       updated: "Updated"
       deleted: "Deleted"
+      category_icon_uploaded: "Category icon uploaded"
+      category_icon_removed: "Category icon removed"
       by: "by"
       system: "System"
       field: "Field"

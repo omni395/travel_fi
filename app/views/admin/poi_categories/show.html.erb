@@ -37,7 +37,11 @@
           active_tab: active_tab,
           panels: {
             fields: content_tag(:div, data: { poi_category_fields: true }) do
-              concat render(Admin::PoiCategories::PoiCategory::FieldsListComponent.new(category: @category))
+              concat render(Admin::PoiCategories::PoiCategory::FieldsListComponent.new(
+                category: @category,
+                add_button: false,
+                with_form: false
+              ))
             end,
             pois: content_tag(:div, data: { poi_category_pois: true }) do
               concat render(Admin::PoiCategories::PoiCategory::PoisListComponent.new(

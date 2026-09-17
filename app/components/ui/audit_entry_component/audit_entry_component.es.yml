@@ -5,6 +5,8 @@ es:
       created: "Creado"
       updated: "Actualizado"
       deleted: "Eliminado"
+      category_icon_uploaded: "Icono subido"
+      category_icon_removed: "Icono eliminado"
       by: "por"
       system: "Sistema"
       field: "Campo"

@@ -43,6 +43,8 @@ class Ui::AuditEntryComponent < ApplicationComponent
     when "create"  then { label: "Created", color: "text-green-600 bg-green-50" }
     when "update"  then { label: "Updated", color: "text-amber-600 bg-amber-50" }
     when "destroy" then { label: "Deleted", color: "text-red-600 bg-red-50" }
+    when "category_icon_uploaded" then { label: t(".category_icon_uploaded"), color: "text-teal-600 bg-teal-50" }
+    when "category_icon_removed" then { label: t(".category_icon_removed"), color: "text-gray-600 bg-gray-50" }
     else { label: version.event.humanize, color: "text-gray-600 bg-gray-50" }
     end
   end

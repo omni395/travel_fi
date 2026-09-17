@@ -1,0 +1,13 @@
+<%= render Ui::HamburgerComponent.new(position: "right") do |h| %>
+  <% h.with_menu do %>
+    <a href="#" class="block px-4 py-2 text-sm text-primary hover:bg-secondary/10 rounded-md transition-colors">
+      <%= t(".home", default: "Главная") %>
+    </a>
+    <a href="#" class="block px-4 py-2 text-sm text-primary hover:bg-secondary/10 rounded-md transition-colors">
+      <%= t(".profile", default: "Профиль") %>
+    </a>
+    <a href="#" class="block px-4 py-2 text-sm text-primary hover:bg-secondary/10 rounded-md transition-colors">
+      <%= t(".settings", default: "Настройки") %>
+    </a>
+  <% end %>
+<% end %>

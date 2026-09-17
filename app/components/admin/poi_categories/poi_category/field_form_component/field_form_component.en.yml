@@ -20,6 +20,19 @@ en:
           options: Options
           options_placeholder: "key;en;ru;es;zh"
           options_hint: "Each line: key;en;ru;es;zh (labels optional)"
+          osm_section: OSM Mapping
+          osm_hint: "Map this field to OpenStreetMap tags for automatic import."
+          osm_keys_label: OSM Keys
+          osm_keys_hint: "Comma-separated OSM tag keys (e.g. wheelchair, disabled:wheelchair)"
+          osm_value_map_label: OSM Value Map
+          osm_value_map_hint: "JSON map from raw OSM value to app value, e.g. { \"yes\": true, \"no\": false }"
+          osm_transform_label: Transform
+          osm_transform_hint: "How to convert the raw OSM value (boolean / extract number / split a list)"
+          osm_transforms:
+            none: None
+            boolean: Boolean
+            extract_number: Extract number
+            split_array: Split list
           field_types:
             string: String
             text: Text

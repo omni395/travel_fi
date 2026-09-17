@@ -1,0 +1,7 @@
+<div class="p-8 bg-gray-50 rounded-xl">
+  <%= render Ui::FiltersComponent.new(
+        search_query: "",
+        search_action: "input->dummy#filter",
+        reset_action: "dummy#reset"
+      ) %>
+</div>

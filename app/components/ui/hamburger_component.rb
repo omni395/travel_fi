@@ -1,63 +1,32 @@
 # frozen_string_literal: true
 
 #
-# Ui::HamburgerComponent — универсальный компонент гамбургер-меню
+# Ui::HamburgerComponent — компонент гамбургер-меню на базе Ui::DropdownComponent
 #
-# Предоставляет выдвижную панель с анимированной кнопкой-бургером,
-# поддержкой оверлея, адаптивности и позиционирования слева/справа.
+# Отображает кнопку-гамбургер и выпадающий списком (dropdown) вместо боковой панели.
 #
 # Использование:
-#   <%= render Ui::HamburgerComponent.new(position: :left, menu_width_class: "w-72") do |h| %>
+#   <%= render Ui::HamburgerComponent.new(position: "right") do |h| %>
 #     <% h.with_menu do %>
-#       <nav class="p-4"><%= link_to "Home", root_path %></nav>
+#       <a href="#" class="block px-4 py-2 text-sm text-primary hover:bg-secondary">Home</a>
 #     <% end %>
 #   <% end %>
 #
-# С кастомным триггером:
-#   <%= render Ui::HamburgerComponent.new do |h| %>
-#     <% h.with_trigger do %>
-#       <button type="button" class="..."><i class="mdi mdi-menu"></i></button>
-#     <% end %>
-#     <% h.with_menu do %>
-#       ...содержимое...
-#     <% end %>
-#   <% end %>
-#
-# @param position [Symbol] :left (по умолч.) или :right — сторона выезда панели
-# @param menu_width_class [String] Tailwind-класс ширины панели (по умолч. "w-64")
-# @param overlay [Boolean] показывать затемняющий оверлей (по умолч. true)
+# @param position [String, Symbol] позиция выпадающего меню (left, right, center), по умолчанию "right"
+# @param btn_color [Symbol] цвет кнопки Ui::BtnComponent (:ghost, :primary, :secondary и т.д.)
+# @param btn_size [Symbol] размер кнопки Ui::BtnComponent (:sm, :md, :lg)
+# @param menu_classes [String] дополнительные CSS-классы для выпадающей плашки
 #
 class Ui::HamburgerComponent < ApplicationComponent
   renders_one :trigger
   renders_one :menu
 
-  def initialize(position: :left, menu_width_class: "w-64", overlay: true)
+  attr_reader :position, :btn_color, :btn_size, :menu_classes
+
+  def initialize(position: "right", btn_color: :ghost, btn_size: :md, menu_classes: "")
     @position = position
-    @menu_width_class = menu_width_class
-    @overlay = overlay
-  end
-
-  #
-  # CSS-класс для позиционирования панели
-  # @return [String]
-  #
-  def panel_position_class
-    @position == :right ? "right-0" : "left-0"
-  end
-
-  #
-  # CSS-класс для анимации выезда (translate)
-  # @return [String]
-  #
-  def panel_translate_class
-    @position == :right ? "translate-x-full" : "-translate-x-full"
-  end
-
-  #
-  # Флаг показа оверлея
-  # @return [Boolean]
-  #
-  def show_overlay?
-    @overlay
+    @btn_color = btn_color
+    @btn_size = btn_size
+    @menu_classes = menu_classes
   end
 end

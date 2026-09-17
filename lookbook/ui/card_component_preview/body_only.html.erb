@@ -1,0 +1,6 @@
+<%# lookbook/ui/card_component_preview/body_only.html.erb %>
+<%= render Ui::CardComponent.new do |c| %>
+  <% c.with_body do %>
+    <p class="text-gray-700"><%= body_text %></p>
+  <% end %>
+<% end %>

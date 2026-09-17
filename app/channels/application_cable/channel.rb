@@ -2,7 +2,7 @@
 
 module ApplicationCable
   class Channel < ActionCable::Channel::Base
-    # CableReady::Broadcaster больше не нужен, так как каналы наследуются напрямую
+    include CableReady::Broadcaster
 
     def subscribe_to_channel
       puts "[CHANNEL_BASE] subscribe_to_channel() called on #{self.class.name}"

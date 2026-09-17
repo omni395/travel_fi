@@ -7,6 +7,6 @@
 # Поддерживает любые HTML атрибуты через html: параметр.
 # %>
 
-<button type="<%= html[:type] || 'button' %>" data-controller="ui--btn-component" class="<%= css_class %>" <%= tag.attributes(attrs) %>>
+<button type="<%= html[:type] || 'button' %>" data-controller="ui--btn-component" class="inline-flex items-center justify-center gap-2 rounded-lg font-bold transition-all duration-200 <%= css_class %>" <%= tag.attributes(attrs) %>>
   <%= content %>
 </button>

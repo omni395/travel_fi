@@ -20,7 +20,7 @@
         <%# Верхняя секция: иконка + информация + кнопки %>
         <div class="flex flex-col sm:flex-row items-start gap-6">
           <%# Иконка/картинка-маркер категории (картинка приоритетнее, fallback — MDI) %>
-          <div class="flex-shrink-0 w-16 h-16 bg-emerald-50 rounded-xl flex items-center justify-center overflow-hidden">
+          <div class="shrink-0 w-16 h-16 bg-emerald-50 rounded-xl flex items-center justify-center overflow-hidden">
             <% if category.category_icon_url.present? %>
               <img src="<%= category.category_icon_url %>"
                    alt="<%= t('.icon_alt') %>"

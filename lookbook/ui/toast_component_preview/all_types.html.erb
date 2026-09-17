@@ -1,0 +1,6 @@
+<div class="p-8 max-w-md bg-secondary space-y-4 rounded-xl">
+  <%= render Ui::ToastComponent.new(message: "Успешно сохранено!", type: :success, auto_dismiss: 0) %>
+  <%= render Ui::ToastComponent.new(message: "Ошибка при сохранении данных.", type: :error, auto_dismiss: 0) %>
+  <%= render Ui::ToastComponent.new(message: "Внимание! Проверьте введенные данные.", type: :warning, auto_dismiss: 0) %>
+  <%= render Ui::ToastComponent.new(message: "Доступно новое обновление системы.", type: :info, auto_dismiss: 0) %>
+</div>

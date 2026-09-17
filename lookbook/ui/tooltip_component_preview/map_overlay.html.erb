@@ -1,0 +1,27 @@
+<div class="p-16 bg-secondary min-h-[300px] flex flex-col items-center justify-center gap-4">
+  <p class="text-xs font-mono text-secondary">Режим OpenLayers (видим при наведении на маркер):</p>
+
+  <div class="group relative inline-block">
+    <div class="cursor-pointer p-2 bg-primary rounded-full shadow-md hover:scale-110 transition-transform flex items-center justify-center w-10 h-10 border border-secondary">
+      <span class="mdi mdi-map-marker text-success text-2xl"></span>
+    </div>
+
+    <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 hidden group-hover:!block">
+      <%= render Ui::TooltipComponent.new(map_overlay: true) do %>
+        <div class="flex min-h-0 w-72 bg-primary rounded-xl overflow-hidden shadow-xl border border-secondary">
+          <div class="w-24 shrink-0 bg-secondary flex items-center justify-center">
+            <span class="mdi mdi-image text-secondary text-2xl"></span>
+          </div>
+          <div class="flex-1 p-3">
+            <span class="text-[10px] font-bold text-success uppercase">Парк</span>
+            <h4 class="text-xs font-bold text-primary mt-0.5">Центральный сквер</h4>
+            <div class="flex items-center gap-1 mt-1 text-[11px] text-accent font-semibold">
+              <span class="mdi mdi-star"></span>
+              <span>4.9</span>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

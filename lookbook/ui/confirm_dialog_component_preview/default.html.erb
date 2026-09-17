@@ -1,0 +1,15 @@
+<div class="p-4">
+  <button type="button"
+          onclick="document.getElementById('demo-dialog-default').classList.remove('hidden')"
+          class="px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 cursor-pointer">
+    Открыть диалог (Подтвердить / Отменить)
+  </button>
+
+  <%= render Ui::ConfirmDialogComponent.new(
+        dialog_id: "demo-dialog-default",
+        title: "Сохранение изменений",
+        message: "Вы уверены, что хотите сохранить текущие настройки профиля?",
+        confirm_variant: :primary,
+        confirm_url: "#"
+      ) %>
+</div>

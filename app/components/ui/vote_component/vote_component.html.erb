@@ -1,56 +1,53 @@
 <%# Ui::VoteComponent — блок голосования сообщества %>
 <%# Иконка: mdi-thumb-up-outline (апрув) / mdi-thumb-down-outline (дизлайк) %>
 <div
-  class="vote-component"
+  class="flex flex-col gap-2"
   data-controller="ui--vote-component"
   data-vote-component-votable-type-value="<%= votable.class.name %>"
   data-vote-component-votable-id-value="<%= votable.id %>"
   data-vote-component-current-vote-value="<%= current_vote_value %>"
 >
-  <%# Бейджи «Одобрено/Отклонено сообществом» (только POI) %>
-  <% if community_approved? %>
-    <span class="vote-component__badge vote-component__badge--approved">
-      <%= t(".community_approved") %>
-    </span>
-  <% elsif community_rejected? %>
-    <span class="vote-component__badge vote-component__badge--rejected">
-      <%= t(".community_rejected") %>
-    </span>
-  <% end %>
-
-  <div class="vote-component__controls">
+  <%# Идеально сжатый однострочный блок %>
+  <div class="inline-flex items-center gap-2">
     <%# Кнопка «Апрув» (+1) %>
-    <button
-      type="button"
-      class="vote-component__btn <%= user_voted_up? ? 'is-active' : '' %>"
-      data-action="ui--vote-component#castUp"
-      aria-label="<%= t(".up_aria") %>"
-      <% unless can_vote? %> disabled <% end %>
-    >
-      <span class="mdi mdi-thumb-up-outline" aria-hidden="true"></span>
-      <span class="vote-component__count" data-vote-counter="up"><%= ups %></span>
-    </button>
+    <%= render Ui::BtnComponent.new(
+          color: user_voted_up? ? :success : :ghost,
+          size: :sm,
+          html: {
+            type: "button",
+            class: "!px-0 border-0 shadow-none inline-flex items-center gap-1 text-success hover:bg-transparent transition-colors disabled:cursor-not-allowed disabled:opacity-50 #{'is-active' if user_voted_up?}",
+            data: { action: "click->ui--vote-component#castUp" },
+            aria: { label: t(".up_aria") },
+            disabled: !can_vote?
+          }
+        ) do %>
+      <span class="mdi mdi-thumb-up-outline text-success text-base leading-none" aria-hidden="true"></span>
+      <span class="font-semibold text-xs leading-none" data-vote-counter="up"><%= ups %></span>
+    <% end %>
 
     <%# Кнопка «Дизлайк» (-1) %>
-    <button
-      type="button"
-      class="vote-component__btn <%= user_voted_down? ? 'is-active--down' : '' %>"
-      data-action="ui--vote-component#castDown"
-      aria-label="<%= t(".down_aria") %>"
-      <% unless can_vote? %> disabled <% end %>
-    >
-      <span class="mdi mdi-thumb-down-outline" aria-hidden="true"></span>
-      <span class="vote-component__count" data-vote-counter="down"><%= downs %></span>
-    </button>
+    <%= render Ui::BtnComponent.new(
+          color: user_voted_down? ? :error : :ghost,
+          size: :sm,
+          html: {
+            type: "button",
+            class: "!px-0 border-0 shadow-none inline-flex items-center gap-1 text-error hover:bg-transparent transition-colors disabled:cursor-not-allowed disabled:opacity-50 #{'is-active--down' if user_voted_down?}",
+            data: { action: "click->ui--vote-component#castDown" },
+            aria: { label: t(".down_aria") },
+            disabled: !can_vote?
+          }
+        ) do %>
+      <span class="mdi mdi-thumb-down-outline text-error text-base leading-none" aria-hidden="true"></span>
+      <span class="font-semibold text-xs leading-none" data-vote-counter="down"><%= downs %></span>
+    <% end %>
+
+    <%# Общее количество голосов %>
+    <span class="text-xs text-secondary-text leading-none ml-1" data-vote-counter="hint">
+      <%= t(".hint", total: total) %>
+    </span>
   </div>
 
-  <p class="vote-component__hint" data-vote-counter="hint">
-    <%= t(".hint", total: total) %>
-  </p>
-
-  <%# Диалог «забрать голос» (повторный клик на ту же кнопку).
-      Режим без confirm_url: при подтверждении ConfirmDialog диспатчит
-      событие confirmDialogConfirmed → Ui::VoteComponent#onRemoveConfirmed. %>
+  <%# Диалог «забрать голос» %>
   <div
     data-ui--vote-component-target="removeDialog"
     data-action="confirmDialogConfirmed->ui--vote-component#onRemoveConfirmed"
@@ -65,9 +62,7 @@
     ) %>
   </div>
 
-  <%# Диалог «изменить голос» (клик на противоположную кнопку).
-      Режим без confirm_url: при подтверждении диспатчит confirmDialogConfirmed
-      → Ui::VoteComponent#onChangeConfirmed. %>
+  <%# Диалог «изменить голос» %>
   <div
     data-ui--vote-component-target="changeDialog"
     data-action="confirmDialogConfirmed->ui--vote-component#onChangeConfirmed"

@@ -1,0 +1,18 @@
+<%= render Ui::HamburgerComponent.new(position: "right") do |h| %>
+  <% h.with_trigger do %>
+    <%= render Ui::BtnComponent.new(
+          color: :primary,
+          size: :md,
+          html: { data: { action: "click->ui--dropdown-component#toggle" } }
+        ) do %>
+      <span><%= t(".custom_menu", default: "Кастомное меню") %></span>
+      <i class="mdi mdi-chevron-down text-lg ml-1"></i>
+    <% end %>
+  <% end %>
+
+  <% h.with_menu do %>
+    <a href="#" class="block px-4 py-2 text-sm text-primary hover:bg-secondary/10 rounded-md transition-colors">
+      <%= t(".action", default: "Действие") %>
+    </a>
+  <% end %>
+<% end %>

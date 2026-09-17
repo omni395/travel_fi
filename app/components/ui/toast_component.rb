@@ -5,10 +5,22 @@
 #
 class Ui::ToastComponent < ApplicationComponent
   TYPES = {
-    success: "bg-teal-600",
-    error: "bg-red-600",
-    warning: "bg-amber-600",
-    info: "bg-blue-600"
+    success: {
+      bg: "bg-success text-text border-success",
+      icon: "mdi-check-circle-outline"
+    },
+    error: {
+      bg: "bg-error text-text border-error",
+      icon: "mdi-alert-circle-outline"
+    },
+    warning: {
+      bg: "bg-warning text-text border-warning",
+      icon: "mdi-alert-outline"
+    },
+    info: {
+      bg: "bg-info text-text border-info",
+      icon: "mdi-information-outline"
+    }
   }.freeze
 
   #
@@ -28,7 +40,15 @@ class Ui::ToastComponent < ApplicationComponent
 
   private
 
-  def bg_color
+  def config
     TYPES.fetch(@type, TYPES[:info])
+  end
+
+  def bg_classes
+    config[:bg]
+  end
+
+  def icon_class
+    config[:icon]
   end
 end

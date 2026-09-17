@@ -7,7 +7,7 @@
 # Поддерживает:
 # - Заголовок и сообщение
 # - Кастомный текст кнопок
-# - Варианты кнопки подтверждения: danger (красная), primary (зелёная)
+# - Варианты кнопки подтверждения: danger или primary
 # - HTTP-метод для подтверждения (get, post, patch, delete)
 # - Управление через Stimulus контроллер ui--confirm-dialog-component
 #
@@ -28,16 +28,17 @@ class Ui::ConfirmDialogComponent < ApplicationComponent
   VARIANTS = %i[danger primary].freeze
 
   #
-  # @param title [String] заголовок диалога
-  # @param message [String] сообщение диалога
-  # @param confirm_text [String] текст кнопки подтверждения
-  # @param cancel_text [String] текст кнопки отмены
-  # @param confirm_variant [Symbol] :danger (красная) или :primary (teal)
-  # @param confirm_url [String] URL для перехода при подтверждении
+  # @param title [String, nil] заголовок диалога
+  # @param message [String, nil] сообщение диалога
+  # @param confirm_text [String, nil] текст кнопки подтверждения (fallback на I18n)
+  # @param cancel_text [String, nil] текст кнопки отмены (fallback на I18n)
+  # @param confirm_variant [Symbol] :danger или :primary
+  # @param confirm_url [String, nil] URL для перехода при подтверждении
   # @param confirm_method [Symbol] HTTP-метод (:get, :post, :patch, :delete)
+  # @param dialog_id [String, nil] Явный HTML ID диалога
   #
-  def initialize(title:, message:, confirm_text: "Confirm", cancel_text: "Cancel",
-                 confirm_variant: :danger, confirm_url: nil, confirm_method: :get)
+  def initialize(title: nil, message: nil, confirm_text: nil, cancel_text: nil,
+                 confirm_variant: :danger, confirm_url: nil, confirm_method: :get, dialog_id: nil)
     @title = title
     @message = message
     @confirm_text = confirm_text
@@ -45,30 +46,6 @@ class Ui::ConfirmDialogComponent < ApplicationComponent
     @confirm_variant = VARIANTS.include?(confirm_variant) ? confirm_variant : :danger
     @confirm_url = confirm_url
     @confirm_method = confirm_method
-    @dialog_id = "confirm-dialog-#{SecureRandom.hex(4)}"
-  end
-
-  #
-  # CSS класс для кнопки подтверждения в зависимости от варианта
-  #
-  # @return [String]
-  #
-  def confirm_button_class
-    base = "px-4 py-2 rounded-lg text-sm font-semibold text-white transition-colors"
-    case confirm_variant
-    when :danger
-      "#{base} bg-red-600 hover:bg-red-700"
-    when :primary
-      "#{base} bg-teal-600 hover:bg-teal-700"
-    end
-  end
-
-  #
-  # CSS класс для кнопки отмены
-  #
-  # @return [String]
-  #
-  def cancel_button_class
-    "px-4 py-2 rounded-lg text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
+    @dialog_id = dialog_id.presence || "confirm-dialog-#{SecureRandom.hex(4)}"
   end
 end

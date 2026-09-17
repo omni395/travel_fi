@@ -64,9 +64,8 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
       current_user: current_user
     )
 
-    cable_ready.redirect_to(url: admin_poi_category_path(id: category))
-    cable_ready.broadcast
-
+    # Без redirect: форма сохраняется через Reflex, обновление DOM выполняет
+    # Broadcaster (PaperTrail → VersionObserverJob → PoiCategoryBroadcaster).
     send_success(I18n.t("reflexes.admin.poi_categories.update_success"))
   rescue Pundit::NotAuthorizedError => e
     send_error(I18n.t("reflexes.admin.poi_categories.update_unauthorized"))
@@ -75,6 +74,33 @@ class Admin::PoiCategoriesReflex < ApplicationReflex
   rescue StandardError => e
     Rails.logger.error("PoiCategory update error: #{e.class} #{e.message}")
     send_error(I18n.t("reflexes.admin.poi_categories.update_error"))
+  end
+
+  #
+  # Удаляет категорию POI. После успешного удаления редиректит на список категорий.
+  #
+  # @param params [Hash] параметры { id: Integer }
+  #
+  def destroy(params = {})
+    morph :nothing
+
+    normalized = deep_symbolize_keys(params)
+    category = PoiCategory.friendly.find(normalized[:id] || element.dataset.id)
+    authorize_with_pundit!(category, :destroy?)
+
+    PoiCategoryService.destroy(category: category, current_user: current_user)
+
+    cable_ready.redirect_to(url: admin_poi_categories_path)
+    cable_ready.broadcast
+
+    send_success(I18n.t("reflexes.admin.poi_categories.destroy_success"))
+  rescue Pundit::NotAuthorizedError => e
+    send_error(I18n.t("reflexes.admin.poi_categories.destroy_unauthorized"))
+  rescue PoiCategoryService::DestroyError => e
+    send_error(e.message)
+  rescue StandardError => e
+    Rails.logger.error("PoiCategory destroy error: #{e.class} #{e.message}")
+    send_error(I18n.t("reflexes.admin.poi_categories.destroy_error"))
   end
 
   #
