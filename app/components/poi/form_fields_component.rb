@@ -46,9 +46,9 @@ class Poi::FormFieldsComponent < ApplicationComponent
         key = (value["key"] || value[:key]).to_s
         label = value["label"] || value[:label] || {}
         localized = label[I18n.locale.to_s] || label["en"].to_s || key
-        [key, localized]
+        [ key, localized ]
       else
-        [value.to_s, value.to_s]
+        [ value.to_s, value.to_s ]
       end
     end
   end
