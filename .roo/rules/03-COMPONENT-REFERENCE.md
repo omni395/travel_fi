@@ -27,6 +27,7 @@ app/components/admin/users/user/
 - Наследовать от `ApplicationComponent`, не от `ViewComponent::Base`
 - Запрещены partials. Только ViewComponents.
 - **СТРОГО: Каждый компонент ОБЯЗАН иметь полный sidecar** — Ruby-класс, шаблон, JS-контроллер, CSS, YAML (4 локали). Даже если JS/CSS пустые — файлы должны существовать. Partial sidecar запрещён.
+- **СТРОГО: Lookbook-превью обязательно.** Каждый новый компонент ОБЯЗАН иметь превью `lookbook/<namespace>/<component>_preview.rb` + `lookbook/<namespace>/<component>_preview/<scenario>.html.erb` для каждого сценария. Папка превью зеркалит sidecar-структуру компонента (тот же namespace/имя) — компонент рендерится в LookBook автоматически. Превью — часть «полного набора» компонента.
 
 ### Ruby-класс
 

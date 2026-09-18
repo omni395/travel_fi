@@ -43,7 +43,7 @@ class Noticed::DeliveryMethods::WebPush < Noticed::DeliveryMethod
     {
       title: notification.message,
       body: notification.params[:body] || "",
-      icon: "/icon.png",
+      icon: "/favicon.png",
       data: {
         url: notification.params[:url] || "/",
         event_type: notification.params[:event_type]
