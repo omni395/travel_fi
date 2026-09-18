@@ -17,6 +17,9 @@ Rails.application.configure do
   # Show full error reports.
   config.consider_all_requests_local = true
 
+  # Всегда показывать debug-страницу с трассировкой в dev (не голый public/500.html).
+  config.action_dispatch.show_exceptions = :all
+
   # Enable server timing.
   config.server_timing = true
 

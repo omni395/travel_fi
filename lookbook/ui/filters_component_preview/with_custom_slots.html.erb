@@ -2,7 +2,7 @@
   <%= render Ui::FiltersComponent.new(reset_action: "dummy#reset") do |f| %>
     <%# Кастомный поиск 1 %>
     <% f.with_search do %>
-      <div class="relative min-w-[160px]">
+      <div class="relative min-w-40">
         <input type="text" placeholder="ID заказа..." class="field-input text-sm">
       </div>
     <% end %>

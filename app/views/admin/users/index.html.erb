@@ -20,7 +20,6 @@
   <%= render ::Ui::FiltersComponent.new(
         search_query: @search_query,
         status_filter: @status_filter,
-        search_controller: "admin--users--table-component",
         search_action: "input->admin--users--table-component#filter",
         filter_action: "change->admin--users--table-component#filter",
         reset_action: "admin--users--table-component#resetFilters"
