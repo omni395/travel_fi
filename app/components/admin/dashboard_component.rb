@@ -20,40 +20,34 @@ class Admin::DashboardComponent < ApplicationComponent
   end
 
   #
-  # Возвращает CSS класс для карточки статистики
+  # Возвращает CSS фон для иконки по цветовому маркеру статистики
   #
-  # @param type [Symbol] тип статистики
-  # @return [String] CSS класс
+  # @param color [String] название цвета (primary, success, error, info)
+  # @return [String] CSS класс фона
   #
-  def stat_card_class(type)
-    case type
-    when :total_users
-      "border-teal-500"
-    when :active_users
-      "border-green-500"
-    when :suspended_users
-      "border-red-500"
-    when :new_users_today
-      "border-blue-500"
+  def stat_icon_bg_class(color)
+    case color
+    when "primary" then "bg-teal-100"
+    when "success" then "bg-emerald-100"
+    when "error" then "bg-red-100"
+    when "info" then "bg-sky-100"
+    else "bg-gray-100"
     end
   end
 
   #
-  # Возвращает CSS класс для иконки карточки статистики
+  # Возвращает CSS цвет текста/иконки по цветовому маркеру статистики
   #
-  # @param type [Symbol] тип статистики
-  # @return [String] CSS класс
+  # @param color [String] название цвета (primary, success, error, info)
+  # @return [String] CSS класс текста/иконки
   #
-  def stat_icon_class(type)
-    case type
-    when :total_users
-      "bg-teal-100 text-teal-600"
-    when :active_users
-      "bg-green-100 text-green-600"
-    when :suspended_users
-      "bg-red-100 text-red-600"
-    when :new_users_today
-      "bg-blue-100 text-blue-600"
+  def stat_icon_text_class(color)
+    case color
+    when "primary" then "text-teal-600"
+    when "success" then "text-emerald-600"
+    when "error" then "text-red-600"
+    when "info" then "text-sky-600"
+    else "text-gray-600"
     end
   end
 
@@ -120,10 +114,10 @@ class Admin::DashboardComponent < ApplicationComponent
   end
 
   #
-  # Возвращает название цвета для StatCardComponent
+  # Возвращает цветовой маркер для карточки статистики
   #
   # @param type [Symbol] тип статистики
-  # @return [String] название цвета (primary, secondary, warning, info)
+  # @return [String] название цвета (primary, success, error, info)
   #
   def stat_color(type)
     case type

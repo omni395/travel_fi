@@ -29,7 +29,6 @@
         status_filter: @status_filter,
         statuses: %w[pending approved rejected archived],
         status_model: :poi,
-        search_controller: "admin--pois--table-component",
         search_action: "input->admin--pois--table-component#filter",
         filter_action: "change->admin--pois--table-component#filter",
         reset_action: "admin--pois--table-component#resetFilters"

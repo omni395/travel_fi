@@ -29,7 +29,6 @@
         status_filter: @status_filter,
         statuses: %w[active inactive],
         status_model: :poi_category,
-        search_controller: "admin--poi-categories--table-component",
         search_action: "input->admin--poi-categories--table-component#filter",
         filter_action: "change->admin--poi-categories--table-component#filter",
         reset_action: "admin--poi-categories--table-component#resetFilters"

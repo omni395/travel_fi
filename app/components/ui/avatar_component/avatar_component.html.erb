@@ -7,11 +7,6 @@
 # %>
 
 <div data-controller="ui--avatar-component" class="<%= css_class %>">
-  <% if user.avatar.attached? %>
-    <%= image_tag avatar_url, class: "w-full h-full object-cover", alt: t(".alt") %>
-  <% else %>
-    <div class="<%= fallback_class %>">
-      <%= initials %>
-    </div>
-  <% end %>
+  <%# Аватар пользователя или заглушка no-image.png (uniform, объектное покрытие) %>
+  <%= image_tag avatar_url, class: "w-full h-full object-cover", alt: t(".alt") %>
 </div>

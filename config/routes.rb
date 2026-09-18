@@ -55,6 +55,9 @@ Rails.application.routes.draw do
         member do
           post :update_category_icon
           delete :remove_category_icon
+          # Импорт POI из загруженного .osm.pbf файла (HTTP/multipart через контроллер,
+          # а не через Reflex — бинарники по WebSocket не передаются).
+          post :import_pbf
         end
       end
 
