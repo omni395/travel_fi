@@ -10,7 +10,7 @@
     <% tabs.each do |tab| %>
       <% is_active = active_tab.to_s == tab[:id].to_s %>
       <button type="button"
-              class="tab-button flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all border border-transparent cursor-pointer text-secondary hover:text-primary <%= 'is-active bg-primary text-primary shadow-sm border-secondary font-bold' if is_active %>"
+              class="tab-button flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all border border-secondary cursor-pointer text-secondary hover:text-primary <%= 'is-active bg-primary text-primary shadow-sm border-secondary font-bold' if is_active %>"
               data-ui--tabs-component-target="tab"
               data-action="click->ui--tabs-component#switch"
               data-tab="<%= tab[:id] %>">

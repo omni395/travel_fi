@@ -7,9 +7,15 @@
  * и CSS-файлов (*.css), генерирует:
  *   1. app/javascript/controllers/_components_lazy.js — все контроллеры ленивые
  *   2. app/javascript/controllers/_components.css     — импорт всех sidecar CSS
+ *   3. .stimulus-lsp/config.json — synchronized ignoredControllerIdentifiers
  *
  * Все компоненты — ленивые (lazy). Stimulus загружает их по требованию
  * при появлении data-controller="..." в DOM.
+ *
+ * ignoredControllerIdentifiers в .stimulus-lsp/config.json синхронизируется
+ * с набором всех lazy-контроллеров, чтобы stimulus-lsp (строгое равенство в
+ * includes, без glob) не выдавал ложные stimulus.controller.invalid для
+ * генерируемых панельных/табличных компонентов.
  *
  * Запуск: node scripts/discover_components.js
  * Автоматически вызывается перед esbuild сборкой.
@@ -21,6 +27,7 @@ const path = require('path')
 const COMPONENTS_DIR = path.join(process.cwd(), 'app/components')
 const OUTPUT_LAZY_JS = path.join(process.cwd(), 'app/javascript/controllers/_components_lazy.js')
 const OUTPUT_CSS = path.join(process.cwd(), 'app/javascript/controllers/_components.css')
+const STIMULUS_LSP_CONFIG = path.join(process.cwd(), '.stimulus-lsp/config.json')
 
 function pathToControllerName(filePath) {
   const withoutSuffix = filePath.replace(/_controller\.js$/, '')
@@ -103,6 +110,46 @@ function generateCSS(cssFiles) {
   console.log(`✅ discover_components: Generated ${OUTPUT_CSS} (${cssFiles.length} CSS files)`)
 }
 
+/**
+ * generateStimulusLspConfig
+ *
+ * Перезаписывает ignoredControllerIdentifiers в .stimulus-lsp/config.json
+ * из набора всех генерируемых lazy-контроллеров.
+ *
+ * Стимулус-LSP (diagnostics.js:350) использует СТРОГОЕ равенство (includes),
+ * без поддержки glob. Поэтому чтобы подавить ложные предупреждения
+ * "controller.is.invalid" для генерируемых контроллеров, каждый id
+ * должен числиться в конфиге явно.
+ *
+ * Сохраняет version/createdAt и ignoredAttributes, обновляет updatedAt.
+ */
+function generateStimulusLspConfig(controllerFiles) {
+  const identifiers = controllerFiles.map(pathToControllerName).sort()
+
+  let config
+  if (fs.existsSync(STIMULUS_LSP_CONFIG)) {
+    try {
+      config = JSON.parse(fs.readFileSync(STIMULUS_LSP_CONFIG, 'utf-8'))
+    } catch (err) {
+      console.warn(`⚠️  discover_components: Could not parse ${STIMULUS_LSP_CONFIG}: ${err.message}; regenerating`)
+      config = {}
+    }
+  } else {
+    config = {}
+  }
+
+  config.version = '1.1.2'
+  config.createdAt = config.createdAt || new Date().toISOString()
+  config.updatedAt = new Date().toISOString()
+  config.options = config.options || {}
+  config.options.ignoredControllerIdentifiers = Array.from(new Set(identifiers)).sort()
+  config.options.ignoredAttributes = config.options.ignoredAttributes || []
+
+  fs.mkdirSync(path.dirname(STIMULUS_LSP_CONFIG), { recursive: true })
+  fs.writeFileSync(STIMULUS_LSP_CONFIG, JSON.stringify(config, null, 2) + '\n')
+  console.log(`✅ discover_components: Updated ${STIMULUS_LSP_CONFIG} (${identifiers.length} ignored controllers)`)
+}
+
 function generate() {
   console.log('🔍 discover_components: Scanning app/components/...')
 
@@ -118,6 +165,7 @@ function generate() {
 
   generateLazyJS(controllerFiles)
   generateCSS(cssFiles)
+  generateStimulusLspConfig(controllerFiles)
 
   controllerFiles.forEach(f => console.log(`   LAZY → ${pathToControllerName(f)}`))
   cssFiles.forEach(f => console.log(`   CSS → ${f}`))

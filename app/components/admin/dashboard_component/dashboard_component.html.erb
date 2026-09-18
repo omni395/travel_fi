@@ -1,7 +1,7 @@
 <%# Admin Dashboard Component - дашборд админки %>
 <%# Отображает статистику и последние активности %>
 
-<div class="p-6">
+<div class="dashboard-component p-6" data-controller="admin--dashboard-component">
   <%# Заголовок страницы %>
   <h1 class="text-3xl font-bold text-primary mb-6">
     <%= t('.title') %>
@@ -10,12 +10,20 @@
   <%# Статистика %>
   <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
     <% @stats.each do |key, value| %>
-      <%= render Admin::Dashboard::StatCardComponent.new(
-            title: stat_label(key),
-            count: value,
-            icon: stat_icon_name(key),
-            color: stat_color(key)
-          ) %>
+      <%= render Ui::CardComponent.new do |card| %>
+        <% card.with_body do %>
+          <div class="flex items-center gap-4">
+            <%# Иконка: mdi-account / mdi-account-check / mdi-account-off / mdi-account-plus %>
+            <div class="h-12 w-12 rounded-full flex items-center justify-center <%= stat_icon_bg_class(stat_color(key)) %>">
+              <i class="mdi <%= stat_icon_name(key) %> <%= stat_icon_text_class(stat_color(key)) %> text-2xl"></i>
+            </div>
+            <div>
+              <p class="text-2xl font-bold text-gray-800"><%= value %></p>
+              <p class="text-sm text-gray-500"><%= stat_label(key) %></p>
+            </div>
+          </div>
+        <% end %>
+      <% end %>
     <% end %>
   </div>
 
@@ -63,7 +71,7 @@
       <div class="space-y-4">
         <% @recent_activities.each do |version| %>
           <div class="flex items-start">
-            <div class="flex-shrink-0">
+            <div class="shrink-0">
               <div class="h-8 w-8 rounded-full bg-secondary/10 flex items-center justify-center">
                 <!-- mdi: history -->
                 <i class="mdi mdi-history text-secondary text-xl"></i>
