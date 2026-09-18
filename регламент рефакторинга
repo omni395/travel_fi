@@ -1,0 +1,85 @@
+### **Единый пошаговый регламент разработки**
+Коментарии в файлах сохранять в том виде в котором они были изначально или адаптировать под новую труктуру.
+Железное правило: Сохранять 100% оригинальных комментариев, JSDoc, описаний методов и аннотаций во всех файлах.
+
+#### **1. Архитектура и структура (Sidecar-first)**
+
+* Каждый компонент размещается strictly в собственной директории: `app/components/ui/<component_name>/`.
+* Комплект файлов включает:
+1. `app/components/ui/<component_name>.rb` (Ruby-класс)
+2. `app/components/ui/<component_name>/<component_name>.html.erb` (Шаблон)
+3. `app/components/ui/<component_name>/<component_name>_controller.js` (Stimulus-контроллер)
+4. `app/components/ui/<component_name>/<component_name>.<locale>.yml` (Локали: `ru`, `en`, `es`, `zh`)
+
+Цвета и тема:
+@theme {
+  --color-primary: #0288D1;
+  --color-secondary: #26A69A;
+  --color-accent: #FF5722;
+  --color-error: #D32F2F;
+  --color-warning: #FFA000;
+  --color-info: #0288D1;
+  --color-success: #388E3C;
+  --color-text: #fafafa;
+
+  @utility bg-success { background-color: var(--color-success); }
+  @utility bg-error { background-color: var(--color-error); }
+  @utility bg-warning { background-color: var(--color-warning); }
+  @utility bg-info { background-color: var(--color-info); }
+  @utility text-text { color: var(--color-text); }
+
+}
+
+* Внешние CSS-файлы компонентов удаляются. Все стили и анимации переводятся на Tailwind.
+
+#### **2. Верстка и единая система стилей (Tailwind-only)**
+
+* Все цвета задаются **только лаконичными утилитарными классами Tailwind**, связанными с темой: `bg-primary`, `text-primary`, `bg-error/10`, `text-error`, `bg-secondary`, `text-accent`, `bg-success` и т.д.
+* Запрещены сырые конструкции вроде `bg-[var(--color-error)]/10` или случайные чистые цвета (вроде `bg-red-500`).
+* Вложенные кнопки везде, где возможно, рендерятся через `Ui::BtnComponent.new(color: ..., size: ..., html: { ... })`.
+
+#### **3. Локализация (No-hardcoded-strings)**
+
+* В Ruby-классах и HTML-шаблонах запрещен хардкод текстовых строк.
+* Все тексты, названия кнопок, подписи и подсказки берутся из YAML-файлов локализации компонента (`t('.key')`) с fallback-значениями для безопасности.
+
+#### **4. Stimulus-контроллеры (100% сохранность документации)**
+
+* Идентификатор контроллера регистрируется с префиксом `ui--<component-name>`.
+* **Железное правило:** Сохранять 100% оригинальных комментариев, JSDoc, описаний методов и аннотаций в JS-файле.
+* Логика должна учитывать фолбеки для работы внутри изоляционных `iframe` Lookbook.
+
+#### **5. Lookbook Previews (Полное покрытие)**
+
+* Превью создаются для всех вариантов использования компонентов.
+* Каждое превью рендерится через изоморфный шаблон в `lookbook/ui/<component_name>_preview/<scenario>.html.erb`.
+* Никаких лишних/забытых атрибутов или `data-controller` на внешних обертках превью — чистый вызов компонента.
+
+import './ui_audit_entry_component_audit_entry_component_controller.js'
+import './ui_avatar_component_avatar_component_controller.js'
+import './ui_badge_component_badge_component_controller.js'
+import './ui_breadcrumbs_component_breadcrumbs_component_controller.js'
+import './ui_btn_component_btn_component_controller.js'
+import './ui_card_component_card_component_controller.js'
+import './ui_clipboard_component_clipboard_component_controller.js'
+import './ui_confirm_dialog_component_confirm_dialog_component_controller.js'
+import './ui_dropdown_component_dropdown_component_controller.js'
+import './ui_filters_component_filters_component_controller.js'
+import './ui_navbar_component_navbar_component_controller.js'
+import './ui_pagination_component_pagination_component_controller.js'
+import './ui_sidebar_component_sidebar_component_controller.js'
+import './ui_tabs_component_tabs_component_controller.js'
+import './ui_toast_component_toast_component_controller.js'
+import './ui_tooltip_component_tooltip_component_controller.js'
+
+
+
+Лукбук не сделано:
+юи:
+фильтры
+тултип
+тосты - цвета не срабатывают.
+сайдбар - задал вопрос на стековерфлоу.
+дропдаун - одновременно открываются несколько дропдаунов.
+:юи
+

@@ -24,12 +24,6 @@ gem "tzinfo-data", platforms: %i[ mswin mingw x64_mingw jruby ]
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
-# Показ точного места ошибки на debug-странице (yellow screen of death) в dev.
-# Rails-обвязка (ActiveSupport Location#spot) вызывает ErrorHighlight; без подключения
-# гема debug-рендер падает (NameError: uninitialized constant ErrorHighlight)
-# и Rails отдаёт голый public/500.html вместо жёлтой страницы.
-gem "error_highlight", ">= 0.6.0"
-
 # Deploy this application anywhere as a Docker container [https://kamal-deploy.org]
 gem "kamal", require: false
 
@@ -65,6 +59,12 @@ group :development, :test do
   # Ретраи флаков Selenium: system-тесты, проходящие изолированно, но
   # падающие в полном прогоне (headful Chrome) — перезапускаются автоматически.
   gem "rspec-retry"
+
+  # Показ точного места ошибки на debug-странице (yellow screen of death) в dev.
+  # Rails-обвязка (ActiveSupport Location#spot) вызывает ErrorHighlight; без подключения
+  # гема debug-рендер падает (NameError: uninitialized constant ErrorHighlight)
+  # и Rails отдаёт голый public/500.html вместо жёлтой страницы.
+  gem "error_highlight", "0.7.0"
 end
 
 group :development do

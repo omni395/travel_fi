@@ -66,6 +66,12 @@ app/components/
 
 **Аудит компонентов**: Перед созданием нового компонента проверить, что все существующие компоненты имеют ПОЛНЫЙ sidecar набор (шаблон, YAML[4], JS, CSS). Отсутствие JS или CSS НЕДОПУСТИМО — файлы должны существовать всегда (даже пустые).
 
+**LOOKBOOK-ПРЕВЬЮ (ОБЯЗАТЕЛЬНО)**: Каждый новый ViewComponent ОБЯЗАН иметь превью в LookBook. Для компонента класса `Admin::Users::User::EditComponent` создаётся:
+- превью `lookbook/admin/users/user/edit_component_preview.rb` (namespace папки `lookbook/admin/users/user/`);
+- для каждого сценария — `lookbook/admin/users/user/edit_component_preview/<scenario>.html.erb`;
+- папка превью зеркалит sidecar-структуру компонента (тот же namespace/путь от `lookbook/`), чтобы компонент рендерился в LookBook автоматически.
+Превью ОБЯЗАНО присутствовать наравне со sidecar набором (шаблон, YAML[4], JS, CSS) — это часть «полного набора» компонента.
+
 ## 3. АРХИТЕКТУРНЫЙ ПОТОК (эталон, обязательный)
 - Цепочка: Controller/Reflex (доступ/Pundit) -> Service (бизнес-логика) -> Model (только данные) -> PaperTrail -> VersionObserverJob -> Broadcaster -> CableReady -> ActionCable -> DOM.
 - **Reflex**: `morph :nothing` + `deep_symbolize_keys(params)` + `authorize_with_pundit!` → делегирует в Service. НЕ рендерит DOM после сохранения (обновление — только через Broadcaster).
