@@ -272,6 +272,7 @@ Rails `check_box` генерирует пару инпутов с одним `na
 - Sidecar-папка с одноимённым именем: `html.erb` + `css` + `controller.js` + 4 yml (en/ru/es/zh) — **полный набор, всегда** (даже пустые JS/CSS).
 - Корневой тег шаблона: `data-controller="kebab-case-name"`.
 - Partial'ы запрещены. Инлайн `<script>`/`<style>` запрещены.
+- **Lookbook-превью обязательно**: для каждого нового компонента создаётся превью `lookbook/<namespace>/<component>_preview.rb` (+ `lookbook/<namespace>/<component>_preview/<scenario>.html.erb` для каждого сценария), чтобы компонент рендерился в LookBook. Папка превью зеркалит sidecar-структуру компонента (тот же namespace/имя).
 
 ### Стиль и цвета
 - Только зелено-голубая гамма Tailwind (`emerald`, `teal`, `sky`). Кастомные стили запрещены.

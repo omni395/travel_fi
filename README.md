@@ -294,6 +294,7 @@ Full description — in [`.roo/rules/01-INSTRUCTIONS.md`](.roo/rules/01-INSTRUCT
 - Sidecar folder with the same name: `html.erb` + `css` + `controller.js` + 4 yml (en/ru/es/zh) — **full set, always** (even empty JS/CSS).
 - Template root tag: `data-controller="kebab-case-name"`.
 - Partials are forbidden. Inline `<script>`/`<style>` are forbidden.
+- **Lookbook preview is mandatory**: every new component CREATEs a matching preview in `lookbook/<namespace>/<component>_preview.rb` (+ `lookbook/<namespace>/<component>_preview/<scenario>.html.erb` for each scenario) so the component renders in the LookBook. The preview folder mirrors the component's sidecar structure (same namespace/name).
 
 ### Style and colors
 - Only the green-blue Tailwind palette (`emerald`, `teal`, `sky`). Custom styles are forbidden.
