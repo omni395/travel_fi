@@ -1,0 +1,21 @@
+---
+es:
+  admin:
+    gamification_settings_component:
+      title: Gamificación (Recompensas y Pool)
+      hint: Los valores se aplican al instante, sin redespliegue.
+      updated: Gamificación actualizada
+      rewards_title: Recompensas (TFT)
+      reward:
+        registration: Registro
+        referral_bonus_referrer: Bono de referido (referidor)
+        referral_bonus_new_user: Bono de referido (nuevo)
+        poi_create: Crear POI
+        poi_photo_add: Foto de POI
+        comment_create: Comentario
+        poi_vote: Voto
+      pool_title: Pool de recompensas
+      pool:
+        lock_days: Período de bloqueo (días)
+        warning_balance: Saldo de advertencia
+        critical_balance: Saldo crítico

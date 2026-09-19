@@ -151,6 +151,22 @@ en:
     osm_import_complete_title: "OSM Import Completed"
     poi_category_updated: "POI category %{category} was updated."
     poi_category_updated_title: "POI Category Updated"
+    poi_comment_new: "New comment on %{poi}."
+    poi_comment_reply: "%{name} replied to your comment on %{poi}."
+    poi_comment_reply_title: "New reply"
+    poi_status_title: "Your POI status changed"
+    poi_status:
+      approved: "Your POI %{name} was approved."
+      rejected: "Your POI %{name} was rejected."
+      updated: "Your POI %{name} was updated."
+    rewards:
+      title: "TFT reward"
+      reward_available: "Your %{amount} TFT tokens are available to claim."
+      reward_locked: "%{amount} TFT was awarded (tokens are locked during the lock period)."
+    badge_earned: "You earned the %{badge} achievement!"
+    badge_earned_title: "New achievement"
+    recommendation: "A POI %{name} appeared in your area of interest."
+    recommendation_title: "Recommendation"
     contract_balance:
       title: "Reward Pool Balance"
       title_warning: "Low Reward Pool Balance"
@@ -179,12 +195,43 @@ en:
       user_updated_by_admin: "Updated"
       profile_updated: "Updated"
       osm_import: "OSM Import"
+      my_poi_status: "My POI status"
+      my_poi_comment: "Comments on my POI"
+      my_poi_photo: "Photos of my POI"
+      reward_available: "Tokens available"
+      reward_locked: "Tokens awarded (locked)"
+      badge_earned: "Achievement earned"
+      recommendations: "Interest-based recommendations"
+      pending_moderation: "POIs for moderation"
+      community_rejected: "Rejected by community"
+      system_alert: "System alerts"
     channels:
       notifications: "In-App"
       email: "Email"
       push: "Push"
 
   admin:
+    comments:
+      index:
+        title: "Comments"
+        subtitle: "Moderate user comments on POIs"
+        filter_body: "Search by text"
+        filter_body_ph: "Comment text..."
+        filter_author: "Search by author"
+        filter_author_ph: "Author name or email..."
+        filter_status: "Status"
+        filter_submit: "Filter"
+        status_all: "All"
+        status_hidden: "Hidden only"
+      show:
+        back: "Back to comments"
+      actions:
+        hide: "Hide"
+        unhide: "Unhide"
+        destroy: "Delete"
+      hide_success: "Comment hidden successfully"
+      unhide_success: "Comment shown successfully"
+      destroy_success: "Comment deleted successfully"
     poi_categories:
       index:
         title: "POI Categories"
@@ -200,6 +247,11 @@ en:
         add_poi: "Add POI"
       new:
         title: "New POI"
+      tabs:
+        details: "Details"
+        map: "Map"
+        audit_log: "Audit Log"
+        comments: "Comments"
     layout:
       loading: "Loading..."
       solid_queue_dashboard: "SolidQueue"

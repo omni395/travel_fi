@@ -11,8 +11,12 @@ export default class extends Controller {
     StimulusReflex.register(this)
   }
 
-  // Отправить обновление настройки через StimulusReflex
+  // Отправить обновление настройки через StimulusReflex.
+  // Передаём нэймспейсный args-объект { field: '<имя_колонки>' } —
+  // рефлекс читает поле из params[:field], а не из dataset элемента,
+  // чтобы инверсию значения брать из актуального состояния БД.
   toggle(event) {
-    this.stimulate('SettingsReflex#update', event.target)
+    const button = event.currentTarget
+    this.stimulate('SettingsReflex#update', { field: button.dataset.fieldValue })
   }
 }

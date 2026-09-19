@@ -1,0 +1,21 @@
+---
+zh:
+  admin:
+    gamification_settings_component:
+      title: 游戏化（奖励与奖池）
+      hint: 数值立即生效，无需重新部署。
+      updated: 游戏化已更新
+      rewards_title: 奖励（TFT）
+      reward:
+        registration: 注册
+        referral_bonus_referrer: 推荐奖励（推荐人）
+        referral_bonus_new_user: 推荐奖励（新用户）
+        poi_create: 创建地点
+        poi_photo_add: 地点照片
+        comment_create: 评论
+        poi_vote: 投票
+      pool_title: 奖励池
+      pool:
+        lock_days: 锁定期（天）
+        warning_balance: 警告余额
+        critical_balance: 临界余额

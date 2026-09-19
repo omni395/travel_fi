@@ -92,7 +92,13 @@ class Poi::ShowComponent < ApplicationComponent
   def panels
     {
       "details" => render(Poi::DetailsComponent.new(poi: poi)),
-      "comments" => render(Poi::CommentsComponent.new(poi: poi, current_user: current_user)),
+      # Комментарии — универсальный Comments::CommentsComponent (корневой comments/).
+      # Контейнер-цель [data-comments-list] размещается ВНУТРИ (на обёртке списка),
+      # а не на корне — чтобы CommentBroadcaster точечно вставлял ноды без вложенности.
+      "comments" => render(Comments::CommentsComponent.new(
+        commentable: poi, current_user: current_user,
+        user_lat: user_lat, user_lng: user_lng
+      )),
       "ratings" => render(Poi::RatingsComponent.new(poi: poi, current_user: current_user)),
       # Контейнер-цель [data-poi-gallery] на обёртке (НЕ на корне компонента —
       # догма inner_html без вложенности). Обновляется Broadcaster/Reflex.

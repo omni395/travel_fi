@@ -15,57 +15,45 @@ class PoiService
   # ---
   # Комментарии
   # ---
+  # Логика управления комментариями (создание/обновление/удаление/ветвление)
+  # вынесена в CommentService (полиморфный контракт, глубина 2 + флоттенинг).
+  # PoiService делегирует, сохраняя единую точку входа для POI.
+  #
 
   #
-  # Создаёт комментарий к POI
+  # Создаёт комментарий к POI (делегирование в CommentService).
   #
   # @param poi [Poi] объект POI
   # @param user [User] автор комментария
   # @param body [String] текст комментария
   # @param parent_id [Integer, nil] ID родительского комментария (опционально)
   # @return [PoiComment]
-  # @raise [CreateError] если ошибка валидации
+  # @raise [CommentService::CreateError] если ошибка валидации
   #
   def self.create_comment(poi:, user:, body:, parent_id: nil)
-    comment = PoiComment.new(
-      poi: poi,
-      user: user,
-      body: body,
-      parent_id: parent_id
-    )
-    comment.save!
-    # Геймификация: награда TFT за комментарий (сумма из config/gamification.yml)
-    GamificationService.award!(:comment_create, user)
-    comment
-  rescue ActiveRecord::RecordInvalid => e
-    raise CreateError, e.message
+    CommentService.create_comment(commentable: poi, user: user, body: body, parent_id: parent_id)
   end
 
   #
-  # Обновляет комментарий
+  # Обновляет комментарий (делегирование в CommentService).
   #
   # @param comment [PoiComment] комментарий
   # @param body [String] новый текст
   # @return [PoiComment]
-  # @raise [UpdateError] если ошибка валидации
+  # @raise [CommentService::UpdateError] если ошибка валидации
   #
   def self.update_comment(comment:, body:)
-    comment.update!(body: body)
-    comment
-  rescue ActiveRecord::RecordInvalid => e
-    raise UpdateError, e.message
+    CommentService.update_comment(comment: comment, body: body)
   end
 
   #
-  # Удаляет комментарий
+  # Удаляет комментарий (делегирование в CommentService).
   #
   # @param comment [PoiComment] комментарий
-  # @raise [DestroyError] если ошибка
+  # @raise [CommentService::DestroyError] если ошибка
   #
   def self.destroy_comment(comment:)
-    comment.destroy!
-  rescue ActiveRecord::RecordNotDestroyed => e
-    raise DestroyError, e.message
+    CommentService.destroy_comment(comment: comment)
   end
 
   #
@@ -188,7 +176,7 @@ class PoiService
     photo = PhotoService.add_photo(record: poi, file: file, user: current_user, audit_touch: true)
     raise CreateError, I18n.t("pois.photo_upload_failed") unless photo
 
-    # Геймификация: награда TFT за добавленное фото (сумма из config/gamification.yml,
+    # Геймификация: награда TFT за добавленное фото (сумма из Setting.gamification_config,
     # ключ poi_photo_add). Начисляется ТОЛЬКО автору (current_user). Обёрнуто в rescue —
     # сбой начисления не роняет загрузку фото (по образцу award_poi_create!).
     begin

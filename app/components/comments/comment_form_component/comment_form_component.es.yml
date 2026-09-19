@@ -1,0 +1,10 @@
+es:
+  comments:
+    comment_form_component:
+      placeholder: "Escribe un comentario..."
+      reply_placeholder: "Escribe una respuesta..."
+      submit: "Comentar"
+      reply_submit: "Responder"
+      save: "Guardar"
+      replying_to: "respondiendo a %{name}"
+      deleted_user: "usuario eliminado"

@@ -115,6 +115,18 @@ ru:
       user_updated_by_admin: "Обновлён"
       profile_updated: "Изменён"
       osm_import: "Импорт OSM"
+      # Юзер-события
+      my_poi_status: "Статус моей точки"
+      my_poi_comment: "Комментарии к моей точке"
+      my_poi_photo: "Фото моей точки"
+      reward_available: "Токены доступны"
+      reward_locked: "Токены начислены (заблокированы)"
+      badge_earned: "Получена ачивка"
+      recommendations: "Рекомендации по интересам"
+      # Админ-события
+      pending_moderation: "Точки на модерации"
+      community_rejected: "Отклонено сообществом"
+      system_alert: "Системные алерты"
     channels:
       notifications: "В приложении"
       email: "Email"
@@ -136,6 +148,22 @@ ru:
     osm_import_complete_title: "Импорт OSM завершён"
     poi_category_updated: "Категория POI «%{category}» обновлена."
     poi_category_updated_title: "Категория POI обновлена"
+    poi_comment_new: "Новый комментарий к «%{poi}»."
+    poi_comment_reply: "%{name} ответил(а) на ваш комментарий к «%{poi}»."
+    poi_comment_reply_title: "Новый ответ"
+    poi_status_title: "Статус вашей точки изменён"
+    poi_status:
+      approved: "Ваша точка «%{name}» одобрена."
+      rejected: "Ваша точка «%{name}» отклонена."
+      updated: "Ваша точка «%{name}» обновлена."
+    rewards:
+      title: "Награда TFT"
+      reward_available: "Ваши токены %{amount} TFT доступны для получения."
+      reward_locked: "Вам начислено %{amount} TFT (токены заблокированы лок-периодом)."
+    badge_earned: "Вы получили ачивку «%{badge}»!"
+    badge_earned_title: "Новая ачивка"
+    recommendation: "В вашей зоне интересов появилась точка «%{name}»."
+    recommendation_title: "Рекомендация"
     contract_balance:
       title: "Баланс наградного пула"
       title_warning: "Низкий баланс наградного пула"
@@ -144,6 +172,27 @@ ru:
       critical: "Баланс наградного пула критически низкий: %{balance} TFT (ниже критического порога %{critical_balance})."
 
   admin:
+    comments:
+      index:
+        title: "Комментарии"
+        subtitle: "Модерация комментариев пользователей к POI"
+        filter_body: "Поиск по тексту"
+        filter_body_ph: "Текст комментария..."
+        filter_author: "Поиск по автору"
+        filter_author_ph: "Имя или email автора..."
+        filter_status: "Статус"
+        filter_submit: "Фильтр"
+        status_all: "Все"
+        status_hidden: "Только скрытые"
+      show:
+        back: "Назад к комментариям"
+      actions:
+        hide: "Скрыть"
+        unhide: "Показать"
+        destroy: "Удалить"
+      hide_success: "Комментарий скрыт"
+      unhide_success: "Комментарий показан"
+      destroy_success: "Комментарий удалён"
     poi_categories:
       index:
         title: "Категории POI"
@@ -154,6 +203,11 @@ ru:
         file_required: "Выберите файл изображения для загрузки"
         unauthorized: "У вас нет прав на изменение картинки-маркера категории"
     pois:
+      tabs:
+        details: "Детали"
+        map: "Карта"
+        audit_log: "Журнал аудита"
+        comments: "Комментарии"
       index:
         title: "POI"
         add_poi: "Добавить POI"

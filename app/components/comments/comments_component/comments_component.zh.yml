@@ -1,0 +1,10 @@
+zh:
+  comments:
+    comments_component:
+      title: "评论"
+      sort_new: "最新"
+      sort_best: "最佳"
+      write_placeholder: "评论 %{name}"
+      write_placeholder_generic: "写评论"
+      login_hint: "登录后发表评论"
+      empty: "暂无评论，快来抢占沙发！"

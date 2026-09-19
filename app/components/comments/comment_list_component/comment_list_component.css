@@ -1,0 +1,6 @@
+/* Comments::CommentListComponent — стили контейнера списка */
+.comment-list-component {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}

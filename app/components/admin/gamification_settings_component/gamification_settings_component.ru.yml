@@ -1,0 +1,21 @@
+---
+ru:
+  admin:
+    gamification_settings_component:
+      title: Геймификация (Награды и Пул)
+      hint: Значения применяются мгновенно, без редеплоя.
+      updated: Геймификация обновлена
+      rewards_title: Награды (TFT)
+      reward:
+        registration: Регистрация
+        referral_bonus_referrer: Реферальный бонус (реферер)
+        referral_bonus_new_user: Реферальный бонус (новичок)
+        poi_create: Создание POI
+        poi_photo_add: Фото POI
+        comment_create: Комментарий
+        poi_vote: Голос
+      pool_title: Наградный пул
+      pool:
+        lock_days: Лок-период (дни)
+        warning_balance: Предупреждающий баланс
+        critical_balance: Критический баланс

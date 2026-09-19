@@ -1,0 +1,47 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/admin/comments/index.html.erb — список комментариев (модерация)
+#
+# Контейнер-цель [data-admin-comments-list] на обёртке (НЕ на корне компонента) —
+# догма inner_html без вложенности: бродкастер/reflex обновляют только #inner_html.
+# %>
+
+<div class="max-w-6xl mx-auto">
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.comments.index.title") }
+  ]) %>
+
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-gray-900"><%= t("admin.comments.index.title") %></h1>
+    <p class="text-sm text-gray-500 mt-1"><%= t("admin.comments.index.subtitle") %></p>
+  </div>
+
+  <%# Ransack-фильтр (общий admin.comments.* i18n) %>
+  <%= form_with url: admin_comments_path, method: :get, class: "mb-6" do |f| %>
+    <div class="flex gap-3 items-end">
+      <div class="flex-1">
+        <%= f.label :q, t("admin.comments.index.filter_body"), class: "block text-xs font-medium text-gray-500 mb-1" %>
+        <%= f.text_field "q[body_cont]", value: @q.body_cont, class: "w-full rounded-md border border-teal-200 focus:border-teal-500 focus:ring-teal-500 text-sm p-2", autocomplete: "off", placeholder: t("admin.comments.index.filter_body_ph") %>
+      </div>
+      <div class="flex-1">
+        <%= f.label :q_author, t("admin.comments.index.filter_author"), class: "block text-xs font-medium text-gray-500 mb-1" %>
+        <%= f.text_field "q[user_name_or_user_email_cont]", value: @q.user_name_or_user_email_cont, class: "w-full rounded-md border border-teal-200 focus:border-teal-500 focus:ring-teal-500 text-sm p-2", autocomplete: "off", placeholder: t("admin.comments.index.filter_author_ph") %>
+      </div>
+      <div class="w-40">
+        <%= f.label :q_hidden, t("admin.comments.index.filter_status"), class: "block text-xs font-medium text-gray-500 mb-1" %>
+        <%= f.select "q[hidden_at_present]", [[t("admin.comments.index.status_all"), ""], [t("admin.comments.index.status_hidden"), "true"]], {}, class: "w-full rounded-md border border-teal-200 focus:border-teal-500 focus:ring-teal-500 text-sm p-2" %>
+      </div>
+      <div>
+        <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: { type: "submit" }) do %>
+          <%# Иконка: mdi-magnify %>
+          <i class="mdi mdi-magnify mr-1"></i><%= t("admin.comments.index.filter_submit") %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div data-admin-comments-list>
+    <%= render Admin::Comments::TableComponent.new(comments: @comments, pagy: @pagy) %>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+zh:
+  comments:
+    comment_component:
+      reply: "回复"
+      edit: "编辑"
+      delete: "删除"
+      replying_to: "回复 %{name}"
+      show_replies:
+        one: "显示 %{count} 条回复"
+        other: "显示 %{count} 条回复"
+      hide_replies: "隐藏回复"
+      confirm_delete: "删除此评论？"

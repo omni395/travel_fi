@@ -1,0 +1,6 @@
+ru:
+  admin:
+    comments:
+      row_component:
+        hidden: "Скрыт"
+        visible: "Виден"

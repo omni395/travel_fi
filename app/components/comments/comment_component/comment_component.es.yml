@@ -1,0 +1,12 @@
+es:
+  comments:
+    comment_component:
+      reply: "Responder"
+      edit: "Editar"
+      delete: "Eliminar"
+      replying_to: "respondiendo a %{name}"
+      show_replies:
+        one: "Mostrar %{count} respuesta"
+        other: "Mostrar %{count} respuestas"
+      hide_replies: "Ocultar respuestas"
+      confirm_delete: "¿Eliminar este comentario?"

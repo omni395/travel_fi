@@ -21,7 +21,7 @@
       <div class="flex items-center space-x-2">
         <%# 1. Гамбургер-меню (мобильное) %>
         <div class="md:hidden">
-          <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-teal-600 to-sky-600 text-white border border-white/20 shadow-xl") do |dropdown| %>
+          <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-primary to-secondary text-white border border-white/20 shadow-xl") do |dropdown| %>
             <% dropdown.with_trigger do %>
               <button type="button" data-action="click->ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 p-2 rounded-md transition-colors duration-200 cursor-pointer" aria-label="<%= t(".toggle_menu") %>">
                 <i class="mdi mdi-menu text-xl"></i>
@@ -50,7 +50,7 @@
             <span class="hidden md:inline ml-1"><%= t(".register") %></span>
           <% end %>
         <% else %>
-          <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-teal-600 to-sky-600 text-white border border-white/20 shadow-xl") do |dropdown| %>
+          <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-primary to-secondary text-white border border-white/20 shadow-xl") do |dropdown| %>
             <% dropdown.with_trigger do %>
               <button type="button" data-action="click->ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 px-3 py-2 rounded-md transition-colors duration-200 cursor-pointer">
                 <div class="w-8 h-8 rounded-full overflow-hidden border border-white/30">
@@ -90,7 +90,7 @@
         <% end %>
 
         <%# 3. Дропдаун выбора языка (без иконок) %>
-        <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-teal-600 to-sky-600 text-white border border-white/20 shadow-xl") do |dropdown| %>
+        <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-primary to-secondary text-white border border-white/20 shadow-xl") do |dropdown| %>
           <% dropdown.with_trigger do %>
             <button type="button" data-action="click->ui--dropdown-component#toggle" class="flex items-center text-white hover:bg-white/10 px-3 py-2 rounded-md transition-colors duration-200 cursor-pointer">
               <span class="text-white font-medium"><%= t(".languages.#{I18n.locale}") %></span>

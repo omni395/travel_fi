@@ -92,6 +92,16 @@ es:
       user_updated_by_admin: "Actualizado"
       profile_updated: "Actualizado"
       osm_import: "Importación OSM"
+      my_poi_status: "Estado de mi POI"
+      my_poi_comment: "Comentarios en mi POI"
+      my_poi_photo: "Fotos de mi POI"
+      reward_available: "Tokens disponibles"
+      reward_locked: "Tokens otorgados (bloqueados)"
+      badge_earned: "Logro obtenido"
+      recommendations: "Recomendaciones por intereses"
+      pending_moderation: "POIs en moderación"
+      community_rejected: "Rechazado por la comunidad"
+      system_alert: "Alertas del sistema"
     channels:
       notifications: "En App"
       email: "Email"
@@ -114,6 +124,22 @@ es:
     osm_import_complete_title: "Importación OSM completada"
     poi_category_updated: "La categoría de POI %{category} fue actualizada."
     poi_category_updated_title: "Categoría de POI actualizada"
+    poi_comment_new: "Nuevo comentario en %{poi}."
+    poi_comment_reply: "%{name} respondió a tu comentario en %{poi}."
+    poi_comment_reply_title: "Nueva respuesta"
+    poi_status_title: "El estado de tu POI cambió"
+    poi_status:
+      approved: "Tu POI %{name} fue aprobado."
+      rejected: "Tu POI %{name} fue rechazado."
+      updated: "Tu POI %{name} fue actualizado."
+    rewards:
+      title: "Recompensa TFT"
+      reward_available: "Tus %{amount} TFT están disponibles para reclamar."
+      reward_locked: "Recibiste %{amount} TFT (los tokens están bloqueados durante el período de bloqueo)."
+    badge_earned: "¡Obtuviste el logro %{badge}!"
+    badge_earned_title: "Nuevo logro"
+    recommendation: "Apareció un POI %{name} en tu área de interés."
+    recommendation_title: "Recomendación"
     contract_balance:
       title: "Saldo del pool de recompensas"
       title_warning: "Saldo bajo del pool de recompensas"
@@ -122,6 +148,27 @@ es:
       critical: "El saldo del pool de recompensas es críticamente bajo: %{balance} TFT (por debajo del umbral crítico %{critical_balance})."
 
   admin:
+    comments:
+      index:
+        title: "Comentarios"
+        subtitle: "Moderar comentarios de usuarios en POI"
+        filter_body: "Buscar por texto"
+        filter_body_ph: "Texto del comentario..."
+        filter_author: "Buscar por autor"
+        filter_author_ph: "Nombre o email del autor..."
+        filter_status: "Estado"
+        filter_submit: "Filtrar"
+        status_all: "Todos"
+        status_hidden: "Solo ocultos"
+      show:
+        back: "Volver a comentarios"
+      actions:
+        hide: "Ocultar"
+        unhide: "Mostrar"
+        destroy: "Eliminar"
+      hide_success: "Comentario ocultado"
+      unhide_success: "Comentario mostrado"
+      destroy_success: "Comentario eliminado"
     poi_categories:
       index:
         title: "Categorías de POI"
@@ -132,6 +179,11 @@ es:
         file_required: "Elige un archivo de imagen para subir"
         unauthorized: "No tienes permiso para cambiar el icono de esta categoría"
     pois:
+      tabs:
+        details: "Detalles"
+        map: "Mapa"
+        audit_log: "Registro de auditoría"
+        comments: "Comentarios"
       index:
         title: "POIs"
         add_poi: "Añadir POI"

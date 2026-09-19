@@ -64,6 +64,12 @@ module TravelFi
 
     # Don't generate system test files.
     config.generators.system_tests = nil
-    config.lookbook.preview_paths = [ Rails.root.join("lookbook") ]
+
+    # Lookbook гем объявлен только в группе :development (Gemfile). В test-окружении
+    # (например, assets:precompile) config.lookbook недоступен — оборачиваем в
+    # respond_to?, чтобы загрузка приложения не падала NoMethodError.
+    if config.respond_to?(:lookbook)
+      config.lookbook.preview_paths = [ Rails.root.join("lookbook") ]
+    end
   end
 end

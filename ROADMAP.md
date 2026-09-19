@@ -30,8 +30,10 @@ Travel Fi
 │   ├── 3.2 Users            (/admin-panel/users)    ✅
 │   ├── 3.3 PoiCategories    (/admin-panel/poi_categories)  ✅
 │   ├── 3.4 Pois             (/admin-panel/pois)     🟡
-│   ├── 3.5 Settings         (/admin-panel/settings) ✅
-│   └── 3.6 Contract Mgmt    🔴 (planned)
+│   ├── 3.5 Voting           (/admin-panel)          ✅
+│   ├── 3.6 Settings         (/admin-panel/settings) ✅
+│   ├── 3.7 Comments         (/admin-panel/comments) ✅
+│   └── 3.8 Contract Mgmt    🔴 (planned)
 ├── 4. Horizontal layers
 │   ├── 4.1 Auth & Roles     ✅
 │   ├── 4.2 Gamification & Web3  🟡
@@ -80,7 +82,7 @@ Travel Fi
 
 **Chain:** `PoisController` (index/view) → [`PoiReflex`](app/reflexes/poi_reflex.rb:16) (load_pois_in_bounds, load_more_pois, filter_by_categories, apply_filters, reset_filters, show_detail, show_detail_modal, edit_poi, create_comment, reverse_geocode, set_location, show_geolocation_toast) → [`PoiService`](app/services/poi_service.rb:12) → PostGIS (`within_bounds`/`within_meters`) → [`PoiBroadcaster`](app/broadcasters/poi_broadcaster.rb:12) / `ToastBroadcaster` → `UserChannel` / `AdminChannel`
 
-**Components:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Modals: `Poi::DetailsComponent`, `Poi::GalleryComponent`; the voting tab — `Poi::RatingsComponent` (readonly rating + `Vote::VoteComponent`).
+**Components:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Ui::SidebarComponent`. Modals: `Poi::DetailsComponent`, `Poi::GalleryComponent`; the voting tab — `Poi::RatingsComponent` (readonly rating + `Ui::VoteComponent`); the comments tab — universal `Comments::CommentsComponent`/`CommentComponent`/`CommentFormComponent`/`CommentListComponent` (root `comments/` namespace).
 
 **Status:** 🟡 Partial
 
@@ -94,8 +96,10 @@ Travel Fi
 - ✅ Gallery: grid + lightbox/slider + add/delete photos directly in the POI card. Model `Photo` (`poi_id`/`user_id`/`position`) with `has_one_attached :image`; own photos first (`Photo.author_first`); add photo via HTTP/multipart (`Poi::PhotosController`, 100m anti-fraud `within_range?`); delete via `PoiReflex#remove_photo` (author/admin/moderator); live update via `VersionObserverJob` → `PoiBroadcaster` `inner_html [data-poi-gallery]` + `PoiReflex#refresh_gallery`. Covered by `spec/system/user/poi_spec.rb`, `spec/system/admin/pois_spec.rb`, `spec/models/photo_spec.rb`, `spec/services/poi_service_spec.rb`.
 - ✅ Photo binaries via HTTP/multipart (`Poi::PhotosController#create`, JSON) — closed debt of binaries through Reflex.
 - ✅ 100m proximity check for comments/editing (`check_proximity!`, `PoiCommentPolicy`)
-- ✅ Live comments: `PoiCommentBroadcaster` + the `PoiComment` branch in `VersionObserverJob` (to the author); correct 100m proximity-check (Boolean + SRID 4326, anti-fraud no longer "always passes")
-- ✅ TFT rewards for POI creation/comment (`GamificationService.award!(:poi_create/:comment_create)`, amounts from `config/gamification.yml`)
+- ✅ **Full threaded comments** (depth 2 + "reply-to-a-reply" flatting into the root): model `PoiComment` (`root_id`/`depth`/`children_count`/`hidden_at`), universal `CommentService` (polymorphic contract, gaming flow), `Comments::*` components (root namespace), live for everyone via `PoiCommentBroadcaster` (targeted `insert_adjacent_html` into `[data-comments-list]` on the `pois_map` stream + reply notification to the thread author via `PoiCommentNotification`/Noticed); `PoiReflex` (create/update/destroy/sort/expand); 100m proximity (`PoiCommentPolicy`).
+- ✅ Live comments for everyone (not only the author): targeted insertion of a new comment/reply node into `[data-comments-list]` via `PoiCommentBroadcaster`, best/new sorting, thread collapsing, voting via `Ui::VoteComponent` (polymorphic `VoteService.tally`).
+- ✅ Moderation (core): `hidden_at` field, `visible`/`roots` scopes, flatting, auto-hide on the dislike threshold — in `ModerationService` (admin section — in progress, see 3.x).
+- ✅ TFT rewards for POI creation/comment (`GamificationService.award!(:poi_create/:comment_create)`, amounts from `Setting.gamification_config`)
 - ✅ Live map: `poi:reload-features` → re-query from the server; fallback marker loading in `map_component_controller.js` (retry `_loadPoisInBounds`)
 - ✅ OSM import: the POIs tab updates incrementally (`inner_html [data-poi-category-pois]` every 10 imports), without `morph` card duplicates
 - ✅ Reverse geocoding when opening the edit form (mini map in edit mode, autofill of address/city/country/zip)
@@ -109,7 +113,7 @@ Travel Fi
 
 **Wishlist:**
 - 🔴 `PoiRating` — 5-star system + aggregation into `poi.rating`
-- 🔴 Comments: live for everyone + threaded replies
+- 🔴 Comments: A/B specs (browser A→B) for live, Lookbook previews (admin moderation section is Done — see 3.7)
 - 🔴 OSRM: route building to a POI + a line on the map
 - 🔴 Offline mode (PWA): tiles + list (IndexedDB)
 - ✅ **OSM field mapping:** a category field can be bound to OSM tags via `osm_keys`/`osm_value_map`/`osm_transform` (admin-configurable in the field modal). On import, `pois.metadata` contains ONLY registered category fields, converted to app types (`OsmValueTransformer` — boolean/number/list/map). Covered by `spec/services/osm_value_transformer_spec.rb`, `spec/services/osm_import_service_spec.rb`.
@@ -144,7 +148,7 @@ Travel Fi
 - ✅ Name + avatar editing (via Broadcaster)
 - ✅ Notification settings on `/:slug/settings` (see 2.4)
 - ✅ Pundit: own profile or admin
-- ✅ `User#badges` — badges by `badge_ids` via `gamification.yml` (the profile does not crash)
+- ✅ `User#badges` — badges by `badge_ids` via `Setting.gamification_config` (the profile does not crash)
 - ✅ Live name update via `UserBroadcaster`: rendering from a job fixes `I18n.with_locale(default)`, `cable_controller.js` applies CableReady operations one by one (per-op try/catch)
 - ✅ `inactive` automation: `UserInactivityJob` (active without activity 6+ months → inactive) + `UserService.mark_inactive_old_users` + a record in `config/recurring.yml`
 
@@ -164,15 +168,19 @@ Travel Fi
 
 **Route:** `/:slug/settings` — [`Users::SettingsController#show`](app/controllers/users/settings_controller.rb:10)
 
-**Chain:** `SettingsReflex#update` ([`app/reflexes/settings_reflex.rb`](app/reflexes/settings_reflex.rb:5)) → [`SettingService.update`](app/services/setting_service.rb:3) → [`SettingBroadcaster`](app/broadcasters/setting_broadcaster.rb:11) → `user_<id>` (toast)
+**Chain:** `SettingsReflex#update` ([`app/reflexes/settings_reflex.rb`](app/reflexes/settings_reflex.rb:10)) → `SettingService.toggle` (inversion from DB) → `ToastBroadcaster` → `user_<id>` (toast)
 
 **Components:** [`Settings::FieldComponent`](app/components/settings/field_component.rb:1) (including the admin set via `admin/settings`)
 
 **Status:** ✅ Done
 
-**Done:**
-- ✅ Event switches (in-app / email / push) for the user
-- ✅ Autosave via Reflex + toast (toasts only via broadcast, without local renders)
+**Done (settings-refactor):**
+- ✅ Toggle fixed: field from args-params, inversion from the actual DB state (`SettingService.toggle`), CSS state by `aria-checked` via CableReady
+- ✅ `SettingService` with `PERMITTED_FIELDS` (allowlist) — mass-assignment protection
+- ✅ User event set: `my_poi_status`, `my_poi_comment`, `my_poi_photo`, `reward_available`, `reward_locked`, `badge_earned`, `recommendations`, `profile_updated`
+- ✅ Channel master flags (`notifications_enabled`, `email_enabled`, `push_enabled`) — primary filter in `SettingFilterable`
+- ✅ Notifications filtered by event: `PoiCommentNotification`, `PoiStatusNotification`, `RewardNotification`, `BadgeNotification`, `RecommendedPoiNotification`
+- ✅ **Empirical recommendations:** `PoiView` entity (card views), `PoiViewService.record`, `RecommendedPoiJob` (SolidQueue recurring every 6h, limit 5) with interest formula `interest(category)=Σ recency_weight(view)` (exponential decay by age)
 
 **Wishlist:**
 - 🔴 Email/push verification before enabling channels
@@ -369,9 +377,9 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
 
 **TODO / debts:**
 - 🔴 **Suggested Edits (edit proposals, 100m consensus):** "Report an error" for non-author users within 100m → `SuggestedEdit` (pending_review) → apply by consensus (author / 2-3 independent local users / reputation) → `SuggestedEditService.apply!` via `Poi.update!` (PaperTrail → `handle_poi_update` → `PoiBroadcaster`). Modes: **Quick Toggles** (works/closed flags — Up/Down via `Vote`, low threshold from `Setting`, `poi.status` unchanged) / **Attributes** (only via proposal + consensus) / **Locked** (coordinates/category/status — admin only). Authorship window (direct edit by the author) + auto-expiry (`SuggestedEditExpiryJob`). Consensus thresholds in `Setting` (`suggestion_consensus_threshold`, `high_reputation_threshold`).
-- 🔴 Behavior for photos/comments on community reject (hide/show/delete) — deferred (currently only vote collection).
+- 🔴 Behavior for photos/comments on community reject — **comment hiding core is implemented** (`hidden_at` + auto-hide by the dislike threshold via `ModerationService`); PHOTO behavior on reject — deferred (currently only vote collection).
 - 🔴 Tie reputation to gamification levels (badges) — planned, on top of `ReputationService.reckon!` (author reputation accumulates; `suspended`/`banned` — decided ONLY by the admin via existing `Admin::UserService`).
-- ⚠️ **Photo voting is embedded in the gallery** (`Poi::GalleryComponent` renders `Vote::VoteComponent` in `[data-vote-zone="photo-<id>"]`; live by the `pois_map` stream). Deferred — only comment voting (`PoiComment` requires embedding `[data-vote-zone="poi_comment-<id>"]` in the comments list).
+- ✅ **Photo and comment voting in UI:** photos — `Poi::GalleryComponent` (`[data-vote-zone="photo-<id>"]`); comments — `Comments::CommentComponent` (`[data-vote-zone="poi_comment-<id>"]`), both via `Ui::VoteComponent` + live by the `pois_map` stream.
 - ⚠️ `reputation` field on `User` (integer) — not yet present in `db/schema.rb`.
 
 ---
@@ -380,14 +388,16 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
 
 **Route:** `/admin-panel/settings` (resource :settings, only: show) — [`Admin::SettingsController`](app/controllers/admin/settings_controller.rb:1)
 
-**Chain:** `SettingsReflex#update` → `SettingService.update` → `SettingBroadcaster` → `user_<id>` (admin as a regular user)
+**Chain:** `SettingsReflex#update` → `SettingService.toggle` → `ToastBroadcaster` → `user_<id>` (admin as a regular user)
 
 **Components:** [`Settings::FieldComponent`](app/components/settings/field_component.rb:1), `Ui::AuditEntryComponent`, `Ui::BreadcrumbsComponent`
 
 **Status:** ✅ Done
 
 **Done:**
-- ✅ All event types (including admin ones: new_registration, user_updated_by_admin, etc.)
+- ✅ "Dead" user-status switches removed from the admin set (pending_verification, suspended/banned/deleted_user, etc.); kept meaningful ones: `new_registration`, `user_updated_by_admin`, `osm_import`, `pending_moderation`, `community_rejected`, `system_alert`
+- ✅ Gamification moved from `config/gamification.yml` into `Setting.global.gamification_config` (rewards + pool + badges) — values edited in settings without redeploy
+- ✅ **Gamification edit form in admin:** `Admin::GamificationSettingsComponent` (rewards + pool numeric fields) → `Admin::GamificationSettingsReflex#update` → `SettingService.update_gamification` (updates `gamification_config` JSONB on the fly)
 - ✅ Autosave + toast + Settings audit feed
 
 **Wishlist:**
@@ -405,6 +415,33 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
 **Wishlist:**
 - 🔴 Mint/rate/pause/rewards via the admin
 - 🔴 `ContractSnapshot` (contract monitoring): model `contract_type`/`data jsonb`/`created_at` with rotation (no monitoring code yet)
+
+**Bugs/Debts:**
+- ⚠️ —
+
+### 3.7 Comments (admin moderation)
+
+**Routes:** `/admin-panel/comments` (index/show/hide/unhide) — [`Admin::CommentsController`](app/controllers/admin/comments_controller.rb:11)
+
+**Chain:** `Admin::CommentsReflex` (filter/sort — read, `inner_html`; hide/unhide/destroy — `morph :nothing` + service) → [`CommentModerationService`](app/services/comment_moderation_service.rb:1) / `CommentService` → PaperTrail → `VersionObserverJob` (`handle_poi_comment_update` → `Admin::CommentAdminBroadcaster` inner_html `[data-admin-comments-list]` + `PoiCommentBroadcaster` removal for public viewers) → `AdminChannel`/`pois_map`
+
+**Components:** `Admin::Comments::TableComponent`, `RowComponent`, `Admin::Comments::PoiComment::ShowComponent`; the admin-POI "Comments" tab renders `Comments::CommentsComponent` in `moderation: true` (`[data-poi-comments]` wrapper)
+
+**Policy:** [`Admin::CommentPolicy`](app/policies/admin/comment_policy.rb:1) — index/show/hide/unhide: admin or moderator
+
+**Status:** ✅ Done
+
+**Done:**
+- ✅ Comments list with Ransack filter (body/author/hidden_at) + pagination (pagy, `PER_PAGE = 20`)
+- ✅ Detail page: comment text/author, parent/children precedence, audit (`Ui::AuditEntryComponent`), hide/unhide/delete actions
+- ✅ Hide/unhide via `CommentModerationService` (idempotent `update!` → PaperTrail → double broadcast: admin table + public node removal)
+- ✅ `PoiCommentBroadcaster` destroy → `remove` of `[data-comment-id='...']` for public viewers
+- ✅ Admin-POI "Comments" tab (moderation mode)
+- ✅ `ModerationService.apply_comment_moderation`: auto-hide at the dislike threshold and auto-unhide on a sustained upvote lead (threshold from `Setting.global_threshold`, global singleton record)
+
+**Wishlist:**
+- 🔴 Lookbook previews for `Admin::Comments::*`
+- 🔴 A/B system specs (browser A→B) for live comments
 
 **Bugs/Debts:**
 - ⚠️ —
@@ -429,7 +466,7 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
 - ✅ **Auto-retry of failed relays:** `TokenTransactionRetryJob` (recurring every 15 min) finds `status: failed` + `tx_hash: nil` and resends via `relay!` only the instant/available-by-lock-period ones (vesting, not yet unlocked, — wait for claim).
 - ✅ **Crediting point = active status:** welcome tokens and referral bonuses are credited ONLY to an active account. Email — after confirmation (`ConfirmationsController#show`, the wallet is created before crediting); OAuth — immediately (the user is active). The referral relation (`referred_by`) is fixed at registration (`UserService.save_referral!`) — survives confirmation.
 - ⚠️ **OAuth refcode:** the backend accepts the refcode — `User.from_google_oauth(auth, referral_code_input)` passes `?ref=`/`session[:referral_code]` into `UserService.handle_google_oauth` (ref credits work when the code is passed). But the OAuth flow has NO UI for entering the refcode and the authorize button does not form `?ref=` → a full referral scenario via OAuth is unavailable until the UI part is implemented (see wishlist §2.4).
-- ✅ **Pool config + monitoring:** the `pool` section in `config/gamification.yml` (`lock_days`, `warning_balance`, `critical_balance`); `ContractBalanceCheckJob` (SolidQueue recurring) reads the pool balance via `TokenTransactionService.balance_of` and sends admins `ContractBalanceNotification` (Noticed) when the balance is low (yellow/red banner in the interface — later, with components).
+- ✅ **Pool config + monitoring:** the `pool` section in `Setting.gamification_config` (`lock_days`, `warning_balance`, `critical_balance`, previously — `config/gamification.yml`); `ContractBalanceCheckJob` (SolidQueue recurring) reads the pool balance via `TokenTransactionService.balance_of` and sends admins `ContractBalanceNotification` (Noticed) when the balance is low (yellow/red banner in the interface — later, with components).
 - ✅ **ECDSA signature on Ruby 3.4:** [`Crypto::Ethereum#ecdsa_sign`](lib/crypto/ethereum.rb:231) — point coordinates are extracted via `to_octet_string(:uncompressed)` (the `OpenSSL::PKey::EC::Point` API has no `#x/#y`); `sign_transaction` is covered by a test
 - ✅ **Dev check (Base Sepolia):** run `bin/jobs` → register a user → the relay job will send a mint → the transaction in the explorer, in the admin an explorer link (4+4 excerpt); `balanceOf(custodial)` == off-chain `token_balance`. RSpec RPC is **mocked** (WebMock) — the real network is not touched in tests
 - ✅ **Custodial wallet:** the `Wallet` model (`kind: custodial/external`), `WalletService.create_hidden_wallet` (EIP-55, private key encryption `MessageEncryptor`), generation in Ruby without new gems ([`Crypto::Ethereum`](lib/crypto/ethereum.rb:1) — OpenSSL secp256k1 + keccak256 + EIP-55). Email — after confirmation, OAuth — immediately.
@@ -447,7 +484,7 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
   - **`sendRewardBatch` — ONLY for promotions/bulk rewards** (several users in one tx), not as a regular process.
   - **Banner "available Y to withdraw / Z on balance":** backend calculation from `TokenTransaction` scopes — `available` (unlocked by `updated_at` AND `claimed == false`), `locked` (the lock period has not passed yet). No manual counter needed.
   - **Claim flow:** button → Service (`UserService.claim_rewards!`) → collects `available` credits → queues the relay Job → on success `claimed = true` (and `updated_at` updates → audit → broadcast).
-- 🔴 **Move all dynamic gamification settings from `config/gamification.yml` into the `Setting` entity + UI in the admin `/admin-panel/settings`:** not only the pool (`rewards_lock_days`, `pool_warning_balance`, `pool_critical_balance`), but also reward amounts (registration 10, referral 15+5, poi_create/photo/comment/vote) and badge thresholds (first_poi, contributor, explorer, recruiter, veteran, …). `GamificationService` reads from `Setting` (fallback to YAML defaults before the first save); a form (numeric inputs/thresholds) via the `SettingsReflex#update` → `SettingService.update` → `SettingBroadcaster` pipeline; PaperTrail audit; on-chain lock synchronization via `setLockDays`. **While the settings remain in YAML — the full migration later as a separate task.**
+- ✅ **Move all dynamic gamification settings from `config/gamification.yml` into the `Setting` entity + UI in the admin `/admin-panel/settings` (settings-refactor):** rewards + pool + badges moved into `Setting.global.gamification_config` (JSONB); `GamificationService`/`ContractBalanceCheckJob` read from `Setting.gamification_config` (fallback to `Setting::GAMIFICATION_DEFAULTS`); default backfill rake `gamification:backfill_config`; **`config/gamification.yml` removed**. Edit UI — `Admin::GamificationSettingsComponent` (rewards + pool numeric fields) → `Admin::GamificationSettingsReflex#update` → `SettingService.update_gamification` (updates `gamification_config` JSONB on the fly).
 - 🔴 **TFT reward for reaching a level (rating system):** when crossing the `token_balance` threshold (level from config) → a one-time reward by the two-stage §4.2 scheme (new `action_key`, e.g. `level_up`). Implemented together with the rating system.
 - 🔴 **Promotions / bulk rewards via `sendRewardBatch`:** one-off campaigns awarding a group of users in one tx (promotions, giveaways, community bonuses). A separate feature on top of the two-stage scheme.
 
