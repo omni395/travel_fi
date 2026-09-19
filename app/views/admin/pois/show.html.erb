@@ -36,7 +36,8 @@
           tabs: [
             { id: "details",   name: t("admin.pois.tabs.details"),   icon: "mdi-information-outline" },
             { id: "map",       name: t("admin.pois.tabs.map"),       icon: "mdi-map" },
-            { id: "audit_log", name: t("admin.pois.tabs.audit_log"), icon: "mdi-clipboard-text-search" }
+            { id: "audit_log", name: t("admin.pois.tabs.audit_log"), icon: "mdi-clipboard-text-search" },
+            { id: "comments",  name: t("admin.pois.tabs.comments"),  icon: "mdi-comment-text-outline" }
           ],
           active_tab: active_tab,
           panels: {
@@ -50,6 +51,15 @@
               else
                 concat render(Ui::AuditEntryComponent.new(version: nil))
               end
+            end,
+            comments: content_tag(:div, data: { poi_comments: true }) do
+              # Контейнер-цель [data-poi-comments] на обёртке (догма inner_html).
+              # Режим модерации: рендерим Comments::CommentsComponent с moderation: true.
+              concat render(Comments::CommentsComponent.new(
+                commentable: @poi,
+                current_user: current_user,
+                moderation: true
+              ))
             end
           }
         ) %>

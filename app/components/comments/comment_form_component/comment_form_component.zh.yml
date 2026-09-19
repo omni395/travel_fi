@@ -1,0 +1,10 @@
+zh:
+  comments:
+    comment_form_component:
+      placeholder: "写评论..."
+      reply_placeholder: "写回复..."
+      submit: "评论"
+      reply_submit: "回复"
+      save: "保存"
+      replying_to: "回复 %{name}"
+      deleted_user: "已删除用户"

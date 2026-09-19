@@ -1,0 +1,29 @@
+<%# frozen_string_literal: true %>
+
+<%#
+# app/views/admin/comments/show.html.erb — детальная страница комментария
+# Рендерит Admin::Comments::PoiComment::ShowComponent (текст, связка, аудит, кнопки).
+# %>
+
+<div class="max-w-3xl mx-auto">
+  <%= render Ui::BreadcrumbsComponent.new(breadcrumbs: [
+    { name: t("admin.comments.index.title"), path: admin_comments_path },
+    { name: "##{@comment.id}" }
+  ]) %>
+
+  <%= render Admin::Comments::PoiComment::ShowComponent.new(
+        comment: @comment,
+        current_user: current_user,
+        versions: @versions
+      ) %>
+
+  <div class="mt-4">
+    <%= render Ui::BtnComponent.new(
+          color: :ghost, size: :sm,
+          html: { href: admin_comments_path }
+        ) do %>
+      <%# Иконка: mdi-arrow-left %>
+      <i class="mdi mdi-arrow-left mr-1"></i><%= t("admin.comments.show.back") %>
+    <% end %>
+  </div>
+</div>

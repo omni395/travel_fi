@@ -1,0 +1,6 @@
+zh:
+  admin:
+    comments:
+      row_component:
+        hidden: "已隐藏"
+        visible: "可见"

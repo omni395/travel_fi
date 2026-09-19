@@ -1,0 +1,10 @@
+ru:
+  comments:
+    comments_component:
+      title: "Комментарии"
+      sort_new: "Новые"
+      sort_best: "Лучшие"
+      write_placeholder: "Напишите комментарий о %{name}"
+      write_placeholder_generic: "Напишите комментарий"
+      login_hint: "Войдите, чтобы оставить комментарий"
+      empty: "Комментариев пока нет. Будьте первым!"

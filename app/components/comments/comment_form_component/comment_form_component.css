@@ -1,0 +1,4 @@
+/* Comments::CommentFormComponent — стили формы комментария */
+.comment-form-component textarea {
+  resize: vertical;
+}

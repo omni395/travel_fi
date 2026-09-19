@@ -1,0 +1,10 @@
+en:
+  comments:
+    comments_component:
+      title: "Comments"
+      sort_new: "New"
+      sort_best: "Best"
+      write_placeholder: "Write a comment about %{name}"
+      write_placeholder_generic: "Write a comment"
+      login_hint: "Sign in to leave a comment"
+      empty: "No comments yet. Be the first!"

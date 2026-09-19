@@ -141,7 +141,7 @@ Travel Fi — Rails 8.1 приложение для туристических �
 - `user_100` / `user_200` / `user_N` — персональные обновления и уведомления (включая админов как обычных пользователей).
 
 **Админ-канал:** `AdminChannel` — подписка для ролей `admin` И `moderator` (moderator имеет права на edit в политиках).
-- Live-обновления админки (поля категорий, лента аудита, статистика) шлются в `AdminChannel` (см. «Единый паттерн админ-сущности»).
+- Live-обновления админки (поля категорий, комментарии, лента аудита, статистика) шлются в `AdminChannel` (см. «Единый паттерн админ-сущности»).
 
 **ActionCable** — WebSocket-инфраструктура Rails: долгоживущее соединение, сервер шлёт сообщения всем подписанным на канал браузерам.
 
@@ -350,7 +350,7 @@ Database-backed кэш (альтернатива Redis). Инфраструкт�
 
 Слой коллективного доверия поверх админ-модерации. Полный план — в секции «3.5 Голосования / Community Moderation» [`docs/ROADMAP_ru.md`](docs/ROADMAP_ru.md:1).
 
-**UI (POI + фото):** голосование встроено в таб Ratings карточки POI — [`Poi::RatingsComponent`](app/components/poi/ratings_component.rb:1) рендерит [`Vote::VoteComponent`](app/components/vote/vote_component.rb:1) в обёртке `[data-vote-zone="poi-<id>"]`; и в галерею фото — [`Poi::GalleryComponent`](app/components/poi/gallery_component.rb:1) рендерит его в `[data-vote-zone="photo-<id>"]`. Live-счётчик обновляется через `VoteBroadcaster` (`inner_html` по стриму `pois_map`). Голосование комментариев — в планах.
+**UI (POI + фото + комментарии):** голосование встроено в таб Ratings карточки POI — [`Poi::RatingsComponent`](app/components/poi/ratings_component.rb:1) рендерит [`Ui::VoteComponent`](app/components/ui/vote_component.rb:1) в обёртке `[data-vote-zone="poi-<id>"]`; в галерею фото — [`Poi::GalleryComponent`](app/components/poi/gallery_component.rb:1) в `[data-vote-zone="photo-<id>"]`; и в комментарии — [`Comments::CommentComponent`](app/components/comments/comment_component.rb:1) в `[data-vote-zone="poi_comment-<id>"]`. Live-счётчик обновляется через `VoteBroadcaster` (`inner_html` по стриму `pois_map`).
 
 **Семантика (строго):** Статус POI ставит ТОЛЬКО админ (`pending` не отображается и не голосуется). Голоса юзеров НЕ меняют `poi.status` и не влияют на видимость — только вешают бейджи на уже видимые точки (`approved`/`imported`): `ups >= threshold` → «Одобрено сообществом», `downs >= threshold` → «Отклонено сообществом» (сигнал админу; точка остаётся на карте).
 

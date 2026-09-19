@@ -518,45 +518,144 @@ class PoiReflex < ApplicationReflex
   end
 
   #
-  # Создаёт комментарий к POI
-  # Вызывается из формы комментариев (Poi::CommentsComponent — заглушка, см. ROADMAP)
+  # Создаёт комментарий (корневой или ответ) к POI.
+  # Вызывается из формы Comments::CommentFormComponent.
+  # Reflex НЕ рендерит DOM после сохранения: PaperTrail → VersionObserverJob →
+  # PoiCommentBroadcaster (точечный inner_html/insert_adjacent) обновит у всех.
   #
-  # @param params [Hash] { poi_id: Integer, body: String }
+  # @param params [Hash] { comment_commentable_id:, comment_body:, comment_parent_id: }
   #
   def create_comment(params = {})
-    poi = Poi.find(params[:poi_id])
+    params = deep_symbolize_keys(params) if params.is_a?(Hash)
+    morph :nothing
 
-    # Устанавливаем координаты пользователя для proximity check в политике
+    poi = Poi.find(params[:comment_commentable_id])
+
+    # Координаты юзера для proximity check в PoiCommentPolicy.
     Current.user_lat = session[:user_lat]
     Current.user_lng = session[:user_lng]
 
     authorize_with_pundit!(PoiComment.new(poi: poi, user: current_user), :create?)
 
-    comment = PoiService.create_comment(
-      poi: poi,
+    CommentService.create_comment(
+      commentable: poi,
       user: current_user,
-      body: params[:body]
+      body: params[:comment_body],
+      parent_id: params[:comment_parent_id]
     )
 
-    # Рендерим обновлённую карточку (таб комментариев — заглушка, layout не подключаем)
-    detail_html = ApplicationController.render(Poi::ShowComponent.new(
-      poi: poi,
-      current_user: current_user,
-      user_lat: session[:user_lat],
-      user_lng: session[:user_lng]
-    ), layout: false)
-
-    cable_ready.inner_html(selector: "#poi-detail-modal-body", html: detail_html)
-    cable_ready.broadcast
-    morph :nothing
-
-    Rails.logger.info("PoiReflex: Created comment ##{comment.id} for POI #{poi.id}")
+    Rails.logger.info("PoiReflex: Created comment for POI #{poi.id}")
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("PoiReflex: POI not found for comment - #{e.message}")
   rescue Pundit::NotAuthorizedError
-    Rails.logger.warn("PoiReflex: Not authorized to comment on POI #{params[:poi_id]}")
-  rescue PoiService::CreateError => e
+    Rails.logger.warn("PoiReflex: Not authorized to comment on POI #{params[:comment_commentable_id]}")
+  rescue CommentService::CreateError => e
     Rails.logger.error("PoiReflex: Comment creation failed - #{e.message}")
+  end
+
+  #
+  # Удаляет комментарий (автор/admin). Reflex НЕ рендерит DOM — точечное
+  # удаление ноды выполняет Broadcaster/клиент по data-comment-id.
+  #
+  # @param params [Hash] { comment_id: Integer }
+  #
+  def destroy_comment(params = {})
+    params = deep_symbolize_keys(params) if params.is_a?(Hash)
+    morph :nothing
+
+    comment = PoiComment.find(params[:comment_id])
+    authorize_with_pundit!(comment, :destroy?)
+
+    CommentService.destroy_comment(comment: comment)
+
+    Rails.logger.info("PoiReflex: Destroyed comment ##{comment.id}")
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("PoiReflex: Comment not found for destroy - #{e.message}")
+  rescue Pundit::NotAuthorizedError
+    Rails.logger.warn("PoiReflex: Not authorized to destroy comment #{params[:comment_id]}")
+  rescue CommentService::DestroyError => e
+    Rails.logger.error("PoiReflex: Comment destroy failed - #{e.message}")
+  end
+
+  #
+  # Обновляет текст комментария (автор/admin). Reflex НЕ рендерит DOM — точечное
+  # обновление ноды выполняет Broadcaster по data-comment-id.
+  #
+  # @param params [Hash] { comment_id:, comment_body: }
+  #
+  def update_comment(params = {})
+    params = deep_symbolize_keys(params) if params.is_a?(Hash)
+    morph :nothing
+
+    comment = PoiComment.find(params[:comment_id])
+    authorize_with_pundit!(comment, :update?)
+
+    CommentService.update_comment(comment: comment, body: params[:comment_body])
+
+    Rails.logger.info("PoiReflex: Updated comment ##{comment.id}")
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("PoiReflex: Comment not found for update - #{e.message}")
+  rescue Pundit::NotAuthorizedError
+    Rails.logger.warn("PoiReflex: Not authorized to update comment #{params[:comment_id]}")
+  rescue CommentService::UpdateError => e
+    Rails.logger.error("PoiReflex: Comment update failed - #{e.message}")
+  end
+
+  #
+  # Меняет сортировку списка комментариев и перерисовывает контейнер-список
+  # ([data-comments-list]) через inner_html — это read-операция, рендер уместен.
+  #
+  # @param params [Hash] { comments_sort:, comments_commentable_type:, comments_commentable_id: }
+  #
+  def sort_comments(params = {})
+    params = deep_symbolize_keys(params) if params.is_a?(Hash)
+    morph :nothing
+
+    sort = params[:comments_sort].to_s == "best" ? :best : :new
+    commentable_id = params[:comments_commentable_id]
+    commentable = Poi.find(commentable_id)
+
+    comments = CommentService.roots(commentable, sort: sort)
+
+    html = ApplicationController.render(
+      Comments::CommentListComponent.new(comments: comments, current_user: current_user, sort: sort),
+      layout: false
+    )
+
+    cable_ready.inner_html(
+      selector: "[data-comments-list='poi-#{commentable.id}']",
+      html: html
+    )
+    cable_ready.broadcast
+
+    Rails.logger.info("PoiReflex: Sorted comments by #{sort} for POI #{commentable.id}")
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("PoiReflex: POI not found for sort - #{e.message}")
+  end
+
+  #
+  # Разворачивает свёрнутую ветку (показывает все ответы). Read-операция:
+  # рендерит полный набор детей и заменяет кнопку «Показать N» через inner_html.
+  #
+  # @param params [Hash] { comment_id: Integer }
+  #
+  def expand_replies(params = {})
+    params = deep_symbolize_keys(params) if params.is_a?(Hash)
+    morph :nothing
+
+    comment = PoiComment.find(params[:comment_id])
+
+    html = ApplicationController.render(
+      Comments::CommentComponent.new(comment: comment, current_user: current_user),
+      layout: false
+    )
+
+    cable_ready.inner_html(selector: "[data-comment-id='#{comment.id}']", html: html)
+    cable_ready.broadcast
+
+    Rails.logger.info("PoiReflex: Expanded replies for comment ##{comment.id}")
+  rescue ActiveRecord::RecordNotFound => e
+    Rails.logger.error("PoiReflex: Comment not found for expand - #{e.message}")
   end
 
   #

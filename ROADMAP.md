@@ -30,8 +30,10 @@ Travel Fi
 │   ├── 3.2 Users            (/admin-panel/users)    ✅
 │   ├── 3.3 PoiCategories    (/admin-panel/poi_categories)  ✅
 │   ├── 3.4 Pois             (/admin-panel/pois)     🟡
-│   ├── 3.5 Settings         (/admin-panel/settings) ✅
-│   └── 3.6 Contract Mgmt    🔴 (planned)
+│   ├── 3.5 Voting           (/admin-panel)          ✅
+│   ├── 3.6 Settings         (/admin-panel/settings) ✅
+│   ├── 3.7 Comments         (/admin-panel/comments) ✅
+│   └── 3.8 Contract Mgmt    🔴 (planned)
 ├── 4. Horizontal layers
 │   ├── 4.1 Auth & Roles     ✅
 │   ├── 4.2 Gamification & Web3  🟡
@@ -80,7 +82,7 @@ Travel Fi
 
 **Chain:** `PoisController` (index/view) → [`PoiReflex`](app/reflexes/poi_reflex.rb:16) (load_pois_in_bounds, load_more_pois, filter_by_categories, apply_filters, reset_filters, show_detail, show_detail_modal, edit_poi, create_comment, reverse_geocode, set_location, show_geolocation_toast) → [`PoiService`](app/services/poi_service.rb:12) → PostGIS (`within_bounds`/`within_meters`) → [`PoiBroadcaster`](app/broadcasters/poi_broadcaster.rb:12) / `ToastBroadcaster` → `UserChannel` / `AdminChannel`
 
-**Components:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Modals: `Poi::DetailsComponent`, `Poi::GalleryComponent`; the voting tab — `Poi::RatingsComponent` (readonly rating + `Vote::VoteComponent`).
+**Components:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Ui::SidebarComponent`. Modals: `Poi::DetailsComponent`, `Poi::GalleryComponent`; the voting tab — `Poi::RatingsComponent` (readonly rating + `Ui::VoteComponent`); the comments tab — universal `Comments::CommentsComponent`/`CommentComponent`/`CommentFormComponent`/`CommentListComponent` (root `comments/` namespace).
 
 **Status:** 🟡 Partial
 
@@ -94,7 +96,9 @@ Travel Fi
 - ✅ Gallery: grid + lightbox/slider + add/delete photos directly in the POI card. Model `Photo` (`poi_id`/`user_id`/`position`) with `has_one_attached :image`; own photos first (`Photo.author_first`); add photo via HTTP/multipart (`Poi::PhotosController`, 100m anti-fraud `within_range?`); delete via `PoiReflex#remove_photo` (author/admin/moderator); live update via `VersionObserverJob` → `PoiBroadcaster` `inner_html [data-poi-gallery]` + `PoiReflex#refresh_gallery`. Covered by `spec/system/user/poi_spec.rb`, `spec/system/admin/pois_spec.rb`, `spec/models/photo_spec.rb`, `spec/services/poi_service_spec.rb`.
 - ✅ Photo binaries via HTTP/multipart (`Poi::PhotosController#create`, JSON) — closed debt of binaries through Reflex.
 - ✅ 100m proximity check for comments/editing (`check_proximity!`, `PoiCommentPolicy`)
-- ✅ Live comments: `PoiCommentBroadcaster` + the `PoiComment` branch in `VersionObserverJob` (to the author); correct 100m proximity-check (Boolean + SRID 4326, anti-fraud no longer "always passes")
+- ✅ **Full threaded comments** (depth 2 + "reply-to-a-reply" flatting into the root): model `PoiComment` (`root_id`/`depth`/`children_count`/`hidden_at`), universal `CommentService` (polymorphic contract, gaming flow), `Comments::*` components (root namespace), live for everyone via `PoiCommentBroadcaster` (targeted `insert_adjacent_html` into `[data-comments-list]` on the `pois_map` stream + reply notification to the thread author via `PoiCommentNotification`/Noticed); `PoiReflex` (create/update/destroy/sort/expand); 100m proximity (`PoiCommentPolicy`).
+- ✅ Live comments for everyone (not only the author): targeted insertion of a new comment/reply node into `[data-comments-list]` via `PoiCommentBroadcaster`, best/new sorting, thread collapsing, voting via `Ui::VoteComponent` (polymorphic `VoteService.tally`).
+- ✅ Moderation (core): `hidden_at` field, `visible`/`roots` scopes, flatting, auto-hide on the dislike threshold — in `ModerationService` (admin section — in progress, see 3.x).
 - ✅ TFT rewards for POI creation/comment (`GamificationService.award!(:poi_create/:comment_create)`, amounts from `config/gamification.yml`)
 - ✅ Live map: `poi:reload-features` → re-query from the server; fallback marker loading in `map_component_controller.js` (retry `_loadPoisInBounds`)
 - ✅ OSM import: the POIs tab updates incrementally (`inner_html [data-poi-category-pois]` every 10 imports), without `morph` card duplicates
@@ -109,7 +113,7 @@ Travel Fi
 
 **Wishlist:**
 - 🔴 `PoiRating` — 5-star system + aggregation into `poi.rating`
-- 🔴 Comments: live for everyone + threaded replies
+- 🔴 Comments: A/B specs (browser A→B) for live, Lookbook previews (admin moderation section is Done — see 3.7)
 - 🔴 OSRM: route building to a POI + a line on the map
 - 🔴 Offline mode (PWA): tiles + list (IndexedDB)
 - ✅ **OSM field mapping:** a category field can be bound to OSM tags via `osm_keys`/`osm_value_map`/`osm_transform` (admin-configurable in the field modal). On import, `pois.metadata` contains ONLY registered category fields, converted to app types (`OsmValueTransformer` — boolean/number/list/map). Covered by `spec/services/osm_value_transformer_spec.rb`, `spec/services/osm_import_service_spec.rb`.
@@ -369,9 +373,9 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
 
 **TODO / debts:**
 - 🔴 **Suggested Edits (edit proposals, 100m consensus):** "Report an error" for non-author users within 100m → `SuggestedEdit` (pending_review) → apply by consensus (author / 2-3 independent local users / reputation) → `SuggestedEditService.apply!` via `Poi.update!` (PaperTrail → `handle_poi_update` → `PoiBroadcaster`). Modes: **Quick Toggles** (works/closed flags — Up/Down via `Vote`, low threshold from `Setting`, `poi.status` unchanged) / **Attributes** (only via proposal + consensus) / **Locked** (coordinates/category/status — admin only). Authorship window (direct edit by the author) + auto-expiry (`SuggestedEditExpiryJob`). Consensus thresholds in `Setting` (`suggestion_consensus_threshold`, `high_reputation_threshold`).
-- 🔴 Behavior for photos/comments on community reject (hide/show/delete) — deferred (currently only vote collection).
+- 🔴 Behavior for photos/comments on community reject — **comment hiding core is implemented** (`hidden_at` + auto-hide by the dislike threshold via `ModerationService`); PHOTO behavior on reject — deferred (currently only vote collection).
 - 🔴 Tie reputation to gamification levels (badges) — planned, on top of `ReputationService.reckon!` (author reputation accumulates; `suspended`/`banned` — decided ONLY by the admin via existing `Admin::UserService`).
-- ⚠️ **Photo voting is embedded in the gallery** (`Poi::GalleryComponent` renders `Vote::VoteComponent` in `[data-vote-zone="photo-<id>"]`; live by the `pois_map` stream). Deferred — only comment voting (`PoiComment` requires embedding `[data-vote-zone="poi_comment-<id>"]` in the comments list).
+- ✅ **Photo and comment voting in UI:** photos — `Poi::GalleryComponent` (`[data-vote-zone="photo-<id>"]`); comments — `Comments::CommentComponent` (`[data-vote-zone="poi_comment-<id>"]`), both via `Ui::VoteComponent` + live by the `pois_map` stream.
 - ⚠️ `reputation` field on `User` (integer) — not yet present in `db/schema.rb`.
 
 ---
@@ -405,6 +409,33 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
 **Wishlist:**
 - 🔴 Mint/rate/pause/rewards via the admin
 - 🔴 `ContractSnapshot` (contract monitoring): model `contract_type`/`data jsonb`/`created_at` with rotation (no monitoring code yet)
+
+**Bugs/Debts:**
+- ⚠️ —
+
+### 3.7 Comments (admin moderation)
+
+**Routes:** `/admin-panel/comments` (index/show/hide/unhide) — [`Admin::CommentsController`](app/controllers/admin/comments_controller.rb:11)
+
+**Chain:** `Admin::CommentsReflex` (filter/sort — read, `inner_html`; hide/unhide/destroy — `morph :nothing` + service) → [`CommentModerationService`](app/services/comment_moderation_service.rb:1) / `CommentService` → PaperTrail → `VersionObserverJob` (`handle_poi_comment_update` → `Admin::CommentAdminBroadcaster` inner_html `[data-admin-comments-list]` + `PoiCommentBroadcaster` removal for public viewers) → `AdminChannel`/`pois_map`
+
+**Components:** `Admin::Comments::TableComponent`, `RowComponent`, `Admin::Comments::PoiComment::ShowComponent`; the admin-POI "Comments" tab renders `Comments::CommentsComponent` in `moderation: true` (`[data-poi-comments]` wrapper)
+
+**Policy:** [`Admin::CommentPolicy`](app/policies/admin/comment_policy.rb:1) — index/show/hide/unhide: admin or moderator
+
+**Status:** ✅ Done
+
+**Done:**
+- ✅ Comments list with Ransack filter (body/author/hidden_at) + pagination (pagy, `PER_PAGE = 20`)
+- ✅ Detail page: comment text/author, parent/children precedence, audit (`Ui::AuditEntryComponent`), hide/unhide/delete actions
+- ✅ Hide/unhide via `CommentModerationService` (idempotent `update!` → PaperTrail → double broadcast: admin table + public node removal)
+- ✅ `PoiCommentBroadcaster` destroy → `remove` of `[data-comment-id='...']` for public viewers
+- ✅ Admin-POI "Comments" tab (moderation mode)
+- ✅ `ModerationService.apply_comment_moderation`: auto-hide at the dislike threshold and auto-unhide on a sustained upvote lead (threshold from `Setting.global_threshold`, global singleton record)
+
+**Wishlist:**
+- 🔴 Lookbook previews for `Admin::Comments::*`
+- 🔴 A/B system specs (browser A→B) for live comments
 
 **Bugs/Debts:**
 - ⚠️ —

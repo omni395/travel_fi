@@ -30,8 +30,10 @@ Travel Fi
 │   ├── 3.2 Users            (/admin-panel/users)    🟡
 │   ├── 3.3 PoiCategories    (/admin-panel/poi_categories)  🟡
 │   ├── 3.4 Pois             (/admin-panel/pois)     🟡
-│   ├── 3.5 Settings         (/admin-panel/settings) 🟡
-│   └── 3.6 Contract Mgmt    🔴 (в планах)
+│   ├── 3.5 Voting           (/admin-panel)          ✅
+│   ├── 3.6 Settings         (/admin-panel/settings) ✅
+│   ├── 3.7 Comments         (/admin-panel/comments) ✅
+│   └── 3.8 Contract Mgmt    🔴 (в планах)
 ├── 4. Горизонтальные слои
 │   ├── 4.1 Auth & Roles     ✅
 │   ├── 4.2 Gamification & Web3  🟡
@@ -80,7 +82,7 @@ Travel Fi
 
 **Цепочка:** `PoisController` (index/просмотр) → [`PoiReflex`](app/reflexes/poi_reflex.rb:16) (load_pois_in_bounds, load_more_pois, filter_by_categories, apply_filters, reset_filters, show_detail, show_detail_modal, edit_poi, create_comment, reverse_geocode, set_location, show_geolocation_toast) → [`PoiService`](app/services/poi_service.rb:12) → PostGIS (`within_bounds`/`within_meters`) → [`PoiBroadcaster`](app/broadcasters/poi_broadcaster.rb:12) / `ToastBroadcaster` → `UserChannel` / `AdminChannel`
 
-**Компоненты:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Poi::CommentsComponent`, `Ui::SidebarComponent`. Модалки: `Poi::DetailsComponent`, `Poi::GalleryComponent`; таб голосования — `Poi::RatingsComponent` (readonly-рейтинг + `Vote::VoteComponent`).
+**Компоненты:** [`Poi::MapComponent`](app/components/poi/map_component.rb:1) (OpenLayers 10), `Poi::ListItemComponent`, `Poi::ShowComponent`, `Poi::FormComponent`, `Poi::FiltersComponent`, `Ui::SidebarComponent`. Модалки: `Poi::DetailsComponent`, `Poi::GalleryComponent`; таб голосования — `Poi::RatingsComponent` (readonly-рейтинг + `Ui::VoteComponent`); таб комментариев — универсальные `Comments::CommentsComponent`/`CommentComponent`/`CommentFormComponent`/`CommentListComponent` (корневой namespace `comments/`).
 
 **Статус:** 🟡 Частично
 
@@ -94,7 +96,9 @@ Travel Fi
 - ✅ Галерея: сетка + lightbox/слайдер + добавление/удаление фото прямо в карточке POI. Модель `Photo` (`poi_id`/`user_id`/`position`) с `has_one_attached :image`; свои фото первыми (`Photo.author_first`); добавление через HTTP/multipart (`Poi::PhotosController`, антифрод 100м `within_range?`); удаление через `PoiReflex#remove_photo` (автор/admin/moderator); live-обновление через `VersionObserverJob` → `PoiBroadcaster` `inner_html [data-poi-gallery]` + `PoiReflex#refresh_gallery`. Покрыто `spec/system/user/poi_spec.rb`, `spec/system/admin/pois_spec.rb`, `spec/models/photo_spec.rb`, `spec/services/poi_service_spec.rb`.
 - ✅ Бинарники фото через HTTP/multipart (`Poi::PhotosController#create`, JSON) — закрыт долг загрузки через Reflex.
 - ✅ Проксимити-проверка 100м для комментариев/редактирования (`check_proximity!`, `PoiCommentPolicy`)
-- ✅ Live-комментарии: `PoiCommentBroadcaster` + ветка `PoiComment` в `VersionObserverJob` (автору); proximity-check 100м корректный (Boolean + SRID 4326, антифрод больше не «всегда проходит»)
+- ✅ **Полноценные threaded-комментарии** (глубина 2 + флоттенинг «ответа на ответ» в корень): модель `PoiComment` (`root_id`/`depth`/`children_count`/`hidden_at`), универсальный `CommentService` (полиморфный контракт, важка-флоу), компоненты `Comments::*` (корневой namespace), live для всех через `PoiCommentBroadcaster` (точечный `insert_adjacent_html` в `[data-comments-list]` стрима `pois_map` + уведомление автору ветки через `PoiCommentNotification`/Noticed); `PoiReflex` (create/update/destroy/sort/expand); проксимити 100м (`PoiCommentPolicy`).
+- ✅ Live-комментарии для всех (не только автору): точечное добавление ноды нового комментария/ответа в `[data-comments-list]` через `PoiCommentBroadcaster`, сортировка best/new, свёртывание веток, голосование через `Ui::VoteComponent` (`VoteService.tally` полиморфный).
+- ✅ Модерация (ядро): поле `hidden_at`, скоупы `visible`/`roots`, флоттенинг, авто-скрытие по порогу дизлайков — в `ModerationService` (авто-скрытие/показ по `Setting.global_threshold`); админ-модерация — см. 3.7.
 - ✅ Награды TFT за создание POI/комментарий (`GamificationService.award!(:poi_create/:comment_create)`, суммы из `config/gamification.yml`)
 - ✅ Live-карта: `poi:reload-features` → перезапрос с сервера; fallback-загрузка маркеров в `map_component_controller.js` (ретрай `_loadPoisInBounds`)
 - ✅ OSM-импорт: вкладка POIs обновляется инкрементально (`inner_html [data-poi-category-pois]` каждые 10 импортов), без `morph`-дублей карточек
@@ -109,7 +113,7 @@ Travel Fi
 
 **Хотелки:**
 - 🔴 `PoiRating` — 5-звёздная система + агрегация в `poi.rating`
-- 🔴 Комментарии: live для всех + threaded-ответы
+- 🔴 Комментарии: спеки A/B (браузер А→Б) для live, Lookbook-превью (админ-раздел модерации — готов, см. 3.7)
 - 🔴 OSRM: построение маршрута к POI + линия на карте
 - 🔴 Offline-режим (PWA): тайлы + список (IndexedDB)
 - ✅ **OSM-маппинг полей:** поле категории можно привязать к тегам OSM через `osm_keys`/`osm_value_map`/`osm_transform` (настраивается админом в модалке поля). При импорте `pois.metadata` содержит ТОЛЬКО зарегистрированные поля категории, сконвертированные в типы приложения (`OsmValueTransformer` — boolean/number/list/map). Покрыто `spec/services/osm_value_transformer_spec.rb`, `spec/services/osm_import_service_spec.rb`.
@@ -369,9 +373,9 @@ net.positive? ? :approved : :rejected   # конфликт/паритет (net<=
 
 **TODO / долги:**
 - 🔴 **Предложения правок (Suggested Edits, консенсус 100м):** «Сообщить об ошибке» для не-авторов в радиусе 100м → `SuggestedEdit` (pending_review) → применение по консенсусу (автор / 2-3 независимых локальных юзера / репутация) → `SuggestedEditService.apply!` через `Poi.update!` (PaperTrail → `handle_poi_update` → `PoiBroadcaster`). Режимы: **Quick Toggles** (флаги «работает/закрыто» — Up/Down через `Vote`, низкий порог из `Setting`, `poi.status` не меняется) / **Attributes** (только через предложение + консенсус) / **Locked** (координаты/категория/статус — только админ). Окно авторства (прямая правка автором) + авто-экспирация (`SuggestedEditExpiryJob`). Пороги консенсуса в `Setting` (`suggestion_consensus_threshold`, `high_reputation_threshold`).
-- 🔴 Поведение фото/комментов при отклонении сообществом (скрыть/показать/удалить) — отложено (сейчас только сбор голосов + репутация).
+- 🔴 Поведение фото/комментов при отклонении сообществом — **для комментариев реализовано ядро скрытия** (`hidden_at` + авто-скрытие по порогу дизлайков через `ModerationService`); поведение ФОТО при отклонении — отложено (сейчас только сбор голосов + репутация).
 - 🔴 Привязка репутации к уровням геймификации (бейджи) — поверх `ReputationService.reckon!` (репутация автора копится; `suspended`/`banned` — решает ТОЛЬКО админ через существующий `Admin::UserService`).
-- ⚠️ Голосование фото/комментариев в UI — **фото уже встроено в галерею** (`Poi::GalleryComponent` рендерит `Vote::VoteComponent` в таргет `[data-vote-zone="photo-<id>"]`; live по стриму `pois_map`). Отложено только голосование комментариев (`PoiComment` — таргет `[data-vote-zone="poi_comment-<id>"]` в списке комментариев требует встройки).
+- ✅ **Голосование фото и комментариев в UI:** фото — `Poi::GalleryComponent` (`[data-vote-zone="photo-<id>"]`); комментарии — `Comments::CommentComponent` (`[data-vote-zone="poi_comment-<id>"]`), оба через `Ui::VoteComponent` + live по стриму `pois_map`.
 
 ---
 
@@ -397,7 +401,36 @@ net.positive? ? :approved : :rejected   # конфликт/паритет (net<=
 
 ---
 
-### 3.7 Contract Mgmt (управление контрактами)
+### 3.7 Comments (админ-модерация)
+
+**Маршруты:** `/admin-panel/comments` (index/show/hide/unhide) — [`Admin::CommentsController`](app/controllers/admin/comments_controller.rb:11)
+
+**Цепочка:** `Admin::CommentsReflex` (filter/sort — read, `inner_html`; hide/unhide/destroy — `morph :nothing` + сервис) → [`CommentModerationService`](app/services/comment_moderation_service.rb:1) / `CommentService` → PaperTrail → `VersionObserverJob` (`handle_poi_comment_update` → `Admin::CommentAdminBroadcaster` inner_html `[data-admin-comments-list]` + `PoiCommentBroadcaster` удаление ноды у публичных зрителей) → `AdminChannel`/`pois_map`
+
+**Компоненты:** `Admin::Comments::TableComponent`, `RowComponent`, `Admin::Comments::PoiComment::ShowComponent`; таб «Comments» в админ-POI рендерит `Comments::CommentsComponent` в `moderation: true` (обёртка `[data-poi-comments]`)
+
+**Политика:** [`Admin::CommentPolicy`](app/policies/admin/comment_policy.rb:1) — index/show/hide/unhide: админ или модератор
+
+**Статус:** ✅ Сделано
+
+**Сделано:**
+- ✅ Список комментариев с Ransack-фильтром (body/автор/hidden_at) + пагинация (pagy, `PER_PAGE = 20`)
+- ✅ Детальная страница: текст/автор, связка родитель/дети, аудит (`Ui::AuditEntryComponent`), действия скрыть/показать/удалить
+- ✅ Скрытие/показ через `CommentModerationService` (идемпотентный `update!` → PaperTrail → двойной бродкаст: админ-таблица + удаление ноды у публичных)
+- ✅ Destroy в `PoiCommentBroadcaster` → `remove` ноды `[data-comment-id='...']` у публичных зрителей
+- ✅ Таб «Comments» в админ-POI (режим модерации)
+- ✅ `ModerationService.apply_comment_moderation`: авто-скрытие по порогу дизлайков и авто-показ при устойчивом перевесе апвотов (порог из `Setting.global_threshold`, глобальная синглтон-запись)
+
+**Хотелки:**
+- 🔴 Lookbook-превью для `Admin::Comments::*`
+- 🔴 Спеки A/B (браузер А→Б) для live-комментариев
+
+**Баги/Долги:**
+- ⚠️ —
+
+---
+
+### 3.8 Contract Mgmt (управление контрактами)
 
 **Статус:** 🔴 В планах (см. слой 4.2)
 

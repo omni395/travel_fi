@@ -1,0 +1,10 @@
+es:
+  comments:
+    comments_component:
+      title: "Comentarios"
+      sort_new: "Nuevos"
+      sort_best: "Mejores"
+      write_placeholder: "Escribe un comentario sobre %{name}"
+      write_placeholder_generic: "Escribe un comentario"
+      login_hint: "Inicia sesión para comentar"
+      empty: "Aún no hay comentarios. ¡Sé el primero!"

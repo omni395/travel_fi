@@ -1,0 +1,4 @@
+/* Comments::CommentComponent — стили записи комментария */
+.comment-component .comment-component {
+  margin-top: 0.75rem;
+}

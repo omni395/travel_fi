@@ -1,0 +1,68 @@
+<%# Comments::CommentsComponent — обёртка-дерево комментариев %>
+<%# Иконки: mdi-comment-text-outline, mdi-sort-variant, mdi-plus %>
+<div class="comments-component"
+     data-controller="comments--comments-component"
+     data-sort="<%= sort %>"
+     data-commentable-type="<%= commentable.class.name %>"
+     data-commentable-id="<%= commentable.id %>">
+
+  <div class="mb-4 flex items-center justify-between">
+    <h3 class="text-sm font-semibold text-teal-700">
+      <%# Иконка: mdi-comment-text-outline %>
+      <i class="mdi mdi-comment-text-outline mr-1"></i>
+      <%= t(".title") %>
+    </h3>
+
+    <%# Переключатель сортировки (best/new) %>
+    <% if root_comments.exists? %>
+      <div class="flex items-center gap-2 text-xs">
+        <%# Иконка: mdi-sort-variant %>
+        <i class="mdi mdi-sort-variant text-gray-400"></i>
+        <button type="button"
+                data-action="comments--comments-component#sortNew"
+                class="<%= sort == :new ? 'text-teal-700 font-semibold' : 'text-gray-400 hover:text-teal-600' %>">
+          <%= t(".sort_new") %>
+        </button>
+        <span class="text-gray-300">|</span>
+        <button type="button"
+                data-action="comments--comments-component#sortBest"
+                class="<%= sort == :best ? 'text-teal-700 font-semibold' : 'text-gray-400 hover:text-teal-600' %>">
+          <%= t(".sort_best") %>
+        </button>
+      </div>
+    <% end %>
+  </div>
+
+  <%# Форма создания корневого комментария (только для авторизованных) %>
+  <% if can_comment? %>
+    <%= render Comments::CommentFormComponent.new(
+          commentable: commentable,
+          current_user: current_user,
+          parent: nil,
+          user_lat: user_lat,
+          user_lng: user_lng
+        ) %>
+  <% elsif current_user.nil? %>
+    <p class="text-xs text-gray-400 mb-4"><%= t(".login_hint") %></p>
+  <% end %>
+
+  <%# Список комментариев — контейнер-цель для точечного broadcast %>
+  <div class="comments-list"
+       data-comments-list="<%= commentable.class.name.underscore %>-<%= commentable.id %>">
+    <% if root_comments.exists? %>
+      <%# Иконка: mdi-comment-text-outline %>
+      <%= render Comments::CommentComponent.with_collection(
+            root_comments,
+            current_user: current_user,
+            moderation: moderation,
+            sort: sort
+          ) %>
+    <% else %>
+      <p class="text-center text-xs text-gray-400 py-4">
+        <%# Иконка: mdi-comment-text-outline %>
+        <i class="mdi mdi-comment-text-outline mr-1"></i>
+        <%= t(".empty") %>
+      </p>
+    <% end %>
+  </div>
+</div>

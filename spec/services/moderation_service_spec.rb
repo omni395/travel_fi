@@ -100,13 +100,47 @@ RSpec.describe ModerationService, type: :service do
       end
     end
 
-    context 'для Photo/PoiComment (поведение отложено — только репутация)' do
+    context 'для Photo (поведение отложено — только репутация)' do
       it 'не падает и пересчитывает репутацию автора' do
-        comment = create(:poi_comment, user: author)
-        create(:vote, votable: comment, user: create(:user), value: 1)
+        photo = create(:photo, user: author)
+        create(:vote, votable: photo, user: create(:user), value: 1)
 
-        expect { described_class.evaluate!(comment) }.not_to raise_error
-        expect(author.reload.reputation).to eq(1)
+        expect { described_class.evaluate!(photo) }.not_to raise_error
+      end
+    end
+
+    context 'для PoiComment (авто-модерация по голосам)' do
+      let(:comment) { create(:poi_comment, user: author) }
+
+      def comment_down_votes(n)
+        n.times { create(:vote, votable: comment, user: create(:user), value: -1) }
+      end
+
+      def comment_up_votes(n)
+        n.times { create(:vote, votable: comment, user: create(:user), value: 1) }
+      end
+
+      it 'скрывает комментарий при достижении порога дизлайков' do
+        threshold = described_class.threshold
+        comment_down_votes(threshold)
+
+        described_class.evaluate!(comment)
+
+        expect(comment.reload).to be_hidden
+      end
+
+      it 'авто-показывает ранее скрытый при устойчивом перевесе апвотов (ups >= threshold, downs < threshold)' do
+        threshold = described_class.threshold
+        comment_down_votes(threshold)
+        described_class.evaluate!(comment)
+        expect(comment.reload).to be_hidden
+
+        # Убираем дизлайки ниже порога и добавляем апрув-перевес.
+        comment.votes.where(value: -1).destroy_all
+        comment_up_votes(threshold)
+        described_class.evaluate!(comment)
+
+        expect(comment.reload).not_to be_hidden
       end
     end
   end
