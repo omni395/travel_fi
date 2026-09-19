@@ -56,9 +56,9 @@ class Admin::CommentsReflex < ApplicationReflex
                   base.order(Arel.sql(
                     "COALESCE((SELECT SUM(value) FROM votes WHERE votable_type='PoiComment' AND votable_id=poi_comments.id), 0) DESC, created_at DESC"
                   ))
-                else
+    else
                   base.order(created_at: :desc)
-                end
+    end
 
     @pagy, @comments = pagy(@comments, limit: PER_PAGE, page: params[:page] || 1)
 
