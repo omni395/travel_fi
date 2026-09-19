@@ -203,6 +203,8 @@ Rails `check_box` генерирует пару инпутов с одним `na
 | Database-Triggered Workflow | PaperTrail → VersionObserverJob → Broadcaster → CableReady. БД = Single Source of Truth |
 | StimulusReflex + CableReady | WebSocket-first, без JSON API. Reflex не рендерит DOM после сохранения |
 | Sidecar ViewComponents | Изоляция шаблонов/стилей/JS, 4 локали, запрет partials |
+| Единая палитра UI | `@utility bg-success/bg-error/bg-warning/bg-info/text-text` в `@theme` (`app/assets/tailwind/application.css`); карточка/вкладки/навбар по умолчанию `bg-linear-to-br from-primary/5 to-secondary/10` |
+| Ленивые Stimulus-контроллеры | Sidecar-контроллеры грузятся по требованию (`_components_lazy.js`), базовый класс `ApplicationController` для всех |
 | PostGIS | Пространственные запросы (bounds, radius, ST_DWithin) |
 | Proximity Check (100м) | Антифрод для комментариев и голосования через `ST_DWithin` |
 | Предложения правок (консенсус 100м) | Правки юзеров применяются по консенсусу (автор / 2-3 локальных юзера / репутация) вместо прямых записей в базу |
@@ -291,6 +293,10 @@ Rails `check_box` генерирует пару инпутов с одним `na
 
 ### Stimulus
 Лёгкий фреймворк взаимодействия браузера с Rails. Слушает события (клики, ввод), отправляет сигналы на Rails, обновляет DOM, управляет состоянием. Жизненный цикл: инициализация при появлении элемента в DOM, очистка при удалении.
+
+**Единый базовый класс (обязательно):** каждый `*_controller.js` (компоненты, `cable`, `admin-layout`, `sidebar-drawer`) наследуется от `ApplicationController.js`, который вызывает `StimulusReflex.register(this)`. Прямой `extends Controller` в компонентах и ручной `StimulusReflex.register(this)` запрещены — это железное правило единообразия.
+
+**Ленивая загрузка sidecar-контроллеров:** контроллеры компонентов регистрируются через `_components_lazy.js` (генерируется [`scripts/discover_components.js`](scripts/discover_components.js:1)); [`app/javascript/controllers/index.js`](app/javascript/controllers/index.js:9) импортирует `_components_lazy.js` (не `_generated/_index.js`). Контроллер подгружается только при наличии его `data-controller` на текущей странице — оптимизация Lighthouse.
 
 ### StimulusReflex
 Реактивные компоненты через WebSocket: браузер отправляет действие, сервер обновляет нужные части DOM (морфинг). Используй `this.stimulate("Reflex#method", params)`. **`prevent_refresh!` НЕ СУЩЕСТВУЕТ** — вместо него `morph :nothing`.

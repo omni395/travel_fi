@@ -1,4 +1,4 @@
-import { Controller } from '@hotwired/stimulus'
+import ApplicationController from '../../../../javascript/controllers/application_controller'
 
 /**
  * Admin::Comments::TableComponent — контроллер таблицы модерации комментариев.
@@ -7,4 +7,4 @@ import { Controller } from '@hotwired/stimulus'
  * Admin::CommentsReflex RowComponent и бродкастер). Интеракция скрытия/показа
  * реализована в RowComponent/компоненте PoiComment::Show.
  */
-export default class extends Controller {}
+export default class extends ApplicationController {}

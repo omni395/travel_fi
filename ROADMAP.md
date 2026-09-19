@@ -511,6 +511,10 @@ net.positive? ? :approved : :rejected   # conflict/parity (net<=0) → rejected
 - ✅ 4 locales (en/ru/es/zh); sidecar ViewComponents (rb + html + css + controller.js + 4 yml)
 - ✅ Only the green-blue Tailwind palette (emerald/teal/sky), MDI icons, partials forbidden
 - ✅ UI library: `Ui::CardComponent`, `BtnComponent`, `DropdownComponent`, `TabsComponent`, `BadgeComponent`, `AvatarComponent`, `TooltipComponent`, `BreadcrumbsComponent`, `PaginationComponent`, `ConfirmDialogComponent`, `ToastComponent`, `SidebarComponent`, `NavbarComponent`, `FiltersComponent`, `AuditEntryComponent`, `ClipboardComponent`, `DateComponent`, `HamburgerComponent`
+- ✅ Status `@utility bg-success/error/warning/info/text-text` in `@theme` — toasts are opaque again
+- ✅ Unified UI: databases/layouts unified (`application.html.erb`/`admin.html.erb`), navbar/card default gradient `bg-linear-to-br from-primary/5 to-secondary/10`, tabs gradient + subtle active state, responsive paddings (`p-4 sm:p-8`), responsive tables/cards
+- ✅ All Stimulus controllers inherit `ApplicationController`; sidecar controllers are loaded lazily (`_components_lazy.js`) — page loads only the needed controllers
+- ⚠️ Debt: admin sidebar strings are hardcoded ("Dashboard", "Users", "POI Categories", "POIs", "Settings", "Back to Site") — must be moved to i18n keys
 
 ### 4.7 PWA / Devices
 **Status:** 🟡 Partial

@@ -514,6 +514,10 @@ net.positive? ? :approved : :rejected   # конфликт/паритет (net<=
 - ✅ 4 локали (en/ru/es/zh); sidecar ViewComponents (rb + html + css + controller.js + 4 yml)
 - ✅ Только зелёно-голубая палитра Tailwind (emerald/teal/sky), иконки MDI, запрет partials
 - ✅ UI-библиотека: `Ui::CardComponent`, `BtnComponent`, `DropdownComponent`, `TabsComponent`, `BadgeComponent`, `AvatarComponent`, `TooltipComponent`, `BreadcrumbsComponent`, `PaginationComponent`, `ConfirmDialogComponent`, `ToastComponent`, `SidebarComponent`, `NavbarComponent`, `FiltersComponent`, `AuditEntryComponent`, `ClipboardComponent`, `DateComponent`, `HamburgerComponent`
+- ✅ Статусные `@utility bg-success/error/warning/info/text-text` в `@theme` — тосты снова непрозрачные
+- ✅ Единый UI: лайауты унифицированы (`application.html.erb`/`admin.html.erb`), навбар/карточка по умолчанию градиент `bg-linear-to-br from-primary/5 to-secondary/10`, вкладки — градиент + ненавязчивая активная, адаптивные паддинги (`p-4 sm:p-8`)
+- ✅ Все Stimulus-контроллеры наследуют `ApplicationController`; sidecar-контроллеры грузятся лениво (`_components_lazy.js`) — страница тянет только нужные контроллеры
+- ⚠️ Долг: строки админ-сайдбара захардкожены ("Dashboard", "Users", "POI Categories", "POIs", "Settings", "Back to Site") — вынести в i18n-ключи
 
 ### 4.7 PWA / Devices
 **Статус:** 🟡 Частично

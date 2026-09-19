@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
 /**
  * Ui::TabsComponent — универсальный контроллер для вкладок
@@ -18,7 +18,7 @@ import { Controller } from "@hotwired/stimulus"
  *     <div data-ui--tabs-component-target="panel" data-tab="wallet" class="hidden">Content</div>
  *   </div>
  */
-export default class extends Controller {
+export default class extends ApplicationController {
   static targets = ["tab", "panel"]
   static values = { activeTab: { type: String, default: "" } }
 
@@ -48,8 +48,8 @@ export default class extends Controller {
    * @param {string} tab - идентификатор вкладки
    */
   _activate(tab) {
-    const activeClasses = ["is-active", "bg-primary", "text-primary", "shadow-sm", "border-secondary", "font-bold"]
-    const inactiveClasses = ["text-secondary", "hover:text-primary"]
+    const activeClasses = ["is-active", "bg-primary/15", "text-primary", "shadow-sm", "border-primary/40", "font-semibold"]
+    const inactiveClasses = ["text-secondary", "hover:text-primary", "hover:bg-primary/5"]
 
     this.tabTargets.forEach(btn => {
       const isActive = btn.dataset.tab === tab

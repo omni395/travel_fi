@@ -1,11 +1,11 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
 /**
  * Ui::TooltipComponent Controller
  *
  * Управляет интерактивным показом/скрытием тултипа при click/hover.
  */
-export default class extends Controller {
+export default class extends ApplicationController {
   static targets = ["panel"]
   static values = { trigger: String }
 

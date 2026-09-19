@@ -3,14 +3,9 @@
 //
 // Отвечает за:
 //   - Отправку StimulusReflex при переключении тумблера
-import { Controller } from "@hotwired/stimulus"
-import StimulusReflex from 'stimulus_reflex'
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
-export default class extends Controller {
-  connect() {
-    StimulusReflex.register(this)
-  }
-
+export default class extends ApplicationController {
   // Отправить обновление настройки через StimulusReflex.
   // Передаём нэймспейсный args-объект { field: '<имя_колонки>' } —
   // рефлекс читает поле из params[:field], а не из dataset элемента,

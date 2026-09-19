@@ -22,6 +22,12 @@
 
 }
 
+@utility bg-success { background-color: var(--color-success); }
+@utility bg-error { background-color: var(--color-error); }
+@utility bg-warning { background-color: var(--color-warning); }
+@utility bg-info { background-color: var(--color-info); }
+@utility text-text { color: var(--color-text); }
+
 @layer base {
   a, button, label, input, select, li, .cursor-pointer {
     cursor: pointer;

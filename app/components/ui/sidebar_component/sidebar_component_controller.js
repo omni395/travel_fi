@@ -13,7 +13,7 @@ import ApplicationController from '../../../javascript/controllers/application_c
  *   sidebar - панель контента
  *   chevron - кнопка переключения
  */
-export default class extends Controller {
+export default class extends ApplicationController {
   static targets = ["wrapper", "sidebar", "chevron"]
 
   connect() {

@@ -6,21 +6,21 @@
 # Карточка с опциональными header, body, footer слотами.
 # %>
 
-<div data-controller="ui--card-component" class="card-ui bg-white rounded-2xl border border-gray-200 shadow-sm">
+<div data-controller="ui--card-component" class="card-ui bg-linear-to-br from-primary/5 to-secondary/10 rounded-2xl border border-secondary/20 shadow-sm">
   <% if header %>
-    <div class="card-ui__header px-8 pt-6">
+    <div class="card-ui__header px-4 pt-4 sm:px-8 sm:pt-6">
       <%= header %>
     </div>
   <% end %>
 
   <% if body %>
-    <div class="card-ui__body p-8">
+    <div class="card-ui__body p-4 sm:p-8">
       <%= body %>
     </div>
   <% end %>
 
   <% if footer %>
-    <div class="card-ui__footer px-8 pb-6">
+    <div class="card-ui__footer px-4 pb-4 sm:px-8 sm:pb-6">
       <%= footer %>
     </div>
   <% end %>

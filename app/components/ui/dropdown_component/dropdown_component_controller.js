@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
 /**
  * DropdownController - управление выпадающими меню
@@ -9,7 +9,7 @@ import { Controller } from "@hotwired/stimulus"
  * - Закрытие всех остальных открытых дропдаунов при открытии текущего
  * - Закрытие при клике на пункт меню
  */
-export default class extends Controller {
+export default class extends ApplicationController {
   static targets = ["menu"]
 
   connect() {

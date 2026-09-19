@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from './application_controller'
 
 //
 // SidebarDrawerController - управление мобильным сайдбаром
@@ -8,7 +8,7 @@ import { Controller } from "@hotwired/stimulus"
 // - Закрытие при клике вне сайдбара
 // - Закрытие при нажатии Escape
 //
-export default class extends Controller {
+export default class extends ApplicationController {
   static targets = ["drawer"]
 
   //

@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
 /**
  * Контроллер для Poi::ListItemComponent
@@ -7,7 +7,7 @@ import { Controller } from "@hotwired/stimulus"
  * Элемент списка POI в сайдбаре.
  * При клике диспатчит событие poi:show-detail для открытия модалки деталей.
  */
-export default class extends Controller {
+export default class extends ApplicationController {
   /**
    * Показывает детали POI при клике на элемент списка
    * Диспатчит событие, которое ловит Poi::ShowComponent (оверлей)

@@ -1,8 +1,8 @@
 // Admin::Users::User::ActivityComponent
 // Stimulus controller for user activity timeline
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../../../javascript/controllers/application_controller'
 
-export default class extends Controller {
+export default class extends ApplicationController {
   connect() {
     // Passive component — no interactive logic needed
   }

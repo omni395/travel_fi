@@ -3,14 +3,9 @@
 //
 // Отвечает за:
 //   - Отправку StimulusReflex при изменении числового поля настройки
-import { Controller } from "@hotwired/stimulus"
-import StimulusReflex from 'stimulus_reflex'
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
-export default class extends Controller {
-  connect() {
-    StimulusReflex.register(this)
-  }
-
+export default class extends ApplicationController {
   // Сохранить значение числового поля через StimulusReflex.
   // Передаём { section, key, value } — рефлекс читает из args-параметров.
   save(event) {

@@ -1,11 +1,11 @@
-import { Controller } from '@hotwired/stimulus'
 import consumer from '../channels/consumer'
 import CableReady from 'cable_ready'
+import ApplicationController from './application_controller'
 
 // Глобальный объект для отслеживания активных подписок
 const activeSubscriptions = new Map()
 
-export default class extends Controller {
+export default class extends ApplicationController {
   connect() {
     console.log('[CABLE_CONTROLLER] connect() called for UserChannel')
 

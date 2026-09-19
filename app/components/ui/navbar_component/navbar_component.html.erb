@@ -1,5 +1,5 @@
 <!-- Navbar Component: Сине-зеленый градиентный navbar, растянут на всю ширину -->
-<nav class="navbar-component shadow-lg" data-controller="ui--navbar-component">
+<nav class="navbar-component bg-linear-to-br from-primary to-secondary shadow-lg" data-controller="ui--navbar-component">
   <div class="w-full px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16 relative z-50">
       <%# Левая группа: логотип %>
@@ -18,7 +18,7 @@
       </div>
 
       <%# Правая группа: гамбургер + auth + язык %>
-      <div class="flex items-center space-x-2">
+      <div class="flex items-center space-x-2 min-w-0 overflow-hidden">
         <%# 1. Гамбургер-меню (мобильное) %>
         <div class="md:hidden">
           <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "bg-linear-to-br from-primary to-secondary text-white border border-white/20 shadow-xl") do |dropdown| %>
