@@ -1,0 +1,15 @@
+ru:
+  admin:
+    comments:
+      poi_comment:
+        show_component:
+          author: "Автор"
+          hidden: "Скрыт"
+          parent: "Ответ на"
+          children: "Ответы"
+          children_count:
+            one: "%{count} ответ"
+            few: "%{count} ответа"
+            many: "%{count} ответов"
+            other: "%{count} ответов"
+          audit: "Журнал аудита"

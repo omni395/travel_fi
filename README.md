@@ -156,7 +156,7 @@ A single channel class subscribes the client to **multiple streams**; broadcaste
 
 **`AdminChannel`** (`app/channels/admin_channel.rb`) — admin part, roles `admin` AND `moderator`. Subscribed to:
 - `admin_<id>` — **personal** admin stream (result of his own actions: success/error reflex events).
-- `admin_feed` — **shared** live-update stream of the admin panel (POI, users, categories, settings, dashboard stats) for ALL admins.
+- `admin_feed` — **shared** live-update stream of the admin panel (POI, users, comments, categories, settings, dashboard stats) for ALL admins.
 
 **Delivery rules:**
 - Personal (user part) → `user_<id>`; shared map update → `pois_map`.
@@ -374,7 +374,7 @@ Search and filtering of data based on request parameters, without manual SQL.
 
 Community approval/trust layer on top of admin moderation. See the «3.5 Voting / Community Moderation» section in [`ROADMAP.md`](ROADMAP.md:1) for the full plan.
 
-**UI (POI + photos):** voting is embedded in the Ratings tab of the POI card — [`Poi::RatingsComponent`](app/components/poi/ratings_component.rb:1) renders [`Vote::VoteComponent`](app/components/vote/vote_component.rb:1) in the `[data-vote-zone="poi-<id>"]` wrapper; and in the photo gallery — [`Poi::GalleryComponent`](app/components/poi/gallery_component.rb:1) renders it in `[data-vote-zone="photo-<id>"]`. The live counter updates via `VoteBroadcaster` (`inner_html` by the `pois_map` stream). Comment voting — pending.
+**UI (POI + photos + comments):** voting is embedded in the Ratings tab of the POI card — [`Poi::RatingsComponent`](app/components/poi/ratings_component.rb:1) renders [`Ui::VoteComponent`](app/components/ui/vote_component.rb:1) in the `[data-vote-zone="poi-<id>"]` wrapper; in the photo gallery — [`Poi::GalleryComponent`](app/components/poi/gallery_component.rb:1) in `[data-vote-zone="photo-<id>"]`; and in comments — [`Comments::CommentComponent`](app/components/comments/comment_component.rb:1) in `[data-vote-zone="poi_comment-<id>"]`. The live counter updates via `VoteBroadcaster` (`inner_html` by the `pois_map` stream).
 
 **Semantics (strict):** POI status is set ONLY by the admin (`pending` is not visible and not votable). User votes NEVER change `poi.status` and NEVER affect visibility — they ONLY attach badges to already visible POIs (`approved`/`imported`): `ups >= threshold` → «Community approved», `downs >= threshold` → «Community rejected» (signal to admin; the POI stays on the map).
 

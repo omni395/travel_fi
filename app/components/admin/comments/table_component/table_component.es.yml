@@ -1,0 +1,11 @@
+es:
+  admin:
+    comments:
+      table_component:
+        comment: "Comentario"
+        author: "Autor"
+        poi: "POI"
+        date: "Fecha"
+        votes: "Votos"
+        status: "Estado"
+        actions: "Acciones"

@@ -1,0 +1,10 @@
+ru:
+  comments:
+    comment_form_component:
+      placeholder: "Напишите комментарий..."
+      reply_placeholder: "Напишите ответ..."
+      submit: "Комментировать"
+      reply_submit: "Ответить"
+      save: "Сохранить"
+      replying_to: "ответ %{name}"
+      deleted_user: "удалённый пользователь"

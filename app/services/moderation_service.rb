@@ -78,9 +78,12 @@ class ModerationService
     case votable
     when Poi
       apply_poi_badge(votable, state)
-    when Photo, PoiComment
-      # TODO (ROADMAP 3.5): фото/комменты — скрыть/показать/удалить. Пока — только
-      # репутация автора (сигнал); сам контент не трогаем.
+    when PoiComment
+      # Авто-модерация комментариев: порог дизлайков скрывает, перевес апвотов — показывает.
+      apply_comment_moderation(votable)
+      apply_reputation(votable)
+    when Photo
+      # Фото: пока только репутация автора (сигнал); скрытие не реализовано.
       apply_reputation(votable)
     end
 
@@ -115,6 +118,29 @@ class ModerationService
     end
 
     apply_reputation(poi)
+  end
+
+  #
+  # Авто-модерация комментария по голосам сообщества.
+  #   - downs >= threshold → CommentModerationService.hide! (скрыть);
+  #   - ups >= threshold и комментарий скрыт → unhide! (перевес апвотов возвращает).
+  # Порог — из Setting.global_threshold (глобальная синглтон-запись; дефолт 10).
+  # Методы CommentModerationService идемпотентны: лишних версий не создают.
+  #
+  # @param comment [PoiComment] комментарий
+  #
+  def self.apply_comment_moderation(comment)
+    tally = VoteService.tally(comment)
+    threshold = Setting.global_threshold
+
+    # Скрываем при достижении порога дизлайков (в т.ч. если голоса запоздали).
+    if tally[:downs] >= threshold
+      CommentModerationService.hide!(comment: comment)
+    # Авто-показ только при устойчивом перевесе апвотов: апвоты >= порога
+    # И дизлайки ниже порога (иначе возвращаем в скрытое сразу).
+    elsif comment.hidden? && tally[:ups] >= threshold && tally[:downs] < threshold
+      CommentModerationService.unhide!(comment: comment)
+    end
   end
 
   #

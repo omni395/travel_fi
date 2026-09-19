@@ -41,3 +41,7 @@
 
 # macOS
 .DS_Store
+
+.roo/
+.stimulus-lsp/
+.vscode/

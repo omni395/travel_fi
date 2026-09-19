@@ -1,0 +1,42 @@
+<%# Comments::CommentFormComponent — форма создания/ответа на комментарий %>
+<%# Иконки: mdi-send, mdi-reply %>
+<%
+  form_attrs = {
+    controller: "comments--comment-form-component",
+    commentable_type: commentable.class.name,
+    commentable_id: commentable.id,
+    parent_id: parent&.id
+  }.compact
+%>
+<%= content_tag :div, class: "comment-form-component mb-3", data: form_attrs do %>
+  <%= form_with url: "#", method: :post do |f| %>
+    <%# Страховка от нативного POST-фолбэка: при url: "#" Rails не генерит
+        authenticity_token. Явно добавляем, чтобы случайный нативный сабмит
+        (если Stimulus-контроллер ещё не подхватился) не падал с 401 CSRF.
+        Основной путь создания — Reflex через WebSocket (токен не участвует). %>
+    <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
+    <% if parent %>
+      <p class="text-xs text-gray-500 mb-1">
+        <%# Иконка: mdi-reply %>
+        <i class="mdi mdi-reply mr-0.5"></i><%= reply_to_label %>
+      </p>
+    <% end %>
+
+    <div class="flex gap-2">
+      <%= f.text_area :body,
+                      class: "w-full rounded-md border border-teal-200 focus:border-teal-500 focus:ring-teal-500 text-sm p-2",
+                      placeholder: placeholder,
+                      rows: 2,
+                      autocomplete: "off",
+                      required: true,
+                      data: { comments__comment_form_component_target: "body" } %>
+
+      <%= render Ui::BtnComponent.new(
+            color: :primary, size: :sm, html: { type: "submit", data: { action: "comments--comment-form-component#submit" } }
+          ) do %>
+        <%# Иконка: mdi-send %>
+        <i class="mdi mdi-send mr-0.5"></i><%= submit_label %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

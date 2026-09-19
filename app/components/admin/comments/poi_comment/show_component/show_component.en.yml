@@ -1,0 +1,13 @@
+en:
+  admin:
+    comments:
+      poi_comment:
+        show_component:
+          author: "Author"
+          hidden: "Hidden"
+          parent: "Reply to"
+          children: "Replies"
+          children_count:
+            one: "%{count} reply"
+            other: "%{count} replies"
+          audit: "Audit log"

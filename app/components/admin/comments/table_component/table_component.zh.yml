@@ -1,0 +1,11 @@
+zh:
+  admin:
+    comments:
+      table_component:
+        comment: "评论"
+        author: "作者"
+        poi: "POI"
+        date: "日期"
+        votes: "投票"
+        status: "状态"
+        actions: "操作"

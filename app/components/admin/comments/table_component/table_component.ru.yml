@@ -1,0 +1,11 @@
+ru:
+  admin:
+    comments:
+      table_component:
+        comment: "Комментарий"
+        author: "Автор"
+        poi: "POI"
+        date: "Дата"
+        votes: "Голоса"
+        status: "Статус"
+        actions: "Действия"

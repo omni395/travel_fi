@@ -136,6 +136,9 @@ ru:
     osm_import_complete_title: "Импорт OSM завершён"
     poi_category_updated: "Категория POI «%{category}» обновлена."
     poi_category_updated_title: "Категория POI обновлена"
+    poi_comment_new: "Новый комментарий к «%{poi}»."
+    poi_comment_reply: "%{name} ответил(а) на ваш комментарий к «%{poi}»."
+    poi_comment_reply_title: "Новый ответ"
     contract_balance:
       title: "Баланс наградного пула"
       title_warning: "Низкий баланс наградного пула"
@@ -144,6 +147,27 @@ ru:
       critical: "Баланс наградного пула критически низкий: %{balance} TFT (ниже критического порога %{critical_balance})."
 
   admin:
+    comments:
+      index:
+        title: "Комментарии"
+        subtitle: "Модерация комментариев пользователей к POI"
+        filter_body: "Поиск по тексту"
+        filter_body_ph: "Текст комментария..."
+        filter_author: "Поиск по автору"
+        filter_author_ph: "Имя или email автора..."
+        filter_status: "Статус"
+        filter_submit: "Фильтр"
+        status_all: "Все"
+        status_hidden: "Только скрытые"
+      show:
+        back: "Назад к комментариям"
+      actions:
+        hide: "Скрыть"
+        unhide: "Показать"
+        destroy: "Удалить"
+      hide_success: "Комментарий скрыт"
+      unhide_success: "Комментарий показан"
+      destroy_success: "Комментарий удалён"
     poi_categories:
       index:
         title: "Категории POI"
@@ -154,6 +178,11 @@ ru:
         file_required: "Выберите файл изображения для загрузки"
         unauthorized: "У вас нет прав на изменение картинки-маркера категории"
     pois:
+      tabs:
+        details: "Детали"
+        map: "Карта"
+        audit_log: "Журнал аудита"
+        comments: "Комментарии"
       index:
         title: "POI"
         add_poi: "Добавить POI"

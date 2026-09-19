@@ -1,0 +1,63 @@
+<%# Admin::Comments::RowComponent — одна строка таблицы модерации комментариев %>
+<%# Иконки: mdi-eye, mdi-eye-off, mdi-delete %>
+<tr
+  class="admin-comments-row-component hover:bg-teal-50/50"
+  data-controller="admin--comments--row-component"
+  data-comment-id="<%= comment.id %>"
+>
+  <td class="px-4 py-3 text-sm text-gray-800 max-w-xs truncate">
+    <%= link_to comment.body.truncate(60), admin_comment_path(id: comment), class: "text-emerald-700 hover:text-emerald-900 hover:underline" %>
+  </td>
+  <td class="px-4 py-3 text-sm text-gray-700"><%= comment.user&.name || comment.user&.email %></td>
+  <td class="px-4 py-3 text-sm text-gray-700">
+    <%= link_to comment.poi.localized_name.truncate(24), admin_poi_path(id: comment.poi), class: "text-sky-700 hover:text-sky-900 hover:underline" %>
+  </td>
+  <td class="px-4 py-3 text-sm text-gray-500"><%= render Ui::DateComponent.new(comment.created_at, format: :long) %></td>
+  <td class="px-4 py-3 text-sm">
+    <span class="text-emerald-600 font-medium">+<%= vote_tally[:ups] %></span>
+    <span class="text-rose-500 font-medium ml-1">−<%= vote_tally[:downs] %></span>
+  </td>
+  <td class="px-4 py-3">
+    <% if comment.hidden? %>
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700">
+        <%# Иконка: mdi-eye-off %>
+        <i class="mdi mdi-eye-off mr-1"></i><%= t(".hidden") %>
+      </span>
+    <% else %>
+      <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+        <%# Иконка: mdi-eye %>
+        <i class="mdi mdi-eye mr-1"></i><%= t(".visible") %>
+      </span>
+    <% end %>
+  </td>
+  <td class="px-4 py-3 text-right whitespace-nowrap">
+    <div class="inline-flex gap-1">
+      <% if comment.hidden? && can_moderate? %>
+        <%= render Ui::BtnComponent.new(
+              color: :primary, size: :sm,
+              html: { type: "button", data: { action: "admin--comments--row-component#unhide", comment_id: comment.id } }
+            ) do %>
+          <%# Иконка: mdi-eye %>
+          <i class="mdi mdi-eye mr-0.5"></i><%= t("admin.comments.actions.unhide") %>
+        <% end %>
+      <% elsif can_moderate? %>
+        <%= render Ui::BtnComponent.new(
+              color: :secondary, size: :sm,
+              html: { type: "button", data: { action: "admin--comments--row-component#hide", comment_id: comment.id } }
+            ) do %>
+          <%# Иконка: mdi-eye-off %>
+          <i class="mdi mdi-eye-off mr-0.5"></i><%= t("admin.comments.actions.hide") %>
+        <% end %>
+      <% end %>
+      <% if can_destroy? %>
+        <%= render Ui::BtnComponent.new(
+              color: :danger, size: :sm,
+              html: { type: "button", data: { action: "admin--comments--row-component#destroy", comment_id: comment.id } }
+            ) do %>
+          <%# Иконка: mdi-delete %>
+          <i class="mdi mdi-delete mr-0.5"></i><%= t("admin.comments.actions.destroy") %>
+        <% end %>
+      <% end %>
+    </div>
+  </td>
+</tr>

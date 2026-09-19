@@ -1,0 +1,13 @@
+zh:
+  admin:
+    comments:
+      poi_comment:
+        show_component:
+          author: "作者"
+          hidden: "已隐藏"
+          parent: "回复"
+          children: "回复"
+          children_count:
+            one: "%{count} 条回复"
+            other: "%{count} 条回复"
+          audit: "审计日志"

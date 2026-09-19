@@ -1,0 +1,91 @@
+<%# Comments::CommentComponent — отдельная запись комментария %>
+<%# Иконки: mdi-reply, mdi-pencil-outline, mdi-delete-outline, mdi-chevron-down, mdi-chevron-up, mdi-flag %>
+<div class="comment-component"
+     data-controller="comments--comment-component"
+     data-comment-id="<%= comment.id %>">
+
+  <div class="flex gap-3 <%= comment.parent ? 'ml-6' : '' %>">
+    <%# Аватар автора %>
+    <%= render Ui::AvatarComponent.new(user: comment.user, size: :sm) %>
+
+    <div class="flex-1 min-w-0">
+      <%# Шапка: автор · дата · @предок (флоттенинг) %>
+      <div class="flex items-center gap-2 text-xs text-gray-500">
+        <span class="font-semibold text-gray-700"><%= comment.user.name %></span>
+        <span>&middot;</span>
+        <span><%= l(comment.created_at, format: :short) %></span>
+        <% if reply_target_name.present? %>
+          <%# Иконка: mdi-reply %>
+          <span class="text-teal-600">
+            <i class="mdi mdi-reply mr-0.5"></i><%= t(".replying_to", name: reply_target_name) %>
+          </span>
+        <% end %>
+      </div>
+
+      <%# Тело комментария %>
+      <p class="mt-1 text-sm text-gray-700 whitespace-pre-wrap"><%= comment.body %></p>
+
+      <%# Панель действий: голоса + ответ/редактировать/удалить/модерация %>
+      <div class="mt-2 flex items-center gap-3 flex-wrap">
+        <%= render Ui::VoteComponent.new(votable: comment, current_user: current_user) %>
+
+        <% if replyable? %>
+          <%= render Ui::BtnComponent.new(
+                color: :ghost, size: :xs,
+                html: { data: { comments__toggle_reply: true, action: "comments--comment-component#toggleReply" } }
+              ) do %>
+            <%# Иконка: mdi-reply %>
+            <i class="mdi mdi-reply mr-0.5"></i><%= t(".reply") %>
+          <% end %>
+        <% end %>
+
+        <% if can_edit? %>
+          <%= render Ui::BtnComponent.new(
+                color: :ghost, size: :xs,
+                html: { data: { comments__toggle_edit: true, action: "comments--comment-component#toggleEdit" } }
+              ) do %>
+            <%# Иконка: mdi-pencil-outline %>
+            <i class="mdi mdi-pencil-outline mr-0.5"></i><%= t(".edit") %>
+          <% end %>
+        <% end %>
+
+        <% if can_destroy? %>
+          <%= render Ui::BtnComponent.new(
+                color: :danger, size: :xs,
+                html: { data: { action: "comments--comment-component#destroy" } }
+              ) do %>
+            <%# Иконка: mdi-delete-outline %>
+            <i class="mdi mdi-delete-outline mr-0.5"></i><%= t(".delete") %>
+          <% end %>
+        <% end %>
+      </div>
+
+      <%# Форма ответа (скрыта, раскрывается по кнопке) %>
+      <div class="mt-2 hidden" data-comments--comment-component-target="replyForm">
+        <%= render Comments::CommentFormComponent.new(
+              commentable: comment.poi, current_user: current_user,
+              parent: comment, user_lat: user_lat, user_lng: user_lng
+            ) %>
+      </div>
+
+      <%# Свёрнутая ветка: кнопка «Показать N ответов» %>
+      <% if collapsed? %>
+        <%= render Ui::BtnComponent.new(
+              color: :ghost, size: :xs,
+              html: { data: { action: "comments--comment-component#expandReplies" } }
+            ) do %>
+          <%# Иконка: mdi-chevron-down %>
+          <i class="mdi mdi-chevron-down mr-0.5"></i><%= t(".show_replies", count: comment.children_count) %>
+        <% end %>
+      <% else %>
+        <%# Дети (ответы, 1 уровень) %>
+        <% if children.any? %>
+          <%= render Comments::CommentComponent.with_collection(
+                children, current_user: current_user, moderation: moderation, sort: sort,
+                user_lat: user_lat, user_lng: user_lng
+              ) %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+</div>

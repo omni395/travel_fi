@@ -63,6 +63,14 @@ Rails.application.routes.draw do
 
       # Управление POI
       resources :pois, only: [ :index, :show, :new, :create, :update ]
+
+      # Управление комментариями POI (модерация: скрыть/удалить)
+      resources :comments, only: [ :index, :show ], controller: "comments" do
+        member do
+          patch :hide
+          patch :unhide
+        end
+      end
     end
 
     # User-facing POI routes - карта, список и редактирование (PATCH /pois/:id из модалки).

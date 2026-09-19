@@ -1,0 +1,15 @@
+<%# Comments::CommentListComponent — контейнер списка корневых комментариев %>
+<div class="comment-list-component" data-controller="comments--comment-list-component">
+  <% if comments.any? %>
+    <%= render Comments::CommentComponent.with_collection(
+          comments, current_user: current_user, moderation: moderation, sort: sort,
+          user_lat: user_lat, user_lng: user_lng
+        ) %>
+  <% else %>
+    <p class="text-center text-xs text-gray-400 py-4">
+      <%# Иконка: mdi-comment-text-outline %>
+      <i class="mdi mdi-comment-text-outline mr-1"></i>
+      <%= t(".empty") %>
+    </p>
+  <% end %>
+</div>

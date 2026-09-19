@@ -162,13 +162,70 @@ class VersionObserverJob < ApplicationJob
   end
 
   #
-  # Маршрутизация обновлений модели PoiComment (live-комментарии)
+  # Маршрутизация обновлений модели PoiComment (live-комментарии).
+  # При create/update — точечный broadcast в общий стрим карты (все зрители
+  # карточки POI видят новый комментарий/обновление без перезагрузки).
+  # При create ответа на чужой комментарий — уведомление автору ветки (Noticed).
+  #
+  # @param version [PaperTrail::Version] версия изменения PoiComment
   #
   def handle_poi_comment_update(version)
     comment = version.item || version.reify
     return unless comment
 
-    PoiCommentBroadcaster.call(comment: comment)
+    event = version.event.to_sym rescue :update
+
+    # Точечный broadcast (inner_html/insert_adjacent_html) — live у публичных зрителей.
+    safe_broadcast { PoiCommentBroadcaster.call(comment: comment, event: event) }
+
+    # Админ-модерация: при изменении hidden_at (скрытие/показ) обновляем
+    # админ-таблицу [data-admin-comments-list] через Admin::CommentAdminBroadcaster.
+    # При destroy — удаляем ноду у публичных зрителей (см. broadcast_removal).
+    if event == :update && hidden_at_changed?(version)
+      safe_broadcast { Admin::CommentAdminBroadcaster.call(comment: comment, event: event) }
+    end
+
+    # Уведомление автору родительского комментария при создании ответа.
+    return unless event == :create && comment.parent.present?
+
+    notify_comment_parent(comment)
+  end
+
+  #
+  # Определяет, был ли в версии PaperTrail изменён hidden_at (модерация скрытия).
+  #
+  # @param version [PaperTrail::Version] версия изменения
+  # @return [Boolean] true, если поле hidden_at менялось
+  #
+  def hidden_at_changed?(version)
+    return false unless version.object_changes.present?
+
+    changes = version.object_changes
+    changes = JSON.parse(changes) if changes.is_a?(String)
+    return false unless changes.is_a?(Hash)
+
+    changes.key?("hidden_at") || changes.key?(:hidden_at)
+  rescue JSON::ParserError
+    false
+  end
+
+  #
+  # Отправляет уведомление (Noticed) автору родительского комментария о новом ответе.
+  # Инлайн-нотификация через Noticed::Event + Setting-фильтры обрабатывает клиент.
+  #
+  # @param comment [PoiComment] созданный ответ
+  #
+  def notify_comment_parent(comment)
+    parent_author = comment.parent.user
+    return if parent_author.nil? || parent_author.id == comment.user_id
+
+    PoiCommentNotification.with(
+      poi: comment.poi,
+      comment: comment,
+      reply_author_id: comment.user_id
+    ).deliver_later(parent_author)
+  rescue StandardError => e
+    Rails.logger.error("VersionObserverJob notify_comment_parent failed: #{e.class} #{e.message}")
   end
 
   #

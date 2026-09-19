@@ -1,0 +1,13 @@
+es:
+  admin:
+    comments:
+      poi_comment:
+        show_component:
+          author: "Autor"
+          hidden: "Oculto"
+          parent: "Respuesta a"
+          children: "Respuestas"
+          children_count:
+            one: "%{count} respuesta"
+            other: "%{count} respuestas"
+          audit: "Registro de auditoría"

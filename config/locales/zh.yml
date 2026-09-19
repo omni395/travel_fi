@@ -103,6 +103,9 @@ zh:
     osm_import_complete_title: "OSM 导入完成"
     poi_category_updated: "POI 分类 %{category} 已更新。"
     poi_category_updated_title: "POI 分类已更新"
+    poi_comment_new: "%{poi} 有新评论。"
+    poi_comment_reply: "%{name} 回复了你在 %{poi} 的评论。"
+    poi_comment_reply_title: "新回复"
     contract_balance:
       title: "奖励池余额"
       title_warning: "奖励池余额不足"
@@ -124,6 +127,27 @@ zh:
       oauth_login: "OAuth 登录"
 
   admin:
+    comments:
+      index:
+        title: "评论"
+        subtitle: "审核用户对POI的评论"
+        filter_body: "按文本搜索"
+        filter_body_ph: "评论内容..."
+        filter_author: "按作者搜索"
+        filter_author_ph: "作者姓名或邮箱..."
+        filter_status: "状态"
+        filter_submit: "筛选"
+        status_all: "全部"
+        status_hidden: "仅隐藏"
+      show:
+        back: "返回评论"
+      actions:
+        hide: "隐藏"
+        unhide: "显示"
+        destroy: "删除"
+      hide_success: "评论已隐藏"
+      unhide_success: "评论已显示"
+      destroy_success: "评论已删除"
     poi_categories:
       index:
         title: "POI 分类"
@@ -134,6 +158,11 @@ zh:
         file_required: "请选择要上传的图片文件"
         unauthorized: "您无权更改此分类图标"
     pois:
+      tabs:
+        details: "详情"
+        map: "地图"
+        audit_log: "审计日志"
+        comments: "评论"
       index:
         title: "POI"
         add_poi: "添加POI"

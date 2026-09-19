@@ -1,0 +1,6 @@
+es:
+  admin:
+    comments:
+      row_component:
+        hidden: "Oculto"
+        visible: "Visible"

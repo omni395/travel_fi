@@ -4,6 +4,12 @@
 
 import { application } from "./application"
 
+application.register('admin--comments--poi-comment--show-component', () => import('../../components/admin/comments/poi_comment/show_component/show_component_controller.js'))
+
+application.register('admin--comments--row-component', () => import('../../components/admin/comments/row_component/row_component_controller.js'))
+
+application.register('admin--comments--table-component', () => import('../../components/admin/comments/table_component/table_component_controller.js'))
+
 application.register('admin--dashboard-component', () => import('../../components/admin/dashboard_component/dashboard_component_controller.js'))
 
 application.register('admin--poi-categories--poi-category--audit-log-component', () => import('../../components/admin/poi_categories/poi_category/audit_log_component/audit_log_component_controller.js'))
@@ -45,6 +51,14 @@ application.register('admin--users--user--edit-component', () => import('../../c
 application.register('admin--users--user--show-component', () => import('../../components/admin/users/user/show_component/show_component_controller.js'))
 
 application.register('admin--users--user--wallet-component', () => import('../../components/admin/users/user/wallet_component/wallet_component_controller.js'))
+
+application.register('comments--comment-component', () => import('../../components/comments/comment_component/comment_component_controller.js'))
+
+application.register('comments--comment-form-component', () => import('../../components/comments/comment_form_component/comment_form_component_controller.js'))
+
+application.register('comments--comment-list-component', () => import('../../components/comments/comment_list_component/comment_list_component_controller.js'))
+
+application.register('comments--comments-component', () => import('../../components/comments/comments_component/comments_component_controller.js'))
 
 application.register('poi--comments-component', () => import('../../components/poi/comments_component/comments_component_controller.js'))
 

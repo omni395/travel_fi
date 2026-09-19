@@ -1,0 +1,14 @@
+ru:
+  comments:
+    comment_component:
+      reply: "Ответить"
+      edit: "Изменить"
+      delete: "Удалить"
+      replying_to: "ответ %{name}"
+      show_replies:
+        one: "Показать %{count} ответ"
+        few: "Показать %{count} ответа"
+        many: "Показать %{count} ответов"
+        other: "Показать %{count} ответов"
+      hide_replies: "Скрыть ответы"
+      confirm_delete: "Удалить этот комментарий?"

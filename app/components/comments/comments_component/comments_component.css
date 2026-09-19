@@ -1,0 +1,6 @@
+/* Comments::CommentsComponent — стили обёртки-дерева комментариев */
+.comments-component .comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
