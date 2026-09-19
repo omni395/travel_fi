@@ -17,6 +17,7 @@ class Admin::SettingsController < Admin::BaseController
   def show
     authorize @setting, :show?
     @pagy_audit, @versions = pagy(@setting.versions.order(created_at: :desc), limit: 20)
+    @gamification_config = Setting.gamification_config
   end
 
   private

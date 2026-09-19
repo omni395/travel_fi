@@ -2,7 +2,13 @@
 
 class SettingsReflex < ApplicationReflex
   #
-  # Обновляет настройки через Reflex (WebSocket).
+  # Инвертирует булевый параметр настройки текущего пользователя (через WebSocket).
+  #
+  # Поле приходит в args-параметрах (неймспейсный ключ, без id) как
+  # `this.stimulate('SettingsReflex#update', { field: 'my_poi_status_email_enabled' })`.
+  # Новое значение берём из актуального состояния БД (SettingService.toggle),
+  # а НЕ из aria-checked или dataset клиента — клиентская строка ненадёжна.
+  #
   # Reflex НЕ рендерит тосты напрямую — тост доставляется через broadcast
   # (ToastBroadcaster, user_N), а не локальным рендером Ui::ToastComponent
   # (принцип «тосты только через broadcast», ROADMAP 3.2).
@@ -10,15 +16,21 @@ class SettingsReflex < ApplicationReflex
   def update
     morph :nothing
 
-    field = element.dataset.fieldValue
-    # Текущее состояние из aria-checked (строка "true"/"false"), инвертируем
-    current_value = element.aria_checked == "true"
-    value = !current_value
+    field = params[:field].to_s
+    setting = current_user.setting || current_user.create_setting!
+    authorize setting, :update?
 
-    # Авторизация через Pundit
-    authorize current_user.setting, :update?
+    new_value = SettingService.toggle(setting, field)
+    return send_error_toast unless new_value
 
-    SettingService.update(current_user.setting, field, value)
+    # Точечно обновляем aria-checked у переключателя (селектор по data-field-value),
+    # иначе при morph :nothing визуальное состояние осталось бы старым.
+    cable_ready.set_attribute(
+      selector: "[data-field-value='#{field}']",
+      name: "aria-checked",
+      value: new_value
+    )
+    cable_ready.broadcast
 
     # Тост об успехе — через broadcast (ToastBroadcaster → user_N)
     ToastBroadcaster.call(

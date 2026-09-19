@@ -1,0 +1,21 @@
+---
+en:
+  admin:
+    gamification_settings_component:
+      title: Gamification (Rewards & Pool)
+      hint: Values update instantly without redeployment.
+      updated: Gamification updated
+      rewards_title: Rewards (TFT)
+      reward:
+        registration: Registration
+        referral_bonus_referrer: Referral bonus (referrer)
+        referral_bonus_new_user: Referral bonus (new user)
+        poi_create: POI create
+        poi_photo_add: POI photo
+        comment_create: Comment
+        poi_vote: Vote
+      pool_title: Reward Pool
+      pool:
+        lock_days: Lock period (days)
+        warning_balance: Warning balance
+        critical_balance: Critical balance

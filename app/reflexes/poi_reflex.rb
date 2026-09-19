@@ -75,6 +75,10 @@ class PoiReflex < ApplicationReflex
     poi = Poi.includes(:poi_category, :user).find(poi_id)
     authorize_with_pundit!(poi, :show?)
 
+    # Фиксируем просмотр карточки (для эмпирических рекомендаций по интересам).
+    # Здесь current_user гарантированно присутствует (гости ушли в диалог выше).
+    PoiViewService.record(user: current_user, poi: poi)
+
     # Таб «Комментарии» — заглушка (Poi::CommentsComponent), данные не запрашиваем.
     html = ApplicationController.render(Poi::ShowComponent.new(
       poi: poi,

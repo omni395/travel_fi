@@ -11,7 +11,8 @@ require 'rails_helper'
 # 3. Бейджи: first_poi (badge_id 2) при условии user.pois.count == 1
 #
 RSpec.describe GamificationService, type: :service do
-  let(:rewards) { YAML.safe_load_file(Rails.root.join('config/gamification.yml'))['rewards'] }
+  # Источник правды — Setting.gamification_config (после переноса из YAML).
+  let(:rewards) { Setting.gamification_config['rewards'] }
   let(:user) { create(:user) }
 
   describe '.award!' do
@@ -111,6 +112,6 @@ RSpec.describe GamificationService, type: :service do
   end
 
   def rewards_config_dig(*keys)
-    YAML.safe_load_file(Rails.root.join('config/gamification.yml')).dig(*keys)
+    Setting.gamification_config.dig(*keys)
   end
 end

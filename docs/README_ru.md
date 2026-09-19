@@ -334,7 +334,7 @@ Database-backed кэш (альтернатива Redis). Инфраструкт�
 
 **ТОКЕННАЯ МОДЕЛЬ:** награды начисляются токенами TFT (не «баллами»).
 
-**Архитектура:** модель `UserReward` (`amount` TFT, `action_key`, `wallet_id`) — off-chain леджер начислений; `User#token_balance` = сумма начислений; сервис `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`, `revoke!`); бейджи — модель `Gamification` (event_type `badge`, репутационные достижения); конфиг [`config/gamification.yml`](config/gamification.yml) (rewards — токены TFT, badges — достижения).
+**Архитектура:** модель `UserReward` (`amount` TFT, `action_key`, `wallet_id`) — off-chain леджер начислений; `User#token_balance` = сумма начислений; сервис `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`, `revoke!`); бейджи — модель `Gamification` (event_type `badge`, репутационные достижения); конфиг — `Setting.gamification_config` (rewards — токены TFT, badges — достижения), правятся в настройках админа `/admin-panel/settings` без редеплоя (ранее — `config/gamification.yml`, файл удалён).
 
 **Отзыв награды (`GamificationService.revoke!`):** глобально отзывает не отправленное (claimed=false, ещё не ушло в блокчейн) начисление за действие (напр. `poi_photo_add` при удалении своего фото через `PoiService.remove_photo`), атомарно удаляя пару `UserReward` + `TokenTransaction` (аудит PaperTrail); идемпотентен. Уже забранное (claimed=true) на бэке не отзывается.
 
