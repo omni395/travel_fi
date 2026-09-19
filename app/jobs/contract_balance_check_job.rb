@@ -3,7 +3,8 @@
 #
 # ContractBalanceCheckJob — периодический мониторинг баланса reward pool-контракта.
 #
-# Читает пороги (TFT) из config/gamification.yml (секция pool):
+# Читает пороги (TFT) из Setting.gamification_config (секция pool,
+# ранее — config/gamification.yml):
 #   - warning_balance  (жёлтая плашка)
 #   - critical_balance (красная плашка)
 # При балансе ниже порога — шлёт уведомление админам через Noticed

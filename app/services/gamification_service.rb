@@ -7,7 +7,8 @@
 # а не в «баллы». Реальная отправка ERC-20 на custodial-кошелёк — через
 # TokenTransactionService.relay! (контракты задеплоены, см. .env).
 #
-# Конфиг: config/gamification.yml (rewards — токены, badges — достижения).
+# Конфиг: Setting.gamification_config (rewards — токены, badges — достижения);
+# значения подхватываются на лету без редеплоя (ранее — config/gamification.yml).
 #
 # Использование:
 #   GamificationService.award!(:registration, user)
@@ -211,7 +212,7 @@ class GamificationService
     end
 
     #
-    # Секция pool глобальной конфигурации (config/gamification.yml).
+    # Секция pool глобальной конфигурации (Setting.global.gamification_config).
     #
     # @return [Hash] { lock_days:, warning_balance:, critical_balance: }
     #
@@ -249,12 +250,14 @@ class GamificationService
     private
 
     #
-    # Загружает конфиг наград/бейджей из YAML.
+    # Возвращает конфиг наград/бейджей. Источник правды — Setting.global
+    # (gamification_config, JSONB), который админ меняет в настройках без
+    # редеплоя. Пока админ не сохранил — fallback на seed-дефолт YAML.
     #
     # @return [Hash]
     #
     def config
-      @config ||= YAML.safe_load_file(Rails.root.join("config/gamification.yml"))
+      @config ||= Setting.gamification_config
     end
 
     #

@@ -176,7 +176,7 @@ class PoiService
     photo = PhotoService.add_photo(record: poi, file: file, user: current_user, audit_touch: true)
     raise CreateError, I18n.t("pois.photo_upload_failed") unless photo
 
-    # Геймификация: награда TFT за добавленное фото (сумма из config/gamification.yml,
+    # Геймификация: награда TFT за добавленное фото (сумма из Setting.gamification_config,
     # ключ poi_photo_add). Начисляется ТОЛЬКО автору (current_user). Обёрнуто в rescue —
     # сбой начисления не роняет загрузку фото (по образцу award_poi_create!).
     begin

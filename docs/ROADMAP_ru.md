@@ -99,7 +99,7 @@ Travel Fi
 - ✅ **Полноценные threaded-комментарии** (глубина 2 + флоттенинг «ответа на ответ» в корень): модель `PoiComment` (`root_id`/`depth`/`children_count`/`hidden_at`), универсальный `CommentService` (полиморфный контракт, важка-флоу), компоненты `Comments::*` (корневой namespace), live для всех через `PoiCommentBroadcaster` (точечный `insert_adjacent_html` в `[data-comments-list]` стрима `pois_map` + уведомление автору ветки через `PoiCommentNotification`/Noticed); `PoiReflex` (create/update/destroy/sort/expand); проксимити 100м (`PoiCommentPolicy`).
 - ✅ Live-комментарии для всех (не только автору): точечное добавление ноды нового комментария/ответа в `[data-comments-list]` через `PoiCommentBroadcaster`, сортировка best/new, свёртывание веток, голосование через `Ui::VoteComponent` (`VoteService.tally` полиморфный).
 - ✅ Модерация (ядро): поле `hidden_at`, скоупы `visible`/`roots`, флоттенинг, авто-скрытие по порогу дизлайков — в `ModerationService` (авто-скрытие/показ по `Setting.global_threshold`); админ-модерация — см. 3.7.
-- ✅ Награды TFT за создание POI/комментарий (`GamificationService.award!(:poi_create/:comment_create)`, суммы из `config/gamification.yml`)
+- ✅ Награды TFT за создание POI/комментарий (`GamificationService.award!(:poi_create/:comment_create)`, суммы из `Setting.gamification_config`)
 - ✅ Live-карта: `poi:reload-features` → перезапрос с сервера; fallback-загрузка маркеров в `map_component_controller.js` (ретрай `_loadPoisInBounds`)
 - ✅ OSM-импорт: вкладка POIs обновляется инкрементально (`inner_html [data-poi-category-pois]` каждые 10 импортов), без `morph`-дублей карточек
 - ✅ Reverse geocoding при открытии формы редактирования (мини-карта в edit-режиме, автозаполнение address/city/country/zip)
@@ -168,15 +168,19 @@ Travel Fi
 
 **Маршрут:** `/:slug/settings` — [`Users::SettingsController#show`](app/controllers/users/settings_controller.rb:10)
 
-**Цепочка:** `SettingsReflex#update` ([`app/reflexes/settings_reflex.rb`](app/reflexes/settings_reflex.rb:5)) → [`SettingService.update`](app/services/setting_service.rb:3) → [`SettingBroadcaster`](app/broadcasters/setting_broadcaster.rb:11) → `user_<id>` (toast)
+**Цепочка:** `SettingsReflex#update` ([`app/reflexes/settings_reflex.rb`](app/reflexes/settings_reflex.rb:10)) → `SettingService.toggle` (инверсия из БД) → `ToastBroadcaster` → `user_<id>` (тост)
 
 **Компоненты:** [`Settings::FieldComponent`](app/components/settings/field_component.rb:1) (в т.ч. админ-набор через `admin/settings`)
 
 **Статус:** ✅ Сделано
 
-**Сделано:**
-- ✅ Переключатели событий (in-app / email / push) для пользователя
-- ✅ Автосохранение через Reflex + toast (тосты только через broadcast, без локальных рендеров)
+**Сделано (рефакторинг settings-refactor):**
+- ✅ Починён переключатель: поле из args-параметров, инверсия из актуального состояния БД (`SettingService.toggle`), CSS-состояние по `aria-checked` через CableReady
+- ✅ `SettingService` с `PERMITTED_FIELDS` (allowlist) — защита от mass-assignment
+- ✅ Набор событий юзера: `my_poi_status`, `my_poi_comment`, `my_poi_photo`, `reward_available`, `reward_locked`, `badge_earned`, `recommendations`, `profile_updated`
+- ✅ Мастер-флаги каналов (`notifications_enabled`, `email_enabled`, `push_enabled`) — первичный фильтр в `SettingFilterable`
+- ✅ Нотификации фильтруются по событию: `PoiCommentNotification`, `PoiStatusNotification`, `RewardNotification`, `BadgeNotification`, `RecommendedPoiNotification`
+- ✅ **Эмпирические рекомендации:** сущность `PoiView` (просмотры карточек), `PoiViewService.record`, `RecommendedPoiJob` (SolidQueue recurring раз в 6ч, лимит 5) с формулой интереса `interest(category)=Σ recency_weight(view)` (экспоненциальное затухание по давности)
 
 **Хотелки:**
 - 🔴 Верификация email/push перед включением каналов
@@ -383,14 +387,15 @@ net.positive? ? :approved : :rejected   # конфликт/паритет (net<=
 
 **Маршрут:** `/admin-panel/settings` (resource :settings, only: show) — [`Admin::SettingsController`](app/controllers/admin/settings_controller.rb:1)
 
-**Цепочка:** `SettingsReflex#update` → `SettingService.update` → `SettingBroadcaster` → `user_<id>` (админ как обычный юзер)
+**Цепочка:** `SettingsReflex#update` → `SettingService.toggle` → `ToastBroadcaster` → `user_<id>` (админ как обычный юзер)
 
 **Компоненты:** [`Settings::FieldComponent`](app/components/settings/field_component.rb:1), `Ui::AuditEntryComponent`, `Ui::BreadcrumbsComponent`
 
 **Статус:** ✅ Сделано
 
 **Сделано:**
-- ✅ Все типы событий (включая админские: new_registration, user_updated_by_admin и т.д.)
+- ✅ Из набора админа убраны «мёртвые» статусные переключатели юзеров (pending_verification, suspended/banned/deleted_user и т.д.), оставлены значимые: `new_registration`, `user_updated_by_admin`, `osm_import`, `pending_moderation`, `community_rejected`, `system_alert`
+- ✅ Перенос геймификации из `config/gamification.yml` в `Setting.global.gamification_config` (rewards + pool + badges) — значения правятся в настройках без редеплоя
 - ✅ Автосохранение + тост + лента аудита Settings
 
 **Хотелки:**
@@ -462,7 +467,7 @@ net.positive? ? :approved : :rejected   # конфликт/паритет (net<=
 - ✅ **Авто-ретрай упавших relay:** `TokenTransactionRetryJob` (recurring каждые 15 мин) находит `status: failed` + `tx_hash: nil` и переотправляет через `relay!` только мгновенные/доступные по лок-периоду (vesting, ещё не разблокированные, — ждут claim).
 - ✅ **Точка начисления = статус active:** welcome-токены и реферальные бонусы начисляются ТОЛЬКО активному аккаунту. Email — после подтверждения (`ConfirmationsController#show`, кошелёк создан до начисления); OAuth — сразу (юзер активен). Реферальная связь (`referred_by`) фиксируется при регистрации (`UserService.save_referral!`) — переживает подтверждение.
 - ⚠️ **OAuth-рефкод:** бэкенд принимает рефкод — `User.from_google_oauth(auth, referral_code_input)` пробрасывает `?ref=`/`session[:referral_code]` в `UserService.handle_google_oauth` (реф-начисления работают при переданном коде). Но в OAuth-флоу НЕТ UI ввода рефкода и кнопка authorize не формирует `?ref=` → полноценный реферальный сценарий через OAuth недоступен до реализации UI-части (см. хотелку §2.4).
-- ✅ **Конфиг pool + мониторинг:** секция `pool` в `config/gamification.yml` (`lock_days`, `warning_balance`, `critical_balance`); `ContractBalanceCheckJob` (SolidQueue recurring) читает баланс pool через `TokenTransactionService.balance_of` и шлёт админам `ContractBalanceNotification` (Noticed) при низком балансе (жёлтая/красная плашка в интерфейсе — позже, с компонентами).
+- ✅ **Конфиг pool + мониторинг:** секция `pool` в `Setting.gamification_config` (`lock_days`, `warning_balance`, `critical_balance`, ранее — `config/gamification.yml`); `ContractBalanceCheckJob` (SolidQueue recurring) читает баланс pool через `TokenTransactionService.balance_of` и шлёт админам `ContractBalanceNotification` (Noticed) при низком балансе (жёлтая/красная плашка в интерфейсе — позже, с компонентами).
 - ✅ **ECDSA-подпись на Ruby 3.4:** [`Crypto::Ethereum#ecdsa_sign`](lib/crypto/ethereum.rb:231) — координаты точки извлекаются через `to_octet_string(:uncompressed)` (у API `OpenSSL::PKey::EC::Point` нет `#x/#y`); `sign_transaction` покрыт тестом
 - ✅ **Проверка в dev (Base Sepolia):** запустить `bin/jobs` → зарегистрировать юзера → relay-job отправит mint → в explorer транзакция, в админке explorer-ссылка (выжимка 4+4); `balanceOf(custodial)` == off-chain `token_balance`. RSpec RPC **мокает** (WebMock) — реальная сеть в тестах не затрагивается
 - ✅ **Custodial-кошелёк:** модель `Wallet` (`kind: custodial/external`), `WalletService.create_hidden_wallet` (EIP-55, шифрование private key `MessageEncryptor`), генерация на Ruby без новых гемов ([`Crypto::Ethereum`](lib/crypto/ethereum.rb:1) — OpenSSL secp256k1 + keccak256 + EIP-55). Email — после подтверждения, OAuth — сразу.
@@ -481,7 +486,8 @@ net.positive? ? :approved : :rejected   # конфликт/паритет (net<=
   - **`sendRewardBatch` — ТОЛЬКО под акции/массовые награды** (несколько юзеров одной tx), не как регулярный процесс.
   - **Плашка «доступно Y к снятию / Z на балансе»:** расчёт на бэке из скоупов `TokenTransaction` — `available` (разблокированы по `updated_at` И `claimed == false`), `locked` (ещё не прошёл лок-период). Ручной счётчик не нужен.
   - **Claim-флоу:** кнопка → Сервис (`UserService.claim_rewards!`) → собирает `available`-начисления → ставит relay-Джоб → при успехе `claimed = true` (и `updated_at` обновляется → аудит → broadcast).
-- 🔴 **Вынести все динамические настройки геймификации из `config/gamification.yml` в сущность `Setting` + UI в админке `/admin-panel/settings`:** не только pool (`rewards_lock_days`, `pool_warning_balance`, `pool_critical_balance`), но и rewards-суммы (registration 10, referral 15+5, poi_create/photo/comment/vote) и thresholds бейджей (first_poi, contributor, explorer, recruiter, veteran, …). `GamificationService` читает из `Setting` (фолбэк на YAML-дефолты до первого сохранения); форма (числовые инпуты/пороги) через конвейер `SettingsReflex#update` → `SettingService.update` → `SettingBroadcaster`; аудит PaperTrail; синхронизация lock on-chain через `setLockDays`. **Пока настройки остаются в YAML — полный перенос позже отдельной задачей.**
+- ✅ **Перенос геймификации из `config/gamification.yml` в `Setting.global.gamification_config` (settings-refactor):** rewards + pool + badges перенесены в JSONB-колонку глобальной синглтон-записи; `GamificationService`/`ContractBalanceCheckJob` читают из `Setting.gamification_config` (фолбэк на `Setting::GAMIFICATION_DEFAULTS`); дефолтный бэкфилл — rake-задача `gamification:backfill_config`; **YAML-файл удалён**.
+- ✅ **Форма правки геймификации в админке `/admin-panel/settings`:** `Admin::GamificationSettingsComponent` (rewards + pool, числовые поля) → `Admin::GamificationSettingsReflex#update` → `SettingService.update_gamification` (обновление `gamification_config` JSONB на лету, без редеплоя).
 - 🔴 **Награда TFT за достижение уровня (рейтинг-система):** при переходе через порог `token_balance` (уровень из конфига) → разовый reward по двухэтапной схеме §4.2 (новый `action_key`, напр. `level_up`). Реализуется вместе с рейтинг-системой.
 - 🔴 **Акции / массовые награды через `sendRewardBatch`:** разовые кампании награждения группы юзеров одной tx (акции, розыгрыши, бонусы комьюнити). Отдельная фича поверх двухэтапной схемы.
 

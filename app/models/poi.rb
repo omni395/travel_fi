@@ -45,6 +45,9 @@ class Poi < ApplicationRecord
   # фиксирует изменение галереи через poi.touch (создаёт версию обновления).
   has_many :photos, dependent: :destroy
 
+  # Просмотры карточки (эмпирические рекомендации)
+  has_many :poi_views, dependent: :destroy
+
   # Голоса сообщества (Vote, полиморфный votable)
   has_many :votes, as: :votable, dependent: :destroy
 

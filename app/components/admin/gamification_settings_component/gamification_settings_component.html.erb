@@ -1,0 +1,54 @@
+<%# frozen_string_literal: true %>
+
+<div class="admin-gamification-settings" data-controller="admin--gamification-settings-component">
+  <div class="px-6 py-4">
+    <h2 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
+      <%# MDI: trophy-outline %>
+      <i class="mdi mdi-trophy-outline text-teal-600"></i>
+      <span><%= t(".title") %></span>
+    </h2>
+    <p class="text-sm text-gray-500 mb-4"><%= t(".hint") %></p>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <%# Rewards %>
+      <div class="space-y-3">
+        <h3 class="text-sm font-semibold text-teal-700"><%= t(".rewards_title") %></h3>
+        <% REWARD_KEYS.each do |key| %>
+          <div class="flex items-center justify-between gap-4">
+            <label for="reward-<%= key %>" class="text-sm text-gray-700 w-1/2"><%= t(".reward.#{key}") %></label>
+            <input id="reward-<%= key %>"
+                   type="number"
+                   inputmode="numeric"
+                   min="0"
+                   value="<%= reward_value(key) %>"
+                   data-field-section="rewards"
+                   data-field-key="<%= key %>"
+                   data-action="change->admin--gamification-settings-component#save"
+                   autocomplete="off"
+                   class="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-teal-400">
+          </div>
+        <% end %>
+      </div>
+
+      <%# Pool %>
+      <div class="space-y-3">
+        <h3 class="text-sm font-semibold text-emerald-700"><%= t(".pool_title") %></h3>
+        <% POOL_KEYS.each do |key| %>
+          <div class="flex items-center justify-between gap-4">
+            <label for="pool-<%= key %>" class="text-sm text-gray-700 w-1/2"><%= t(".pool.#{key}") %></label>
+            <input id="pool-<%= key %>"
+                   type="number"
+                   inputmode="numeric"
+                   min="0"
+                   value="<%= pool_value(key) %>"
+                   data-field-section="pool"
+                   data-field-key="<%= key %>"
+                   data-action="change->admin--gamification-settings-component#save"
+                   autocomplete="off"
+                   class="w-24 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-emerald-400">
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

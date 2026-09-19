@@ -25,3 +25,7 @@ production:
     class: TokenTransactionRetryJob
     queue: default
     schedule: every 15 minutes
+  recommend_pois:
+    class: RecommendedPoiJob
+    queue: default
+    schedule: every 6 hours

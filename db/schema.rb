@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_19_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "postgis"
@@ -149,6 +149,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_150000) do
     t.index ["user_id"], name: "index_poi_comments_on_user_id"
   end
 
+  create_table "poi_views", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "poi_category_id", null: false
+    t.bigint "poi_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.datetime "viewed_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.index ["poi_category_id"], name: "index_poi_views_on_poi_category_id"
+    t.index ["poi_id"], name: "index_poi_views_on_poi_id"
+    t.index ["user_id", "poi_category_id"], name: "index_poi_views_on_user_id_and_poi_category_id"
+    t.index ["user_id", "poi_id"], name: "index_poi_views_on_user_id_and_poi_id", unique: true
+    t.index ["user_id"], name: "index_poi_views_on_user_id"
+  end
+
   create_table "pois", force: :cascade do |t|
     t.string "address"
     t.string "city"
@@ -201,29 +215,63 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_150000) do
     t.boolean "active_user_email_enabled", default: false
     t.boolean "active_user_notifications_enabled", default: true
     t.boolean "active_user_push_enabled", default: false
+    t.boolean "badge_earned_email_enabled", default: false
+    t.boolean "badge_earned_notifications_enabled", default: true
+    t.boolean "badge_earned_push_enabled", default: false
     t.boolean "banned_user_email_enabled", default: false
     t.boolean "banned_user_notifications_enabled", default: true
     t.boolean "banned_user_push_enabled", default: false
     t.integer "community_moderation_threshold"
+    t.boolean "community_rejected_email_enabled", default: false
+    t.boolean "community_rejected_notifications_enabled", default: true
+    t.boolean "community_rejected_push_enabled", default: false
     t.datetime "created_at", null: false
     t.boolean "deleted_user_email_enabled", default: false
     t.boolean "deleted_user_notifications_enabled", default: true
     t.boolean "deleted_user_push_enabled", default: false
+    t.boolean "email_enabled", default: true
+    t.jsonb "gamification_config"
     t.boolean "inactive_user_email_enabled", default: false
     t.boolean "inactive_user_notifications_enabled", default: true
     t.boolean "inactive_user_push_enabled", default: false
+    t.boolean "my_poi_comment_email_enabled", default: false
+    t.boolean "my_poi_comment_notifications_enabled", default: true
+    t.boolean "my_poi_comment_push_enabled", default: false
+    t.boolean "my_poi_photo_email_enabled", default: false
+    t.boolean "my_poi_photo_notifications_enabled", default: true
+    t.boolean "my_poi_photo_push_enabled", default: false
+    t.boolean "my_poi_status_email_enabled", default: false
+    t.boolean "my_poi_status_notifications_enabled", default: true
+    t.boolean "my_poi_status_push_enabled", default: false
     t.boolean "new_registration_email_enabled", default: false
     t.boolean "new_registration_notifications_enabled", default: true
     t.boolean "new_registration_push_enabled", default: false
+    t.boolean "notifications_enabled", default: true
     t.boolean "osm_import_email_enabled", default: false
     t.boolean "osm_import_notifications_enabled", default: true
     t.boolean "osm_import_push_enabled", default: false
+    t.boolean "pending_moderation_email_enabled", default: false
+    t.boolean "pending_moderation_notifications_enabled", default: true
+    t.boolean "pending_moderation_push_enabled", default: false
     t.boolean "pending_verification_email_enabled", default: false
     t.boolean "pending_verification_notifications_enabled", default: true
     t.boolean "pending_verification_push_enabled", default: false
+    t.boolean "push_enabled", default: true
+    t.boolean "recommendations_email_enabled", default: false
+    t.boolean "recommendations_notifications_enabled", default: true
+    t.boolean "recommendations_push_enabled", default: false
+    t.boolean "reward_available_email_enabled", default: false
+    t.boolean "reward_available_notifications_enabled", default: true
+    t.boolean "reward_available_push_enabled", default: false
+    t.boolean "reward_locked_email_enabled", default: false
+    t.boolean "reward_locked_notifications_enabled", default: true
+    t.boolean "reward_locked_push_enabled", default: false
     t.boolean "suspended_user_email_enabled", default: false
     t.boolean "suspended_user_notifications_enabled", default: true
     t.boolean "suspended_user_push_enabled", default: false
+    t.boolean "system_alert_email_enabled", default: false
+    t.boolean "system_alert_notifications_enabled", default: true
+    t.boolean "system_alert_push_enabled", default: false
     t.datetime "updated_at", null: false
     t.bigint "user_id"
     t.boolean "user_updated_by_admin_email_enabled", default: false
@@ -368,6 +416,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_150000) do
   add_foreign_key "poi_comments", "poi_comments", column: "root_id"
   add_foreign_key "poi_comments", "pois", on_delete: :cascade
   add_foreign_key "poi_comments", "users", on_delete: :cascade
+  add_foreign_key "poi_views", "poi_categories"
+  add_foreign_key "poi_views", "pois"
+  add_foreign_key "poi_views", "users"
   add_foreign_key "pois", "poi_categories"
   add_foreign_key "pois", "users"
   add_foreign_key "settings", "users", on_delete: :cascade

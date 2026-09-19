@@ -104,6 +104,9 @@ class User < ApplicationRecord
   # Голоса, отданные этим пользователем (Vote, полиморфный votable)
   has_many :votes, dependent: :destroy
 
+  # Просмотренные точки (эмпирические рекомендации по интересам)
+  has_many :poi_views, dependent: :destroy
+
   # Кошельки (custodial — наш, external — собственный юзера)
   has_many :wallets, dependent: :destroy
 
@@ -228,7 +231,7 @@ class User < ApplicationRecord
 
   #
   # Количество пользователей, приглашённых по реферальному коду.
-  # Используется условием бейджа recruiter (config/gamification.yml).
+  # Используется условием бейджа recruiter (Setting.gamification_config).
   #
   # @return [Integer] количество рефералов
   #

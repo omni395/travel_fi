@@ -1,23 +1,27 @@
 # frozen_string_literal: true
 
 #
-# Уведомление об изменении профиля/регистрации пользователя.
+# PoiStatusNotification — уведомление об изменении статуса собственной точки
+# пользователя (одобрена админом/сообществом, отклонена, изменена).
 #
-# Доставляется админам (+ инициатору). Каналы фильтруются по личным настройкам
-# получателя через SettingFilterable с ключом "profile_updated":
+# Каналы фильтруются по личным настройкам получателя (Setting) через
+# SettingFilterable с ключом события "my_poi_status":
 #   канал = мастер-флаг (notifications/email/push_enabled) AND
-#           profile_updated_<channel>_enabled
+#           my_poi_status_<channel>_enabled
 #
-class UserProfileNotification < ApplicationNotification
+# @param poi [Poi] точка
+# @param event_type [String] ключ события ("approved" / "rejected" / "updated")
+#
+class PoiStatusNotification < ApplicationNotification
   include SettingFilterable
-  self.setting_event_key = "profile_updated"
+  self.setting_event_key = "my_poi_status"
 
   # deliver_by :database deprecated в Noticed 3 — записи создаются автоматически
   deliver_by :email, mailer: "UserMailer", method: :profile_updated, if: :email_enabled?
   deliver_by :action_cable, channel: "UserChannel", stream: :user_stream, message: :to_websocket, if: :notifications_enabled?
   deliver_by :web_push, class: "Noticed::DeliveryMethods::WebPush", if: :push_enabled?
 
-  required_param :item
+  required_param :poi
   required_param :event_type
 
   #
@@ -26,7 +30,8 @@ class UserProfileNotification < ApplicationNotification
   # @return [String]
   #
   def message
-    I18n.t("notifications.user_updated", name: params[:item].name)
+    poi_name = params[:poi].respond_to?(:localized_name) ? params[:poi].localized_name : params[:poi].name.to_s
+    I18n.t("notifications.poi_status.#{params[:event_type]}", name: poi_name)
   end
 
   #
@@ -36,9 +41,10 @@ class UserProfileNotification < ApplicationNotification
   #
   def to_websocket
     {
-      title: I18n.t("notifications.user_updated_title"),
+      title: I18n.t("notifications.poi_status_title"),
       message: message,
-      item_id: params[:item].id,
+      item_id: params[:poi].id,
+      item_type: "Poi",
       event_type: params[:event_type]
     }
   end

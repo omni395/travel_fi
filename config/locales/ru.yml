@@ -115,6 +115,18 @@ ru:
       user_updated_by_admin: "Обновлён"
       profile_updated: "Изменён"
       osm_import: "Импорт OSM"
+      # Юзер-события
+      my_poi_status: "Статус моей точки"
+      my_poi_comment: "Комментарии к моей точке"
+      my_poi_photo: "Фото моей точки"
+      reward_available: "Токены доступны"
+      reward_locked: "Токены начислены (заблокированы)"
+      badge_earned: "Получена ачивка"
+      recommendations: "Рекомендации по интересам"
+      # Админ-события
+      pending_moderation: "Точки на модерации"
+      community_rejected: "Отклонено сообществом"
+      system_alert: "Системные алерты"
     channels:
       notifications: "В приложении"
       email: "Email"
@@ -139,6 +151,19 @@ ru:
     poi_comment_new: "Новый комментарий к «%{poi}»."
     poi_comment_reply: "%{name} ответил(а) на ваш комментарий к «%{poi}»."
     poi_comment_reply_title: "Новый ответ"
+    poi_status_title: "Статус вашей точки изменён"
+    poi_status:
+      approved: "Ваша точка «%{name}» одобрена."
+      rejected: "Ваша точка «%{name}» отклонена."
+      updated: "Ваша точка «%{name}» обновлена."
+    rewards:
+      title: "Награда TFT"
+      reward_available: "Ваши токены %{amount} TFT доступны для получения."
+      reward_locked: "Вам начислено %{amount} TFT (токены заблокированы лок-периодом)."
+    badge_earned: "Вы получили ачивку «%{badge}»!"
+    badge_earned_title: "Новая ачивка"
+    recommendation: "В вашей зоне интересов появилась точка «%{name}»."
+    recommendation_title: "Рекомендация"
     contract_balance:
       title: "Баланс наградного пула"
       title_warning: "Низкий баланс наградного пула"

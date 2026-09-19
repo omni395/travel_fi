@@ -12,6 +12,8 @@ application.register('admin--comments--table-component', () => import('../../com
 
 application.register('admin--dashboard-component', () => import('../../components/admin/dashboard_component/dashboard_component_controller.js'))
 
+application.register('admin--gamification-settings-component', () => import('../../components/admin/gamification_settings_component/gamification_settings_component_controller.js'))
+
 application.register('admin--poi-categories--poi-category--audit-log-component', () => import('../../components/admin/poi_categories/poi_category/audit_log_component/audit_log_component_controller.js'))
 
 application.register('admin--poi-categories--poi-category--edit-component', () => import('../../components/admin/poi_categories/poi_category/edit_component/edit_component_controller.js'))

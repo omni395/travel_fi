@@ -31,15 +31,17 @@
 
     <div class="px-6 divide-y divide-gray-100">
       <% %w[
-        new_registration active_user inactive_user
-        pending_verification verification_failed
-        suspended_user banned_user deleted_user
-        user_updated_by_admin profile_updated
-        osm_import
+        new_registration user_updated_by_admin osm_import
+        pending_moderation community_rejected system_alert
       ].each do |event_type| %>
         <%= render Settings::FieldComponent.new(setting: @setting, event_type: event_type) %>
       <% end %>
     </div>
+  </div>
+
+  <%# Геймификация (rewards + pool) — форма правки числовых настроек %>
+  <div class="bg-white rounded-lg shadow-md overflow-hidden">
+    <%= render Admin::GamificationSettingsComponent.new(config: @gamification_config) %>
   </div>
 
   <%# Audit trail для Settings %>

@@ -5,17 +5,20 @@
 #
 # Доставляется автору родительского комментария (и опционально автору ветки),
 # когда на его комментарий ответили. Каналы фильтруются по личным настройкам
-# получателя (Setting) с безопасным fallback:
-#   - отдельные колонки события (comment_reply_*) пока НЕ добавлены в Setting,
-#     поэтому используем общие комментарий-каналы; при отсутствии колонки
-#     уведомление НЕ падает (setting_field_enabled? возвращает false).
+# получателя (Setting) через SettingFilterable с ключом события "my_poi_comment":
+#   канал = мастер-флаг (notifications/email/push_enabled) AND
+#           my_poi_comment_<channel>_enabled
 #
 # @param poi [Poi] точка
 # @param comment [PoiComment] созданный ответ
 # @param reply_author_id [Integer] автор ответа
 #
 class PoiCommentNotification < ApplicationNotification
+  include SettingFilterable
+  self.setting_event_key = "my_poi_comment"
+
   # deliver_by :database deprecated в Noticed 3 — записи создаются автоматически
+  deliver_by :email, mailer: "UserMailer", method: :profile_updated, if: :email_enabled?
   deliver_by :action_cable, channel: "UserChannel", stream: :user_stream, message: :to_websocket, if: :notifications_enabled?
   deliver_by :web_push, class: "Noticed::DeliveryMethods::WebPush", if: :push_enabled?
 
@@ -58,67 +61,11 @@ class PoiCommentNotification < ApplicationNotification
   end
 
   #
-  # Включён ли in-app (action_cable) канал для получателя (по его Setting).
-  #
-  # @param recipient [User, nil] получатель
-  # @return [Boolean]
-  #
-  def notifications_enabled?(recipient = nil)
-    setting_field_enabled?(:notifications, recipient)
-  end
-
-  #
-  # Включён ли push-канал для получателя (по его Setting).
-  #
-  # @param recipient [User, nil] получатель
-  # @return [Boolean]
-  #
-  def push_enabled?(recipient = nil)
-    setting_field_enabled?(:push, recipient)
-  end
-
-  #
   # Персональный стрим получателя.
   #
   # @return [String]
   #
   def user_stream
     "user_#{recipient.id}"
-  end
-
-  private
-
-  #
-  # Проверка соответствующего поля настройки. Безопасно: метод может
-  # отсутствовать (нет колонок comment_* в Setting) — возвращаем дефолт
-  # (true), чтобы уведомление не потерялось.
-  #
-  # @param type [Symbol] :notifications / :push / :email
-  # @param recipient [User, nil]
-  # @return [Boolean]
-  #
-  def setting_field_enabled?(type, recipient = nil)
-    recipient ||= self.recipient
-    return true unless recipient&.setting
-
-    # Общий флаг включения уведомлений юзера (если есть).
-    method_name = "notifications_enabled"
-    value = if recipient.setting.respond_to?(method_name)
-              recipient.setting.public_send(method_name)
-    else
-              true
-    end
-
-    # Для push/email дополнительно проверяем общий флаг канала, если он есть.
-    if type == :push && recipient.setting.respond_to?(:push_enabled)
-      value = value && recipient.setting.push_enabled
-    elsif type == :email && recipient.setting.respond_to?(:email_enabled)
-      value = value && recipient.setting.email_enabled
-    end
-
-    value
-  rescue StandardError => e
-    Rails.logger.error("PoiCommentNotification setting check error: #{e.message}")
-    true
   end
 end

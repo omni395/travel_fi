@@ -358,7 +358,7 @@ Search and filtering of data based on request parameters, without manual SQL.
 
 **TOKEN MODEL:** rewards are credited with TFT tokens (not "points").
 
-**Architecture:** the `UserReward` model (`amount` TFT, `action_key`, `wallet_id`) — off-chain crediting ledger; `User#token_balance` = sum of credits; the `GamificationService` service (`award!`, `award_referral!`, `badge_key`, `check_badges!`, `revoke!`); badges — the `Gamification` model (event_type `badge`, reputation achievements); config [`config/gamification.yml`](config/gamification.yml) (rewards — TFT tokens, badges — achievements).
+**Architecture:** the `UserReward` model (`amount` TFT, `action_key`, `wallet_id`) — off-chain crediting ledger; `User#token_balance` = sum of credits; the `GamificationService` service (`award!`, `award_referral!`, `badge_key`, `check_badges!`, `revoke!`); badges — the `Gamification` model (event_type `badge`, reputation achievements); config — `Setting.gamification_config` (rewards — TFT tokens, badges — achievements), edited in the admin `/admin-panel/settings` without redeploy (previously [`config/gamification.yml`](config/gamification.yml), file removed).
 
 **Reward revocation (`GamificationService.revoke!`):** globally revokes a not-yet-relayed reward (`claimed=false`, not sent to the blockchain) for an action (e.g. `poi_photo_add` on photo self-delete via `PoiService.remove_photo`), atomically deleting the `UserReward` + `TokenTransaction` pair (PaperTrail audit); idempotent. Already-relayed (`claimed=true`) rewards are NOT revoked on the backend.
 
