@@ -64,7 +64,7 @@ group :development, :test do
   # Rails-обвязка (ActiveSupport Location#spot) вызывает ErrorHighlight; без подключения
   # гема debug-рендер падает (NameError: uninitialized constant ErrorHighlight)
   # и Rails отдаёт голый public/500.html вместо жёлтой страницы.
-  gem "error_highlight", "0.7.0"
+  gem "error_highlight", "0.7.2"
 end
 
 group :development do
