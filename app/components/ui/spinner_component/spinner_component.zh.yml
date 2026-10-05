@@ -1,0 +1,4 @@
+zh:
+  ui:
+    spinner_component:
+      loading: "加载中..."

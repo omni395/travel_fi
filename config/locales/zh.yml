@@ -277,6 +277,9 @@ zh:
       moderator: "版主"
 
   reflexes:
+    poi:
+      comment_error_generic: "评论添加失败。"
+      comment_unauthorized: "您无权评论此地点。"
     user:
       not_authorized: "您无权更新此个人资料"
       update_error: "更新个人资料时出错"
@@ -351,6 +354,7 @@ zh:
     photo_proximity_error: "您需要在此地点 100 米范围内才能添加照片"
     auth_required_title: "需要登录"
     auth_required_message: "请登录或注册以查看此地点的详细信息。"
+    details_unavailable: "您的账户无法查看地点详情。"
     load_more:
       one: "再显示 1 个"
       other: "再显示 %{count} 个"
@@ -392,6 +396,10 @@ zh:
       poi_photo_add: "添加了照片"
       comment_create: "添加了评论"
       poi_vote: "为兴趣点投票"
+
+  comments:
+    cannot_reply_to_self: "不能回复自己的评论"
+    already_replied: "你已经回复过这条评论"
 
   time:
     formats:

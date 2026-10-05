@@ -1,0 +1,22 @@
+ru:
+  comments:
+    comment_content_component:
+      reply: "Ответить"
+      edit: "Изменить"
+      delete: "Удалить"
+      replying_to: "ответ %{name}"
+      edited_by: "изменено %{name} в %{time}"
+      community_approved: "Одобрено сообществом"
+      hidden_notice: "Комментарий скрыт модерацией"
+      show_replies:
+        one: "Показать %{count} ответ"
+        few: "Показать %{count} ответа"
+        many: "Показать %{count} ответов"
+        other: "Показать %{count} ответов"
+      delete_dialog_title: "Удаление комментария"
+      delete_dialog_message: "Вы уверены, что хотите удалить этот комментарий? Действие необратимо."
+      delete_confirm: "Удалить"
+      suspend_dialog_title: "Заморозить автора?"
+      suspend_dialog_message: "Удалить комментарий и заморозить его автора? Аккаунт будет разблокирован автоматически."
+      suspend_confirm: "Удалить и заморозить"
+      cancel: "Отмена"

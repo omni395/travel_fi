@@ -9,6 +9,8 @@ en:
       delete_confirm: Remove this photo?
       upload_failed: Failed to upload photo
       upload_proximity: You need to be within 100 meters of this place to add a photo
+      blocked_suspended: You are temporarily suspended from adding photos.
+      unlock_at: Unlocks %{when}
       close: Close
       counter: "%{current} / %{total}"
       photo_alt: POI photo

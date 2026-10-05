@@ -12,9 +12,12 @@
   <%# Затемнённый оверлей (скрыт по умолчанию) %>
   <div class="fixed inset-0 z-50 hidden"
        data-admin--poi-categories--poi-category--field-form-component-target="overlay">
-    <div class="absolute inset-0 bg-black/50"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4">
-      <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[85vh]">
+    <%# Клик по затемнению закрывает диалог %>
+    <div class="absolute inset-0 bg-black/50" data-action="click->admin--poi-categories--poi-category--field-form-component#close"></div>
+    <%# Центровка учитывает высоту навбара (h-16 = 64px, top-16): диалог
+        центрируется в области НИЖЕ навбара, а не по всему viewport. %>
+    <div class="absolute inset-x-0 bottom-0 top-16 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[calc(100vh-8rem)]">
         <%# Заголовок + кнопка закрытия в одну строку %>
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h3 class="text-lg font-semibold text-gray-900"
@@ -290,4 +293,3 @@
     </div>
   </div>
 </div>
-

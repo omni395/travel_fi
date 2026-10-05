@@ -65,7 +65,10 @@
       <% end %>
     </div>
 
-    <%# Тултип-попап при ховере (OL Overlay) — внутри контейнера карты для корректного позиционирования %>
-    <%= render Ui::TooltipComponent.new %>
+    <%# Тултип-попап при ховере (OL Overlay) — внутри контейнера карты для корректного позиционирования.
+        map_overlay: true обязателен: рендерит #ui-tooltip, который ищет
+        map_component_controller (getElementById("ui-tooltip")). Без этого
+        _tooltipOverlay = null и ховер-попап не показывается. %>
+    <%= render Ui::TooltipComponent.new(map_overlay: true) %>
   <% end %>
 </div>

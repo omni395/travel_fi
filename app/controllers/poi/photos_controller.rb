@@ -35,6 +35,10 @@ class Poi::PhotosController < ApplicationController
   def create
     authorize @poi, :show?
 
+    # Заблокированный статус (suspended и др.) не может добавлять фото.
+    return render json: { error: I18n.t("pois.details_unavailable") }, status: :forbidden \
+      unless UserAccessService.can_interact?(current_user)
+
     file = params[:photo][:image] if params[:photo].present?
     return render json: { error: I18n.t("pois.photo_required") }, status: :unprocessable_entity if file.blank?
 

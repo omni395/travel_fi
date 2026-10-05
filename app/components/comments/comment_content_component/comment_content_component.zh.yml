@@ -1,0 +1,20 @@
+zh:
+  comments:
+    comment_content_component:
+      reply: "回复"
+      edit: "编辑"
+      delete: "删除"
+      replying_to: "回复 %{name}"
+      edited_by: "%{name} 于 %{time} 编辑"
+      community_approved: "已获社区认可"
+      hidden_notice: "评论已被版主隐藏"
+      show_replies:
+        one: "显示 %{count} 条回复"
+        other: "显示 %{count} 条回复"
+      delete_dialog_title: "删除评论"
+      delete_dialog_message: "确定要删除此评论吗？此操作无法撤销。"
+      delete_confirm: "删除"
+      suspend_dialog_title: "封禁作者？"
+      suspend_dialog_message: "删除评论并封禁作者？账户将自动解封。"
+      suspend_confirm: "删除并封禁"
+      cancel: "取消"

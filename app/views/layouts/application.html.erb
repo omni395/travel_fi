@@ -1,62 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="<%= I18n.locale.to_s %>">
   <head>
     <title><%= content_for(:title) || "Travel Fi" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0288D1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Travel Fi">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Travel Fi">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
     <%= yield :head %>
 
-    <%# === RESOURCE HINTS (для ранней загрузки критических ресурсов) === %>
+    <%# === RESOURCE HINTS === %>
     <link rel="preload" href="<%= asset_path("application.css") %>" as="style">
     <link rel="modulepreload" href="<%= asset_path("application.js") %>" crossorigin="anonymous">
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
-    <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/favicon.png">
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.webp">
+    <link rel="manifest" href="/manifest.json">
 
     <%# MDI font загружается локально через esbuild (import в application.js) %>
-    <%# CDN больше не используется — @mdi/font включён в сборку %>
+    <%# CDN больше не используется %>
 
-    <%# === CRITICAL CSS (inline, не блокирует рендеринг) === %>
+    <%# === CRITICAL CSS === %>
     <%= critical_css %>
 
-    <%# === ASYNC CSS (загружаются без блокировки рендеринга) === %>
-    <%# Основной CSS: Tailwind %>
+    <%# === ASYNC CSS === %>
     <link rel="stylesheet" href="<%= asset_path("application.css") %>" media="print" onload="this.media='all'">
     <noscript><%= stylesheet_link_tag :app %></noscript>
 
     <%# MDI иконки — CDN, асинхронно %>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" media="print" onload="this.media='all'">
 
-    <%# Компонентный CSS (sidecar) %>
     <link rel="stylesheet" href="<%= asset_path("components.css") %>" media="print" onload="this.media='all'">
     <noscript><%= stylesheet_link_tag "components" %></noscript>
 
-    <%# JS — modulepreload уже указан выше, этот тег запускает выполнение %>
     <%= javascript_include_tag "application", type: "module" %>
   </head>
 
-  <body class="flex flex-col min-h-screen bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable" data-current-user-id="<%= current_user&.id %>">
-    <!-- Navbar Section -->
-    <div class="flex-none">
-      <%= render Ui::NavbarComponent.new(user: current_user) %>
-    </div>
+  <body class="flex flex-col min-h-screen bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable" data-current-user-id="<%= current_user&.id %>" data-user-role="<%= current_user&.admin? ? 'admin' : (current_user&.moderator? ? 'moderator' : '') %>">
 
-    <!-- Content Section -->
-    <div class="flex-1 <%= content_for(:content_class) || "overflow-y-auto p-4" %>">
+    <%# Полноэкранный спиннер загрузки (Ui::SpinnerComponent). Появляется ПЕРВЫМ,
+        скрывается после полной загрузки страницы. %>
+    <%= render Ui::SpinnerComponent.new %>
+
+    <!-- 1. ХЕДЕР: Фиксированная высота 64px -->
+    <header class="h-16 border-b shrink-0 relative z-70">
+      <%= render Ui::NavbarComponent.new(user: current_user) %>
+    </header>
+
+    <!-- 2. ОСНОВНОЙ КОНТЕНТ -->
+    <div class="flex-1 <%= content_for(:content_class) || "overflow-y-auto p-4 md:p-8" %>">
       <%= yield %>
     </div>
 
-    <!-- Toast notifications: SSR flash + CableReady target -->
-    <div id="notifications" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <!-- 3. Toast notifications: SSR flash + CableReady target -->
+    <div id="notifications" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none">
       <% flash.each do |type, message| %>
         <% next if message.blank? %>
         <% toast_type = case type.to_s
@@ -72,5 +74,5 @@
       <% flash.clear %>
     </div>
 
-    </body>
+  </body>
 </html>

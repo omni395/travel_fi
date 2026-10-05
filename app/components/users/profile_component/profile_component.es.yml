@@ -2,6 +2,9 @@ es:
   users:
     profile_component:
       token_balance: "Saldo TFT"
+      spendable_balance: "Disponible para reclamar"
+      locked_balance: "Bloqueado"
+      claim_button: "Reclamar recompensas"
       badges: "Insignias"
       roles: "Roles"
       referral_code: "Código de Referido"

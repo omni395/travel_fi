@@ -1,0 +1,4 @@
+ru:
+  ui:
+    spinner_component:
+      loading: "Загрузка..."

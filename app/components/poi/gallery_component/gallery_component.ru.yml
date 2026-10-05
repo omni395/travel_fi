@@ -9,6 +9,8 @@ ru:
       delete_confirm: Удалить это фото?
       upload_failed: Не удалось загрузить фото
       upload_proximity: Чтобы добавить фото, нужно находиться в пределах 100 метров от этого места
+      blocked_suspended: Вы временно заблокированы и не можете добавлять фото.
+      unlock_at: Разблокировка %{when}
       close: Закрыть
       counter: "%{current} / %{total}"
       photo_alt: Фото точки

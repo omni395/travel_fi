@@ -43,7 +43,10 @@
      class="fixed inset-0 z-50 hidden"
      data-action="keydown.esc->poi--show-component#close">
   <div class="absolute inset-0 bg-black/50" data-action="click->poi--show-component#close"></div>
-  <div class="absolute inset-0 flex items-center justify-center p-4">
+  <%# Центровка учитывает высоту навбара (h-16 = 64px, top-16): модальное окно
+      центрируется в области НИЖЕ навбара, а не по всему viewport, иначе большая
+      карточка наезжает под навбар (z-70 навбара выше z-50 оверлея). %>
+  <div class="absolute inset-x-0 bottom-0 top-16 flex items-center justify-center p-4">
     <div id="poi-detail-modal-body"></div>
 
     <div id="poi-form-content" class="hidden">

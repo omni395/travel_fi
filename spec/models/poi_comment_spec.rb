@@ -67,8 +67,9 @@ RSpec.describe PoiComment, type: :model do
 
     it 'assigns root_id/depth при создании ответа (через CommentService)' do
       user = create(:user)
+      other_user = create(:user)
       root = CommentService.create_comment(commentable: poi, user: user, body: 'Корень')
-      reply = CommentService.create_comment(commentable: poi, user: user, body: 'Ответ', parent_id: root.id)
+      reply = CommentService.create_comment(commentable: poi, user: other_user, body: 'Ответ', parent_id: root.id)
 
       expect(reply.root_id).to eq(root.id)
       expect(reply.depth).to eq(1)
@@ -77,8 +78,9 @@ RSpec.describe PoiComment, type: :model do
 
     it 'branch_for возвращает всю ветку по корню' do
       user = create(:user)
+      other_user = create(:user)
       root = CommentService.create_comment(commentable: poi, user: user, body: 'Корень')
-      reply = CommentService.create_comment(commentable: poi, user: user, body: 'Ответ', parent_id: root.id)
+      reply = CommentService.create_comment(commentable: poi, user: other_user, body: 'Ответ', parent_id: root.id)
 
       branch = poi.poi_comments.branch_for(root)
 
@@ -109,8 +111,9 @@ RSpec.describe PoiComment, type: :model do
   describe 'валидации threading' do
     it 'запрещает прямой ответ на ответ (родитель depth >= MAX_DEPTH)' do
       user = create(:user)
+      other_user = create(:user)
       root = CommentService.create_comment(commentable: poi, user: user, body: 'Корень')
-      reply = CommentService.create_comment(commentable: poi, user: user, body: 'Ответ', parent_id: root.id)
+      reply = CommentService.create_comment(commentable: poi, user: other_user, body: 'Ответ', parent_id: root.id)
 
       # Прямое создание с parent=reply (depth 1) через модель — невалидно;
       # флоттенинг корректно делает CommentService (перенаправляет parent на корень).
@@ -127,7 +130,42 @@ RSpec.describe PoiComment, type: :model do
     end
   end
 
-  describe 'live-рассылка (ROADMAP 2.2)' do
+
+  describe 'анти-флуд ответов (defense-in-depth на уровне модели)' do
+    it 'разрешает ответ ДРУГОГО пользователя на комментарий' do
+      user = create(:user)
+      other_user = create(:user)
+      root = CommentService.create_comment(commentable: poi, user: user, body: 'Корень')
+
+      reply = build(:poi_comment, poi: poi, user: other_user, parent: root)
+      expect(reply).to be_valid
+    end
+
+    it 'запрещает ВТОРОЙ ответ того же пользователя на один комментарий' do
+      user = create(:user)
+      other_user = create(:user)
+      root = CommentService.create_comment(commentable: poi, user: user, body: 'Корень')
+      create(:poi_comment, poi: poi, user: other_user, parent: root)
+
+      second = build(:poi_comment, poi: poi, user: other_user, parent: root)
+      expect(second).not_to be_valid
+    end
+
+    it 'не ломает флоттенинг: ответ на чужой reply в своей ветке (parent==свой root) валиден' do
+      user = create(:user)
+      author = create(:user)
+      root = CommentService.create_comment(commentable: poi, user: user, body: 'Корень')
+      CommentService.create_comment(commentable: poi, user: author, body: 'Ответ', parent_id: root.id)
+
+      # Флоттенинг "ответа на ответ": сервис перенаправляет parent на корень ветки
+      # (== собственный root автора). Модель не должна блокировать это как
+      # "ответ на свой комментарий" — эта проверка живёт только в сервисе.
+      floored = build(:poi_comment, poi: poi, user: user, parent: root)
+      expect(floored).to be_valid
+    end
+  end
+
+  describe 'live-рассылка' do
     it 'создание комментария фиксирует PaperTrail-версию для VersionObserverJob' do
       comment = create(:poi_comment, poi: poi)
 

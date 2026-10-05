@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
 /**
  * Ui Confirm Dialog Component Controller
@@ -15,7 +15,7 @@ import { Controller } from "@hotwired/stimulus"
  *     Delete
  *   </button>
  */
-export default class extends Controller {
+export default class extends ApplicationController {
   static values = {
     confirmUrl: String,
     confirmMethod: { type: String, default: "get" }

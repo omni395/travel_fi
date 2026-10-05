@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
 /**
  * Ui Navbar Component Controller
@@ -7,7 +7,7 @@ import { Controller } from "@hotwired/stimulus"
  * Подтверждением выхода управляет Ui::ConfirmDialogComponent (ui--confirm-dialog-component)
  * Мобильным меню управляет Ui::DropdownComponent (ui--dropdown-component)
  */
-export default class extends Controller {
+export default class extends ApplicationController {
   connect() {
     // nothing
   }

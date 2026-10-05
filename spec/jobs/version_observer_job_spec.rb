@@ -112,16 +112,34 @@ RSpec.describe VersionObserverJob, type: :job do
   end
 
   describe 'PoiComment-ветка (#handle_poi_comment_update — live-комментарии)' do
-    it 'вызывает PoiCommentBroadcaster при создании комментария' do
-      # Спецификация: комментарии должны доставляться live всем подписанным.
-      # Сейчас ветки handle_poi_comment_update в job НЕТ — тест падает (A-баг,
-      # ROADMAP 2.2 «live-комментарии для всех»).
+    it 'вызывает PoiCommentBroadcaster при создании комментария (event: :create)' do
       comment = create(:poi_comment)
       version = comment.versions.last
 
-      expect(PoiCommentBroadcaster).to receive(:call).with(comment: comment)
+      expect(PoiCommentBroadcaster).to receive(:call).with(comment: comment, event: :create)
 
       described_class.perform_now(version.id)
+    end
+
+    it 'НЕ вызывает PoiCommentBroadcaster, когда изменён ТОЛЬКО children_count (инкремент ответа)' do
+      # Создаём корень и ответ: increment_children_count! обновляет children_count
+      # корня через update! → PaperTrail-версия, где object_changes — ТОЛЬКО
+      # children_count. Такой служебный апдейт НЕ должен триггерить точечный
+      # broadcast (дубль ноды ответа / затирание ввода).
+      root = create(:poi_comment)
+      reply = create(:poi_comment, poi: root.poi, parent: root)
+      version = reply.versions.last
+      expect(version.event).to eq('create')
+
+      # Формируем UPDATE-версию корня, где изменено только children_count.
+      root.update!(children_count: root.children_count.to_i + 1)
+      children_version = root.versions.last
+      expect(children_version.event).to eq('update')
+      expect(children_version.object_changes).to include('children_count')
+
+      expect(PoiCommentBroadcaster).not_to receive(:call)
+
+      described_class.perform_now(children_version.id)
     end
   end
 

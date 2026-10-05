@@ -51,13 +51,22 @@ class Poi::GalleryComponent < ApplicationComponent
 
   #
   # Может ли текущий пользователь управлять галереей (добавлять фото).
-  # Админ/модератор — всегда; обычный юзер — при проксимити 100м
-  # (проверяется на бэке; здесь — базовое наличие user + гостевой false).
+  # Только статус active (см. UserAccessService.can_interact?). Suspended и др.
+  # — кнопка скрывается, показывается плашка. Антифрод 100м — на бэке.
   #
   # @return [Boolean]
   #
   def can_manage?
-    current_user.present?
+    UserAccessService.can_interact?(current_user)
+  end
+
+  #
+  # Причина блокировки добавления фото (сейчас только suspended) — для плашки.
+  #
+  # @return [Hash, nil] { reason: :suspended, unlock_at: Time } или nil
+  #
+  def interaction_block
+    UserAccessService.interaction_block(current_user)
   end
 
   #

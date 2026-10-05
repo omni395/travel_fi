@@ -275,6 +275,9 @@ es:
       moderator: "Moderador"
 
   reflexes:
+    poi:
+      comment_error_generic: "No se pudo añadir el comentario."
+      comment_unauthorized: "No tienes permiso para comentar en este punto."
     user:
       not_authorized: "No estás autorizado para actualizar este perfil"
       update_error: "Error al actualizar el perfil"
@@ -349,12 +352,17 @@ es:
     photo_proximity_error: "Debes estar a menos de 100 metros de este lugar para añadir una foto"
     auth_required_title: "Inicio de sesión requerido"
     auth_required_message: "Inicie sesión o regístrese para ver información detallada sobre este lugar."
+    details_unavailable: "Los detalles del punto no están disponibles para su cuenta."
     load_more:
       one: "Mostrar 1 más"
       other: "Mostrar %{count} más"
 
   notifications:
     poi_updated: "POI %{name} fue actualizada."
+
+  comments:
+    cannot_reply_to_self: "No puedes responder a tu propio comentario"
+    already_replied: "Ya has respondido a este comentario"
 
   time:
     formats:

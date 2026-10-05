@@ -3,6 +3,7 @@ ru:
     comment_form_component:
       placeholder: "Напишите комментарий..."
       reply_placeholder: "Напишите ответ..."
+      edit_placeholder: "Измените свой комментарий..."
       submit: "Комментировать"
       reply_submit: "Ответить"
       save: "Сохранить"

@@ -114,9 +114,13 @@ class Admin::CommentsReflex < ApplicationReflex
   end
 
   #
-  # Удаляет комментарий. Изменение состояния — service+бродкаст.
+  # Удаляет комментарий (скрывает модерацией через CommentService.destroy_comment
+  # → CommentModerationService.hide!). Ветка ответов сохраняется.
   #
-  # @param params [Hash] { comment_id: Integer }
+  # Опциональная автопенализация автора: при suspend=true — перевод в статус
+  # :suspended на 3 дня (UserService.suspend!) + авто-разблокировка джобом.
+  #
+  # @param params [Hash] { comment_id: Integer, suspend: Boolean }
   #
   def destroy(params = {})
     params = deep_symbolize_keys(params) if params.is_a?(Hash)
@@ -126,6 +130,10 @@ class Admin::CommentsReflex < ApplicationReflex
 
     CommentService.destroy_comment(comment: comment)
 
+    if params[:suspend].to_s == "true"
+      UserService.suspend!(user: comment.user)
+    end
+
     cable_ready["admin_#{current_user&.id}"].dispatch_event(
       name: "toast",
       detail: { message: t("admin.comments.destroy_success"), variant: "success" }
@@ -133,5 +141,7 @@ class Admin::CommentsReflex < ApplicationReflex
     cable_ready.broadcast
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("CommentsReflex#destroy: comment not found — #{e.message}")
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("CommentsReflex#destroy: penalty failed — #{e.message}")
   end
 end

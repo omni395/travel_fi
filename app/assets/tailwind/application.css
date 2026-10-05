@@ -22,8 +22,16 @@
 
 }
 
-@layer base {
-  a, button, label, input, select, li, .cursor-pointer {
-    cursor: pointer;
-  }
+@utility bg-success { background-color: var(--color-success); }
+@utility bg-error { background-color: var(--color-error); }
+@utility bg-warning { background-color: var(--color-warning); }
+@utility bg-info { background-color: var(--color-info); }
+@utility text-text { color: var(--color-text); }
+
+/* Глобальный курсор pointer для интерактивных элементов.
+   ВАЖНО: НЕ в @layer base — в Tailwind v4 (нативные CSS-слои) layered-стиль
+   проигрывает unlayered и вутилитам (cursor-default). Unlayered-правило имеет
+   приоритет над всеми слоями по спецификации каскада. */
+a, button, label, input, select, li, .cursor-pointer {
+  cursor: pointer;
 }

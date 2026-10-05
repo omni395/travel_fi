@@ -122,12 +122,13 @@ class Ui::VoteComponent < ApplicationComponent
   end
 
   #
-  # Может ли текущий пользователь голосовать (не автор).
+  # Может ли текущий пользователь голосовать (статус active + не автор).
+  # Заблокированный статус (suspended) — голосование отключено.
   #
   # @return [Boolean]
   #
   def can_vote?
-    return true unless current_user
+    return false unless UserAccessService.can_interact?(current_user)
     return true unless votable.respond_to?(:user_id)
 
     votable.user_id != current_user.id

@@ -23,13 +23,17 @@ class GamificationService
     # @param action_key [String] ключ действия (registration, poi_create и т.д.)
     # @param user [User] пользователь
     # @param log [String, nil] описание начисления
+    # @param source [ActiveRecord::Base, nil] источник начисления (Poi/Photo/
+    #   PoiComment/Vote) — реляционная полиморфная связь на UserReward#source.
+    #   Источник правды — PaperTrail-версия начисления; связь нужна для точечного
+    #   отзыва (revoke! по source) и UI-резолва. Сама модель has_paper_trail.
     #
-    def award!(action_key, user, log: nil)
+    def award!(action_key, user, log: nil, source: nil)
       key = action_key.to_s
       amount = config.dig("rewards", key)
       return unless amount && amount.to_f.positive?
 
-      create_reward!(user, amount, key, log || key)
+      create_reward!(user, amount, key, log || key, source: source)
       check_badges!(user, key)
     end
 
@@ -60,11 +64,22 @@ class GamificationService
     #
     # @param action_key [String, Symbol] ключ действия (poi_photo_add и т.д.)
     # @param user [User] пользователь, чьё начисление отзываем
+    # @param source [ActiveRecord::Base, nil] источник начисления (реляционная
+    #   полиморфная связь UserReward#source). Если передан — отзываются ТОЛЬКО
+    #   незабранные начисления этого конкретного источника, а не все с тем же
+    #   action_key. Используется анти-фармингом голосов (VoteService#destroy_vote).
     # @return [Integer] количество отозванных начислений
     #
-    def revoke!(action_key, user)
+    def revoke!(action_key, user, source: nil)
       key = action_key.to_s
+      rewards_ids = user.user_rewards.where(
+        action_key: key,
+        source_type: source.class.base_class.name,
+        source_id: source.id
+      ).pluck(:id) if source.present?
+
       transactions = user.token_transactions.where(action_key: key, claimed: false)
+      transactions = transactions.where(user_reward_id: rewards_ids) if rewards_ids
 
       revoked = 0
       ActiveRecord::Base.transaction do
@@ -90,17 +105,20 @@ class GamificationService
     # @param amount [Numeric] количество токенов TFT
     # @param action_key [String] тип начисления
     # @param log [String] описание
+    # @param source [ActiveRecord::Base, nil] источник начисления (реляционная
+    #   полиморфная связь UserReward#source; модель has_paper_trail)
     # @return [UserReward]
     #
-    def create_reward!(user, amount, action_key, log)
-      # Единая транзакция: off-chain начисление (UserReward) + запись журнала
-      # движения токенов (TokenTransaction). Всё или ничего.
+    def create_reward!(user, amount, action_key, log, source: nil)
+      # Единая транзакция: off-chain начисление (UserReward, при необходимости с
+      # источником) + запись журнала движения токенов (TokenTransaction). Всё или ничего.
       ActiveRecord::Base.transaction do
         reward = user.user_rewards.create!(
           amount: amount,
           action_key: action_key,
           log: log,
-          wallet: user.wallet
+          wallet: user.wallet,
+          source: source
         )
 
         create_token_transaction!(reward)

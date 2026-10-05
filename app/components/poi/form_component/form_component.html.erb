@@ -6,7 +6,9 @@
      data-poi--form-component-initial-lng="<%= initial_lng %>"
      data-poi--form-component-missing-coords="<%= t('.missing_coords') %>">
   <%# ОКНО МОДАЛКИ — основание окна живёт в компоненте (не в index) %>
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+  <%# max-h учитывает навбар (h-16 = 64px) + поля p-4 центровочного контейнера
+      (top-16/inset-x): 100vh - 8rem. Иначе форма 90vh наезжает под навбар. %>
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[calc(100vh-8rem)] overflow-y-auto relative">
     <%= form_with model: edit_mode? ? poi : Poi.new, url: form_url, method: form_method, local: true,
                   html: { class: "p-6", data: { action: "submit->poi--form-component#handleSubmit" } } do |f| %>
     <div class="flex items-center justify-between mb-6">

@@ -34,6 +34,18 @@ RSpec.describe Poi::PhotosController, type: :request do
       end
     end
 
+    context 'suspended пользователь' do
+      before { sign_in create(:user, :suspended) }
+
+      it 'отклоняет загрузку фото (статус не позволяет взаимодействовать)' do
+        allow(PoiService).to receive(:within_range?).and_return(true)
+        expect {
+          post poi_photos_path(poi_id: poi.id), params: { photo: { image: image } }
+        }.not_to change(Photo, :count)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
     context 'обычный пользователь' do
       before { sign_in user }
 

@@ -7,7 +7,7 @@
 #   - index/show: все (включая гостей)
 #   - create: аутентифицированные пользователи в радиусе 100м от POI
 #   - update: автор комментария или admin (в радиусе 100м)
-#   - destroy: автор комментария или admin
+#   - destroy: только admin/moderator (удаление = скрытие модерацией, автор НЕ удаляет)
 #
 # Координаты пользователя для proximity check берутся из Current.user_lat/lng
 # (устанавливаются в Reflex/Controller перед авторизацией)
@@ -42,12 +42,14 @@ class PoiCommentPolicy < ApplicationPolicy
   end
 
   #
-  # Удаление: автор или admin (без проверки расстояния)
+  # Удаление: только admin/moderator. Автор комментарий НЕ удаляет — удаление
+  # эквивалентно скрытию модерацией (CommentModerationService.hide!), сохраняет
+  # ветку ответов и может сопровождаться автопенализацией автора.
   #
   def destroy?
     return false unless user.present?
 
-    user.has_role?(:admin) || record.user_id == user.id
+    user.has_role?(:admin) || user.has_role?(:moderator)
   end
 
   private

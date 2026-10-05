@@ -1,6 +1,8 @@
 # Travel Fi — Architecture & System Design
 
-Travel Fi — Rails 8.1 application for tourism services with DeFi functionality and an ERC-20 token (TFT). Architecture — WebSocket-first: asynchronous updates via ActionCable (SolidCable), background jobs via SolidQueue, cache infrastructure SolidCache (caching in code temporarily disabled), audit via PaperTrail.
+Travel Fi is an **open, community-driven humanitarian safety and civic infrastructure platform** — a map of the places essential for daily life and safety: drinking water, public toilets and showers, free charging, safe overnight spots, first-aid and pharmacy points. Built for **travelers and city residents alike**, it doubles as aid infrastructure for refugees, displaced people and families with children. Web3 entry is **low-friction**: a custodial wallet is created invisibly at registration, tokens (TFT) reward contribution, and an optional path lets advanced users connect their own wallet. Positioned as **Digital Public Goods (DPG)** — open infrastructure for public benefit.
+
+Architecture — Rails 8.1, WebSocket-first: asynchronous updates via ActionCable (SolidCable), background jobs via SolidQueue, cache infrastructure SolidCache (caching in code **temporarily disabled**), audit via PaperTrail.
 
 > Demo: https://noneternally-approbative-rosanne.ngrok-free.dev/ (admin@example.com/12345678 launching the server by agreement)
 
@@ -13,6 +15,10 @@ Travel Fi — Rails 8.1 application for tourism services with DeFi functionality
 > Support Travel Fi on Giveth: https://giveth.io/project/travel-fi
 > Support Travel Fi on Artizen: https://artizen.fund/index/p/travel-fi
 > Support Travel Fi on Karmahq: https://www.karmahq.org/project/travel-fi
+
+> **Document set:** product status by section → [`ROADMAP.md`](ROADMAP.md); grant estimate (what to build + time + cost) → [`MILESTONES.md`](MILESTONES.md); debts register → [`TECH-DEBTS.md`](TECH-DEBTS.md); AI-agent instructions → `.roo/rules/*`. Bilingual mirror → `docs/*_ru.md`.
+
+---
 
 ## 🏗️ Technology Stack
 
@@ -27,13 +33,13 @@ Travel Fi — Rails 8.1 application for tourism services with DeFi functionality
 | **Map Engine** | OpenLayers 10 (clustering, Overlay, PostGIS queries) |
 | **Realtime** | ActionCable, SolidCable, CableReady |
 | **Background Jobs** | SolidQueue |
-| **Job Dashboard** | SolidQueueDashboard |
-| **Caching** | SolidCache (infrastructure; cache disabled in code) |
+| **Job Dashboard** | SolidQueueDashboard - https://github.com/akodkod/solid-queue-dashboard |
+| **Caching** | SolidCache (infrastructure; **caching temporarily disabled** in code) |
 | **Search & Filtering** | Ransack |
-| **Gamification** | Custom system: TFT tokens + badges; levels — from `token_balance` |
+| **Gamification** | Custom system: TFT tokens + badges; levels — from user contribution (not `token_balance`) |
 | **Notifications** | Noticed (database + email + action_cable + web_push) |
 | **CSS Framework** | Tailwind CSS, Stimulus-Components |
-| **Web3** | viem |
+| **Web3** | viem (frontend), 3 EVM contracts |
 
 ---
 
@@ -44,6 +50,9 @@ Travel Fi — Rails 8.1 application for tourism services with DeFi functionality
 **Target Audience:** Budget backpackers, digital nomads, solo travelers from developing countries, van-lifers, as well as local residents who utilize various services and public amenities.
 
 **Key Advantage:** There is no dominant global player in most niches (while Wi-Fi hotspots are covered by apps like WiFi Map and Instabridge, other categories remain largely untapped).
+
+**Positioning (Digital Public Goods):** Travel Fi is an open, community-driven map of the places that matter most for daily life and safety — drinking water points, public toilets and showers, free charging, safe overnight spots, first-aid and pharmacy points, luggage storage. Built for **travelers and city residents alike**, it doubles as humanitarian and civic infrastructure: refugees, displaced people and families with children can find water, help points and shelter-adjacent services, while anyone can add and verify them.
+> Web3 is deliberately **low-friction**: a custodial wallet is created invisibly at registration, and tokens (TFT) reward contribution. You don't need to know anything about crypto — just contribute, the "crypto" part stays under the hood, with an optional path for advanced users to connect their own wallet. Positioned as **Digital Public Goods** — open infrastructure for public benefit.
 
 **Current Stage:** Prototype currently in active development. The core architecture is complete, and its technical viability has been proven. The product has not yet launched; work is currently focused on code refinement, logic debugging, and preparing the architecture for production.
 
@@ -60,377 +69,164 @@ Travel Fi — Rails 8.1 application for tourism services with DeFi functionality
 9. **24/7 pharmacies + first aid points** — critical in Asia/LatAm/Africa; medication availability, languages.
 10. **Bonus lifehacks** — charging in coworking spaces, pet-friendly, LGBTQ+-safe, free food points.
 
-## 💰 Web3 Integration & Smart Contracts
+## 💰 Web3 & Smart Contracts
 
-- **Testnet Status:** The TFT smart contract is written, deployed, and verified in the testnet.
-- **Gasless Transactions:** The contract implements a gasless architecture for the end user (Gasless / Meta-transactions).
-- **Backend Integration:** The Rails backend (`Crypto::Ethereum`) acts as a Relayer (or interacts with Biconomy/Paymaster). The backend only signs and broadcasts transactions, without shifting gas payments onto users' internal wallets.
+**Three EVM contracts** (written, deployed, and verified on testnet; all 18 decimals):
+- [`TravelFiToken.sol`](contracts/TravelFiToken.sol:13) — **Issuer**: hard supply `MAX_SUPPLY = 1 000 000 000`, one-time distribution, then paused.
+- [`TravelFiCrowdsale.sol`](contracts/TravelFiCrowdsale.sol) — **Cashier**: token buy/sell for ETH/USDT (sell fee — anti-arbitrage), feature payment (Token Spend).
+- [`TravelFiRewards.sol`](contracts/TravelFiRewards.sol) — **Rewards**: issuance with vesting (`lockDays`).
+
+**Gasless (EIP-2771):** the backend (`Crypto::Ethereum`) acts as a Relayer — signs and broadcasts without shifting gas onto user wallets.
+
+**Decimals:** EVM contracts = 18; future TON Jetton = 9 (standard). The bridge maps 9↔18 via a conversion factor — existing contracts are NOT rewritten.
 
 ### 🚀 Future Roadmap: Telegram & TON
+- **Telegram Mini App** — entry into the ecosystem directly from the messenger (POI map, notifications, TFT) without installing a separate app. **TON Cross-chain Bridge** — TFT moves freely between EVM and TON (lock ERC-20 → mint Jetton), making the token truly cross-chain.
+- *Strategic development vector, implemented after Production launch and initial user-base build-up.* → [`MILESTONES.md`](MILESTONES.md) M4.
 
-**Telegram Mini App** — a strategic channel for additional user acquisition after the launch of the main application: entry into the ecosystem directly from the messenger (POI map, notifications, TFT tokens) without installing a separate app — where the audience already lives.
+**Monetization via ERC-20 (TFT):** tokens for adding/verifying POIs · premium features for tokens (filters, analytics, ratings) · DAO for categories and policies · affiliate for providers (hostels, hotels, services).
 
-**TON Cross-chain Bridge** — a bridge connecting the two networks together: TFT tokens move freely between the EVM network and the TON blockchain through the bridge (lock ERC-20 → mint Jetton). This connects the platform's on-chain economy with the Telegram/TON ecosystem and makes the token truly cross-chain.
-
-*Note: this functionality is a strategic development vector and will be implemented at the stage after Production launch and building the initial user base.*
-
-**Monetization via ERC-20 (TFT):**
-- Users get tokens for adding/verifying POIs
-- Premium features for tokens (filters, analytics, ratings)
-- DAO for managing categories and policies
-- Affiliate for providers (hostels, hotels, services)
-
-### 🔐 Web3 & Onboarding (Custodial / Embedded Wallet)
-- **Automatic wallet creation:** upon successful registration/confirmation the service generates a hidden (custodial) wallet **in Ruby** — `OpenSSL::PKey::EC` (secp256k1) + a custom keccak256 implementation + EIP-55 (module [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1), no new gems). The private key is encrypted with `ActiveSupport::MessageEncryptor` (`WalletService`).
-- **`viem` — frontend only** (npm, [`package.json`](package.json:23)): EIP-2771 sponsored transactions, Contract Mgmt, reading ERC-20 balance. Server-side key generation has nothing to do with viem.
-- **Zero-Friction UX:** the user does not interact with the Web3 interface at the start — token crediting/debiting is seamless.
-- **DeFi integration:** tokens are credited to the wallet (off-chain ledger `UserReward`) for activity → access to premium features. On-chain sending — via `TokenTransactionService.relay!` (contracts deployed, see `.env`).
+### 🔐 Web3 & Onboarding (wallets)
+- **Custodial** — hidden wallet generated server-side in Ruby (`OpenSSL::PKey::EC` secp256k1 + keccak256 + EIP-55, [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1), no new gems); private key encrypted with `ActiveSupport::MessageEncryptor` (`WalletService`). Zero-Friction UX: the user does not interact with Web3 at the start.
+- **External** — advanced user connects their own wallet (**MetaMask / hot-wallet**) and signs independently; **WalletConnect — future option**.
+- **`viem` — frontend only** (npm, [`package.json`](package.json:23)): EIP-2771 sponsored tx, Contract Mgmt, reading ERC-20 balance. Server-side key generation has nothing to do with viem.
+- **DeFi integration:** off-chain ledger `UserReward` + `TokenTransaction` credited for activity → premium access. On-chain sending via `TokenTransactionService.relay!` (contracts deployed, see `.env`).
 
 ---
 
 ## ⚙️ Unified Data Flow (Database-Triggered Workflow)
 
-> **Architecture reference.** Any state change goes through this chain. The Reflex/Controller does NOT render DOM after saving — the UI is updated ONLY by the Broadcaster via `VersionObserverJob`. Following the chain guarantees live-updating in all subscribed browsers (the initiator and everyone else).
+**Reference chain.** Any state change goes through it; the Reflex/Controller does NOT render DOM after saving — the UI is updated ONLY by the Broadcaster via `VersionObserverJob`.
 
-### Phase 1 — INPUT (browser)
-1. **Stimulus controller** (component sidecar) intercepts the event (click/input)
-2. `this.stimulate("XxxReflex#action", params)` — RPC over WebSocket
-3. **Reflex**: `current_user` → `morph :nothing` (cancels full re-render) → `deep_symbolize_keys(params)` → `authorize_with_pundit!(record, :action?)`
-4. Reflex **only delegates** to the Service. Zero logic in the reflex.
-
-### Phase 2 — STATE (PostgreSQL)
-5. **Service**: all business logic + `Model.save!`/`update!` **inside a transaction**
-6. **PaperTrail** creates a `Version` (event, `whodunnit` = current_user.id, `object_changes`)
-7. `after_commit :broadcast_changes` → `VersionObserverJob.perform_later(version.id)`
-
-### Phase 3 — ASYNCHRONOUS DISTRIBUTION (SolidQueue)
-8. **VersionObserverJob**: parses `item_type` → branch `handle_<model>_update` → calls `XxxBroadcaster.call`
-9. **Broadcaster**: renders zones (ViewComponent via `helpers.render`) → `cable_ready["AdminChannel"].inner_html(selector:, html:)` by wrapper selectors
-10. `.broadcast` → ActionCable (**SolidCable**) → stream
-
-### Phase 4 — DELIVERY (browsers A and B)
-11. The client is subscribed to the channel (`AdminChannel`/`user_N`) → `received` applies operations **one by one** (`forEach` + `try/catch`, skipping missing selectors)
-12. DOM updates **selectively** (inner_html by wrappers) — without reload
+```
+Stimulus → Reflex (morph :nothing + Pundit) → Service (business logic, save! in transaction)
+   → PostgreSQL + PaperTrail → VersionObserverJob → Broadcaster (inner_html)
+   → CableReady → ActionCable (SolidCable) → DOM
+```
 
 ### Strict layer rules
 | Layer | Does | Forbidden |
 |------|--------|-----------|
-| Controller | Only access (Pundit) + page render + tab data + pagy | Logic |
-| Reflex | UI→Service bridge: `morph :nothing` + authorize + delegation | Rendering DOM after saving |
+| Controller | Access (Pundit) + render + tab data + pagy | Logic |
+| Reflex | UI→Service bridge: `morph :nothing` + authorize + delegate | Rendering DOM after saving |
 | Service | Business logic, `save!`/`update!` in transaction | — |
 | Model | Data only | Broadcast logic |
 | Broadcaster | Zone render + `inner_html` + broadcast | `morph`, `update_all` |
-| VersionObserverJob | Routing by `item_type` | — |
+| VersionObserverJob | Routing by `item_type` → `XxxBroadcaster.call` | — |
 | ViewComponent | Presentation only (sidecar 7 files, 4 locales) | partials, text hardcoding |
 
-### Practical integration rules (mandatory)
-- **StimulusReflex reserved keys** (`id`, `params`, `selectors`, `morph`, `attrs`, `flash`, `event`, `permanent_attribute_name`) cannot be passed top-level to `this.stimulate` — the object becomes options, `args` arrives empty. Use namespaced keys (`field_id`) or `{ params: {...} }`; remove `id` from FormData.
-- **Reflex does not render DOM after saving** — only `morph :nothing` + Service. Selector morph — read-only (pagination/filters).
-- **Broadcaster uses `inner_html`, not `morph`** — `morph` fails on `undefined.dispatchEvent` (`parent.children[idx]`).
-- **Target container separate from content:** the `[data-...]` selector is on the wrapper in the page template, NOT on the component root (otherwise nesting on `inner_html`).
-- **Parameter normalization:** in Reflex `deep_symbolize_keys(params)` before Service (string keys from JS).
-- **Audit and bulk updates:** `update!`/`save!` (versions → Broadcast); `update_all` is forbidden for audited data (including reordering positions).
-- **CableReady client handling:** in `received` operations one by one (`forEach` + `try/catch`), skipping missing selectors.
-- **Rendering nested ViewComponents in Broadcaster (SolidQueue worker):** only `<%= render %>`/`helpers.render` (view_context). Nested `ApplicationController.render` is forbidden — fails in the job, the zone is silently not sent. Per-entry `rescue` (see `AuditLogComponent#render_entries_html`).
-- **Broadcast from worker (`bin/jobs`):** initialize ActionCable PubSub before `SolidQueue::Cli.start` — `ActionCable.server.config.cable = { "adapter" => "solid_cable" }` (STRING key; symbol `:adapter` → default `"redis"` → `Redis::CannotConnectError`), then `ActionCable.server.pubsub`.
-- **`pagy()` in Broadcaster:** the worker has no `request` → `NameError: request`. Add a mock: `def request; @request ||= ActionDispatch::Request.new({}); end`.
-- **Checkboxes (Rails `check_box`):** hidden(value=0)+checkbox with one `name`. In JS select `input[name='...'][type='checkbox']`, otherwise the hidden input (false) is always read.
-
-### Scenario "A created, B sees"
-- **A:** Phases 1–2 + synchronous `redirect_to` (A only) + toast to the initiator (`dispatch_event`)
-- **B:** Phases 3–4: job → broadcaster → `AdminChannel` → all subscribed admins receive `inner_html` without reload
+### Practical rules (mandatory)
+- **StimulusReflex reserved keys** (`id`, `params`, `selectors`, `morph`, `attrs`, `flash`, `event`, `permanent_attribute_name`) — never top-level to `this.stimulate`; use namespaced keys or `{ params: {...} }`; remove `id` from FormData.
+- **Broadcaster uses `inner_html`, not `morph`** (morph fails on `undefined.dispatchEvent`).
+- **Target container separate from content:** the `[data-...]` selector is on the wrapper in the page template, NOT the component root.
+- **Normalize params:** `deep_symbolize_keys(params)` in Reflex before Service.
+- **Audit:** `update!`/`save!` create versions → Broadcast; `update_all` is forbidden for audited data (incl. reorders).
+- **CableReady client:** apply operations one by one (`forEach` + `try/catch`), skipping missing selectors.
+- **Nested ViewComponents from a job:** only `<%= render %>`/`helpers.render` (view_context); `ApplicationController.render` nested is forbidden in a SolidQueue worker. Per-entry `rescue` (see `AuditLogComponent#render_entries_html`).
+- **Broadcast from worker (`bin/jobs`):** init ActionCable PubSub before `SolidQueue::Cli.start` — `ActionCable.server.config.cable = { "adapter" => "solid_cable" }` (STRING key), then `ActionCable.server.pubsub`.
+- **`pagy()` in Broadcaster:** the worker has no `request` → add mock: `def request; @request ||= ActionDispatch::Request.new({}); end`.
+- **Checkboxes (Rails `check_box`):** hidden(value=0)+checkbox with one `name`. In JS select `input[name='...'][type='checkbox']`.
+- **Scenario «A creates, B sees»:** A — phases 1–2 + synchronous redirect + toast; B — phases 3–4 via broadcast without reload.
 
 ---
 
-## 📡 Channels and delivery (ActionCable Channels)
+## 📡 Channels & delivery
 
-Everything is sent over WebSocket — no data in the controller's JSON response.
+Everything over WebSocket — no data in the controller JSON.
+- **`UserChannel`** — `user_<id>` (personal: profile, toasts, replies, own-POI status) + `pois_map` (shared map: `poi:reload-features`, live marker/sidebar). Noticed (`stream: :user_stream` → `user_<id>`) keeps working.
+- **`AdminChannel`** (roles `admin` AND `moderator`) — `admin_<id>` (personal: own reflex results) + `admin_feed` (shared admin panel: POI, users, comments, categories, settings, dashboard).
 
-### Channel model: 2 channels with addressed streams
-
-A single channel class subscribes the client to **multiple streams**; broadcasters address a message by the stream name (addressed delivery). The two channels:
-
-**`UserChannel`** (`app/channels/user_channel.rb`) — user part. Subscribed to:
-- `user_<id>` — **personal** stream (profile, own toasts, replies to their comments, status of their poi). Resolves "how to single out a specific user".
-- `pois_map` — **shared** map stream (`poi:reload-features`, live marker/sidebar update for ALL users on the map). Each client filters by visible bounds (`_detailIntersectsView`).
-
-**`AdminChannel`** (`app/channels/admin_channel.rb`) — admin part, roles `admin` AND `moderator`. Subscribed to:
-- `admin_<id>` — **personal** admin stream (result of his own actions: success/error reflex events).
-- `admin_feed` — **shared** live-update stream of the admin panel (POI, users, comments, categories, settings, dashboard stats) for ALL admins.
-
-**Delivery rules:**
-- Personal (user part) → `user_<id>`; shared map update → `pois_map`.
-- Personal (admin part) → `admin_<id>`; shared admin panel update → `admin_feed`.
-- Noticed notifications (`channel: "UserChannel", stream: :user_stream` → `"user_<id>"`) land in the personal user stream and keep working.
-
-Example mapping in broadcasters: `PoiBroadcaster` sends `poi:reload-features` + sidebar `inner_html` to `pois_map`; admin zones (`[data-admin-pois-list]`, `#poi-detail`, `[data-audit-log]`) go to `admin_feed`. Admin reflex success/error events go to `admin_<id>`.
-
-**ActionCable** — Rails WebSocket infrastructure: long-lived connection, the server sends messages to all browsers subscribed to the channel.
-
-**SolidCable** — database-backed ActionCable adapter: messages in PostgreSQL instead of Redis; allows scaling multiple Rails processes without separate infrastructure (process 1 sent → process 2 delivered to the browser).
+**SolidCable** — database-backed ActionCable adapter (PostgreSQL instead of Redis) allowing multiple Rails processes to scale without extra infrastructure.
 
 ---
 
-## 🗂 Unified admin entity pattern (for quick admin extension)
+## 🗂 Unified admin entity pattern
 
-One admin entity (User, Poi, Setting, PoiCategory…) is implemented using a unified template:
-
-### 1. Components (Sidecar, full set: rb + html.erb + css + controller.js + 4 yml)
-- **Index**: `Admin/<entity>/TableComponent` + `RowComponent`.
-- **Show**: `Admin/<entity>/<entity>/ShowComponent` + a separate component for EACH tab (`FieldsListComponent`, `PoisListComponent`, `AuditLogComponent`, `ActivityComponent`).
-- **Edit**: `Admin/<entity>/<entity>/EditComponent`.
-- The target container (`[data-...]`) is on the wrapper in `show.html.erb`, the component root is without it.
-
-### 2. Reflex (`app/reflexes/admin/<entity>_reflex.rb`)
-- `create` / `update` / `destroy` — `morph :nothing` → `deep_symbolize_keys(params)` → `authorize_with_pundit!` → Service → `send_success`/`send_error` (dispatch_event into `user_#{id}`).
-- `filter` / `<entity>_page` (pagination) — read, render via `ApplicationController.render(Component)` + `inner_html` + `broadcast`.
-
-### 3. Service (`app/services/<entity>_service.rb`)
-- `create` / `update` / `destroy` — `Model.save!` in a transaction; `update!`, not `update_all` (audit).
-- `audit_versions(entity:)` — entity versions + related (for deleted — via `object`), safe `parse_version_object`.
-
-### 4. Broadcaster (`app/broadcasters/<entity>_broadcaster.rb`)
-- `include CableReady::Broadcaster`, `include Pagy::Method` (+ `request` mock for pagy).
-- `broadcast` — render zones one by one (`inner_html` by wrapper selector), each zone in `rescue`.
-- Nested ViewComponents from a job — only via `<%= render %>`/`helpers.render`.
-- Result: `cable_ready["admin_feed"]` → `.broadcast` (shared admin-panel stream).
-
-### 5. Channel
-`AdminChannel` (`app/channels/admin_channel.rb`) — subscription `admin` OR `moderator` on streams
-`admin_<id>` (personal) + `admin_feed` (shared).
-
-### 6. VersionObserverJob (`app/jobs/version_observer_job.rb`)
-- For each `item_type` — branch `handle_<model>_update(version)` → `XxxBroadcaster.call(<entity>: version.item || version.reify)`.
-
-### 7. Live audit (feed)
-- Unified `Ui::AuditEntryComponent` for all entities: `changes` filters "empty→empty", readable JSONB, `field_key_from_version` fallback to `version.object`.
-- The audit tab panel — a component with its own Stimulus controller on the root (ancestor controller for pagination), `goToPage` → Reflex `<entity>_page`.
-- **Author guarantee:** `PaperTrail.request.whodunnit` is set in `ApplicationReflex#before_reflex` AND, as a safety net, in the service layer (`PoiCategoryService.create_field/update_field/destroy_field`) so audit entries always carry the author instead of "System".
-- **Non-model assets audit:** image markers are ActiveStorage attachments (no model field) — explicit audit-only PaperTrail versions are written via `PaperTrailAuditService.log_category_icon_uploaded/removed` (events `category_icon_uploaded`/`category_icon_removed`), which land in the feed but do not re-render the open edit form.
-
-### 8. Child CRUD embedded into the edit form
-For entities whose child records are managed via a modal (e.g. category fields), the CRUD lives inside the edit form, while the detail tab keeps only read-only/reorder actions. The modal follows `Ui::ConfirmDialogComponent` (header+close on one line, scrollable body, pinned footer with Cancel/Save/Delete). A single page holds exactly one target container — either the show-tab wrapper (`[data-poi-category-fields]`) or the edit-form wrapper (`[data-poi-category-fields-edit]`) — so the Broadcaster's `inner_html` re-renders whichever one exists without duplication.
-
-### 9. Forms (checkboxes!)
-Rails `check_box` generates a pair of inputs with one `name` (hidden `value="0"` + checkbox). In JS select `input[name='...'][type='checkbox']`, otherwise the hidden input (false) is read. Example: `form.querySelector("[name='poi_category_field[required]'][type='checkbox']")`.
+One admin entity (User, Poi, Setting, PoiCategory…) follows one template (details in AI instructions `.roo/rules/03-COMPONENT-REFERENCE.md`).
+1. **Components** (sidecar full set): `Admin/<entity>/TableComponent`+`RowComponent` (Index); `<entity>/ShowComponent` + separate component per tab; `EditComponent`. Target selector on the page wrapper, not component root.
+2. **Reflex** (`app/reflexes/admin/<entity>_reflex.rb`): create/update/destroy → `morph :nothing` + `deep_symbolize_keys` + `authorize_with_pundit!` → Service → success/error dispatch; filter/page — read + `inner_html` + broadcast.
+3. **Service**: `save!` in transaction; `update!` not `update_all`; `audit_versions`.
+4. **Broadcaster**: `inner_html` per wrapper selector, each zone in `rescue` → `admin_feed`.
+5. **Channel**: `AdminChannel` on `admin_<id>` + `admin_feed`.
+6. **VersionObserverJob**: branch `handle_<model>_update` → `XxxBroadcaster.call`.
+7. **Live audit**: unified `Ui::AuditEntryComponent` (readable JSONB, fallback to `version.object`); whodunnit guaranteed in `ApplicationReflex#before_reflex` + service layer; non-model assets (icons) logged via audit-only PaperTrail versions.
+8. **Child CRUD** embedded in the edit form (modal follows `Ui::ConfirmDialogComponent`); exactly one target container per page.
+9. **Forms (checkboxes):** Rails `check_box` = hidden(value=0)+checkbox with one `name`; JS selects `input[name='...'][type='checkbox']`.
 
 ---
 
 ## 🏛 Architectural decisions
 
-Recorded decisions. When changing any item — update this section and the instructions (`.roo/rules`).
-
 | Decision | Rationale |
 |---------|-------------|
-| Database-Triggered Workflow | PaperTrail → VersionObserverJob → Broadcaster → CableReady. DB = Single Source of Truth |
-| StimulusReflex + CableReady | WebSocket-first, without JSON API. Reflex does not render DOM after saving |
-| Sidecar ViewComponents | Isolation of templates/styles/JS, 4 locales, partials forbidden |
-| PostGIS | Spatial queries (bounds, radius, ST_DWithin) |
+| Database-Triggered Workflow | PaperTrail → VersionObserverJob → Broadcaster → CableReady; DB = source of truth |
+| StimulusReflex + CableReady | WebSocket-first, no JSON API; Reflex doesn't render DOM after saving |
+| Sidecar ViewComponents | Isolation of template/styles/JS, 4 locales, partials forbidden |
+| Unified UI palette | `@utility bg-success/bg-error/bg-warning/bg-info/text-text` in `@theme`; cards/tabs/navbar `bg-linear-to-br from-primary/5 to-secondary/10` |
+| Lazy Stimulus controllers | Sidecar controllers on demand (`_components_lazy.js`), base `ApplicationController` |
+| PostGIS | Spatial queries (bounds, radius, `ST_DWithin`) |
 | Proximity Check (100m) | Anti-fraud for comments and voting via `ST_DWithin` |
-| Suggested Edits (консенсус 100м) | User suggestions apply by consensus (author / 2-3 local users / reputation) instead of direct writes |
-| ERC-20 (TFT) gamification | Utility token: rewards for activity, verification, premium |
-| EIP-2771 (ERC-2771) | Sponsored transactions — gas is paid by the platform |
+| Suggested Edits (100m consensus) | Apply by author / independent local users / reputation instead of direct writes |
+| ERC-20 (TFT) gamification | Utility token: rewards, verification, premium |
+| EIP-2771 | Sponsored transactions — gas paid by the platform |
 | TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton for the Telegram ecosystem |
 | SolidQueue instead of Sidekiq | Zero Redis (SolidQueue/SolidCache/SolidCable) |
 | PWA + Telegram Mini App | Instead of native apps — reach, budget, TON Foundation grants |
 
-### TFT tokenomics (semi-closed system)
-- **Emission limit:** 1 000 000 000 TFT (18 decimals), set in [`travel-fi.sol`](travel-fi.sol) (`MAX_SUPPLY`).
-- **Tokens are NOT burned (no burn).** TFT circulate within the platform: credited for activity (POI, photos, comments, referrals), spent on premium services and verification, returned to circulation. Deficit — due to the hard emission limit.
-- **Utility mechanics:** rewards, reputation (badges, levels from accumulated TFT), premium filters, priority verification, DAO voting.
-- **Sale (crowdsale) — a separate legally vetted entity**, not part of the grant application (regulatory risk).
+---
 
-### 🔄 TFT circulation (conditionally closed system)
-The user does not need to know anything about cryptocurrency: custodial wallets sign transactions themselves (gasless, EIP-2771); a "smart" user can connect their own wallet and sign independently. The goal is utility TFT circulation in a closed loop **without mint on the fly and without burn**.
+## 🏆 TFT Tokenomics
 
-**Contract roles:**
-| Contract | Role |
-|----------|------|
-| **Issuer** (`TravelFiToken`) | Hard issuance `MAX_SUPPLY = 1 000 000 000` (18 decimals). One-time distribution of tokens to the other contracts, then **is paused**. |
-| **Cashier** | Token purchase for ETH/USDT (without lock), token sale for ETH/USDT **with a fee** (anti-arbitrage), feature payment (Token Spend). Accepts ETH/USDT and gives/takes TFT. |
-| **Rewards** (`TravelFiRewards`) | Issuing rewards for actions (POI, photo, comment, like/verification, etc.) with vesting (`lockDays`). Locked TFT are virtual (internal DB account), transferred on-chain only at `claim`. |
-
-**Cycle:**
-1. The Issuer mints `MAX_SUPPLY` and distributes among the contracts → is paused.
-2. Then only the **Cashier** and **Rewards** work.
-3. The user receives a reward for an action:
-   - **without lock** — actions that give tokens immediately for spending (by default: registration and the referral bonus to the newcomer himself, lock=0);
-   - **with lock (vesting)** — other rewards (photo, content, votes) **and the referral bonus of the REFERRER**: the referrer receives on-chain tokens only after unlocking by the lock period (anti-fraud against fake registrations). A record older than the lock period (`updated_at + lock_days` has passed) is considered unlocked; before that — locked and displayed as an internal off-chain balance.
-4. Enough TFT accumulated → feature purchase (e.g., remove ads before showing a POI) → TFT debited from the balance to the **Cashier**.
-5. Token purchase for ETH/USDT — without lock (the Cashier works without blocking): ETH/USDT to the cashier's wallet, TFT to the user's balance.
-6. Token sale for ETH/USDT → platform fee (anti-arbitrage), the rest of the TFT is debited, ETH/USDT returned.
-7. This is how **circulation** of tokens happens in a closed loop.
-8. UX: the custodial wallet signs transactions itself (seamless for the "non-crypto" user); an advanced user connects their own wallet and signs independently.
-
-**On-chain crediting (two-stage):** off-chain crediting (`UserReward` + `TokenTransaction`) immediately → by the "Claim rewards" button (or auto-claim job) one on-chain send → real TFT to the custodial wallet. The lock period is computed on the fly for the record (`updated_at + lock_days`), there is no separate field; the "received" marker is boolean. Registration and the newcomer bonus — sent immediately (lock=0); the referrer's referral bonus — by the lock period (vesting, anti-fraud). The sending (`TokenTransactionRelayJob`) is serialized by operator (`limits_concurrency`) to avoid nonce conflicts during parallel relay; failed transactions (`status: failed`) are periodically resent by `TokenTransactionRetryJob` (recurring). `sendRewardBatch` — for promotions/bulk rewards.
-
-### Open technical debts
-- [ ] **`ContractSnapshot` (contract monitoring)** — wishlist: model (`contract_type`, `data jsonb`, `created_at`) with rotation for tracking contract state. There is no monitoring code — only on-chain sending via `TokenTransactionService.relay!`.
-- [ ] **Targeted caching** — SolidCache is enabled, the cache in code is disabled. Return selectively: ShowComponent `[category, I18n.locale]`, aggregates with collection dependency; do NOT cache forms.
-- [ ] **`Ui::ConfirmDialogComponent`** — extract the modal into a separate component, remove the window from `Poi::ShowComponent`/`Poi::FormComponent`.
+- **Emission limit:** 1 000 000 000 TFT (18 decimals), [`TravelFiToken.sol`](contracts/TravelFiToken.sol:31) `MAX_SUPPLY`. **No burn** — TFT circulate in a closed loop (activity → premium/verification → back into circulation).
+- **Utility:** rewards, reputation (badges, levels from **user contribution**, not `token_balance`), premium filters, priority verification, DAO voting.
+- **Sale (crowdsale) — separate legally-vetted entity**, not in the grant.
+- **Circulation:** Issuer mints and distributes once → paused. Then only the Cashier (`TravelFiCrowdsale`) and Rewards (`TravelFiRewards`) work. Rewards without lock (registration, newcomer referral) or **with vesting** (`lockDays`; rest + referrer's referral bonus — anti-fraud). Lock computed on the fly (`updated_at + lock_days`).
+- **Two-stage on-chain crediting:** off-chain (`UserReward` + `TokenTransaction`) immediately → "Claim rewards" (or auto-claim job) → one on-chain send to the custodial wallet. `TokenTransactionRelayJob` serialized by operator (`limits_concurrency`); `TokenTransactionRetryJob` resends failed; `sendRewardBatch` for promotions.
+- **Gamification:** rewards — registration 10, referral (referrer) 5 (vesting), referral (newcomer) 5, POI 20, photo 5, comment 5, vote 2. Badges — `registration_complete`, `first_poi`, `contributor`, `explorer`, `recruiter`, `veteran`. Config in `Setting.gamification_config` (admin-editable, no redeploy). `GamificationService.revoke!` — global revoke of not-yet-relayed rewards.
 
 ---
 
-## 📐 System architecture
+## 🗳️ Community Moderation (Voting)
 
-### The "One entity" principle
-- **Model** — data and relations (base only).
-- **Service** — the single entry point for business logic.
-- **Reflex** — the entry point for UI interactions over WebSocket.
-- **Controller** — only access (Pundit), rendering, Pundit policies.
-- **Broadcaster** — the layer for delivering interface updates (CableReady).
-- **Notification** — notifications (Noticed) with filtering via `Setting`.
+Polymorphic `Vote` (POI/photo/comment), live counters via `VoteBroadcaster`/`PoiBroadcaster` (`inner_html`). **Strict semantics:** `poi.status` is set ONLY by admin (`pending` is neither visible nor votable); user votes NEVER change status or visibility — only attach badges to already-visible POIs (`ups >= threshold` → «Community approved», `downs >= threshold` → «Community rejected»). Conflict resolved by `net = ups - downs`; one user = one vote (unique index `[votable_type, votable_id, user_id]`), re-vote toggles value. **Anti-fraud:** `VotePolicy` — logged in, not the author, within 100m. `suspended`/`banned` — decided ONLY by the admin.
 
-### DATABASE as Single Source of Truth
-Data in PostgreSQL with history via PaperTrail: transactional (all or nothing), audit of every change, reliability (transaction failed — nothing sent).
+---
+
+## ✏️ Suggested Edits (100m consensus)
+
+An extension over `Vote` + `ReputationService`. Direct edit — only the POI author within the authorship window; everyone else within 100m creates a **Suggested Edit**, applied by **consensus**. Three-layer field control: **Quick Toggles** (anyone within 100m via Vote), **Attributes** (only via `SuggestedEdit` + consensus), **Locked** (`coordinates`, `poi_category_id`, `slug`, `status` — admin/moderator only; regular user — «Report an error»). Model `SuggestedEdit` + `suggested_edit_confirmations`. Apply if: author confirmed, or `confirmed_by.size + 1` ≥ threshold, or proposer reputation ≥ threshold. Auto-expiry via `SuggestedEditExpiryJob`.
 
 ---
 
 ## 📦 Development standards
 
 ### ViewComponent (Sidecar Subdirectory)
-Full description — in [`.roo/rules/01-INSTRUCTIONS.md`](.roo/rules/01-INSTRUCTIONS.md) and [`.roo/rules/03-COMPONENT-REFERENCE.md`](.roo/rules/03-COMPONENT-REFERENCE.md). Summary:
-- Each component is a class `XxxComponent < ApplicationComponent` (NOT module wrappers, NOT `ViewComponent::Base`).
-- Sidecar folder with the same name: `html.erb` + `css` + `controller.js` + 4 yml (en/ru/es/zh) — **full set, always** (even empty JS/CSS).
-- Template root tag: `data-controller="kebab-case-name"`.
-- Partials are forbidden. Inline `<script>`/`<style>` are forbidden.
-- **Lookbook preview is mandatory**: every new component CREATEs a matching preview in `lookbook/<namespace>/<component>_preview.rb` (+ `lookbook/<namespace>/<component>_preview/<scenario>.html.erb` for each scenario) so the component renders in the LookBook. The preview folder mirrors the component's sidecar structure (same namespace/name).
+Full description in [`.roo/rules/01-INSTRUCTIONS.md`](.roo/rules/01-INSTRUCTIONS.md) and [`.roo/rules/03-COMPONENT-REFERENCE.md`](.roo/rules/03-COMPONENT-REFERENCE.md). Summary: class `XxxComponent < ApplicationComponent` (NOT module wrappers, NOT `ViewComponent::Base`); sidecar folder same name (`html.erb` + `css` + `controller.js` + 4 yml) — **full set, always**; root tag `data-controller="kebab-case-name"`; partials and inline `<script>`/`<style>` forbidden; **Lookbook preview mandatory**.
 
-### Style and colors
-- Only the green-blue Tailwind palette (`emerald`, `teal`, `sky`). Custom styles are forbidden.
-- Icons — only MDI, with a comment of the class name (`<%# Icon: mdi-pencil %>`).
+### Live comments (no duplicated/nested HTML)
+`Comments::CommentComponent` — pure wrapper with `[data-comment-content]` + `[data-comment-children]`; content in `Comments::CommentContentComponent`. `PoiCommentBroadcaster` inserts roots/replies; `:update` = `inner_html`. `VersionObserverJob#children_count_only_changed?` suppresses reply-increment broadcasts. **"Edited by" label** reads the last UPDATE-version changing `body`; after live edit the broadcaster dispatches `poi:comment-updated` → `refreshPermissions()`. **Interaction gating:** commenting/voting/photo require active status (`UserAccessService.can_interact?`).
 
-### Internationalization
-- 4 locales: en, ru, es, zh. Text hardcoding is forbidden.
-- Translations — in the component's sidecar YAML, relative keys `t(".key")`. Keys in `config/locales/*.yml` for texts inside a ViewComponent — forbidden.
-
-### Comments
-Every method is documented with a comment STRICTLY before the declaration.
+### Style, i18n, comments
+Only green-blue Tailwind palette (`emerald`, `teal`, `sky`); icons — only MDI with class comment. 4 locales; translations in sidecar YAML, relative keys `t(".key")`; no hardcoding. Every method documented with a comment immediately before the declaration.
 
 ---
 
-## 🔌 Main frontend components
+## 📨 Notifications & background
 
-### Stimulus
-A lightweight framework for browser-Rails interaction. Listens to events (clicks, input), sends signals to Rails, updates the DOM, manages state. Lifecycle: initialization when the element appears in the DOM, cleanup on removal.
-
-### StimulusReflex
-Reactive components over WebSocket: the browser sends an action, the server updates the needed parts of the DOM (morphing). Use `this.stimulate("Reflex#method", params)`. **`prevent_refresh!` DOES NOT EXIST** — use `morph :nothing` instead.
-
-### CableReady
-A generator of DOM update commands. Transport layer: a command (update/replace/add/remove/notify) is sent over WebSocket and executed by the browser.
-
-### OpenLayers map & category icons
-The global POI map ([`Poi::MapComponent`](app/components/poi/map_component.rb:1), OpenLayers 10) draws a single POI as the MDI glyph of its category (no pin/point), with a white outline for readability. The real glyph codepoint is resolved at runtime from the loaded MDI CSS (`getComputedStyle(el, "::before").content`) and cached; markers re-render after the async CDN font loads (`document.fonts.ready`). Clusters stay as numbered circles. The marker reads the source feature's `poiIcon` (from the cluster wrapper `features[0]`); the icon reaches the frontend via [`PoiService.map_feature_data`](app/services/poi_service.rb:394).
-
-A category can also define a custom **map marker image** ([`PoiCategory#category_icon`](app/models/poi_category.rb:1), `has_one_attached`). When set, the marker renders the image with `ol/style Icon` instead of the MDI glyph; otherwise it falls back to the MDI icon. The image is managed from the admin category edit form via HTTP/multipart (`Admin::PoiCategoriesController#update_category_icon/#remove_category_icon` → `PoiCategoryService.attach/remove_category_icon` → `PoiCategoryBroadcaster`, event_type `category_icon`, which refreshes the admin card and dispatches `poi:reload-features` on `pois_map` so visible markers re-render live). `PoiService.map_feature_data` carries `category_image` (`category_icon_url`) into `#poi-map-features`.
+- **Noticed** — one event, multiple channels (database + email + action_cable + web_push).
+- **SolidQueue** — DB-backed queue (no Redis); workers in `bin/jobs`. `prepared_statements: false` in [`config/database.yml`](config/database.yml:1) prevents pg Segmentation Fault; secondary DBs use `postgis` adapter with `schema_search_path: public,postgis`.
+- **SolidCache** — infra configured, **caching temporarily disabled in code** (avoids stale during broadcast morphs). Restore selectively: static ShowComponent parts key `[category, I18n.locale]`; aggregates with collection dependency; do NOT cache forms. Config `config/cache.yml` (256MB).
+- **SolidQueueDashboard** — web UI for monitoring queues, statuses, restarting failed jobs.
+- **ReverseGeocodingService** — Nominatim (1 req/sec).
+- **AiService** — OpenAI-compatible (OpenAI/DeepSeek via ENV): toxicity, translate missing keys, AI recommendations (Premium). Implementation — TODO.
+- **Ransack** — search/filtering from request params without manual SQL.
 
 ---
 
-## 📨 Notifications and background jobs
+## 🗄️ Data & audit
 
-### Noticed
-A multichannel notification system: one notification — multiple channels (Email, SMS/Twilio, Push/WebPush, In-app/WebSocket).
+- **PaperTrail** — full versioning (what/who/when), the trigger for all downstream actions (notifications, broadcasts).
+- **PostgreSQL + PostGIS** — geographic types, spatial queries (radius, route).
+- **Devise** — auth (email + OAuth), bcrypt, `current_user`, route protection.
 
-### SolidQueue
-Database-backed queue (instead of Sidekiq + Redis). Long operations are stored in the DB, worker processes execute asynchronously.
-
-**DB stability:** in [`config/database.yml`](config/database.yml:1) prepared statements are disabled (`prepared_statements: false`) — this removes the Segmentation Fault (`connect_start`) of the `pg` gem under multithreaded/multiprocess SolidQueue. All secondary DBs (queue/cache/cable) use the `postgis` adapter with `schema_search_path: public,postgis` — a single C-extension connection type in the application (otherwise conflicts).
-
-### SolidCache
-Database-backed cache (Redis alternative). Infrastructure is configured, **caching in code is disabled** (to exclude stale during broadcast morphs). When to bring back (selectively): static parts of ShowComponent — key `[category, I18n.locale]`; aggregates — with collection dependency (`[category, category.pois, I18n.locale]`); do NOT cache forms. Configuration: `config/cache.yml` (256MB), `:solid_cache_store` in production, `bin/rails dev:cache` in dev.
-
-### SolidQueueDashboard
-Web interface for monitoring queues, job statuses, and restarting failed jobs.
-
-### ReverseGeocodingService
-Reverse geocoding (country/city/address by coordinates). API: Nominatim (free, 1 request/sec). File: [`app/services/reverse_geocoding_service.rb`](app/services/reverse_geocoding_service.rb).
-
-### AI services (paid LLM API)
-A unified `AiService` (OpenAI-compatible APIs: OpenAI, DeepSeek; switching via ENV). Scenarios: `check_toxicity`, `translate_missing_keys`, AI recommendations (Premium). Implementation — TODO.
-
-### Ransack
-Search and filtering of data based on request parameters, without manual SQL.
-
----
-
-## 🏆 Gamification and TFT tokens
-
-**TOKEN MODEL:** rewards are credited with TFT tokens (not "points").
-
-**Architecture:** the `UserReward` model (`amount` TFT, `action_key`, `wallet_id`) — off-chain crediting ledger; `User#token_balance` = sum of credits; the `GamificationService` service (`award!`, `award_referral!`, `badge_key`, `check_badges!`, `revoke!`); badges — the `Gamification` model (event_type `badge`, reputation achievements); config — `Setting.gamification_config` (rewards — TFT tokens, badges — achievements), edited in the admin `/admin-panel/settings` without redeploy (previously [`config/gamification.yml`](config/gamification.yml), file removed).
-
-**Reward revocation (`GamificationService.revoke!`):** globally revokes a not-yet-relayed reward (`claimed=false`, not sent to the blockchain) for an action (e.g. `poi_photo_add` on photo self-delete via `PoiService.remove_photo`), atomically deleting the `UserReward` + `TokenTransaction` pair (PaperTrail audit); idempotent. Already-relayed (`claimed=true`) rewards are NOT revoked on the backend.
-
-**Rewards (TFT):** registration (welcome) 10, referral (referrer) 5 — by vesting lock period (anti-fraud), referral (newcomer) 5 — instantly, POI addition 20, POI photo 5, comment 5, POI vote 2.
-
-**Badges:** `registration_complete`, `first_poi`, `contributor` (10+), `explorer` (5+ cities), `recruiter` (5+ referrals), `veteran` (balance 1000+ TFT).
-
-**I18n:** badge and reward names are localized (en, ru, es, zh).
-
----
-
-## 🗳️ Community Moderation (Voting)
-
-Community approval/trust layer on top of admin moderation. See the «3.5 Voting / Community Moderation» section in [`ROADMAP.md`](ROADMAP.md:1) for the full plan.
-
-**UI (POI + photos + comments):** voting is embedded in the Ratings tab of the POI card — [`Poi::RatingsComponent`](app/components/poi/ratings_component.rb:1) renders [`Ui::VoteComponent`](app/components/ui/vote_component.rb:1) in the `[data-vote-zone="poi-<id>"]` wrapper; in the photo gallery — [`Poi::GalleryComponent`](app/components/poi/gallery_component.rb:1) in `[data-vote-zone="photo-<id>"]`; and in comments — [`Comments::CommentComponent`](app/components/comments/comment_component.rb:1) in `[data-vote-zone="poi_comment-<id>"]`. The live counter updates via `VoteBroadcaster` (`inner_html` by the `pois_map` stream).
-
-**Semantics (strict):** POI status is set ONLY by the admin (`pending` is not visible and not votable). User votes NEVER change `poi.status` and NEVER affect visibility — they ONLY attach badges to already visible POIs (`approved`/`imported`): `ups >= threshold` → «Community approved», `downs >= threshold` → «Community rejected» (signal to admin; the POI stays on the map).
-
-**Vote counting:** absolute threshold per side (from `Setting`/config, default 10); on conflict (`both >= threshold`) the `net = ups - downs` decides — `net > 0` → approved, `net <= 0` (incl. parity) → rejected. One user = one vote (unique index `[votable_type, votable_id, user_id]`); re-voting toggles `value` (`+1`/`-1`).
-
-**Chain:** `Vote::VoteComponent` → `VoteReflex#cast` (`morph :nothing`) → `VoteService.cast!` (transaction, PaperTrail, TFT `poi_vote`) → `VersionObserverJob#handle_vote_update` → `ModerationService.evaluate!` + `ReputationService.reckon!` + `VoteBroadcaster`/`PoiBroadcaster` (`inner_html`) → SolidCable → DOM.
-
-**Anti-fraud:** `VotePolicy` — logged-in, not the author, proximity 100m via `PoiService.within_range?`. Author reputation accumulates via `ReputationService.reckon!`; `suspended`/`banned` — decided ONLY by the admin (`Admin::UserService`).
-
----
-
-## ✏️ Suggested Edits (edit proposals + 100m consensus)
-
-Spam protection on top of the 100-meter Proof of Location. An **extension** over the existing `Vote` mechanics and `ReputationService` — it does not break the current flow. The idea: a direct edit is allowed **only to the POI author** within the authorship window; everyone else within 100m creates an **edit proposal** (Suggested Edit) that is applied by **consensus** — instead of chaotic direct rewriting of the database.
-
-### Three-layer field control
-
-| Layer | Fields | Who edits | Mechanics |
-|-------|--------|-----------|-----------|
-| **Quick Toggles** (soft crowdsourcing) | `is_operational`, quick flags ("Water ran out", "Queue", "Closed") | anyone within 100m | Up/Down voting via the existing `Vote`, low threshold from `Setting`; `poi.status` is NOT changed — only an indicator |
-| **Attributes** (factual) | `has_esim`, `fee_amount`/`price_info`, `opening_hours`, `metadata` | anyone within 100m | only via `SuggestedEdit` + consensus |
-| **Locked** (critical) | `coordinates`, `poi_category_id`, `slug`, `status` | admin/moderator only | regular user — only "Report an error" (signal) |
-
-### SuggestedEdit model
-- `poi_id`, `user_id` (proposer), `field_key`, `old_value` jsonb, `new_value` jsonb, `status` enum (`pending_review`/`approved`/`rejected`/`expired`), `proposal_type` enum (`attribute`/`quick_toggle`), `resolution_reason`, `confirmed_by` int[].
-- Supporting join table `suggested_edit_confirmations` (unique `[suggested_edit_id, user_id]`) — independent confirmers.
-- `has_paper_trail` (audit dogma). Index `[poi_id, field_key, status]` — excludes duplicate open proposals.
-
-### Consensus rule (`SuggestedEditService.apply_if_consensus!`)
-An edit is applied (`Poi.update!` → PaperTrail → `handle_poi_update` → `PoiBroadcaster`) if ANY holds:
-- the POI **author** confirmed it (within the authorship window), **or**
-- `confirmed_by.size + 1` reached the threshold from `Setting` (independent users within 100m), **or**
-- the proposer's `reputation >= high_reputation_threshold` from `Setting`.
-
-**Anti-fraud:** only a user within 100m (`PoiService.within_range?`, not the author) can propose/confirm; confirmers — only independent (not the author, not the proposer). One user = one confirmation.
-
-### Authorship (direct edit window)
-- The POI author (any distance) — direct edit in the first 24-48h (window from `Setting`, field `pois.edit_lock_expires_at`) or until the POI reaches X confirmations.
-- **Auto-expiry:** `SuggestedEditExpiryJob` (SolidQueue recurring) — no author response for N days → consensus without the author (`apply_if_consensus!`); otherwise the edit becomes `expired`.
-
-### Flow
-`Poi::EditComponent`/"Report an error" button → `SuggestionReflex#create` (`morph :nothing` + `deep_symbolize_keys` + Pundit) → `SuggestedEditService.create!` (transaction, PaperTrail) → `VersionObserverJob#handle_suggested_edit_update` → `SuggestedEditBroadcaster` (+ `PoiSuggestionNotification` to the author via Noticed, `Setting` filter) → SolidCable. Applying the edit on consensus — via `apply!` (POI version → `PoiBroadcaster`), optionally auto-crediting TFT (`GamificationService.award!(:suggestion_applied)`).
-
----
-
-## 🗄️ Data and audit
-
-### Paper Trail
-Full versioning of models: WHAT changed (old/new values), WHO (user), WHEN, WHAT happened (create/update/destroy). The trigger for all subsequent actions (notifications, broadcasts).
-
-### PostgreSQL + PostGIS
-Main DB + geographic extension: coordinates as geographic types, spatial queries (objects within a radius, on a route).
-
----
-
-## 🔐 Security
-
-### Devise
-Authentication: registration, login, password recovery, sessions. Passwords — bcrypt (irreversible hashing). Provides `current_user`, protection of routes from unauthorized access.
+> Versioning: use `git log` for change history. Statuses → [`ROADMAP.md`](ROADMAP.md), estimates → [`MILESTONES.md`](MILESTONES.md), debts → [`TECH-DEBTS.md`](TECH-DEBTS.md).

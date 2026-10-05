@@ -1,4 +1,4 @@
-import ApplicationController from '../../../../javascript/controllers/application_controller'
+import ApplicationController from '../../../../../javascript/controllers/application_controller'
 
 /**
  * Admin::Comments::PoiComment::ShowComponent — контроллер детальной страницы

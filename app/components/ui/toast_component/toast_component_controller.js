@@ -5,9 +5,9 @@
 //   - Управление очередью (max 5 тостов одновременно)
 //   - Авто-скрытие по таймауту
 //   - Анимированное удаление (slideOutRight)
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
-export default class extends Controller {
+export default class extends ApplicationController {
   static values = {
     autoDismissTimeout: { type: Number, default: 5000 }
   }

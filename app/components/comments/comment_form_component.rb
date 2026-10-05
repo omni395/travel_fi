@@ -15,30 +15,31 @@
 # @param commentable [Poi] владелец комментария
 # @param current_user [User, nil] текущий пользователь
 # @param parent [PoiComment, nil] родитель (nil = корневой комментарий)
+# @param comment [PoiComment, nil] редактируемый комментарий (режим edit)
 # @param user_lat [Float, nil] широта юзера (session)
 # @param user_lng [Float, nil] долгота юзера
 #
 class Comments::CommentFormComponent < ApplicationComponent
-  attr_reader :commentable, :current_user, :parent, :user_lat, :user_lng
+  attr_reader :commentable, :current_user, :parent, :comment, :user_lat, :user_lng
 
-  def initialize(commentable:, current_user: nil, parent: nil, user_lat: nil, user_lng: nil, editing: false)
+  def initialize(commentable:, current_user: nil, parent: nil, comment: nil, user_lat: nil, user_lng: nil)
     @commentable = commentable
     @current_user = current_user
     @parent = parent
+    @comment = comment
     @user_lat = user_lat
     @user_lng = user_lng
-    @editing = editing
   end
 
   private
 
   #
-  # Режим редактирования (заглушка: рут едit-формы не используется напрямую).
+  # Режим редактирования (присутствует редактируемый комментарий).
   #
   # @return [Boolean]
   #
-  def editing
-    @editing
+  def editing?
+    comment.present?
   end
 
   #
@@ -51,12 +52,12 @@ class Comments::CommentFormComponent < ApplicationComponent
   end
 
   #
-  # Placeholder формы (отличает корневой от ответа).
+  # Placeholder формы (отличает корневой от ответа и от редактирования).
   #
   # @return [String]
   #
   def placeholder
-    parent ? t(".reply_placeholder") : t(".placeholder")
+    editing? ? t(".edit_placeholder") : (parent ? t(".reply_placeholder") : t(".placeholder"))
   end
 
   #
@@ -65,7 +66,7 @@ class Comments::CommentFormComponent < ApplicationComponent
   # @return [String]
   #
   def submit_label
-    parent ? (editing ? t(".save") : t(".reply_submit")) : t(".submit")
+    editing? ? t(".save") : (parent ? t(".reply_submit") : t(".submit"))
   end
 
   #

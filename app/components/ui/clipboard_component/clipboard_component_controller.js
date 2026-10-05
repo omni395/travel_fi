@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
 // Контроллер для Ui::ClipboardComponent
 // Иконка: mdi-content-copy
@@ -7,7 +7,7 @@ import { Controller } from "@hotwired/stimulus"
 // - Копирование явного текста из textValue
 // - ИЛИ считывание текста/значения из стороннего элемента по targetIdValue
 // - Визуальную обратную связь (tooltip "Скопировано")
-export default class extends Controller {
+export default class extends ApplicationController {
   static targets = ["text"]
   static values = {
     text: String,

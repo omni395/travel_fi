@@ -2,6 +2,9 @@ zh:
   users:
     profile_component:
       token_balance: "TFT 余额"
+      spendable_balance: "可领取"
+      locked_balance: "已锁定"
+      claim_button: "领取奖励"
       badges: "徽章"
       roles: "角色"
       referral_code: "邀请码"

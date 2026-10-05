@@ -1,4 +1,4 @@
-import { Controller } from "@hotwired/stimulus"
+import ApplicationController from '../../../javascript/controllers/application_controller'
 
 /**
  * Poi::FormFieldsComponent - динамические поля выбранной категории POI
@@ -8,4 +8,4 @@ import { Controller } from "@hotwired/stimulus"
  * Интерактивной логики на этом контроллере нет — она в родительском
  * poi--form-component (выбор категории, сабмит).
  */
-export default class extends Controller {}
+export default class extends ApplicationController {}

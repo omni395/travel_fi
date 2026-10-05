@@ -16,9 +16,10 @@
     <link rel="preload" href="<%= asset_path("application.css") %>" as="style">
     <link rel="modulepreload" href="<%= asset_path("admin.js") %>" crossorigin="anonymous">
 
-    <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/favicon.png">
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.webp">
     <link rel="manifest" href="/manifest.json">
 
     <%# MDI font загружается локально через esbuild (import в admin.js) %>
@@ -40,91 +41,83 @@
     <%= javascript_include_tag "admin", type: "module" %>
   </head>
 
-<body class="flex flex-col h-screen overflow-hidden bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable admin-layout">
+  <body class="flex flex-col h-screen overflow-hidden bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable" data-current-user-id="<%= current_user&.id %>" data-user-role="<%= current_user&.admin? ? 'admin' : (current_user&.moderator? ? 'moderator' : '') %>">
 
-  <!-- 1. ХЕДЕР: Фиксированная высота 64px -->
-  <header class="h-16 border-b shrink-0 relative z-70">
-    <%= render Ui::NavbarComponent.new(user: current_user) %>
-  </header>
+    <%# Полноэкранный спиннер загрузки (Ui::SpinnerComponent). Появляется ПЕРВЫМ,
+        скрывается после полной загрузки страницы. %>
+    <%= render Ui::SpinnerComponent.new %>
 
-  <!-- 2. ОСНОВНОЙ КОНТЕНТ: сайдбар + страница -->
-  <div class="relative flex flex-1 overflow-hidden">
-    <%= render Ui::SidebarComponent.new do %>
-      <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
-        <div class="flex items-center gap-2">
-          <i class="mdi mdi-view-dashboard text-primary text-xl"></i>
-          <h2 class="text-md font-semibold text-gray-900">Admin Panel</h2>
+
+    <!-- 1. ХЕДЕР: Фиксированная высота 64px -->
+    <header class="h-16 border-b shrink-0 relative z-70">
+      <%= render Ui::NavbarComponent.new(user: current_user) %>
+    </header>
+
+    <!-- 2. ОСНОВНОЙ КОНТЕНТ: сайдбар + страница -->
+    <div class="relative flex flex-1 overflow-hidden">
+      <%= render Ui::SidebarComponent.new do %>
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
+          <div class="flex items-center gap-2">
+            <i class="mdi mdi-view-dashboard text-primary text-xl"></i>
+            <h2 class="text-md font-semibold text-gray-900">Admin Panel</h2>
+          </div>
         </div>
-      </div>
-      <nav class="py-2">
-        <%= link_to admin_root_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
-          <i class="mdi mdi-view-dashboard text-xl mr-3 shrink-0"></i>
-          <span class="text-sm whitespace-nowrap">Dashboard</span>
-        <% end %>
-        <%= link_to admin_users_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
-          <i class="mdi mdi-account-multiple text-xl mr-3 shrink-0"></i>
-          <span class="text-sm whitespace-nowrap">Users</span>
-        <% end %>
-        <%= link_to admin_poi_categories_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
-          <i class="mdi mdi-shape-outline text-xl mr-3 shrink-0"></i>
-          <span class="text-sm whitespace-nowrap">POI Categories</span>
-        <% end %>
-        <%= link_to admin_pois_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
-          <i class="mdi mdi-map-marker-multiple text-xl mr-3 shrink-0"></i>
-          <span class="text-sm whitespace-nowrap">POIs</span>
-        <% end %>
-        <%= link_to solid_queue_dashboard.root_path, target: "_blank", rel: "noopener", class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
-          <%# MDI: tray-full %>
-          <i class="mdi mdi-tray-full text-xl mr-3 shrink-0"></i>
-          <span class="text-sm whitespace-nowrap"><%= t("admin.layout.solid_queue_dashboard") %></span>
-        <% end %>
-        <%= link_to admin_settings_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
-          <i class="mdi mdi-cog text-xl mr-3 shrink-0"></i>
-          <span class="text-sm whitespace-nowrap">Settings</span>
-        <% end %>
-      </nav>
-      <div class="absolute bottom-0 left-0 right-0 border-t border-gray-200">
-        <%= link_to root_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors" do %>
-          <i class="mdi mdi-home text-xl mr-3 shrink-0"></i>
-          <span class="text-sm whitespace-nowrap">Back to Site</span>
-        <% end %>
-      </div>
-    <% end %>
-
-    <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
-      <%# Спиннер загрузки (скрывается после загрузки контента) %>
-      <div data-admin-layout-target="spinner"
-           class="absolute inset-0 flex items-center justify-center bg-gray-50/80 z-50 transition-opacity duration-300">
-        <div class="flex flex-col items-center gap-3">
-          <!-- mdi: loading (spin animation) -->
-          <span class="mdi mdi-loading mdi-spin text-4xl text-teal-500"></span>
-          <span class="text-sm text-gray-400"><%= t('admin.layout.loading') %></span>
+        <nav class="py-2">
+          <%= link_to admin_root_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+            <i class="mdi mdi-view-dashboard text-xl mr-3 shrink-0"></i>
+            <span class="text-sm whitespace-nowrap">Dashboard</span>
+          <% end %>
+          <%= link_to admin_users_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+            <i class="mdi mdi-account-multiple text-xl mr-3 shrink-0"></i>
+            <span class="text-sm whitespace-nowrap">Users</span>
+          <% end %>
+          <%= link_to admin_poi_categories_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+            <i class="mdi mdi-shape-outline text-xl mr-3 shrink-0"></i>
+            <span class="text-sm whitespace-nowrap">POI Categories</span>
+          <% end %>
+          <%= link_to admin_pois_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+            <i class="mdi mdi-map-marker-multiple text-xl mr-3 shrink-0"></i>
+            <span class="text-sm whitespace-nowrap">POIs</span>
+          <% end %>
+          <%= link_to solid_queue_dashboard.root_path, target: "_blank", rel: "noopener", class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+            <%# MDI: tray-full %>
+            <i class="mdi mdi-tray-full text-xl mr-3 shrink-0"></i>
+            <span class="text-sm whitespace-nowrap"><%= t("admin.layout.solid_queue_dashboard") %></span>
+          <% end %>
+          <%= link_to admin_settings_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
+            <i class="mdi mdi-cog text-xl mr-3 shrink-0"></i>
+            <span class="text-sm whitespace-nowrap">Settings</span>
+          <% end %>
+        </nav>
+        <div class="absolute bottom-0 left-0 right-0 border-t border-gray-200">
+          <%= link_to root_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors" do %>
+            <i class="mdi mdi-home text-xl mr-3 shrink-0"></i>
+            <span class="text-sm whitespace-nowrap">Back to Site</span>
+          <% end %>
         </div>
-      </div>
+      <% end %>
 
-      <%# Контент страницы (скрыт, пока спиннер виден) %>
-      <div data-admin-layout-target="content" class="opacity-0 transition-opacity duration-300">
+      <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
         <%= yield %>
-      </div>
-    </main>
-  </div>
+      </main>
+    </div>
 
-  <!-- 3. Toast notifications: SSR flash + CableReady target -->
-  <div id="notifications" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-    <% flash.each do |type, message| %>
-      <% next if message.blank? %>
-      <% toast_type = case type.to_s
-           when "success" then :success
-           when "notice"  then :success
-           when "alert"   then :error
-           when "error"   then :error
-           when "warning" then :warning
-           else :info
-         end %>
-      <%= render Ui::ToastComponent.new(message: message, type: toast_type) %>
-    <% end %>
-    <% flash.clear %>
-  </div>
+    <!-- 3. Toast notifications: SSR flash + CableReady target -->
+    <div id="notifications" class="fixed top-20 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+      <% flash.each do |type, message| %>
+        <% next if message.blank? %>
+        <% toast_type = case type.to_s
+             when "success" then :success
+             when "notice"  then :success
+             when "alert"   then :error
+             when "error"   then :error
+             when "warning" then :warning
+             else :info
+           end %>
+        <%= render Ui::ToastComponent.new(message: message, type: toast_type) %>
+      <% end %>
+      <% flash.clear %>
+    </div>
 
   </body>
 </html>

@@ -4,3 +4,11 @@
 
 import "./controllers"
 import "./config"
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker')
+      .then(reg => console.log('Сервис-воркер успешно зарегистрирован!', reg))
+      .catch(err => console.error('Ошибка регистрации сервис-воркера:', err));
+  });
+}

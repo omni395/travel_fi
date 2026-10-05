@@ -15,6 +15,14 @@ class ApplicationReflex < StimulusReflex::Reflex
     Current.user = current_user
     PaperTrail.request.whodunnit = current_user&.id
     I18n.locale = params[:locale]&.to_sym || I18n.default_locale
+
+    # Единый источник координат пользователя для ВСЕХ рефлексов (Vote/Comment/
+    # Update и др.): выставляем Current.user_lat/lng из session ДО вызова сервиса.
+    # Ранее локация в Current попадала только через set_location/create_comment —
+    # из-за этого VoteReflex#cast видел session пустым в момент голоса («локация
+    # запрещена»), даже если в devtools координаты уже были.
+    Current.user_lat = session[:user_lat]
+    Current.user_lng = session[:user_lng]
   end
 
   # Пробрасываем NotAuthorizedError при ошибке авторизации
@@ -53,8 +61,10 @@ class ApplicationReflex < StimulusReflex::Reflex
   def check_proximity!(poi)
     return true if current_user&.has_role?(:admin) || current_user&.has_role?(:moderator)
 
-    user_lat = session[:user_lat]
-    user_lng = session[:user_lng]
+    # Fallback на Current (устанавливается единым источником в before_reflex из
+    # session): если сессия совместима, но Current уже заполнен — используем его.
+    user_lat = session[:user_lat] || Current.user_lat
+    user_lng = session[:user_lng] || Current.user_lng
 
     unless user_lat && user_lng
       render_proximity_warning(:no_location)

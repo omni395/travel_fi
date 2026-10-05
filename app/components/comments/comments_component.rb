@@ -55,24 +55,56 @@ class Comments::CommentsComponent < ApplicationComponent
   end
 
   #
-  # Может ли пользователь создавать комментарий (залогинен + admin/mod исключения).
-  # Финальная проверка — в PoiCommentPolicy; здесь — только видимость формы.
+  # Может ли пользователь создавать комментарий. Только статус active
+  # (см. UserAccessService.can_interact?). Админ/модератор — тоже active
+  # статусом (роль не отменяет блокировку). Финальная проверка —
+  # в PoiCommentPolicy; здесь — только видимость формы.
   #
   # @return [Boolean]
   #
   def can_comment?
-    return false if current_user.nil?
-
-    current_user.has_role?(:admin) || current_user.has_role?(:moderator) || proximity_ok?
+    UserAccessService.can_interact?(current_user)
   end
 
   #
-  # Доступен ли proximity (100м) — грубая проверка перед показом формы.
+  # Причина, блокирующая создание комментария (сейчас только suspended).
+  # Используется для плашки «почему нельзя оставить комментарий» и даты снятия.
+  #
+  # @return [Hash, nil] { reason: :suspended, unlock_at: Time } или nil
+  #
+  def interaction_block
+    UserAccessService.interaction_block(current_user)
+  end
+
+  #
+  # Доступен ли proximity (100м) — юзер в радиусе точки. Админ/модератор
+  # всегда в радиусе (обходят проверку внутри PoiService.within_range?).
   #
   # @return [Boolean]
   #
   def proximity_ok?
-    user_lat.present? && user_lng.present? && commentable.respond_to?(:latitude)
+    return false unless user_lat.present? && user_lng.present?
+    return false unless commentable.respond_to?(:latitude) && commentable.latitude.present?
+
+    PoiService.within_range?(
+      user_lat: user_lat,
+      user_lng: user_lng,
+      poi_lat: commentable.latitude,
+      poi_lng: commentable.longitude,
+      user: current_user
+    )
+  end
+
+  #
+  # Юзер active, но вне радиуса 100м — плашка «слишком далеко».
+  # Отличается от отсутствия геоданных (no_location не показываем как причину).
+  #
+  # @return [Boolean]
+  #
+  def too_far?
+    return false unless user_lat.present? && user_lng.present? && can_comment? == false
+
+    interaction_block.nil? && !proximity_ok?
   end
 
   #

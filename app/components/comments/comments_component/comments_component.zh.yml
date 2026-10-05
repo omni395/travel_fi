@@ -7,4 +7,7 @@ zh:
       write_placeholder: "评论 %{name}"
       write_placeholder_generic: "写评论"
       login_hint: "登录后发表评论"
+      blocked_suspended: "您已被暂时禁止发表评论。"
+      unlock_at: "%{when} 解除限制"
+      blocked_too_far: "您需要在此地点 100 米范围内才能发表评论。"
       empty: "暂无评论，快来抢占沙发！"

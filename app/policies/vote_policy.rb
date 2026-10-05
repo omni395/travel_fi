@@ -19,6 +19,7 @@ class VotePolicy < ApplicationPolicy
   #
   def create?
     return false unless user
+    return false unless UserAccessService.can_interact?(user)
     return false if record.is_a?(Poi) && !(record.approved? || record.imported?)
 
     # Автор не голосует за своё.

@@ -56,6 +56,8 @@ application.register('admin--users--user--wallet-component', () => import('../..
 
 application.register('comments--comment-component', () => import('../../components/comments/comment_component/comment_component_controller.js'))
 
+application.register('comments--comment-content-component', () => import('../../components/comments/comment_content_component/comment_content_component_controller.js'))
+
 application.register('comments--comment-form-component', () => import('../../components/comments/comment_form_component/comment_form_component_controller.js'))
 
 application.register('comments--comment-list-component', () => import('../../components/comments/comment_list_component/comment_list_component_controller.js'))
@@ -113,6 +115,8 @@ application.register('ui--navbar-component', () => import('../../components/ui/n
 application.register('ui--pagination-component', () => import('../../components/ui/pagination_component/pagination_component_controller.js'))
 
 application.register('ui--sidebar-component', () => import('../../components/ui/sidebar_component/sidebar_component_controller.js'))
+
+application.register('ui--spinner-component', () => import('../../components/ui/spinner_component/spinner_component_controller.js'))
 
 application.register('ui--tabs-component', () => import('../../components/ui/tabs_component/tabs_component_controller.js'))
 

@@ -116,6 +116,7 @@ export default class extends ApplicationController {
    * @param {Event} event - клик по миниатюре
    */
   open(event) {
+    if (!this.hasLightboxTarget) return
     const thumb = event.currentTarget
     const index = Array.from(this.thumbTargets).indexOf(thumb)
     if (index === -1) return
@@ -129,6 +130,7 @@ export default class extends ApplicationController {
    * Закрывает lightbox.
    */
   close() {
+    if (!this.hasLightboxTarget) return
     this.lightboxTarget.classList.add("hidden")
     document.body.style.overflow = ""
   }
@@ -138,6 +140,7 @@ export default class extends ApplicationController {
    * @param {Event} event - клик
    */
   closeBackdrop(event) {
+    if (!this.hasLightboxTarget) return
     if (event.target === this.lightboxTarget) this.close()
   }
 
@@ -153,6 +156,7 @@ export default class extends ApplicationController {
    * Предыдущая фотография в слайдере.
    */
   prev() {
+    if (!this.hasLightboxTarget) return
     if (this.thumbTargets.length === 0) return
     this._currentIndex = (this._currentIndex - 1 + this.thumbTargets.length) % this.thumbTargets.length
     this._render()
@@ -162,6 +166,7 @@ export default class extends ApplicationController {
    * Следующая фотография в слайдере.
    */
   next() {
+    if (!this.hasLightboxTarget) return
     if (this.thumbTargets.length === 0) return
     this._currentIndex = (this._currentIndex + 1) % this.thumbTargets.length
     this._render()
@@ -172,6 +177,7 @@ export default class extends ApplicationController {
    * @param {KeyboardEvent} event - событие клавиатуры
    */
   _onKeydown(event) {
+    if (!this.hasLightboxTarget) return
     if (this.lightboxTarget.classList.contains("hidden")) return
     if (event.key === "Escape") this.close()
     else if (event.key === "ArrowLeft") this.prev()
@@ -182,6 +188,7 @@ export default class extends ApplicationController {
    * Рендерит текущее фото в lightbox + счётчик.
    */
   _render() {
+    if (!this.hasLightboxTarget) return
     const thumb = this.thumbTargets[this._currentIndex]
     if (!thumb) return
     this.lightboxImageTarget.src = thumb.dataset.fullUrl

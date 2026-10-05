@@ -2,6 +2,9 @@ ru:
   users:
     profile_component:
       token_balance: "Баланс TFT"
+      spendable_balance: "Доступно к получению"
+      locked_balance: "Заблокировано"
+      claim_button: "Забрать награды"
       badges: "Значки"
       roles: "Роли"
       referral_code: "Код приглашения"

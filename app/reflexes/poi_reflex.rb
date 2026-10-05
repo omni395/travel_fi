@@ -24,9 +24,17 @@ class PoiReflex < ApplicationReflex
     poi = Poi.includes(:poi_category, :user).find(poi_id)
     authorize_with_pundit!(poi, :show?)
 
+    # Передаём user_lat/user_lng из session → Comments::CommentsComponent#can_comment?
+    # открывает форму и для обычного юзера (proximity_ok?). Без них форма скрыта
+    # (баг «комментарий создать нельзя — кнопки нет»).
     cable_ready.morph(
       selector: "#poi-detail",
-      html: ApplicationController.render(Poi::ShowComponent.new(poi: poi), layout: false)
+      html: ApplicationController.render(Poi::ShowComponent.new(
+        poi: poi,
+        current_user: current_user,
+        user_lat: session[:user_lat],
+        user_lng: session[:user_lng]
+      ), layout: false)
     )
     cable_ready.set_attribute(selector: "#poi-list", name: "class", value: "hidden")
     cable_ready.remove_attribute(selector: "#poi-detail-wrapper", name: "class")
@@ -48,6 +56,18 @@ class PoiReflex < ApplicationReflex
   # @param poi_id [Integer] ID POI
   #
   def show_detail_modal(poi_id)
+    # Пользователи со «заблокированным» статусом (pending/inactive/deleted/banned) —
+    # детали точки не видят. Показываем тост вместо модалки.
+    if current_user && !UserAccessService.can_view_details?(current_user)
+      ToastBroadcaster.call(
+        user_id: current_user.id,
+        message: I18n.t("pois.details_unavailable"),
+        type: :warning
+      )
+      morph :nothing
+      return
+    end
+
     # Гости — показываем ConfirmDialog с предложением войти
     unless current_user
       login_url = new_user_session_path(return_to: request.original_url)
@@ -536,8 +556,33 @@ class PoiReflex < ApplicationReflex
     poi = Poi.find(params[:comment_commentable_id])
 
     # Координаты юзера для proximity check в PoiCommentPolicy.
+    # session НЕ персистится между WebSocket-рефлексами (StimulusReflex + SolidCable,
+    # окна изолированы): set_location пишет session, но Set-Cookie на вебсокет-фрейм
+    # с morph :nothing не приходит, поэтому следующий рефлекс читает пустую сессию.
+    # Надёжный источник — клиент, передающий координаты параметром (comment_lat/lng);
+    # им заполняем и session, и Current как запасными источниками.
     Current.user_lat = session[:user_lat]
     Current.user_lng = session[:user_lng]
+
+    if params[:comment_lat].present? && params[:comment_lng].present?
+      Current.user_lat = params[:comment_lat].to_f
+      Current.user_lng = params[:comment_lng].to_f
+      session[:user_lat] = Current.user_lat
+      session[:user_lng] = Current.user_lng
+    end
+
+    # Диагностика: почему ломается proximity (тост «не авторизован» для обычного
+    # юзера). Показывает, что session/Current содержат в момент вызова и какие
+    # координаты у POI — чтобы отличить «локация пуста» от «точка дальше 100м».
+    Rails.logger.info(
+      "PoiReflex: create_comment near-check session=#{session[:user_lat]},#{session[:user_lng]} " \
+      "current=#{Current.user_lat},#{Current.user_lng} poi=#{poi.latitude},#{poi.longitude} " \
+      "poi_id=#{poi.id}"
+    )
+
+    # Честный proximity-гейт: вместо обманчивого тоста «нет прав» рендерим
+    # Ui::ConfirmDialogComponent с различием :no_location / :too_far.
+    return false unless check_proximity!(poi)
 
     authorize_with_pundit!(PoiComment.new(poi: poi, user: current_user), :create?)
 
@@ -551,17 +596,28 @@ class PoiReflex < ApplicationReflex
     Rails.logger.info("PoiReflex: Created comment for POI #{poi.id}")
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("PoiReflex: POI not found for comment - #{e.message}")
+    send_comment_toast(:error, I18n.t("reflexes.poi.comment_error_generic"))
   rescue Pundit::NotAuthorizedError
     Rails.logger.warn("PoiReflex: Not authorized to comment on POI #{params[:comment_commentable_id]}")
+    send_comment_toast(:error, I18n.t("reflexes.poi.comment_unauthorized"))
   rescue CommentService::CreateError => e
     Rails.logger.error("PoiReflex: Comment creation failed - #{e.message}")
+    send_comment_toast(:error, e.message)
+  rescue StandardError => e
+    Rails.logger.error("PoiReflex: Comment creation error - #{e.message}")
+    send_comment_toast(:error, I18n.t("reflexes.poi.comment_error_generic"))
   end
 
   #
-  # Удаляет комментарий (автор/admin). Reflex НЕ рендерит DOM — точечное
-  # удаление ноды выполняет Broadcaster/клиент по data-comment-id.
+  # Удаляет (скрывает модерацией) комментарий. Удалять может только
+  # admin/moderator (PoiCommentPolicy#destroy?). Нода убирается у зрителей через
+  # Broadcaster (event update + hidden → remove), ветка ответов сохраняется.
   #
-  # @param params [Hash] { comment_id: Integer }
+  # Опциональная автопенализация автора: при suspend=true автор переводится в
+  # статус :suspended на 3 дня (UserService.suspend! → ставит UnlockSuspendedUserJob
+  # на авто-разблокировку).
+  #
+  # @param params [Hash] { comment_id: Integer, suspend: Boolean }
   #
   def destroy_comment(params = {})
     params = deep_symbolize_keys(params) if params.is_a?(Hash)
@@ -572,13 +628,20 @@ class PoiReflex < ApplicationReflex
 
     CommentService.destroy_comment(comment: comment)
 
+    if params[:suspend].to_s == "true"
+      UserService.suspend!(user: comment.user)
+      Rails.logger.info("PoiReflex: Author ##{comment.user_id} suspended for comment ##{comment.id}")
+    end
+
     Rails.logger.info("PoiReflex: Destroyed comment ##{comment.id}")
   rescue ActiveRecord::RecordNotFound => e
     Rails.logger.error("PoiReflex: Comment not found for destroy - #{e.message}")
   rescue Pundit::NotAuthorizedError
     Rails.logger.warn("PoiReflex: Not authorized to destroy comment #{params[:comment_id]}")
-  rescue CommentService::DestroyError => e
+  rescue CommentService::DestroyError, UserService::ArgumentError => e
     Rails.logger.error("PoiReflex: Comment destroy failed - #{e.message}")
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.error("PoiReflex: Comment destroy/penalty failed - #{e.message}")
   end
 
   #
@@ -901,6 +964,25 @@ class PoiReflex < ApplicationReflex
       user_id: current_user.id,
       message: message,
       type: :error,
+      auto_dismiss: 8000
+    )
+  end
+
+  #
+  # Показывает тост об ошибке создания/ответа на комментарий (вместо «тишины»).
+  # Сбой создания комментария не должен проходить незаметно — информируем юзера
+  # через ToastBroadcaster live-тостом (модалка остаётся открытой, ввод сохраняется).
+  #
+  # @param type [Symbol] тип тоста (:error)
+  # @param message [String] текст ошибки
+  #
+  def send_comment_toast(type, message)
+    return unless current_user
+
+    ToastBroadcaster.call(
+      user_id: current_user.id,
+      message: message,
+      type: type,
       auto_dismiss: 8000
     )
   end

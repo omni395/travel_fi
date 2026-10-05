@@ -48,8 +48,18 @@ class VersionObserverJob < ApplicationJob
       handle_poi_category_field_update(version)
     when "TokenTransaction"
       handle_token_transaction_update(version)
+    when "UserReward"
+      handle_user_reward_update(version)
     when "Vote"
       handle_vote_update(version)
+    when "Photo"
+      handle_photo_update(version)
+    when "Gamification"
+      handle_gamification_update(version)
+    when "Wallet"
+      handle_wallet_update(version)
+    when "PoiView"
+      handle_poi_view_update(version)
     end
   end
 
@@ -175,6 +185,12 @@ class VersionObserverJob < ApplicationJob
 
     event = version.event.to_sym rescue :update
 
+    # Изменение ТОЛЬКО children_count (инкремент счётчика ответов) — это
+    # служебная денормализация, вызванная созданием ответа. Пропускаем точечный
+    # broadcast: иначе inner_html контента перезатрёт активный ввод/морфинг и
+    # задублирует уже вставленную ноду ответа. Сам ответ вставит :create-бродкаст.
+    return if event == :update && children_count_only_changed?(version)
+
     # Точечный broadcast (inner_html/insert_adjacent_html) — live у публичных зрителей.
     safe_broadcast { PoiCommentBroadcaster.call(comment: comment, event: event) }
 
@@ -205,6 +221,27 @@ class VersionObserverJob < ApplicationJob
     return false unless changes.is_a?(Hash)
 
     changes.key?("hidden_at") || changes.key?(:hidden_at)
+  rescue JSON::ParserError
+    false
+  end
+
+  #
+  # Определяет, изменился ли в версии PaperTrail ТОЛЬКО счётчик ответов
+  # children_count (служебная денормализация от создания ответа). В этом случае
+  # точечный broadcast комментария пропускается — иначе inner_html контента
+  # дублирует уже вставленную ноду ответа / затирает активный ввод.
+  #
+  # @param version [PaperTrail::Version] версия изменения
+  # @return [Boolean] true, если единственное изменение — children_count
+  #
+  def children_count_only_changed?(version)
+    return false unless version.object_changes.present?
+
+    changes = version.object_changes
+    changes = JSON.parse(changes) if changes.is_a?(String)
+    return false unless changes.is_a?(Hash)
+
+    changes.keys.map(&:to_s).all? { |k| k == "children_count" }
   rescue JSON::ParserError
     false
   end
@@ -311,6 +348,72 @@ class VersionObserverJob < ApplicationJob
 
     # Live-счётчик голосов.
     safe_broadcast { VoteBroadcaster.call(votable: votable) }
+  end
+
+  #
+  # Маршрутизация начислений (UserReward) — аудит-страховка целостности.
+  #
+  # UI (баланс/история наград) уже обновляется через TokenTransaction,
+  # который создаётся в той же транзакции и триггерит TokenTransactionBroadcaster
+  # (handle_token_transaction_update). Отдельного бродкаста здесь не требуется —
+  # ветвь существует для полноты маршрутизации всех сущностей с аудитом.
+  #
+  # @param version [PaperTrail::Version] версия начисления
+  #
+  def handle_user_reward_update(version)
+    # Аудит зафиксирован PaperTrail; UI-ресурс покрыт TokenTransactionBroadcaster.
+    version
+  end
+
+  #
+  # Маршрутизация фото (Photo) — аудит-страховка, без двойного бродкаста.
+  #
+  # Photo теперь имеет has_paper_trail, а галерея обновляется через poi.touch →
+  # version POI → handle_poi_update → PoiBroadcaster. Отдельный вызов PoiBroadcaster
+  # здесь дал бы дубль зоны [data-poi-gallery]. Оставляем branch no-op для полноты
+  # маршрутизации аудита.
+  #
+  # @param version [PaperTrail::Version] версия фото
+  #
+  def handle_photo_update(version)
+    # Аудит фото зафиксирован; live-обновление галереи идёт через version POI.
+    version
+  end
+
+  #
+  # Маршрутизация баллов/бейджей (Gamification) — обновляет бейджи в профиле.
+  #
+  # @param version [PaperTrail::Version] версия балла/бейджа
+  #
+  def handle_gamification_update(version)
+    gamification = version.item || version.reify
+    return unless gamification
+
+    safe_broadcast { UserBroadcaster.call(user: gamification.user) }
+  end
+
+  #
+  # Маршрутизация кошельков (Wallet) — аудит изменений; UI-зон не имеет
+  # (админ-вкладка Wallet обновляется через TokenTransactionBroadcaster).
+  # Здесь просто страхуем аудит-цепочку без бродкаста.
+  #
+  # @param version [PaperTrail::Version] версия кошелька
+  #
+  def handle_wallet_update(version)
+    # Wallet меняется при привязке custodial/external — журналируется PaperTrail
+    # автоматически; отдельного UI-бродкаста не требуется.
+    version
+  end
+
+  #
+  # Маршрутизация просмотров (PoiView) — рекомендации; аудит фиксируется, UI
+  # зон нет (данные просматриваются в RecommendedPoiJob, а не в реальном времени).
+  #
+  # @param version [PaperTrail::Version] версия просмотра
+  #
+  def handle_poi_view_update(version)
+    # Просмотры агрегируются фоновым RecommendedPoiJob; live-бродкаст не нужен.
+    version
   end
 
   #

@@ -9,6 +9,8 @@ es:
       delete_confirm: ¿Eliminar esta foto?
       upload_failed: No se pudo subir la foto
       upload_proximity: Debes estar a menos de 100 metros de este lugar para añadir una foto
+      blocked_suspended: Está temporalmente suspendido para añadir fotos.
+      unlock_at: Se desbloquea %{when}
       close: Cerrar
       counter: "%{current} / %{total}"
       photo_alt: Foto del punto

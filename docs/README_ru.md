@@ -1,10 +1,26 @@
-# Travel Fi — Architecture & System Design
+# Travel Fi — Архитектура и системный дизайн
 
-Travel Fi — Rails 8.1 приложение для туристических услуг с DeFi-функциональностью и ERC-20 токеном (TFT). Архитектура — WebSocket-first: асинхронные обновления через ActionCable (SolidCable), фоновые задачи через SolidQueue, кэш-инфраструктура SolidCache (кэширование в коде временно отключено), аудит через PaperTrail.
+Travel Fi — **открытая комьюнити-платформа гуманитарной безопасности и общественной инфраструктуры**: карта мест, важных для повседневной жизни и безопасности, — питьевая вода, общественные туалеты и душевые, бесплатные зарядки, безопасные ночёвки, аптеки и пункты первой помощи. Проект — **и для путешественников, и для жителей городов**, одновременно выступая как инфраструктура помощи для беженцев, перемещённых лиц и семей с детьми. Вход в Web3 — **без барьеров**: custodial-кошелёк создаётся незаметно при регистрации, токены (TFT) начисляются за вклад, а продвинутые пользователи могут подключить свой кошелёк. Позиционирование — **Digital Public Goods (DPG)**: открытая инфраструктура на пользу обществу.
 
-> Демо: https://noneternally-approbative-rosanne.ngrok-free.dev/ (запуск сервераа по согласованию)
+Архитектура — Rails 8.1, WebSocket-first: асинхронные обновления через ActionCable (SolidCable), фоновые задачи через SolidQueue, кэш-инфраструктура SolidCache (**кэширование в коде временно отключено**), аудит через PaperTrail.
 
-## 🏗️ Technology Stack
+> Демо: https://noneternally-approbative-rosanne.ngrok-free.dev/ (admin@example.com/12345678, запуск сервера по согласованию)
+
+> Промо-демо - https://drive.google.com/file/d/1-WECv_pAtkrJqNUK_LF9o1pbySfmNgFx/view?usp=drive_link
+
+> Youtube - https://youtu.be/R1NnzuvNBAU
+
+> Github Repo - https://github.com/omni395/travel_fi
+
+> Поддержать Travel Fi на Giveth: https://giveth.io/project/travel-fi
+> Поддержать Travel Fi на Artizen: https://artizen.fund/index/p/travel-fi
+> Поддержать Travel Fi на Karmahq: https://www.karmahq.org/project/travel-fi
+
+> **Набор документов:** статус продукта по секциям → [`docs/ROADMAP_ru.md`](docs/ROADMAP_ru.md); грант-оценка (что делать + время + стоимость) → [`docs/MILESTONES_ru.md`](docs/MILESTONES_ru.md); реестр долгов → [`docs/TECH-DEBTS_ru.md`](docs/TECH-DEBTS_ru.md); инструкции для ИИ-агента — `.roo/rules/*`. Английское зеркало — `README.md`.
+
+---
+
+## 🏗️ Технологический стек
 
 | Слой | Компоненты |
 |------|-----------|
@@ -17,13 +33,13 @@ Travel Fi — Rails 8.1 приложение для туристических �
 | **Map Engine** | OpenLayers 10 (кластеризация, Overlay, PostGIS-запросы) |
 | **Realtime** | ActionCable, SolidCable, CableReady |
 | **Background Jobs** | SolidQueue |
-| **Job Dashboard** | SolidQueueDashboard |
-| **Caching** | SolidCache (инфраструктура; кэш в коде отключён) |
+| **Job Dashboard** | SolidQueueDashboard - https://github.com/akodkod/solid-queue-dashboard |
+| **Caching** | SolidCache (инфраструктура; **кэширование временно отключено** в коде) |
 | **Search & Filtering** | Ransack |
-| **Gamification** | Собственная система: токены TFT + бейджи; уровни — от `token_balance` |
+| **Gamification** | Собственная система: токены TFT + бейджи; уровни — от вклада пользователя (не `token_balance`) |
 | **Notifications** | Noticed (database + email + action_cable + web_push) |
 | **CSS Framework** | Tailwind CSS, Stimulus-Components |
-| **Web3** | viem |
+| **Web3** | viem (фронтенд), 3 EVM-контракта |
 
 ---
 
@@ -35,8 +51,10 @@ Travel Fi — Rails 8.1 приложение для туристических �
 
 **Ключевое преимущество:** Нет единого сильного мирового игрока в большинстве ниш (Wi-Fi точки заняты WiFi Map/Instabridge, всё остальное — белые пятна).
 
-**Текущая стадия:** Прототип в фазе активной разработки. Базовая архитектура готова и доказала техническую жизнеспособность. Продукт еще не запущен, сейчас идет доработка кода, отладка логики и подготовка архитектуры к Production.
+**Позиционирование (Digital Public Goods):** Travel Fi — открытая комьюнити-карта мест, важных для повседневной жизни и безопасности: точки питьевой воды, общественные туалеты и душевые, бесплатные зарядки, безопасные ночёвки, аптеки и пункты первой помощи, хранение багажа. Проект — **и для путешественников, и для жителей городов**, одновременно выступая как гуманитарная и общественная инфраструктура: беженцы, перемещённые лица и семьи с детьми могут найти воду, помощь и связанные с проживанием услуги — а каждый может добавлять и проверять такие точки.
+> Web3 здесь **без барьеров**: custodial-кошелёк создаётся незаметно при регистрации, а токены (TFT) начисляются за вклад. Разбираться в криптовалютах не нужно — просто контрибьють, а «крипто-часть» остаётся под капотом; продвинутые пользователи могут подключить свой кошелёк. Позиционирование — **Digital Public Goods**: открытая инфраструктура на пользу обществу.
 
+**Текущая стадия:** Прототип в фазе активной разработки. Базовая архитектура готова и доказала техническую жизнеспособность. Продукт еще не запущен, сейчас идет доработка кода, отладка логики и подготовка архитектуры к Production.
 
 ## 📍 POI Categories (от самого востребованного)
 
@@ -51,362 +69,164 @@ Travel Fi — Rails 8.1 приложение для туристических �
 9. **Круглосуточные аптеки + пункты первой помощи** — критично в Азии/ЛатАм/Африке; наличие лекарств, языки.
 10. **Бонусные лайфхаки** — зарядки в коворкингах, pet-friendly, LGBTQ+-safe, пункты бесплатной еды.
 
-## 💰 Web3 Integration & Smart Contracts
+## 💰 Web3 и смарт-контракты
 
-- **Testnet Status:** Смарт-контракт TFT написан, задеплоен и верифицирован в тестнете.
-- **Gasless Transactions:** Контракт реализует архитектуру без газа для конечного пользователя (Gasless / Meta-transactions).
-- **Backend Integration:** Rails-бэкенд (`Crypto::Ethereum`) выступает в роли Relayer-а (или взаимодействует с Biconomy/Paymaster). Бэкенд только подписывает и транслирует транзакции, не перекладывая оплату газа на внутренние кошельки пользователей.
+**Три EVM-контракта** (написаны, задеплоены и верифицированы в тестнете; все — 18 decimals):
+- [`TravelFiToken.sol`](contracts/TravelFiToken.sol:13) — **Эмитент**: жёсткая эмиссия `MAX_SUPPLY = 1 000 000 000`, разовое распределение, затем пауза.
+- [`TravelFiCrowdsale.sol`](contracts/TravelFiCrowdsale.sol) — **Кассир**: покупка/продажа токенов за ETH/USDT (комиссия при продаже — анти-арбитраж), оплата фич (Token Spend).
+- [`TravelFiRewards.sol`](contracts/TravelFiRewards.sol) — **Награды**: выдача с vesting (`lockDays`).
+
+**Gasless (EIP-2771):** бэкенд (`Crypto::Ethereum`) выступает как Relayer — подписывает и транслирует, не перекладывая оплату газа на кошельки пользователей.
+
+**Decimals:** EVM-контракты = 18; будущий TON Jetton = 9 (стандарт). Мост маппит 9↔18 через коэффициент конверсии — существующие контракты НЕ переписываются.
 
 ### 🚀 Future Roadmap: Telegram & TON
+- **Telegram Mini App** — вход в экосистему прямо из мессенджера (карта POI, уведомления, TFT) без установки отдельного приложения. **TON Cross-chain Bridge** — TFT свободно перемещаются между EVM и TON (lock ERC-20 → mint Jetton), делая токен по-настоящему кросс-чейн.
+- *Стратегический вектор развития, реализуется после Production-запуска и набора первичной базы.* → [`docs/MILESTONES_ru.md`](docs/MILESTONES_ru.md) M4.
 
-**Telegram Mini App** — стратегический канал дополнительного привлечения пользователей после запуска основного приложения: вход в экосистему прямо из мессенджера (карта POI, уведомления, токены TFT) без установки отдельного приложения — там, где уже живёт аудитория.
+**Монетизация через ERC-20 (TFT):** токены за добавление/верификацию POI · premium-функции за токены (фильтры, аналитика, рейтинги) · DAO для категорий и политик · affiliate для провайдеров (хостелы, отели, сервисы).
 
-**TON Cross-chain Bridge** — мост, соединяющий две сети воедино: токены TFT свободно перемещаются между EVM-сетью и блокчейном TON через бридж (lock ERC-20 → mint Jetton). Это связывает ончейн-экономику платформы с экосистемой Telegram/TON и делает токен по-настоящему кросс-чейн.
-
-*Примечание: данный функционал — стратегический вектор развития и будет реализовываться на этапе после Production-запуска и набора первичной базы пользователей.*
-
-**Монетизация через ERC-20 (TFT):**
-- Юзеры получают токены за добавление/верификацию POI
-- Premium-функции за токены (фильтры, аналитика, рейтинги)
-- DAO для управления категориями и политиками
-- Affiliate для провайдеров (хостелы, отели, сервисы)
-
-### 🔐 Web3 & Onboarding (Custodial / Embedded Wallet)
-- **Автоматическое создание кошелька:** при успешной регистрации/подтверждении сервис генерирует скрытый (custodial) кошелёк **на Ruby** — `OpenSSL::PKey::EC` (secp256k1) + собственная реализация keccak256 + EIP-55 (модуль [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1), без новых гемов). Приватный ключ шифруется `ActiveSupport::MessageEncryptor` (`WalletService`).
+### 🔐 Web3 & Onboarding (кошельки)
+- **Custodial** — скрытый кошелёк, генерируется на сервере на Ruby (`OpenSSL::PKey::EC` secp256k1 + keccak256 + EIP-55, [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1), без новых гемов); приватный ключ шифруется `ActiveSupport::MessageEncryptor` (`WalletService`). Zero-Friction UX: пользователь не взаимодействует с Web3 на старте.
+- **External** — продвинутый пользователь подключает свой кошелёк (**MetaMask / hot-wallet**) и подписывает сам; **WalletConnect — на будущее**.
 - **`viem` — только фронтенд** (npm, [`package.json`](package.json:23)): EIP-2771 sponsored-транзакции, Contract Mgmt, чтение баланса ERC-20. Генерация ключей на сервере к viem отношения не имеет.
-- **Zero-Friction UX:** пользователь не взаимодействует с Web3-интерфейсом на старте — начисление/списание токенов бесшовно.
-- **DeFi-интеграция:** на кошелёк зачисляются токены (off-chain леджер `UserReward`) за активность → доступ к премиум-функциям. On-chain отправка — через `TokenTransactionService.relay!` (контракты задеплоены, см. `.env`).
+- **DeFi-интеграция:** off-chain леджер `UserReward` + `TokenTransaction` зачисляется за активность → доступ к premium. On-chain отправка через `TokenTransactionService.relay!` (контракты задеплоены, см. `.env`).
 
 ---
 
 ## ⚙️ Единый поток данных (Database-Triggered Workflow)
 
-> **Эталон архитектуры.** Любое изменение состояния проходит по этой цепочке. Reflex/Controller НЕ рендерит DOM после сохранения — UI обновляет ТОЛЬКО Broadcaster через `VersionObserverJob`. Соблюдение цепочки гарантирует live-обновление у всех подписанных браузеров (инициатор и остальные).
+**Эталонная цепочка.** Любое изменение состояния проходит через неё; Reflex/Controller НЕ рендерит DOM после сохранения — UI обновляет ТОЛЬКО Broadcaster через `VersionObserverJob`.
 
-### Фаза 1 — ВВОД (браузер)
-1. **Stimulus-контроллер** (sidecar компонента) перехватывает событие (клик/ввод)
-2. `this.stimulate("XxxReflex#action", params)` — RPC через WebSocket
-3. **Reflex**: `current_user` → `morph :nothing` (отмена полного перерендера) → `deep_symbolize_keys(params)` → `authorize_with_pundit!(record, :action?)`
-4. Reflex **только делегирует** в Service. Логики в рефлексе — НОЛЬ.
-
-### Фаза 2 — СОСТОЯНИЕ (PostgreSQL)
-5. **Service**: вся бизнес-логика + `Model.save!`/`update!` **внутри транзакции**
-6. **PaperTrail** создаёт `Version` (event, `whodunnit` = current_user.id, `object_changes`)
-7. `after_commit :broadcast_changes` → `VersionObserverJob.perform_later(version.id)`
-
-### Фаза 3 — АСИНХРОННОЕ РАСПРОСТРАНЕНИЕ (SolidQueue)
-8. **VersionObserverJob**: парсит `item_type` → ветка `handle_<model>_update` → вызывает `XxxBroadcaster.call`
-9. **Broadcaster**: рендерит зоны (ViewComponent через `helpers.render`) → `cable_ready["AdminChannel"].inner_html(selector:, html:)` по селекторам-обёрткам
-10. `.broadcast` → ActionCable (**SolidCable**) → стрим
-
-### Фаза 4 — ДОСТАВКА (браузеры А и Б)
-11. Клиент подписан на канал (`AdminChannel`/`user_N`) → `received` применяет операции **по одной** (`forEach` + `try/catch`, пропуск отсутствующих селекторов)
-12. DOM обновляется **точечно** (inner_html по обёрткам) — без перезагрузки
+```
+Stimulus → Reflex (morph :nothing + Pundit) → Service (бизнес-логика, save! в транзакции)
+   → PostgreSQL + PaperTrail → VersionObserverJob → Broadcaster (inner_html)
+   → CableReady → ActionCable (SolidCable) → DOM
+```
 
 ### Строгие правила слоёв
 | Слой | Делает | Запрещено |
 |------|--------|-----------|
-| Controller | Только доступ (Pundit) + рендер страницы + данные вкладок + pagy | Логика |
+| Controller | Доступ (Pundit) + рендер + данные вкладок + pagy | Логика |
 | Reflex | Мост UI→Service: `morph :nothing` + authorize + делегирование | Рендерить DOM после сохранения |
 | Service | Бизнес-логика, `save!`/`update!` в транзакции | — |
 | Model | Только данные | Логика рассылок |
 | Broadcaster | Рендер зон + `inner_html` + broadcast | `morph`, `update_all` |
-| VersionObserverJob | Маршрутизация по `item_type` | — |
+| VersionObserverJob | Маршрутизация по `item_type` → `XxxBroadcaster.call` | — |
 | ViewComponent | Только презентация (sidecar 7 файлов, 4 локали) | partials, хардкод текста |
 
-### Практические правила интеграции (обязательны)
-- **Зарезервированные ключи StimulusReflex** (`id`, `params`, `selectors`, `morph`, `attrs`, `flash`, `event`, `permanent_attribute_name`) нельзя передавать top-level в `this.stimulate` — объект станет опциями, `args` придёт пустым. Используй неймспейсные ключи (`field_id`) или `{ params: {...} }`; из FormData удаляй `id`.
-- **Reflex не рендерит DOM после сохранения** — только `morph :nothing` + Service. Селекторный морф — только для чтения (пагинация/фильтры).
-- **Broadcaster использует `inner_html`, не `morph`** — `morph` падает на `undefined.dispatchEvent` (`parent.children[idx]`).
-- **Контейнер-цель отдельно от содержимого:** селектор `[data-...]` — на обёртке в шаблоне страницы, НЕ на корне компонента (иначе вложенность при `inner_html`).
-- **Нормализация параметров:** в Reflex `deep_symbolize_keys(params)` перед Service (строковые ключи из JS).
-- **Аудит и массовые обновления:** `update!`/`save!` (версии → Broadcast); `update_all` запрещён для данных с аудитом (в т.ч. реордер позиций).
-- **Клиентская обработка CableReady:** в `received` операции по одной (`forEach` + `try/catch`), пропуск отсутствующих селекторов.
-- **Рендер вложенных ViewComponent в Broadcaster (SolidQueue worker):** только `<%= render %>`/`helpers.render` (view_context). Запрещён вложенный `ApplicationController.render` — падает в job, зона молча не отправляется. Per-entry `rescue` (см. `AuditLogComponent#render_entries_html`).
-- **Broadcast из worker (`bin/jobs`):** инициализировать ActionCable PubSub до `SolidQueue::Cli.start` — `ActionCable.server.config.cable = { "adapter" => "solid_cable" }` (СТРОКОВЫЙ ключ; символьный `:adapter` → дефолт `"redis"` → `Redis::CannotConnectError`), затем `ActionCable.server.pubsub`.
-- **`pagy()` в Broadcaster:** в worker нет `request` → `NameError: request`. Добавь mock: `def request; @request ||= ActionDispatch::Request.new({}); end`.
-- **Чекбоксы (Rails `check_box`):** hidden(value=0)+checkbox с одним `name`. В JS выбирай `input[name='...'][type='checkbox']`, иначе всегда читается hidden (false).
-
-### Сценарий «А создал, Б видит»
-- **А:** Фазы 1–2 + синхронный `redirect_to` (только А) + тост инициатору (`dispatch_event`)
-- **Б:** Фазы 3–4: job → broadcaster → `AdminChannel` → все подписанные админы получают `inner_html` без перезагрузки
+### Практические правила (обязательны)
+- **Зарезервированные ключи StimulusReflex** (`id`, `params`, `selectors`, `morph`, `attrs`, `flash`, `event`, `permanent_attribute_name`) — никогда top-level в `this.stimulate`; используй неймспейсные ключи или `{ params: {...} }`; из FormData удаляй `id`.
+- **Broadcaster использует `inner_html`, не `morph`** (morph падает на `undefined.dispatchEvent`).
+- **Контейнер-цель отдельно от содержимого:** селектор `[data-...]` — на обёртке в шаблоне страницы, НЕ на корне компонента.
+- **Нормализация параметров:** `deep_symbolize_keys(params)` в Reflex перед Service.
+- **Аудит:** `update!`/`save!` создают версии → Broadcast; `update_all` запрещён для данных с аудитом (в т.ч. реордер).
+- **Клиент CableReady:** операции по одной (`forEach` + `try/catch`), пропуск отсутствующих селекторов.
+- **Вложенные ViewComponent из job:** только `<%= render %>`/`helpers.render` (view_context); вложенный `ApplicationController.render` запрещён в SolidQueue worker. Per-entry `rescue` (см. `AuditLogComponent#render_entries_html`).
+- **Broadcast из worker (`bin/jobs`):** инициализировать ActionCable PubSub до `SolidQueue::Cli.start` — `ActionCable.server.config.cable = { "adapter" => "solid_cable" }` (СТРОКОВЫЙ ключ), затем `ActionCable.server.pubsub`.
+- **`pagy()` в Broadcaster:** в worker нет `request` → mock: `def request; @request ||= ActionDispatch::Request.new({}); end`.
+- **Чекбоксы (Rails `check_box`):** hidden(value=0)+checkbox с одним `name`. В JS выбирай `input[name='...'][type='checkbox']`.
+- **Сценарий «А создал, Б видит»:** А — фазы 1–2 + синхронный redirect + тост; Б — фазы 3–4 через broadcast без перезагрузки.
 
 ---
 
-## 📡 Каналы и доставка (ActionCable Channels)
+## 📡 Каналы и доставка
 
-Всё отправляется через WebSocket — нет данных в JSON-ответе контроллера.
+Всё через WebSocket — нет данных в JSON-ответе контроллера.
+- **`UserChannel`** — `user_<id>` (личный: профиль, тосты, ответы, статус своей точки) + `pois_map` (общий карты: `poi:reload-features`, live-маркер/сайдбар). Noticed (`stream: :user_stream` → `user_<id>`) продолжает работать.
+- **`AdminChannel`** (роли `admin` И `moderator`) — `admin_<id>` (личный: результат своих рефлексов) + `admin_feed` (общий админки: POI, юзеры, комментарии, категории, настройки, дашборд).
 
-**Личный канал:** каждый пользователь подписан на `user_<id>` (`UserChannel`).
-- `user_100` / `user_200` / `user_N` — персональные обновления и уведомления (включая админов как обычных пользователей).
-
-**Админ-канал:** `AdminChannel` — подписка для ролей `admin` И `moderator` (moderator имеет права на edit в политиках).
-- Live-обновления админки (поля категорий, комментарии, лента аудита, статистика) шлются в `AdminChannel` (см. «Единый паттерн админ-сущности»).
-
-**ActionCable** — WebSocket-инфраструктура Rails: долгоживущее соединение, сервер шлёт сообщения всем подписанным на канал браузерам.
-
-**SolidCable** — database-backed адаптер ActionCable: сообщения в PostgreSQL вместо Redis; позволяет масштабировать несколько Rails-процессов без отдельной инфраструктуры (процесс 1 отправил → процесс 2 доставил браузеру).
+**SolidCable** — database-backed адаптер ActionCable (PostgreSQL вместо Redis), позволяющий масштабировать несколько Rails-процессов без отдельной инфраструктуры.
 
 ---
 
-## 🗂 Единый паттерн админ-сущности (для быстрого расширения админки)
+## 🗂 Единый паттерн админ-сущности
 
-Одна админ-сущность (User, Poi, Setting, PoiCategory…) реализуется по единому шаблону:
-
-### 1. Компоненты (Sidecar, полный набор: rb + html.erb + css + controller.js + 4 yml)
-- **Index**: `Admin/<entity>/TableComponent` + `RowComponent`.
-- **Show**: `Admin/<entity>/<entity>/ShowComponent` + для КАЖДОГО таба отдельный компонент (`FieldsListComponent`, `PoisListComponent`, `AuditLogComponent`, `ActivityComponent`).
-- **Edit**: `Admin/<entity>/<entity>/EditComponent`.
-- Контейнер-цель (`[data-...]`) — на обёртке в `show.html.erb`, корень компонента без неё.
-
-### 2. Reflex (`app/reflexes/admin/<entity>_reflex.rb`)
-- `create` / `update` / `destroy` — `morph :nothing` → `deep_symbolize_keys(params)` → `authorize_with_pundit!` → Service → `send_success`/`send_error` (dispatch_event в `admin_#{id}`).
-- `filter` / `<entity>_page` (пагинация) — чтение, рендер через `ApplicationController.render(Component)` + `inner_html` + `broadcast`.
-
-### 3. Service (`app/services/<entity>_service.rb`)
-- `create` / `update` / `destroy` — `Model.save!` в транзакции; `update!`, НЕ `update_all` (аудит).
-- `audit_versions(entity:)` — версии сущности + связанных (для удалённых — через `object`), безопасный `parse_version_object`.
-
-### 4. Broadcaster (`app/broadcasters/<entity>_broadcaster.rb`)
-- `include CableReady::Broadcaster`, `include Pagy::Method` (+ mock `request` для pagy).
-- `broadcast` — рендер зон по одной (`inner_html` по селектору-обёртке), каждая зона в `rescue`.
-- Вложенные ViewComponent из job — только через `<%= render %>`/`helpers.render`.
-- Результат: `cable_ready["admin_feed"]` → `.broadcast` (общий стрим админки).
-
-### 5. Канал
-`AdminChannel` (`app/channels/admin_channel.rb`) — подписка `admin` ИЛИ `moderator` на стримы
-`admin_<id>` (личный) + `admin_feed` (общий).
-
-### 6. VersionObserverJob (`app/jobs/version_observer_job.rb`)
-- Для каждого `item_type` — ветка `handle_<model>_update(version)` → `XxxBroadcaster.call(<entity>: version.item || version.reify)`.
-
-### 7. Живой аудит (лента)
-- Единый `Ui::AuditEntryComponent` для всех сущностей: `changes` фильтрует «пусто→пусто», читаемый JSONB, `field_key_from_version` fallback на `version.object`.
-- Панель таба аудита — компонент с собственным Stimulus-контроллером на корне (контроллер-предок для пагинации), `goToPage` → Reflex `<entity>_page`.
-- **Гарантия автора:** `PaperTrail.request.whodunnit` ставится в `ApplicationReflex#before_reflex` И, как страховка, в сервисном слое (`PoiCategoryService.create_field/update_field/destroy_field`), чтобы записи аудита всегда несли автора, а не «System».
-- **Аудит активов вне модели:** картинка-маркер — ActiveStorage-актив (не поле модели). Явные audit-only записи PaperTrail пишутся через `PaperTrailAuditService.log_category_icon_uploaded/removed` (события `category_icon_uploaded`/`category_icon_removed`) — попадают в ленту, но не перерисовывают открытую edit-форму.
-
-### 8. Дочерний CRUD, встроенный в edit-форму
-Для сущностей, чьи дочерние записи управляются через модалку (например, поля категории), CRUD живёт внутри edit-формы, а вкладка детальной страницы оставляет только read-only/реордер-действия. Модалка следует `Ui::ConfirmDialogComponent` (заголовок + закрытие в одну строку, прокручиваемое тело, закреплённый футер с Отмена/Сохранить/Удалить). На странице всегда ровно один контейнер-цель — либо show-вкладка (`[data-poi-category-fields]`), либо edit-форма (`[data-poi-category-fields-edit]`) — поэтому `inner_html` Broadcaster перерисовывает тот, что существует, без дублирования.
-
-### 9. Формы (чекбоксы!)
-Rails `check_box` генерирует пару инпутов с одним `name` (hidden `value="0"` + checkbox). В JS выбирай `input[name='...'][type='checkbox']`, иначе читается hidden (false). Пример: `form.querySelector("[name='poi_category_field[required]'][type='checkbox']")`.
+Одна админ-сущность (User, Poi, Setting, PoiCategory…) реализуется по единому шаблону (детали — в инструкциях для ИИ `.roo/rules/03-COMPONENT-REFERENCE.md`).
+1. **Компоненты** (sidecar, полный набор): `Admin/<entity>/TableComponent`+`RowComponent` (Index); `<entity>/ShowComponent` + отдельный компонент на каждый таб; `EditComponent`. Селектор-цель — на обёртке страницы, не на корне компонента.
+2. **Reflex** (`app/reflexes/admin/<entity>_reflex.rb`): create/update/destroy → `morph :nothing` + `deep_symbolize_keys` + `authorize_with_pundit!` → Service → success/error; filter/page — чтение + `inner_html` + broadcast.
+3. **Service**: `save!` в транзакции; `update!`, не `update_all`; `audit_versions`.
+4. **Broadcaster**: `inner_html` по селектору-обёртке, каждая зона в `rescue` → `admin_feed`.
+5. **Канал**: `AdminChannel` на `admin_<id>` + `admin_feed`.
+6. **VersionObserverJob**: ветка `handle_<model>_update` → `XxxBroadcaster.call`.
+7. **Живой аудит**: единый `Ui::AuditEntryComponent` (читаемый JSONB, fallback на `version.object`); whodunnit гарантирован в `ApplicationReflex#before_reflex` + сервисный слой; активы вне модели (иконки) — audit-only PaperTrail-версии.
+8. **Дочерний CRUD** встроен в edit-форму (модалка по `Ui::ConfirmDialogComponent`); на странице ровно один контейнер-цель.
+9. **Формы (чекбоксы):** Rails `check_box` = hidden(value=0)+checkbox с одним `name`; JS выбирает `input[name='...'][type='checkbox']`.
 
 ---
 
 ## 🏛 Архитектурные решения
 
-Зафиксированные решения. При изменении любого пункта — обновлять этот раздел и инструкции (`.roo/rules`).
-
 | Решение | Обоснование |
 |---------|-------------|
-| Database-Triggered Workflow | PaperTrail → VersionObserverJob → Broadcaster → CableReady. БД = Single Source of Truth |
-| StimulusReflex + CableReady | WebSocket-first, без JSON API. Reflex не рендерит DOM после сохранения |
+| Database-Triggered Workflow | PaperTrail → VersionObserverJob → Broadcaster → CableReady; БД = источник правды |
+| StimulusReflex + CableReady | WebSocket-first, без JSON API; Reflex не рендерит DOM после сохранения |
 | Sidecar ViewComponents | Изоляция шаблонов/стилей/JS, 4 локали, запрет partials |
-| PostGIS | Пространственные запросы (bounds, radius, ST_DWithin) |
+| Единая палитра UI | `@utility bg-success/bg-error/bg-warning/bg-info/text-text` в `@theme`; карточки/вкладки/навбар `bg-linear-to-br from-primary/5 to-secondary/10` |
+| Ленивые Stimulus-контроллеры | Sidecar-контроллеры по требованию (`_components_lazy.js`), базовый `ApplicationController` |
+| PostGIS | Пространственные запросы (bounds, radius, `ST_DWithin`) |
 | Proximity Check (100м) | Антифрод для комментариев и голосования через `ST_DWithin` |
-| Предложения правок (консенсус 100м) | Правки юзеров применяются по консенсусу (автор / 2-3 локальных юзера / репутация) вместо прямых записей в базу |
-| ERC-20 (TFT) геймификация | Utility-токен: награды за активность, верификация, premium |
-| EIP-2771 (ERC-2771) | Спонсированные транзакции — газ платит платформа |
-| TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton для Telegram экосистемы |
+| Предложения правок (консенсус 100м) | Применение по автору / независимым локальным юзерам / репутации вместо прямых записей |
+| ERC-20 (TFT) геймификация | Utility-токен: награды, верификация, premium |
+| EIP-2771 | Спонсированные транзакции — газ платит платформа |
+| TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton для экосистемы Telegram |
 | SolidQueue вместо Sidekiq | Zero Redis (SolidQueue/SolidCache/SolidCable) |
 | PWA + Telegram Mini App | Вместо нативных приложений — охват, бюджет, гранты TON Foundation |
 
-### Токеномика TFT (полузакрытая система)
-- **Лимит эмиссии:** 1 000 000 000 TFT (18 decimals), задано в [`travel-fi.sol`](travel-fi.sol) (`MAX_SUPPLY`).
-- **Токены НЕ сжигаются (no burn).** TFT циркулируют внутри платформы: начисляются за активность (POI, фото, комментарии, рефералы), расходуются на premium-услуги и верификацию, возвращаются в оборот. Дефицит — за счёт жёсткого лимита эмиссии.
-- **Utility-механики:** награды, репутация (бейджи, уровни от накопленных TFT), премиум-фильтры, приоритетная верификация, DAO-голосование.
-- **Продажа (crowdsale) — отдельная юридически выверенная сущность**, не входит в грант-заявку (регуляторный риск).
+---
 
-### 🔄 Кругооборот TFT (условно закрытая система)
-Пользователь не обязан ничего знать о криптовалюте: custodial-кошельки подписывают транзакции сами (gasless, EIP-2771); «умный» пользователь может подключить свой кошелёк и подписывать самостоятельно. Цель — utility-кругооборот TFT в замкнутом контуре **без mint на ходу и без burn**.
+## 🏆 Токеномика TFT
 
-**Роли контрактов:**
-| Контракт | Роль |
-|----------|------|
-| **Эмитент** (`TravelFiToken`) | Жёсткая эмиссия `MAX_SUPPLY = 1 000 000 000` (18 decimals). Разово распределяет токены по остальным контрактам, затем **ставится на паузу**. |
-| **Кассир** | Покупка токенов за ETH/USDT (без локдейса), продажа токенов за ETH/USDT **с комиссией** (анти-арбитраж), оплата фич (Token Spend). Принимает ETH/USDT и отдаёт/забирает TFT. |
-| **Награды** (`TravelFiRewards`) | Выдача наград за действия (POI, фото, комментарий, лайк/верификация и т.д.) с vesting (`lockDays`). Заблокированные TFT — виртуальные (внутренний счёт в БД), на on-chain передаются только при `claim`. |
-
-**Цикл:**
-1. Эмитент выпускает `MAX_SUPPLY` и распределяет по контрактам → ставится на паузу.
-2. Дальше работают только **Кассир** и **Награды**.
-3. Пользователь получает награду за действие:
-   - **без локдейса** — действия, дающие токены сразу для траты (по умолчанию: регистрация и реферальный бонус самому новичку, lock=0);
-   - **с локдейсом (vesting)** — остальные награды (фото, контент, голоса) **и реферальный бонус РЕФЕРЕРА**: реферер получает on-chain токены только после разблокировки по лок-периоду (антифрод от фейковых регистраций). Запись старше лок-периода (`updated_at + lock_days` уже прошло) считается разблокированной; до этого — заблокировано и отображается как внутренний off-chain баланс.
-4. Накоплено достаточно TFT → покупка фичи (например, убрать рекламу перед показом POI) → списание TFT с баланса в **Кассир**.
-5. Покупка токенов за ETH/USDT — без локдейса (Кассир работает без блокировки): ETH/USDT на кошелёк кассира, TFT на баланс пользователя.
-6. Продажа токенов за ETH/USDT → комиссия платформе (анти-арбитраж), остаток TFT списывается, ETH/USDT возвращаются.
-7. Так происходит **кругооборот** токенов в замкнутом контуре.
-8. UX: custodial-кошелёк сам подписывает транзакции (для «некрипто»-пользователя всё бесшовно); продвинутый пользователь подключает свой кошелёк и подписывает сам.
-
-**On-chain начисление (двухэтапное):** off-chain начисление (`UserReward` + `TokenTransaction`) сразу → по кнопке «Забрать награды» (или авто-claim job'ом) одна on-chain отправка → реальные TFT на custodial-кошелёк. Лок-период считается на лету у записи (`updated_at + lock_days`), отдельного поля нет; маркер «получено» — булево. Регистрация и бонус новичку — отправка сразу (lock=0); реферальный бонус реферера — по лок-периоду (vesting, антифрод). Отправку (`TokenTransactionRelayJob`) сериализован по оператору (`limits_concurrency`), чтобы избежать конфликта nonce при параллельном relay; упавшие транзакции (`status: failed`) периодически переотправляются `TokenTransactionRetryJob` (recurring). `sendRewardBatch` — под акции/массовые награды.
-
-### Открытые технические долги
-- [ ] **`ContractSnapshot` (мониторинг контрактов)** — хотелка: модель (`contract_type`, `data jsonb`, `created_at`) с ротацией для отслеживания состояния контрактов. В коде мониторинга нет — есть только on-chain отправка через `TokenTransactionService.relay!`.
-- [ ] **Точечное кэширование** — SolidCache включён, кэш в коде отключён. Возвращать точечно: ShowComponent `[category, I18n.locale]`, агрегаты с зависимостью от коллекции; НЕ кэшировать формы.
-- [ ] **`Ui::ConfirmDialogComponent`** — вынести модалку в отдельный компонент, убрать окно из `Poi::ShowComponent`/`Poi::FormComponent`.
+- **Лимит эмиссии:** 1 000 000 000 TFT (18 decimals), [`TravelFiToken.sol`](contracts/TravelFiToken.sol:31) `MAX_SUPPLY`. **No burn** — TFT циркулируют в замкнутом контуре (активность → premium/верификация → обратно в оборот).
+- **Utility:** награды, репутация (бейджи, уровни от **вклада пользователя**, не `token_balance`), премиум-фильтры, приоритетная верификация, DAO-голосование.
+- **Продажа (crowdsale) — отдельная юридически выверенная сущность**, не входит в грант.
+- **Кругооборот:** Эмитент выпускает и распределяет разово → пауза. Дальше работают только Кассир (`TravelFiCrowdsale`) и Награды (`TravelFiRewards`). Награды без локдейса (регистрация, реферал новичку) или **с vesting** (`lockDays`; остальные + реферальный бонус реферера — антифрод). Лок считается на лету (`updated_at + lock_days`).
+- **Двухэтапное on-chain начисление:** off-chain (`UserReward` + `TokenTransaction`) сразу → кнопка «Забрать награды» (или авто-claim) → одна on-chain отправка на custodial-кошелёк. `TokenTransactionRelayJob` сериализован по оператору (`limits_concurrency`); `TokenTransactionRetryJob` переотправляет упавшие; `sendRewardBatch` для акций.
+- **Геймификация:** награды — регистрация 10, реферал (реферер) 5 (vesting), реферал (новичок) 5, POI 20, фото 5, комментарий 5, голос 2. Бейджи — `registration_complete`, `first_poi`, `contributor`, `explorer`, `recruiter`, `veteran`. Конфиг в `Setting.gamification_config` (правится в админке, без редеплоя). `GamificationService.revoke!` — глобальный отзыв не отправленных начислений.
 
 ---
 
-## 📐 Архитектура системы
+## 🗳️ Community Moderation (голосования)
 
-### Принцип «Одна сущность»
-- **Model** — данные и связи (только база).
-- **Service** — единственная точка входа для бизнес-логики.
-- **Reflex** — точка входа UI-взаимодействий через WebSocket.
-- **Controller** — только доступ (Pundit), рендеринг, Pundit-политики.
-- **Broadcaster** — слой доставки обновлений интерфейса (CableReady).
-- **Notification** — уведомления (Noticed) с фильтрацией через `Setting`.
+Полиморфный `Vote` (POI/фото/комментарий), live-счётчики через `VoteBroadcaster`/`PoiBroadcaster` (`inner_html`). **Строгая семантика:** `poi.status` ставит ТОЛЬКО админ (`pending` не отображается и не голосуется); голоса юзеров НЕ меняют статус и видимость — только вешают бейджи на уже видимые точки (`ups >= threshold` → «Одобрено сообществом», `downs >= threshold` → «Отклонено сообществом»). Конфликт решает `net = ups - downs`; один юзер — один голос (unique index `[votable_type, votable_id, user_id]`), повторное голосование переключает value. **Анти-фрод:** `VotePolicy` — залогинен, не автор, в пределах 100м. `suspended`/`banned` — решает ТОЛЬКО админ.
 
-### DATABASE as Single Source of Truth
-Данные в PostgreSQL с историей через PaperTrail: транзакционность (всё или ничего), аудит каждого изменения, надёжность (не прошла транзакция — ничего не отправлено).
+---
+
+## ✏️ Предложения правок (консенсус 100м)
+
+Надстройка над `Vote` + `ReputationService`. Прямая правка — только автору точки в окно авторства; остальные в 100м создают **«предложение правки»** (Suggested Edit), применяемое по **консенсусу**. Трёхслойный контроль: **Quick Toggles** (любой в 100м через Vote), **Attributes** (только через `SuggestedEdit` + консенсус), **Locked** (`coordinates`, `poi_category_id`, `slug`, `status` — только админ/модератор; обычный юзер — «Сообщить об ошибке»). Модель `SuggestedEdit` + `suggested_edit_confirmations`. Применение, если: подтвердил автор, или `confirmed_by.size + 1` ≥ порога, или репутация предлагающего ≥ порога. Авто-экспирация через `SuggestedEditExpiryJob`.
 
 ---
 
 ## 📦 Стандарты разработки
 
 ### ViewComponent (Sidecar Subdirectory)
-Полное описание — в [`.roo/rules/01-INSTRUCTIONS.md`](.roo/rules/01-INSTRUCTIONS.md) и [`.roo/rules/03-COMPONENT-REFERENCE.md`](.roo/rules/03-COMPONENT-REFERENCE.md). Кратко:
-- Каждый компонент — класс `XxxComponent < ApplicationComponent` (НЕ module-обёртки, НЕ `ViewComponent::Base`).
-- Sidecar-папка с одноимённым именем: `html.erb` + `css` + `controller.js` + 4 yml (en/ru/es/zh) — **полный набор, всегда** (даже пустые JS/CSS).
-- Корневой тег шаблона: `data-controller="kebab-case-name"`.
-- Partial'ы запрещены. Инлайн `<script>`/`<style>` запрещены.
-- **Lookbook-превью обязательно**: для каждого нового компонента создаётся превью `lookbook/<namespace>/<component>_preview.rb` (+ `lookbook/<namespace>/<component>_preview/<scenario>.html.erb` для каждого сценария), чтобы компонент рендерился в LookBook. Папка превью зеркалит sidecar-структуру компонента (тот же namespace/имя).
+Полное описание — в [`.roo/rules/01-INSTRUCTIONS.md`](.roo/rules/01-INSTRUCTIONS.md) и [`.roo/rules/03-COMPONENT-REFERENCE.md`](.roo/rules/03-COMPONENT-REFERENCE.md). Кратко: класс `XxxComponent < ApplicationComponent` (НЕ module-обёртки, НЕ `ViewComponent::Base`); sidecar-папка с одноимённым именем (`html.erb` + `css` + `controller.js` + 4 yml) — **полный набор, всегда**; корневой тег `data-controller="kebab-case-name"`; partial'ы и инлайн `<script>`/`<style>` запрещены; **Lookbook-превью обязательно**.
 
-### Стиль и цвета
-- Только зелено-голубая гамма Tailwind (`emerald`, `teal`, `sky`). Кастомные стили запрещены.
-- Иконки — только MDI, с комментарием названия класса (`<%# Иконка: mdi-pencil %>`).
+### Live-комментарии (без дублей/вложенного HTML)
+`Comments::CommentComponent` — чистая обёртка с `[data-comment-content]` + `[data-comment-children]`; контент в `Comments::CommentContentComponent`. `PoiCommentBroadcaster` вставляет корни/ответы; `:update` = `inner_html`. `VersionObserverJob#children_count_only_changed?` подавляет broadcast при изменении только `children_count`. Метка «(изменено {кем} {когда})» читает последнюю UPDATE-версию, менявшую `body`; после live-правки бродкастер шлёт `poi:comment-updated` → `refreshPermissions()`. **Ограничение взаимодействия:** комментирование/голосование/фото требуют активного статуса (`UserAccessService.can_interact?`).
 
-### Интернационализация
-- 4 локали: en, ru, es, zh. Хардкод текста запрещён.
-- Переводы — в sidecar YAML компонента, относительные ключи `t(".key")`. Ключи в `config/locales/*.yml` для текстов внутри ViewComponent — запрещено.
-
-### Комментарии
-Каждый метод документируется комментарием СТРОГО перед объявлением.
-
----
-
-## 🔌 Основные компоненты фронтенда
-
-### Stimulus
-Лёгкий фреймворк взаимодействия браузера с Rails. Слушает события (клики, ввод), отправляет сигналы на Rails, обновляет DOM, управляет состоянием. Жизненный цикл: инициализация при появлении элемента в DOM, очистка при удалении.
-
-### StimulusReflex
-Реактивные компоненты через WebSocket: браузер отправляет действие, сервер обновляет нужные части DOM (морфинг). Используй `this.stimulate("Reflex#method", params)`. **`prevent_refresh!` НЕ СУЩЕСТВУЕТ** — вместо него `morph :nothing`.
-
-### CableReady
-Генератор команд обновления DOM. Транспортный слой: команда (обновить/заменить/добавить/удалить/уведомление) отправляется через WebSocket и выполняется браузером.
-
-### Карта OpenLayers и иконки категорий
-Глобальная карта POI ([`Poi::MapComponent`](app/components/poi/map_component.rb:1), OpenLayers 10) рисует одиночный POI глифом MDI его категории (вместо булавки/точки) с белой обводкой для читаемости. Реальный codepoint глифа извлекается в рантайме из загруженного MDI CSS (`getComputedStyle(el, "::before").content`) и кэшируется; маркеры перерисовываются после загрузки асинхронного CDN-шрифта (`document.fonts.ready`). Кластеры остаются кружками с числом. Маркер читает `poiIcon` исходной фичи (из кластер-обёртки `features[0]`); иконка доходит до фронтенда через [`PoiService.map_feature_data`](app/services/poi_service.rb:394).
+### Стиль, i18n, комментарии
+Только зелено-голубая гамма Tailwind (`emerald`, `teal`, `sky`); иконки — только MDI с комментарием класса. 4 локали; переводы в sidecar YAML, относительные ключи `t(".key")`; хардкод запрещён. Каждый метод документируется комментарием непосредственно перед объявлением.
 
 ---
 
 ## 📨 Уведомления и фоновые задачи
 
-### Noticed
-Мультиканальная система уведомлений: одно уведомление — несколько каналов (Email, SMS/Twilio, Push/WebPush, In-app/WebSocket).
-
-### SolidQueue
-Database-backed очередь (вместо Sidekiq + Redis). Долгие операции сохраняются в БД, worker-процессы выполняют асинхронно.
-
-**Стабильность БД:** в [`config/database.yml`](config/database.yml:1) отключены prepared statements (`prepared_statements: false`) — это убирает Segmentation Fault (`connect_start`) гема `pg` при многопоточной/многопроцессной работе SolidQueue. Все вторичные БД (queue/cache/cable) используют `postgis`-адаптер с `schema_search_path: public,postgis` — единый тип соединений C-расширений в приложении (иначе конфликты).
-
-### SolidCache
-Database-backed кэш (альтернатива Redis). Инфраструктура настроена, **кэширование в коде отключено** (исключить stale при broadcast-морфах). Когда вернуть (точечно): статичные части ShowComponent — ключ `[category, I18n.locale]`; агрегаты — с зависимостью от коллекции (`[category, category.pois, I18n.locale]`); НЕ кэшировать формы. Конфигурация: `config/cache.yml` (256MB), `:solid_cache_store` в production, `bin/rails dev:cache` в dev.
-
-### SolidQueueDashboard
-Веб-интерфейс мониторинга очередей, статусов задач, повторного запуска упавших.
-
-### ReverseGeocodingService
-Обратное геокодирование (страна/город/адрес по координатам). API: Nominatim (бесплатно, 1 запрос/сек). Файл: [`app/services/reverse_geocoding_service.rb`](app/services/reverse_geocoding_service.rb).
-
-### AI-сервисы (платные LLM API)
-Единый `AiService` (OpenAI-совместимые API: OpenAI, DeepSeek; переключение через ENV). Сценарии: `check_toxicity`, `translate_missing_keys`, AI-рекомендации (Premium). Реализация — TODO.
-
-### Ransack
-Поиск и фильтрация данных на основе параметров запроса, без ручного SQL.
-
----
-
-## 🏆 Геймификация и токены TFT
-
-**ТОКЕННАЯ МОДЕЛЬ:** награды начисляются токенами TFT (не «баллами»).
-
-**Архитектура:** модель `UserReward` (`amount` TFT, `action_key`, `wallet_id`) — off-chain леджер начислений; `User#token_balance` = сумма начислений; сервис `GamificationService` (`award!`, `award_referral!`, `badge_key`, `check_badges!`, `revoke!`); бейджи — модель `Gamification` (event_type `badge`, репутационные достижения); конфиг — `Setting.gamification_config` (rewards — токены TFT, badges — достижения), правятся в настройках админа `/admin-panel/settings` без редеплоя (ранее — `config/gamification.yml`, файл удалён).
-
-**Отзыв награды (`GamificationService.revoke!`):** глобально отзывает не отправленное (claimed=false, ещё не ушло в блокчейн) начисление за действие (напр. `poi_photo_add` при удалении своего фото через `PoiService.remove_photo`), атомарно удаляя пару `UserReward` + `TokenTransaction` (аудит PaperTrail); идемпотентен. Уже забранное (claimed=true) на бэке не отзывается.
-
-**Награды (TFT):** регистрация (welcome) 10, реферал (реферер) 5 — по vesting-лок-периоду (антифрод), реферал (новый) 5 — мгновенно, добавление POI 20, фото POI 5, комментарий 5, голос за POI 2.
-
-**Бейджи:** `registration_complete`, `first_poi`, `contributor` (10+), `explorer` (5+ городов), `recruiter` (5+ рефералов), `veteran` (баланс 1000+ TFT).
-
-**I18n:** названия бейджей и наград локализованы (en, ru, es, zh).
-
----
-
-## 🗳️ Community Moderation (голосования)
-
-Слой коллективного доверия поверх админ-модерации. Полный план — в секции «3.5 Голосования / Community Moderation» [`docs/ROADMAP_ru.md`](docs/ROADMAP_ru.md:1).
-
-**UI (POI + фото + комментарии):** голосование встроено в таб Ratings карточки POI — [`Poi::RatingsComponent`](app/components/poi/ratings_component.rb:1) рендерит [`Ui::VoteComponent`](app/components/ui/vote_component.rb:1) в обёртке `[data-vote-zone="poi-<id>"]`; в галерею фото — [`Poi::GalleryComponent`](app/components/poi/gallery_component.rb:1) в `[data-vote-zone="photo-<id>"]`; и в комментарии — [`Comments::CommentComponent`](app/components/comments/comment_component.rb:1) в `[data-vote-zone="poi_comment-<id>"]`. Live-счётчик обновляется через `VoteBroadcaster` (`inner_html` по стриму `pois_map`).
-
-**Семантика (строго):** Статус POI ставит ТОЛЬКО админ (`pending` не отображается и не голосуется). Голоса юзеров НЕ меняют `poi.status` и не влияют на видимость — только вешают бейджи на уже видимые точки (`approved`/`imported`): `ups >= threshold` → «Одобрено сообществом», `downs >= threshold` → «Отклонено сообществом» (сигнал админу; точка остаётся на карте).
-
-**Подсчёт голосов:** абсолютный порог по каждой стороне (из `Setting`/конфига, дефолт 10); при конфликте (оба >= порога) решает `net = ups - downs` — `net > 0` → одобрено, `net <= 0` (в т.ч. паритет) → отклонено. Один юзер = один голос (unique index `[votable_type, votable_id, user_id]`); повторное голосование переключает `value` (`+1`/`-1`).
-
-**Цепочка:** `Vote::VoteComponent` → `VoteReflex#cast` (`morph :nothing`) → `VoteService.cast!` (транзакция, PaperTrail, награда TFT `poi_vote`) → `VersionObserverJob#handle_vote_update` → `ModerationService.evaluate!` + `ReputationService.reckon!` + `VoteBroadcaster`/`PoiBroadcaster` (`inner_html`) → SolidCable → DOM.
-
-**Антифрод:** `VotePolicy` — залогинен, не автор, проксимити 100м через `PoiService.within_range?`. Репутация автора копится через `ReputationService.reckon!`; `suspended`/`banned` — решает ТОЛЬКО админ (существующий `Admin::UserService`).
-
----
-
-## ✏️ Предложения правок (Suggested Edits) + консенсус 100м
-
-Защита от спама поверх 100-метрового Proof of Location. **Надстройка** над существующей `Vote`-механикой и `ReputationService`, не ломает текущий поток. Идея: прямая правка — только **автору точки** в окно авторства; все остальные в радиусе 100м создают **«предложение правки»** (Suggested Edit), которое применяется по **консенсусу** — вместо хаотичного прямого перезаписывания базы.
-
-### Трёхслойный контроль полей
-
-| Слой | Поля | Кто меняет | Механика |
-|------|------|-----------|----------|
-| **Quick Toggles** (мягкий краудсорсинг) | `is_operational`, быстрые флаги («Вода закончилась», «Очередь», «Закрыто») | любой в 100м | голосование Up/Down через существующий `Vote`, низкий порог из `Setting`; `poi.status` НЕ меняется — только индикатор |
-| **Attributes** (фактические) | `has_esim`, `fee_amount`/`price_info`, `opening_hours`, `metadata` | любой в 100м | только через `SuggestedEdit` + консенсус |
-| **Locked** (критические) | `coordinates`, `poi_category_id`, `slug`, `status` | только админ/модератор | обычный юзер — только «Сообщить об ошибке» (сигнал) |
-
-### Модель SuggestedEdit
-- `poi_id`, `user_id` (предлагающий), `field_key`, `old_value` jsonb, `new_value` jsonb, `status` enum (`pending_review`/`approved`/`rejected`/`expired`), `proposal_type` enum (`attribute`/`quick_toggle`), `resolution_reason`, `confirmed_by` int[].
-- Вспомогательная join-таблица `suggested_edit_confirmations` (unique `[suggested_edit_id, user_id]`) — независимые подтверждающие.
-- `has_paper_trail` (аудит-догма). Индекс `[poi_id, field_key, status]` — исключает дубликаты незакрытых правок.
-
-### Правило консенсуса (`SuggestedEditService.apply_if_consensus!`)
-Правка применяется (`Poi.update!` → PaperTrail → `handle_poi_update` → `PoiBroadcaster`), если выполнено ЛЮБОЕ:
-- подтвердил **автор** точки (в окне авторства), **или**
-- `confirmed_by.size + 1` достигло порога из `Setting` (независимые юзеры в 100м), **или**
-- у предлагающего `reputation >= high_reputation_threshold` из `Setting`.
-
-**Анти-фрод:** предложить/подтвердить может только юзер в 100м (`PoiService.within_range?`, не автор); подтверждающие — только независимые (не автор, не предлагающий). Один юзер — одно подтверждение.
-
-### Авторство (окно direct edit)
-- Автор точки (любое расстояние) — прямое редактирование в первые 24-48ч (окно из `Setting`, поле `pois.edit_lock_expires_at`) или пока точка не набрала X подтверждений.
-- **Авто-экспирация:** `SuggestedEditExpiryJob` (SolidQueue recurring) — нет ответа автора N дней → консенсус без автора (`apply_if_consensus!`); иначе правка `expired`.
-
-### Поток
-`Poi::EditComponent`/кнопка «Сообщить об ошибке» → `SuggestionReflex#create` (`morph :nothing` + `deep_symbolize_keys` + Pundit) → `SuggestedEditService.create!` (транзакция, PaperTrail) → `VersionObserverJob#handle_suggested_edit_update` → `SuggestedEditBroadcaster` (+ `PoiSuggestionNotification` автору через Noticed, фильтр `Setting`) → SolidCable. Применение правки при консенсусе — через `apply!` (версия POI → `PoiBroadcaster`), при необходимости автокредит TFT (`GamificationService.award!(:suggestion_applied)`).
+- **Noticed** — одно событие, несколько каналов (database + email + action_cable + web_push).
+- **SolidQueue** — database-backed очередь (без Redis); worker'ы в `bin/jobs`. `prepared_statements: false` в [`config/database.yml`](config/database.yml:1) предотвращает Segmentation Fault pg; вторичные БД используют `postgis`-адаптер с `schema_search_path: public,postgis`.
+- **SolidCache** — инфраструктура настроена, **кэширование временно отключено в коде** (исключает stale при broadcast-морфах). Возвращать точечно: статичные части ShowComponent ключ `[category, I18n.locale]`; агрегаты с зависимостью от коллекции; НЕ кэшировать формы. Конфиг `config/cache.yml` (256MB).
+- **SolidQueueDashboard** — веб-интерфейс мониторинга очередей, статусов, повторного запуска упавших.
+- **ReverseGeocodingService** — Nominatim (1 запрос/сек).
+- **AiService** — OpenAI-совместимые API (OpenAI/DeepSeek через ENV): токсичность, перевод недостающих ключей, AI-рекомендации (Premium). Реализация — TODO.
+- **Ransack** — поиск и фильтрация из параметров запроса без ручного SQL.
 
 ---
 
 ## 🗄️ Данные и аудит
 
-### Paper Trail
-Полное версионирование моделей: ЧТО изменилось (старые/новые значения), КТО (пользователь), КОГДА, ЧТО произошло (create/update/destroy). Триггер всех последующих действий (notifications, broadcasts).
+- **PaperTrail** — полное версионирование (что/кто/когда), триггер всех последующих действий (notifications, broadcasts).
+- **PostgreSQL + PostGIS** — географические типы, пространственные запросы (радиус, маршрут).
+- **Devise** — аутентификация (email + OAuth), bcrypt, `current_user`, защита маршрутов.
 
-### PostgreSQL + PostGIS
-Основная БД + географическое расширение: координаты как географические типы, пространственные запросы (объекты в радиусе, на маршруте).
-
----
-
-## 🔐 Безопасность
-
-### Devise
-Аутентификация: регистрация, вход, восстановление пароля, сессии. Пароли — bcrypt (необратимое хеширование). Предоставляет `current_user`, защиту маршрутов от неавторизованного доступа.
+> Версионирование: используй `git log` для истории изменений. Статусы → [`docs/ROADMAP_ru.md`](docs/ROADMAP_ru.md), оценки → [`docs/MILESTONES_ru.md`](docs/MILESTONES_ru.md), долги → [`docs/TECH-DEBTS_ru.md`](docs/TECH-DEBTS_ru.md).
