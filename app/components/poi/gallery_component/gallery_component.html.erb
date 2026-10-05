@@ -19,6 +19,18 @@
                  class="hidden">
         </label>
       </div>
+    <% elsif block = interaction_block %>
+      <%# Плашка: suspended — нельзя добавлять фото %>
+      <%# Иконка: mdi-shield-lock-outline %>
+      <div class="mb-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-700">
+        <i class="mdi mdi-shield-lock-outline mt-0.5"></i>
+        <div>
+          <p class="font-semibold"><%= t(".blocked_suspended") %></p>
+          <% if block[:unlock_at].present? %>
+            <p class="mt-0.5"><%= t(".unlock_at", when: l(block[:unlock_at], format: :long)) %></p>
+          <% end %>
+        </div>
+      </div>
     <% end %>
 
     <%# Сетка миниатюр %>
@@ -55,9 +67,10 @@
       <% end %>
     </div>
 
-    <%# Lightbox/слайдер %>
+    <%# Lightbox/слайдер (скрыт по умолчанию; открывается только по клику на
+        миниатюру — gallery_component_controller#open снимает hidden). %>
     <div data-poi--gallery-component-target="lightbox"
-         class="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+         class="hidden fixed inset-0 z-50 bg-black/80 items-center justify-center p-4"
          data-action="click->poi--gallery-component#closeBackdrop">
       <div class="relative max-w-3xl w-full" data-action="click->poi--gallery-component#stopPropagation">
         <button type="button"
@@ -106,6 +119,18 @@
                  data-action="change->poi--gallery-component#upload"
                  class="hidden">
         </label>
+      <% elsif block = interaction_block %>
+        <%# Плашка: suspended — нельзя добавлять фото %>
+        <%# Иконка: mdi-shield-lock-outline %>
+        <div class="mt-4 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-700">
+          <i class="mdi mdi-shield-lock-outline mt-0.5"></i>
+          <div>
+            <p class="font-semibold"><%= t(".blocked_suspended") %></p>
+            <% if block[:unlock_at].present? %>
+              <p class="mt-0.5"><%= t(".unlock_at", when: l(block[:unlock_at], format: :long)) %></p>
+            <% end %>
+          </div>
+        </div>
       <% end %>
     </div>
   <% end %>

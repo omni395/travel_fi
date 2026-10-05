@@ -1,55 +1,66 @@
 <%# frozen_string_literal: true %>
 
 <%#
-# Users::RewardsComponent — история начислений токенов TFT в профиле юзера.
-# Иконка: mdi-coins
+# Users::RewardsComponent — история начислений в профиле юзера.
+# Иконки: mdi-history, mdi-open-in-new, mdi-chevron-left, mdi-chevron-right
 # %>
 
-<div data-controller="users--rewards-component" class="rewards-component">
+<div data-controller="users--rewards-component" class="rewards-component w-full max-w-2xl">
   <%= render Ui::CardComponent.new do |card| %>
     <% card.with_body do %>
+
       <h3 class="text-lg font-semibold text-gray-800 mb-4">
-        <%# Иконка: mdi-coins %>
-        <i class="mdi mdi-coins text-emerald-600 mr-1"></i>
+        <%# Иконка: mdi-history %>
+        <i class="mdi mdi-history text-emerald-600 mr-1"></i>
         <%= t(".title") %>
       </h3>
 
-      <%# Плашка балансов: заблокировано / доступно к получению %>
-      <% if user.token_transactions.unclaimed.any? %>
-        <div class="mb-4 p-3 rounded-lg bg-teal-50 border border-teal-200">
-          <div class="flex items-center justify-between text-sm">
-            <div class="flex flex-col gap-1">
-              <span class="text-teal-700 font-medium">
-                <%# Иконка: mdi-lock %>
-                <i class="mdi mdi-lock text-teal-600 mr-1"></i>
-                <%= t(".locked_balance") %>: <%= format_amount(locked_amount) %> TFT
-              </span>
-              <span class="text-emerald-700 font-medium">
-                <%# Иконка: mdi-arrow-down-circle %>
-                <i class="mdi mdi-arrow-down-circle text-emerald-600 mr-1"></i>
-                <%= t(".available_balance") %>: <%= format_amount(available_amount) %> TFT
-              </span>
+      <%# Сводные мини-карточки по типам начислений (summary_by_action) %>
+      <% if summary_by_action.any? %>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-5">
+          <% summary_by_action.each do |summary| %>
+            <div class="p-3 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200">
+              <p class="text-[11px] font-semibold text-gray-600 flex items-center gap-1">
+                <%# Иконка по типу (см. summary[:icon]) %>
+                <i class="mdi mdi-<%= summary[:icon] %> text-emerald-600"></i>
+                <%= summary[:label] %>
+              </p>
+              <p class="text-base font-bold text-emerald-700 mt-1">
+                +<%= format_amount(summary[:total]) %> TFT
+              </p>
             </div>
-            <% if available? %>
-              <%= render Ui::BtnComponent.new(color: :primary, size: :sm, html: {
-                    data: { action: "click->users--rewards-component#claim" }
-                  }) do %>
-                <%# Иконка: mdi-wallet-plus %>
-                <i class="mdi mdi-wallet-plus mr-1"></i>
-                <%= t(".claim_button") %>
-              <% end %>
-            <% end %>
-          </div>
+          <% end %>
         </div>
       <% end %>
 
       <% if transactions.any? %>
-        <ul class="divide-y divide-gray-200">
+        <%# Плоская лента по дате (created_at desc), без группировки %>
+        <ul class="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
           <% transactions.each do |tx| %>
-            <li class="py-3 flex items-center justify-between">
-              <div>
-                <p class="text-sm font-medium text-gray-800"><%= action_key_label(tx) %></p>
-                <p class="text-xs text-gray-500"><%= l(tx.created_at, format: :short) %></p>
+            <% target = source_target(tx) %>
+            <li class="px-3 py-3 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-sm text-gray-700 flex items-center gap-1 flex-wrap">
+                  <%= action_key_label(tx) %>
+
+                  <% if target.present? %>
+                    <button type="button"
+                            class="inline-flex items-center gap-1 text-emerald-600 hover:text-emerald-800 text-xs font-medium"
+                            data-reward-source="<%= target.to_json %>"
+                            data-action="click->users--rewards-component#openSource">
+                      <%# Иконка: mdi-open-in-new %>
+                      <i class="mdi mdi-open-in-new"></i>
+                      <%= t(".source_label", label: truncate(target[:link_label], length: 24)) %>
+                    </button>
+                  <% end %>
+
+                  <% if tx.explorer_url.present? %>
+                    <%= link_to tx.short_hash, tx.explorer_url,
+                                target: "_blank", rel: "noopener",
+                                class: "inline-flex items-center gap-0.5 text-secondary hover:underline font-mono text-xs" %>
+                  <% end %>
+                </p>
+                <p class="text-xs text-gray-400"><%= l(tx.created_at, format: :short) %></p>
               </div>
               <span class="text-sm font-semibold text-emerald-600 whitespace-nowrap">
                 +<%= format_amount(tx.amount) %> TFT
@@ -57,9 +68,18 @@
             </li>
           <% end %>
         </ul>
+
+        <%# Пагинация через проектный Ui::PaginationComponent (pagy.previous/next) %>
+        <% if pagination && pagination.pages > 1 %>
+          <%= render Ui::PaginationComponent.new(
+                pagy: pagination,
+                pagination_controller: "users--rewards-component"
+              ) %>
+        <% end %>
       <% else %>
         <p class="text-sm text-gray-400"><%= t(".empty") %></p>
       <% end %>
+
     <% end %>
   <% end %>
 </div>

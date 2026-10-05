@@ -1,0 +1,4 @@
+es:
+  ui:
+    spinner_component:
+      loading: "Cargando..."

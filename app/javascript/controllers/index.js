@@ -4,11 +4,12 @@ import { application } from "./application"
 // Корневые контроллеры (cable, application)
 import controllers from "./*_controller.js"
 
-// Sidecar-контроллеры ViewComponent — ЛЕНИВАЯ загрузка (code-split):
-// каждый контроллер подгружается только если встречается data-controller="..."
-// в DOM текущей страницы. Сгенерировано scripts/discover_components.js.
-// Это оптимизация под Lighthouse: не тянем все контроллеры приложения на каждой странице.
-import "./_components_lazy.js"
+// Sidecar-контроллеры ViewComponent — EAGER загрузка:
+// все контроллеры импортируются при старте и регистрируются как классы.
+// Сгенерировано scripts/discover_components.js.
+// Примечание: регистрация через класс (не lazy-колбэк), т.к. Stimulus 3.2.2
+// не резолвит application.register(name, () => import(...)).
+import "./_components_index.js"
 
 controllers.forEach((controller) => {
   // application_controller — базовый класс, не регистрируется

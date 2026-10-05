@@ -1,0 +1,20 @@
+es:
+  comments:
+    comment_content_component:
+      reply: "Responder"
+      edit: "Editar"
+      delete: "Eliminar"
+      replying_to: "respondiendo a %{name}"
+      edited_by: "editado por %{name} a las %{time}"
+      community_approved: "Aprobado por la comunidad"
+      hidden_notice: "Comentario ocultado por moderación"
+      show_replies:
+        one: "Mostrar %{count} respuesta"
+        other: "Mostrar %{count} respuestas"
+      delete_dialog_title: "Eliminar comentario"
+      delete_dialog_message: "¿Seguro que quieres eliminar este comentario? Esta acción no se puede deshacer."
+      delete_confirm: "Eliminar"
+      suspend_dialog_title: "¿Suspender al autor?"
+      suspend_dialog_message: "¿Eliminar el comentario y suspender a su autor? La cuenta se desbloqueará automáticamente."
+      suspend_confirm: "Eliminar y suspender"
+      cancel: "Cancelar"

@@ -7,4 +7,7 @@ en:
       write_placeholder: "Write a comment about %{name}"
       write_placeholder_generic: "Write a comment"
       login_hint: "Sign in to leave a comment"
+      blocked_suspended: "You are temporarily suspended from commenting."
+      unlock_at: "Unlocks %{when}"
+      blocked_too_far: "You need to be within 100 meters of this place to leave a comment."
       empty: "No comments yet. Be the first!"

@@ -3,6 +3,7 @@ zh:
     comment_form_component:
       placeholder: "写评论..."
       reply_placeholder: "写回复..."
+      edit_placeholder: "编辑你的评论..."
       submit: "评论"
       reply_submit: "回复"
       save: "保存"

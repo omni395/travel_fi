@@ -2,16 +2,19 @@
 ru:
   users:
     rewards_component:
-      title: История начислений
-      empty: Начислений пока нет
-      locked_balance: Заблокировано
-      available_balance: Доступно
-      claim_button: Забрать награды
+      title: История наград
+      summary_title: Итоги
+      empty: Пока нет наград
+      source_label: "в %{label}"
+      pagination_label: "Пагинация наград"
+      prev: Назад
+      next: Вперёд
+      page_of: "Стр. %{page} из %{pages}"
       action_keys:
         registration: Бонус за регистрацию
         referral_bonus_referrer: Реферальный бонус (пригласившему)
-        referral_bonus_new_user: Реферальный бонус (новому)
-        poi_create: Создан POI
-        poi_photo_add: Добавлено фото POI
-        comment_create: Создан комментарий
+        referral_bonus_new_user: Реферальный бонус (новому пользователю)
+        poi_create: Создание POI
+        poi_photo_add: Добавление фото POI
+        comment_create: Создание комментария
         poi_vote: Голос за POI

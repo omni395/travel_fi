@@ -39,6 +39,7 @@ class Comments::CommentComponent < ApplicationComponent
 
   #
   # Прямые ответы на комментарий (дети, 1 уровень) — только видимые.
+  # Рендерятся в отдельном контейнере [data-comment-children] обёртки.
   #
   # @return [ActiveRecord::Relation<PoiComment>]
   #
@@ -47,64 +48,27 @@ class Comments::CommentComponent < ApplicationComponent
   end
 
   #
-  # Имя контроллера компонента.
-  #
-  # @return [String]
-  #
-  def controller_name
-    "comments--comment-component"
-  end
-
-  #
-  # Пометка @предка для флоттенед ответа (ответ на ответ → ответ на корень).
-  # Если у комментария задан parent, отличный от корня — это флоттенинг.
-  #
-  # @return [User, nil]
-  #
-  def reply_target_name
-    return nil if comment.parent.nil?
-    return nil if comment.root_id == comment.parent_id
-
-    comment.parent.user.name
-  end
-
-  #
-  # Может ли текущий пользователь редактировать (автор или admin).
+  # Ответил ли текущий пользователь уже на этот комментарий.
+  # Только для корня ветки; UI скрывает кнопку «Ответить» (анти-флуд).
+  # Бэкенд-рубеж — CommentService + валидации модели (здесь только UX).
   #
   # @return [Boolean]
   #
-  def can_edit?
+  def i_replied?
     return false if current_user.nil?
+    return false if comment.parent.present?
 
-    current_user.has_role?(:admin) || comment.user_id == current_user.id
+    current_user.poi_comments.where(parent_id: comment.id).exists?
   end
 
   #
-  # Может ли текущий пользователь удалять (автор или admin).
-  #
-  # @return [Boolean]
-  #
-  def can_destroy?
-    can_edit?
-  end
-
-  #
-  # Показывать ли кнопку «Ответ» (только для корня; ответы уже 1 уровень —
-  # отвечаем на корень, чтобы не углублять дерево).
-  #
-  # @return [Boolean]
-  #
-  def replyable?
-    comment.parent.nil? && current_user.present?
-  end
-
-  #
-  # Свёрнута ли ветка (много ответов → показываем кнопку «Показать N»).
+  # Свёрнута ли ветка ответов (рендер кнопки «Показать N» вместо детей).
+  # Порог — COLLAPSE_THRESHOLD. Кнопка «Показать N» → PoiReflex#expand_replies.
   #
   # @return [Boolean]
   #
   def collapsed?
-    comment.children_count.to_i > COLLAPSE_THRESHOLD
+    comment.children_count.to_i >= COLLAPSE_THRESHOLD
   end
 
   # Порог сворачивания ветки

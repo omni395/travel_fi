@@ -69,9 +69,63 @@ export default class extends ApplicationController {
   showDetail(event) {
     const poiId = event.detail?.poiId
     if (!poiId) return
-    if (this._lastPoiId === poiId) return
+    // Данные для подсветки (например из RewardsComponent#openSource):
+    // { tab: "comments", selector: "[data-comment-id='1']" }.
+    const highlight = event.detail?.highlight || null
+    // Idempotency-гейт пропускается, когда запрошена подсветка: повторный клик на
+    // тот же POI из истории наград (RewardsComponent#openSource) должен заново открыть
+    // модалку и подсветить комментарий даже если этот POI уже показывался (уже открыт).
+    if (!highlight && this._lastPoiId === poiId) return
     this._lastPoiId = poiId
+    this._pendingHighlight = highlight
     this.stimulate("PoiReflex#show_detail_modal", poiId)
+  }
+
+  /**
+   * Lifecycle StimulusReflex — после загрузки контента модалки POI.
+   * Переключает нужную вкладку и подсвечивает целевой узел (мигание 3с).
+   * @param {HTMLElement} element
+   * @param {String} reflex
+   */
+  reflexSuccess(element, reflex) {
+    if (!this._pendingHighlight) return
+    const highlight = this._pendingHighlight
+    this._pendingHighlight = null
+
+    if (highlight.tab && typeof this._activateTab === "function") {
+      this._activateTab(highlight.tab)
+    }
+
+    if (highlight.selector) {
+      setTimeout(() => this._flashNode(highlight.selector), 0)
+    }
+  }
+
+  /**
+   * Переключает активную вкладку в открытой модалке через ui--tabs-component.
+   * @param {String} tab - идентификатор вкладки (details/comments/ratings/gallery)
+   */
+  _activateTab(tab) {
+    const root = this.element.closest("[data-poi--show-component-target='overlay']")
+    const tabs = root && root.querySelector("[data-controller='ui--tabs-component']")
+    const controller = tabs && this.application.getControllerForElementAndIdentifier(tabs, "ui--tabs-component")
+    if (controller && typeof controller.switch === "function") {
+      // switch ожидает event; передаём фейковый currentTarget с dataset.tab.
+      controller.switch({ currentTarget: { dataset: { tab } } })
+    }
+  }
+
+  /**
+   * Подсвечивает узел зелёной рамкой с пульсацией на 3 секунды.
+   * @param {String} selector - CSS-селектор цели
+   */
+  _flashNode(selector) {
+    const root = this.element.closest("[data-poi--show-component-target='overlay']")
+    const node = root && root.querySelector(selector)
+    if (!node) return
+    const HIGHLIGHT_CLASS = "rew-source-highlight"
+    node.classList.add(HIGHLIGHT_CLASS)
+    setTimeout(() => node.classList.remove(HIGHLIGHT_CLASS), 3000)
   }
 
   /**

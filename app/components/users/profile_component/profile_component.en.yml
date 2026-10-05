@@ -2,6 +2,9 @@ en:
   users:
     profile_component:
       token_balance: "TFT Balance"
+      spendable_balance: "Available to claim"
+      locked_balance: "Locked"
+      claim_button: "Claim rewards"
       badges: "Badges"
       roles: "Roles"
       referral_code: "Referral Code"

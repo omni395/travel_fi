@@ -9,15 +9,20 @@
        data-poi-lng="<%= poi.longitude %>"
        class="hidden"></div>
 
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative">
+  <%# max-h учитывает навбар (h-16 = 64px) + поля p-4 центровочного контейнера
+      (top-16/inset-x): 100vh - 8rem. Иначе карточка 90vh наезжает под навбар.
+      Карточка — flex-колонка: шапка (shrink-0) закреплена и не скроллится,
+      скролл только у таб-контента (flex-1 min-h-0 overflow-y-auto). %>
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[calc(100vh-8rem)] flex flex-col relative">
     <%# Кнопка закрытия — правый верхний угол окна, вне контента, не прокручивается %>
     <%= render Ui::BtnComponent.new(color: :ghost, size: :sm, html: { class: "absolute top-3 right-3 z-10", data: { action: "click->poi--show-component#close" } }) do %>
       <%# Иконка: mdi-close %>
       <i class="mdi mdi-close text-xl"></i>
     <% end %>
 
-    <%# ШАПКА: двухколонная структура по образцу Ui::TooltipComponent %>
-    <div class="flex p-4 gap-4 border-b border-gray-200 pr-12">
+    <%# ШАПКА: двухколонная структура по образцу Ui::TooltipComponent.
+        shrink-0 — шапка всегда видна, не прокручивается вместе с таб-контентом %>
+    <div class="flex p-4 gap-4 border-b border-gray-200 pr-12 shrink-0">
       <%# Фото (обложка) слева %>
       <div class="w-28 h-28 shrink-0 rounded-lg overflow-hidden border border-gray-200">
         <img src="<%= cover_photo_url %>"
@@ -85,7 +90,10 @@
       </div>
     </div>
 
-    <%# ТАБЫ %>
-    <%= render Ui::TabsComponent.new(tabs: tabs, active_tab: "details", panels: panels) %>
+    <%# ТАБЫ: flex-1 min-h-0 — зона растёт на всю оставшуюся высоту карточки и скроллится
+        независимо от закреплённой шапки (без полосы прокрутки у шапки) %>
+    <div class="flex-1 min-h-0 overflow-y-auto">
+      <%= render Ui::TabsComponent.new(tabs: tabs, active_tab: "details", panels: panels) %>
+    </div>
   </div>
 </div>

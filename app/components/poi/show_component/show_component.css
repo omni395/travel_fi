@@ -1,1 +1,13 @@
 /* Poi::ShowComponent — стили не требуются, весь UI через Tailwind-классы в шаблоне */
+/* Подсветка узла, из которого пришла награда (RewardsComponent#openSource):
+   зелёная рамка с пульсацией на 3 секунды (класс вешает show_component_controller.js). */
+.rew-source-highlight {
+  animation: rew-source-pulse 1s ease-in-out 3;
+  border: 2px solid #059669; /* emerald-600 */
+  border-radius: 0.5rem;
+}
+@keyframes rew-source-pulse {
+  0%   { background-color: rgba(16, 185, 129, 0.35); } /* emerald-500 */
+  50%  { background-color: rgba(16, 185, 129, 0.12); }
+  100% { background-color: rgba(16, 185, 129, 0.35); }
+}

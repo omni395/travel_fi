@@ -3,6 +3,7 @@ en:
     comment_form_component:
       placeholder: "Write a comment..."
       reply_placeholder: "Write a reply..."
+      edit_placeholder: "Edit your comment..."
       submit: "Comment"
       reply_submit: "Reply"
       save: "Save"

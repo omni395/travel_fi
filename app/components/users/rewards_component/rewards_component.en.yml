@@ -3,10 +3,14 @@ en:
   users:
     rewards_component:
       title: Rewards history
+      summary_title: Summary
       empty: No rewards yet
-      locked_balance: Locked
-      available_balance: Available
-      claim_button: Claim rewards
+      in_prefix: "in"
+      source_label: "in %{label}"
+      pagination_label: "Rewards pagination"
+      prev: Prev
+      next: Next
+      page_of: "Page %{page} of %{pages}"
       action_keys:
         registration: Registration bonus
         referral_bonus_referrer: Referral bonus (referrer)

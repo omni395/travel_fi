@@ -33,7 +33,7 @@
     <% end %>
   </div>
 
-  <%# Форма создания корневого комментария (только для авторизованных) %>
+  <%# Форма создания корневого комментария (только для active) %>
   <% if can_comment? %>
     <%= render Comments::CommentFormComponent.new(
           commentable: commentable,
@@ -44,25 +44,48 @@
         ) %>
   <% elsif current_user.nil? %>
     <p class="text-xs text-gray-400 mb-4"><%= t(".login_hint") %></p>
+  <% elsif block = interaction_block %>
+    <%# Плашка почему нельзя комментировать (только suspended; too_far — отдельно) %>
+    <%# Иконка: mdi-shield-lock-outline %>
+    <div class="mb-4 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-xs text-amber-700">
+      <i class="mdi mdi-shield-lock-outline mt-0.5"></i>
+      <div>
+        <p class="font-semibold"><%= t(".blocked_suspended") %></p>
+        <% if block[:unlock_at].present? %>
+          <p class="mt-0.5">
+            <%= t(".unlock_at", when: l(block[:unlock_at], format: :long)) %>
+          </p>
+        <% end %>
+      </div>
+    </div>
+  <% elsif too_far? %>
+    <%# Пользователь active, но вне зоны 100м — показываем подсказку про дистанцию %>
+    <%# Иконка: mdi-map-marker-distance %>
+    <div class="mb-4 flex items-start gap-2 rounded-lg bg-sky-50 p-3 text-xs text-sky-700">
+      <i class="mdi mdi-map-marker-distance mt-0.5"></i>
+      <p><%= t(".blocked_too_far") %></p>
+    </div>
+  <% end %>
+
+  <%# Заглушка «нет комментариев» — ОТДЕЛЬНЫЙ блок вне контейнера-цели, чтобы
+      broadcaster при insert_adjacent_html не оставлял её рядом с первым
+      комментарием. Удаляется точечно по [data-comments-empty] при :create. %>
+  <% if root_comments.empty? %>
+    <p class="text-center text-xs text-gray-400 py-4" data-comments-empty>
+      <%# Иконка: mdi-comment-text-outline %>
+      <i class="mdi mdi-comment-text-outline mr-1"></i>
+      <%= t(".empty") %>
+    </p>
   <% end %>
 
   <%# Список комментариев — контейнер-цель для точечного broadcast %>
   <div class="comments-list"
        data-comments-list="<%= commentable.class.name.underscore %>-<%= commentable.id %>">
-    <% if root_comments.exists? %>
-      <%# Иконка: mdi-comment-text-outline %>
-      <%= render Comments::CommentComponent.with_collection(
-            root_comments,
-            current_user: current_user,
-            moderation: moderation,
-            sort: sort
-          ) %>
-    <% else %>
-      <p class="text-center text-xs text-gray-400 py-4">
-        <%# Иконка: mdi-comment-text-outline %>
-        <i class="mdi mdi-comment-text-outline mr-1"></i>
-        <%= t(".empty") %>
-      </p>
-    <% end %>
+    <%= render Comments::CommentComponent.with_collection(
+          root_comments,
+          current_user: current_user,
+          moderation: moderation,
+          sort: sort
+        ) if root_comments.exists? %>
   </div>
 </div>
