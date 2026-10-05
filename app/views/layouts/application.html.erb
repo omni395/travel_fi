@@ -16,9 +16,10 @@
     <link rel="preload" href="<%= asset_path("application.css") %>" as="style">
     <link rel="modulepreload" href="<%= asset_path("application.js") %>" crossorigin="anonymous">
 
-    <link rel="icon" href="/favicon.png" type="image/png">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/favicon.png">
+    <link rel="icon" href="/favicon.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.webp">
     <link rel="manifest" href="/manifest.json">
 
     <%# MDI font загружается локально через esbuild (import в application.js) %>
@@ -40,7 +41,11 @@
     <%= javascript_include_tag "application", type: "module" %>
   </head>
 
-  <body class="flex flex-col min-h-screen bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable" data-current-user-id="<%= current_user&.id %>">
+  <body class="flex flex-col min-h-screen bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable" data-current-user-id="<%= current_user&.id %>" data-user-role="<%= current_user&.admin? ? 'admin' : (current_user&.moderator? ? 'moderator' : '') %>">
+
+    <%# Полноэкранный спиннер загрузки (Ui::SpinnerComponent). Появляется ПЕРВЫМ,
+        скрывается после полной загрузки страницы. %>
+    <%= render Ui::SpinnerComponent.new %>
 
     <!-- 1. ХЕДЕР: Фиксированная высота 64px -->
     <header class="h-16 border-b shrink-0 relative z-70">

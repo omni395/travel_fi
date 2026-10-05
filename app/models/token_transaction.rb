@@ -55,6 +55,13 @@ class TokenTransaction < ApplicationRecord
   # Незабранные начисления (claimed = false).
   scope :unclaimed, -> { where(claimed: false) }
 
+  # Забранные on-chain начисления (claimed = true) — фактический баланс TFT
+  # пользователя (токены уже отправлены relay-джобом на custodial-кошелёк).
+  #
+  # @return [ActiveRecord::Relation<TokenTransaction>]
+  #
+  scope :claimed, -> { where(claimed: true) }
+
   # Разблокированные по лок-периоду, ещё не забранные начисления.
   # Мгновенные начисления (registration / referral_bonus_new_user, lock=0)
   # доступны СРАЗУ независимо от created_at; vesting-начисления — только

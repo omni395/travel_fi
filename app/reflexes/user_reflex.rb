@@ -8,8 +8,6 @@
 #        Model.save! → after_commit → Broadcaster (CableReady морфинг)
 #
 class UserReflex < ApplicationReflex
-  include CableReady::Broadcaster
-
   #
   # Обновляет профиль пользователя
   # Получает параметры от Stimulus формы через WebSocket
@@ -79,6 +77,56 @@ class UserReflex < ApplicationReflex
   end
 
   #
+  # Переключает страницу истории начислений (README: read-пагинация — из Reflex
+  # допустим рендер зоны, как <entity>_page в админ-таблицах).
+  # Рендерит Users::RewardsComponent с указанной страницей и обновляет зону
+  # [data-user-rewards] у текущего юзера через CableReady (user_N).
+  #
+  # @param page [Integer, String] номер страницы
+  #
+  def rewards_page(page = 1)
+    morph :nothing
+
+    user = current_user
+    authorize user, :update?
+
+    # Сигнатура принимает и примитив (исторический вызов), и объект { page }
+    # (согласовано с эталоном админки). Нормализуем в число.
+    page_number = page.is_a?(Hash) ? page[:page].to_i : page.to_i
+
+    html = render_rewards(user, page_number)
+    if html.present?
+      cable_ready["user_#{user.id}"].inner_html(
+        selector: "[data-user-rewards]",
+        html: html
+      )
+      cable_ready.broadcast
+    end
+  rescue Pundit::NotAuthorizedError => e
+    send_error(I18n.t("reflexes.user.not_authorized"))
+  rescue StandardError => e
+    Rails.logger.error("UserReflex#rewards_page error: #{e.class} #{e.message}")
+    send_error(I18n.t("reflexes.user.claim_error"))
+  end
+
+  #
+  # Рендерит компонент истории начислений для страницы.
+  #
+  # @param user [User] пользователь
+  # @param page [Integer] номер страницы
+  # @return [String, nil] HTML или nil при сбое
+  #
+  private def render_rewards(user, page)
+    component = Users::RewardsComponent.new(user: user, page: page)
+    I18n.with_locale(I18n.default_locale) do
+      ApplicationController.render(component, layout: false)
+    end
+  rescue StandardError => e
+    Rails.logger.error("UserReflex render_rewards error: #{e.class} #{e.message}")
+    nil
+  end
+
+  #
   # Отправляет ошибку в браузер (показывает в форме)
   # Dispatch notice или alert через CableReady
   #
@@ -89,7 +137,7 @@ class UserReflex < ApplicationReflex
       name: "usersError",
       detail: { message: message }
     )
-    broadcast
+    cable_ready.broadcast
   end
 
   #
@@ -103,6 +151,6 @@ class UserReflex < ApplicationReflex
       name: "usersSuccess",
       detail: { message: message || I18n.t("reflexes.user.profile_updated") }
     )
-    broadcast
+    cable_ready.broadcast
   end
 end

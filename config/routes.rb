@@ -5,9 +5,6 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   get "/.well-known/appspecific/*path", to: ->(env) { [ 204, {}, [ "" ] ] }
 
-  # Favicon — блокируем перехват роутом get ":id" (UsersController)
-  get "favicon.ico", to: redirect("/favicon.ico")
-
   # ActionCable WebSocket маршрут
   mount ActionCable.server => "/cable"
 

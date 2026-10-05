@@ -299,6 +299,9 @@ ru:
       moderator: "Модератор"
 
   reflexes:
+    poi:
+      comment_error_generic: "Не удалось добавить комментарий."
+      comment_unauthorized: "У вас нет прав для комментирования этой точки."
     user:
       not_authorized: "У вас нет прав для обновления этого профиля"
       update_error: "Ошибка при обновлении профиля"
@@ -368,6 +371,7 @@ ru:
     photo_proximity_error: "Чтобы добавить фото, нужно находиться в пределах 100 метров от этого места"
     auth_required_title: "Требуется вход"
     auth_required_message: "Пожалуйста, войдите или зарегистрируйтесь, чтобы просмотреть подробную информацию об этом месте."
+    details_unavailable: "Детали точки недоступны для вашего аккаунта."
     load_more:
       one: "Показать ещё 1"
       few: "Показать ещё %{count}"
@@ -376,6 +380,10 @@ ru:
 
   notifications:
     poi_updated: "POI %{name} была обновлена."
+
+  comments:
+    cannot_reply_to_self: "Нельзя отвечать на свой собственный комментарий"
+    already_replied: "Вы уже ответили на этот комментарий"
 
   time:
     formats:

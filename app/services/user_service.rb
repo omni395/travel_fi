@@ -124,6 +124,45 @@ class UserService
   end
 
   #
+  # Переводит пользователя в статус :suspended на фиксированный срок (в днях) и
+  # планирует авто-разблокировку (UnlockSuspendedUserJob) на дату окончания
+  # пенализации. Используется при модерации запрещённого комментария.
+  #
+  # Срок берётся из Setting.suspension_days (по умолчанию 3), если явно не передан.
+  # Точная дата окончания сохраняется в users.suspended_until — для плашки
+  # «Комментирование недоступно до <дата>» и guard (даже если джоб опоздает).
+  #
+  # @param user [User] пользователь-нарушитель
+  # @param days [Integer] срок пенализации в днях (по умолчанию Setting.suspension_days)
+  # @return [User] пользователь в статусе :suspended
+  # @raise [ActiveRecord::RecordInvalid] при ошибке валидации/перехода
+  #
+  def self.suspend!(user:, days: nil)
+    raise ArgumentError, "user is nil" if user.nil?
+
+    days ||= Setting.suspension_days
+    user.update!(status: :suspended, suspended_until: days.days.from_now)
+    UnlockSuspendedUserJob.set(wait: days.days).perform_later(user.id)
+    user
+  end
+
+  #
+  # Возвращает пользователя из статуса :suspended в :active. Вызывается
+  # UnlockSuspendedUserJob по истечении срока пенализации. Использует update!
+  # (создаёт PaperTrail-версию → VersionObserverJob → broadcaster).
+  # Статус unsuspended в enum НЕ существует — разморозка = возврат в :active.
+  # Сбрасывает suspended_until (плащки/guard больше не блокируют).
+  #
+  # @param user [User] пользователь
+  # @return [User] пользователь в статусе :active
+  # @raise [ActiveRecord::RecordInvalid] при ошибке валидации
+  #
+  def self.reactivate!(user:)
+    user.update!(status: :active, suspended_until: nil) unless user.status == "active"
+    user
+  end
+
+  #
   # Присваивает реферальную связь юзеру БЕЗ сохранения (ассоциация ляжет в
   # тот же INSERT, что и создание юзера). Вызывается в registrations#create
   # ПЕРЕД resource.save, чтобы referred_by_id был виден сразу после INSERT —

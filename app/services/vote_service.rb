@@ -98,7 +98,7 @@ class VoteService
 
   #
   # Action :create — ставит голос. Если голос уже есть — перезаписывает value.
-  # Награда TFT начисляется только когда создаётся новый Vote.
+  # Награда TFT начисляется ТОЛЬКО когда создаётся новый Vote (не при смене value).
   #
   # @param votable [Poi, Photo, PoiComment]
   # @param user [User]
@@ -112,7 +112,7 @@ class VoteService
       [ vote, :updated ]
     else
       vote = votable.votes.create!(user: user, value: value_i)
-      award_poi_vote!(user)
+      award_poi_vote!(user, vote)
       [ vote, :created ]
     end
   end
@@ -121,12 +121,18 @@ class VoteService
   #
   # Action :destroy — забирает голос (удаляет Vote юзера).
   #
+  # Анти-фарминг: отзывается ТОЛЬКО награда именно этого голоса (unclaimed),
+  # чтобы цикл «поставил → забрал → поставил» не плодил бесконечные токены.
+  # Отзыв — идемпотентный, сбой не роняет удаление самого голоса.
+  #
   # @param vote [Vote, nil] текущий голос юзера
   # @return [Symbol] :destroyed или :none (голоса не было)
   #
   def self.destroy_vote(vote)
     if vote
+      user = vote.user
       vote.destroy!
+      revoke_vote_award!(user, vote)
       :destroyed
     else
       :none
@@ -135,28 +141,51 @@ class VoteService
   private_class_method :destroy_vote
 
   #
-  # Action :change — смена голоса: удаляет старый (если был) + создаёт новый value.
-  # Награда TFT начисляется за новое создание.
+  # Action :change — смена голоса.
+  #
+  # Анти-фарминг: смена value (+1 ↔ -1) НЕ создаёт новый Vote и НЕ награждает
+  # повторно. Если голоса не было — создаётся новый с наградой. Голос уже есть —
+  # только перезаписывается value (как в :create / upsert), без отзыва/награды.
   #
   # @return [Array<Vote?, Symbol>] [новый голос, :changed]
   #
   def self.change_vote(votable, user, vote, value_i)
-    vote.destroy! if vote
-    new_vote = votable.votes.create!(user: user, value: value_i)
-    award_poi_vote!(user)
-    [ new_vote, :changed ]
+    if vote
+      vote.update!(value: value_i)
+      [ vote, :changed ]
+    else
+      new_vote = votable.votes.create!(user: user, value: value_i)
+      award_poi_vote!(user, new_vote)
+      [ new_vote, :created ]
+    end
   end
   private_class_method :change_vote
 
   #
-  # Начисляет TFT-награду за голос (poi_vote). Сбой не роняет сам голос.
+  # Начисляет TFT-награду за новый голос (poi_vote), привязывая её к голосу
+  # (служебная ссылка source). Сбой не роняет сам голос.
   #
   # @param user [User]
+  # @param vote [Vote] созданный голос — источник начисления
   #
-  def self.award_poi_vote!(user)
-    GamificationService.award!(:poi_vote, user)
+  def self.award_poi_vote!(user, vote)
+    GamificationService.award!(:poi_vote, user, source: vote)
   rescue StandardError => e
     Rails.logger.error("VoteService award failed: #{e.class} #{e.message}")
   end
   private_class_method :award_poi_vote!
+
+  #
+  # Отзывает TFT-награду конкретного голоса (poi_vote, unclaimed), если она есть.
+  # Сбой отзыва не роняет удаление голоса.
+  #
+  # @param user [User]
+  # @param vote [Vote] удалённый голос — источник начисления
+  #
+  def self.revoke_vote_award!(user, vote)
+    GamificationService.revoke!(:poi_vote, user, source: vote)
+  rescue StandardError => e
+    Rails.logger.error("VoteService revoke failed: #{e.class} #{e.message}")
+  end
+  private_class_method :revoke_vote_award!
 end

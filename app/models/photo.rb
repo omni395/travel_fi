@@ -6,8 +6,10 @@
 # Каждая фото принадлежит POI и автору (user). Хранит attachment :image
 # (ActiveStorage) и позицию (position) для сортировки/cover.
 #
-# Фото НЕ трекается PaperTrail напрямую: PoiService фиксирует изменение галереи
-# через poi.touch (создаёт версию обновления POI → VersionObserverJob → Broadcaster).
+# Photo аудируется через PaperTrail напрямую (загрузка/удаление фото — действие в
+# БД, обязано фиксироваться в versions; догма PaperTrail как единственного
+# источника правды). PoiService раньше дополнительно делал poi.touch — теперь
+# достоверный аудит галереи даёт сама версия Photo.
 #
 # @attr poi_id [Integer] ссылка на POI
 # @attr user_id [Integer] автор фото
@@ -15,6 +17,9 @@
 # @attr image [ActiveStorage::Attached] загруженное изображение
 #
 class Photo < ApplicationRecord
+  # Аудит всех изменений фото (Single Source of Truth — PaperTrail).
+  has_paper_trail
+
   # ActiveStorage — само изображение
   has_one_attached :image
 

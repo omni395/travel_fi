@@ -210,10 +210,10 @@ RSpec.describe PoiService, type: :service do
         expect(poi.poi_comments.replies_for(parent.id)).to include(reply)
       end
 
-      it 'бросает CreateError при пустом теле' do
+      it 'бросает CommentService::CreateError при пустом теле' do
         expect {
           described_class.create_comment(poi: poi, user: user, body: '')
-        }.to raise_error(PoiService::CreateError)
+        }.to raise_error(CommentService::CreateError)
       end
     end
 
@@ -226,22 +226,22 @@ RSpec.describe PoiService, type: :service do
         expect(comment.reload.body).to eq('New')
       end
 
-      it 'бросает UpdateError при невалидном теле' do
+      it 'бросает CommentService::UpdateError при невалидном теле' do
         comment = create(:poi_comment, poi: poi, user: user, body: 'Old')
 
         expect {
           described_class.update_comment(comment: comment, body: '')
-        }.to raise_error(PoiService::UpdateError)
+        }.to raise_error(CommentService::UpdateError)
       end
     end
 
     describe '.destroy_comment' do
-      it 'удаляет комментарий' do
+      it 'скрывает комментарий модерацией (hidden_at)' do
         comment = create(:poi_comment, poi: poi, user: user)
 
         described_class.destroy_comment(comment: comment)
 
-        expect(PoiComment.exists?(comment.id)).to be(false)
+        expect(comment.reload.hidden_at).to be_present
       end
     end
   end
@@ -420,8 +420,8 @@ RSpec.describe PoiService, type: :service do
     end
   end
 
-  describe 'геймификация (награды TFT из config/gamification.yml)' do
-    let(:rewards) { YAML.safe_load_file(Rails.root.join('config/gamification.yml'))['rewards'] }
+  describe 'геймификация (награды TFT из Setting.gamification_config)' do
+    let(:rewards) { Setting.gamification_config['rewards'] }
 
     describe '.create' do
       it 'НЕ начисляет poi_create при создании pending-точки (БАГ B: награда только после approve)' do
@@ -472,10 +472,14 @@ RSpec.describe PoiService, type: :service do
     end
 
     describe '.create_comment' do
-      it 'вызывает GamificationService.award!(:comment_create) для автора комментария' do
+      it 'вызывает GamificationService.award!(:comment_create, source: комментарий) для автора комментария' do
         poi = create(:poi)
 
-        expect(GamificationService).to receive(:award!).with(:comment_create, user)
+        expect(GamificationService).to receive(:award!) do |action, recipient, opts|
+          expect(action).to eq(:comment_create)
+          expect(recipient).to eq(user)
+          expect(opts[:source]).to be_a(PoiComment)
+        end
 
         described_class.create_comment(poi: poi, user: user, body: 'Nice place')
       end
@@ -497,7 +501,11 @@ RSpec.describe PoiService, type: :service do
       end
 
       it 'начисляет награду TFT автору за добавленное фото (poi_photo_add)' do
-        expect(GamificationService).to receive(:award!).with(:poi_photo_add, user)
+        expect(GamificationService).to receive(:award!) do |action, recipient, opts|
+          expect(action).to eq(:poi_photo_add)
+          expect(recipient).to eq(user)
+          expect(opts[:source]).to be_a(Photo)
+        end
 
         described_class.add_photo(poi: poi, file: uploaded_file, current_user: user)
       end

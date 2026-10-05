@@ -16,6 +16,7 @@ en:
     photo_proximity_error: "You need to be within 100 meters of this place to add a photo"
     auth_required_title: "Sign in required"
     auth_required_message: "Please sign in or create an account to view detailed information about this place."
+    details_unavailable: "Point details are unavailable for your account."
     load_more:
       one: "Show 1 more"
       few: "Show %{count} more"
@@ -338,6 +339,9 @@ en:
       moderator: "Moderator"
 
   reflexes:
+    poi:
+      comment_error_generic: "Failed to add comment."
+      comment_unauthorized: "You are not authorized to comment on this point."
     user:
       not_authorized: "You are not authorized to update this profile"
       update_error: "An error occurred while updating your profile"
@@ -453,6 +457,10 @@ en:
       poi_photo_add: "Added a photo"
       comment_create: "Added a comment"
       poi_vote: "Voted for a point"
+
+  comments:
+    cannot_reply_to_self: "You cannot reply to your own comment"
+    already_replied: "You have already replied to this comment"
 
   time:
     formats:

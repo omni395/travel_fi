@@ -152,4 +152,30 @@ RSpec.describe UserService, type: :service do
       expect(count).to eq(0)
     end
   end
+
+  describe '.suspend!' do
+    it 'переводит в :suspended, ставит suspended_until и планирует UnlockSuspendedUserJob' do
+      user = create(:user, :active)
+
+      configured_job = double('configured_job')
+      allow(configured_job).to receive(:perform_later).with(user.id)
+      allow(UnlockSuspendedUserJob).to receive(:set).with(wait: Setting.suspension_days.days).and_return(configured_job)
+
+      suspended = described_class.suspend!(user: user)
+
+      expect(suspended.status).to eq('suspended')
+      expect(suspended.suspended_until).to be_within(1.minute).of(Setting.suspension_days.days.from_now)
+    end
+  end
+
+  describe '.reactivate!' do
+    it 'возвращает в :active и очищает suspended_until' do
+      user = create(:user, :suspended, suspended_until: 1.day.from_now)
+
+      reactivated = described_class.reactivate!(user: user)
+
+      expect(reactivated.status).to eq('active')
+      expect(reactivated.suspended_until).to be_nil
+    end
+  end
 end

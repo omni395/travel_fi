@@ -29,6 +29,7 @@ class CommentService
   class CreateError < StandardError; end
   class UpdateError < StandardError; end
   class DestroyError < StandardError; end
+  class ModerationError < StandardError; end
 
   class << self
     #
@@ -43,6 +44,22 @@ class CommentService
     #
     def create_comment(commentable:, user:, body:, parent_id: nil)
       parent = parent_id.present? ? commentable.poi_comments.find(parent_id) : nil
+
+      # Анти-флуд ответов (защита на бэкенде — независимо от UI):
+      #   1. нельзя отвечать на СВОЙ собственный комментарий;
+      #   2. на один и тот же чужой комментарий юзер может оставить максимум
+      #      ОДИН ответ (нельзя нафлудить ответами, накрутив токены comment_create).
+      # Жёсткая проверка выполняется ДО создания, поэтому прямой RPC-вызов
+      # Reflex (в обход кнопки Reply) тоже блокируется.
+      if parent.present?
+        if parent.user_id == user.id
+          raise CreateError, I18n.t("comments.cannot_reply_to_self")
+        end
+
+        if user.poi_comments.where(parent_id: parent.id).exists?
+          raise CreateError, I18n.t("comments.already_replied")
+        end
+      end
 
       comment = PoiComment.new(
         poi: commentable,
@@ -63,8 +80,9 @@ class CommentService
 
         # Геймификация: награда TFT за комментарий. Сбой начисления не роняет
         # сам комментарий (иначе не сохранится пользовательский ввод).
+        # source: комментарий — для UI-резолва и точечного отзыва награды.
         begin
-          GamificationService.award!(:comment_create, user)
+          GamificationService.award!(:comment_create, user, source: comment)
         rescue StandardError => e
           Rails.logger.error("CommentService award failed: #{e.class} #{e.message}")
         end
@@ -91,19 +109,19 @@ class CommentService
     end
 
     #
-    # Удаляет комментарий (автор/admin). Ветка остаётся (root/comments других
-    # авторов сохраняются); текст удалённого комментария мягко затирается
-    # ("deleted"), чтобы не ломать согласованность дерева. Денормализованный
-    # children_count предка НЕ инкрементируется при удалении (убыль обрабатывает
-    # вызывающий/бродкаст при необходимости).
+    # «Удаляет» комментарий модерацией: фактически скрывает его (hidden_at),
+    # сохраняя ветку ответов и историю PaperTrail. Право на удаление есть только
+    # у admin/moderator (см. PoiCommentPolicy#destroy?). Нода убирается у зрителей
+    # через Broadcaster (event update + hidden → remove).
     #
     # @param comment [PoiComment] комментарий
-    # @raise [DestroyError] если ошибка
+    # @return [PoiComment] скрытый комментарий
+    # @raise [ModerationError] при ошибке валидации
     #
     def destroy_comment(comment:)
-      comment.destroy!
-    rescue ActiveRecord::RecordNotDestroyed => e
-      raise DestroyError, e.message
+      CommentModerationService.hide!(comment: comment)
+    rescue ActiveRecord::RecordInvalid => e
+      raise ModerationError, e.message
     end
 
     #

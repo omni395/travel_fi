@@ -9,7 +9,7 @@ require 'rails_helper'
 # 1. index/show — все (включая гостей)
 # 2. create — аутентифицированные в радиусе 100м (proximity через Current)
 # 3. update — автор или admin (с proximity)
-# 4. destroy — автор или admin
+# 4. destroy — только staff (admin/moderator)
 #
 RSpec.describe PoiCommentPolicy, type: :policy do
   let(:poi) { create(:poi) } # координаты: 50.4501, 30.5234
@@ -79,12 +79,13 @@ RSpec.describe PoiCommentPolicy, type: :policy do
   end
 
   describe 'destroy?' do
-    it 'разрешён автору и админу' do
-      expect(described_class.new(author, comment).destroy?).to be(true)
+    it 'разрешён admin и moderator (стафф)' do
       expect(described_class.new(admin, comment).destroy?).to be(true)
+      expect(described_class.new(moderator, comment).destroy?).to be(true)
     end
 
-    it 'запрещён чужому и гостю' do
+    it 'запрещён автору, чужому и гостю' do
+      expect(described_class.new(author, comment).destroy?).to be(false)
       expect(described_class.new(other_user, comment).destroy?).to be(false)
       expect(described_class.new(guest, comment).destroy?).to be(false)
     end

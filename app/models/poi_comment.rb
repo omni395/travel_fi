@@ -46,6 +46,16 @@ class PoiComment < ApplicationRecord
   validates :body, presence: true, length: { minimum: 2, maximum: 1000 }
   validate :parent_belongs_to_same_poi
   validate :depth_not_too_deep
+  # Анти-флуд ответов — defense-in-depth на уровне модели (независимо от сервиса):
+  # на один и тот же чужой комментарий — максимум ОДИН ответ. Это второй рубеж
+  # защиты: даже если обработчик минует CommentService, запись не сохранится
+  # (прямое Model.new/save обойдёт проверки сервиса).
+  # ПРИМЕЧАНИЕ: проверка "нельзя отвечать на свой комментарий" живёт ТОЛЬКО в
+  # CommentService.create_comment (source of truth). На уровне модели она нереализуема
+  # корректно: при флоттенинге сервис перенаправляет parent на корень ветки ДО save,
+  # и для флоттенед-ответа (на чужой reply в своей ветке) parent==свой root — модель
+  # не отличает его от прямого "ответа на свой root" и ложно блокирует легитимную ветку.
+  validate :already_replied_once
 
   # Скоупы
   scope :recent, -> { order(created_at: :desc) }
@@ -74,6 +84,16 @@ class PoiComment < ApplicationRecord
   #
   def visible?
     !hidden?
+  end
+
+  #
+  # Был ли комментарий редактирован (автором/admin) — updated_at позже created_at.
+  # Служит для пометки «(изменено)» в UI.
+  #
+  # @return [Boolean]
+  #
+  def edited?
+    updated_at.present? && created_at.present? && updated_at > created_at + 1.second
   end
 
   # Голосовал ли пользователь за этот комментарий
@@ -110,5 +130,19 @@ class PoiComment < ApplicationRecord
     return if parent.nil?
 
     errors.add(:parent, :too_deep) if parent.depth.to_i >= MAX_DEPTH
+  end
+
+  #
+  # Анти-флуд: на один и тот же чужой комментарий — максимум один ответ.
+  # Дублирует guard в CommentService.create_comment (независимый рубеж на уровне
+  # записи). Проверка "свой комментарий" — в сервисе (см. примечание у validate).
+  #
+  def already_replied_once
+    return if parent.nil?
+    return if parent.user_id == user_id
+
+    if PoiComment.where(parent_id: parent.id, user_id: user_id).where.not(id: id).exists?
+      errors.add(:parent, I18n.t("comments.already_replied"))
+    end
   end
 end

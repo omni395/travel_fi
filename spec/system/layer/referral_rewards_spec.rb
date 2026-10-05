@@ -78,12 +78,12 @@ RSpec.describe 'Реферальные начисления TFT', type: :system 
       expect(page).to have_content('15')
       wait_for_selector('[data-user-rewards]', timeout: 90)
       expect(page).to have_content(I18n.t('users.rewards_component.title'))
-      # Начисления доступны сразу (БАГ A): Available: 15, Locked: 0 — без лока.
-      # Локализованные подписи плашек балансов из rewards_component.
-      expect(page).to have_content("#{I18n.t('users.rewards_component.available_balance')}: 15 TFT")
-      expect(page).to have_content("#{I18n.t('users.rewards_component.locked_balance')}: 0 TFT")
+      # Начисления доступны сразу (БАГ A): Spendable: 15, Locked: 0 — без лока.
+      # Баланс (спендабельный/лок) + claim теперь в Users::ProfileComponent.
+      expect(page).to have_content("#{I18n.t('users.profile_component.spendable_balance')}: 15 TFT")
+      expect(page).to have_content("#{I18n.t('users.profile_component.locked_balance')}: 0 TFT")
       # Кнопка claim доступна, т.к. есть available-начисления.
-      expect(page).to have_button(I18n.t('users.rewards_component.claim_button'))
+      expect(page).to have_button(I18n.t('users.profile_component.claim_button'))
     end
 
     # ---------- Админ Б: вкладка Wallet ----------

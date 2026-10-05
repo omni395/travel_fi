@@ -180,7 +180,7 @@ class PoiService
     # ключ poi_photo_add). Начисляется ТОЛЬКО автору (current_user). Обёрнуто в rescue —
     # сбой начисления не роняет загрузку фото (по образцу award_poi_create!).
     begin
-      GamificationService.award!(:poi_photo_add, current_user)
+      GamificationService.award!(:poi_photo_add, current_user, source: photo)
     rescue StandardError => e
       Rails.logger.error("PoiService add_photo award failed: #{e.class} #{e.message}")
     end
@@ -206,30 +206,19 @@ class PoiService
     raise DestroyError, I18n.t("pois.photo_remove_failed") unless removed
 
     # Отзыв награды за фото — только если удаляем свою (награда начислялась
-    # автору при add_photo). Сбой отзыва не роняет само удаление.
-    if current_user && removed_photo_owned_by?(poi, photo_id, current_user)
+    # автору при add_photo). Точечно: source — конкретное фото (служебная ссылка),
+    # чтобы не отозвать награды за другие фото того же action_key. Сбой отзыва
+    # не роняет само удаление.
+    photo = poi.photos.find_by(id: photo_id)
+    if current_user && photo && photo.user_id == current_user.id
       begin
-        GamificationService.revoke!(:poi_photo_add, current_user)
+        GamificationService.revoke!(:poi_photo_add, current_user, source: photo)
       rescue StandardError => e
         Rails.logger.error("PoiService remove_photo revoke failed: #{e.class} #{e.message}")
       end
     end
 
     removed
-  end
-
-  #
-  # Принадлежит ли удаляемое фото указанному пользователю.
-  # Используется для отзыва награды poi_photo_add при удалении своего фото.
-  #
-  # @param poi [Poi] POI
-  # @param photo_id [Integer] id записи Photo
-  # @param user [User] пользователь
-  # @return [Boolean]
-  #
-  def self.removed_photo_owned_by?(poi, photo_id, user)
-    photo = poi.photos.find_by(id: photo_id)
-    photo&.user_id == user.id
   end
 
   #
@@ -452,7 +441,7 @@ class PoiService
     return if poi.awarded_for_approval?
 
     begin
-      GamificationService.award!(:poi_create, author)
+      GamificationService.award!(:poi_create, author, source: poi)
     rescue StandardError => e
       Rails.logger.error("PoiService award_poi_create! failed: #{e.class} #{e.message}")
     end

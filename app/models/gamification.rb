@@ -11,6 +11,9 @@
 #   Gamification.badges  — только бейджи
 #
 class Gamification < ApplicationRecord
+  # Аудит всех изменений (выдача/снятие баллов и бейджей).
+  has_paper_trail
+
   belongs_to :user
 
   scope :scores, -> { where(event_type: "score") }

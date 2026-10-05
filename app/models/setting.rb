@@ -74,6 +74,7 @@ class Setting < ApplicationRecord
     },
     "pool" => {
       "lock_days" => 7,
+      "suspension_days" => 3,
       "warning_balance" => 10_000_000,
       "critical_balance" => 1_000_000
     },
@@ -107,5 +108,17 @@ class Setting < ApplicationRecord
   #
   def self.global_threshold
     global_settings.community_moderation_threshold || 10
+  end
+
+  #
+  # Срок пенализации (suspension) в днях.
+  # Берётся из секции pool глобальной конфигурации геймификации
+  # (настраивается админом без редеплоя); дефолт — 3 дня.
+  #
+  # @return [Integer]
+  #
+  def self.suspension_days
+    gamification_config.dig("pool", "suspension_days") ||
+      GAMIFICATION_DEFAULTS.dig("pool", "suspension_days") || 3
   end
 end
