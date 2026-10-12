@@ -67,6 +67,17 @@ class Comments::CommentsComponent < ApplicationComponent
   end
 
   #
+  # Проверяет, оставил ли пользователь корневой комментарий к этой точке.
+  #
+  # @return [Boolean]
+  #
+  def already_commented?
+    return false if current_user.nil?
+
+    commentable.poi_comments.where(user_id: current_user.id, parent_id: nil).exists?
+  end
+
+  #
   # Причина, блокирующая создание комментария (сейчас только suspended).
   # Используется для плашки «почему нельзя оставить комментарий» и даты снятия.
   #

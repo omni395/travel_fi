@@ -78,6 +78,14 @@ Rails.application.routes.draw do
       resources :photos, only: [ :create, :destroy ], controller: "poi/photos"
     end
 
+    post "wallet/challenge", to: "wallets#challenge", as: :wallet_challenge
+    post "wallet/connect", to: "wallets#connect", as: :wallet_connect
+    delete "wallet/disconnect", to: "wallets#disconnect", as: :wallet_disconnect
+    post "wallet/claim-request", to: "wallets#claim_request", as: :wallet_claim_request
+    post "wallet/claim", to: "wallets#claim", as: :wallet_claim
+    post "wallet/cashier-request", to: "wallets#cashier_request", as: :wallet_cashier_request
+    post "wallet/cashier", to: "wallets#cashier", as: :wallet_cashier
+
     # User profile routes - FriendlyId slug или числовой id
     # ВАЖНО: эти маршруты должны быть ПОСЛЕ devise_for и admin namespace,
     # чтобы Devise-пути (/sign_in, /sign_up) и админка имели приоритет

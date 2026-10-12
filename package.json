@@ -2,8 +2,10 @@
   "name": "app",
   "private": true,
   "devDependencies": {
+    "@openzeppelin/contracts": "5.4.0",
     "chokidar": "^5.0.0",
-    "esbuild": "^0.28.0"
+    "esbuild": "^0.28.0",
+    "solc": "0.8.30"
   },
   "scripts": {
     "build": "rm -rf app/assets/builds/* && node esbuild.config.mjs",
@@ -15,6 +17,7 @@
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
     "@tailwindcss/cli": "^4.3.3",
+    "@walletconnect/ethereum-provider": "^2.26.0",
     "cable_ready": "^5.0.6",
     "esbuild-rails": "^1.0.3",
     "ol": "^10.9.0",

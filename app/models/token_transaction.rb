@@ -5,7 +5,7 @@
 #
 # Каждое начисление (UserReward, off-chain леджер) фиксируется записью с
 # direction = credit в единой транзакции. Поле tx_hash остаётся пустым до
-# on-chain отправки через релей (EIP-2771); после отправки сюда записывается
+# on-chain отправки операторским relay; после отправки сюда записывается
 # хэш транзакции в сети, по которому строится ссылка на explorer.
 #
 # direction: credit (приход) / debit (расход — будущий Token Spend)
@@ -56,7 +56,7 @@ class TokenTransaction < ApplicationRecord
   scope :unclaimed, -> { where(claimed: false) }
 
   # Забранные on-chain начисления (claimed = true) — фактический баланс TFT
-  # пользователя (токены уже отправлены relay-джобом на custodial-кошелёк).
+  # пользователя (токены уже отправлены relay-джобом на кошелёк-получатель).
   #
   # @return [ActiveRecord::Relation<TokenTransaction>]
   #

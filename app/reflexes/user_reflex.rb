@@ -133,11 +133,11 @@ class UserReflex < ApplicationReflex
   # @param message [String] сообщение об ошибке
   #
   private def send_error(message)
-    cable_ready["user_#{current_user.id}"].dispatch_event(
-      name: "usersError",
-      detail: { message: message }
+    ToastBroadcaster.call(
+      user_id: current_user.id,
+      message: message,
+      type: :error
     )
-    cable_ready.broadcast
   end
 
   #
@@ -147,10 +147,10 @@ class UserReflex < ApplicationReflex
   # @param message [String] опциональное сообщение об успехе
   #
   private def send_success(message = nil)
-    cable_ready["user_#{current_user.id}"].dispatch_event(
-      name: "usersSuccess",
-      detail: { message: message || I18n.t("reflexes.user.profile_updated") }
+    ToastBroadcaster.call(
+      user_id: current_user.id,
+      message: message || I18n.t("reflexes.user.profile_updated"),
+      type: :success
     )
-    cable_ready.broadcast
   end
 end

@@ -31,6 +31,16 @@ en:
   application:
     not_authorized: "You are not authorized to perform this action."
 
+  wallets:
+    invalid_address: "Enter a valid wallet address."
+    challenge_expired: "The wallet verification request expired. Please try again."
+    signature_invalid: "Wallet signature is invalid. Please try again."
+    connected: "Wallet connected."
+    disconnected: "Wallet disconnected."
+    address_in_use: "This wallet is already connected to another account."
+    claim_unavailable: "No eligible rewards are available for a sponsored claim."
+    cashier_unavailable: "This sponsored cashier operation is unavailable."
+
   pages:
     index:
       title: "Full Component Audit"
@@ -256,6 +266,11 @@ en:
     layout:
       loading: "Loading..."
       solid_queue_dashboard: "SolidQueue"
+      dashboard: "Dashboard"
+      users: "Users"
+      poi_categories: "POI Categories"
+      pois: "POIs"
+      settings: "Settings"
     title: "Admin Panel"
     back_to_site: "Back to Site"
     profile: "Profile"
@@ -461,6 +476,7 @@ en:
   comments:
     cannot_reply_to_self: "You cannot reply to your own comment"
     already_replied: "You have already replied to this comment"
+    already_commented_on_poi: "You have already commented on this place"
 
   time:
     formats:

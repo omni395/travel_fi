@@ -127,6 +127,53 @@ module Crypto
         eip55_checksum(digest[-20, 20].unpack1("H*"))
       end
 
+      #
+      # Восстанавливает адрес подписанта EIP-191 personal_sign.
+      #
+      # @param message [String] подписанное сообщение
+      # @param signature [String] подпись 65 байт (hex)
+      # @return [String] EIP-55 адрес подписанта
+      #
+      def recover_personal_signer(message:, signature:)
+        digest = keccak256_bytes("\x19Ethereum Signed Message:\n#{message.bytesize}#{message}".b).unpack1("H*")
+        recover_digest_signer(digest_hex: digest, signature: signature)
+      end
+
+      def recover_digest_signer(digest_hex:, signature:)
+        digest = digest_hex.to_s.sub(/\A0x/, "")
+        raise ArgumentError, "Invalid digest" unless digest.match?(/\A[0-9a-fA-F]{64}\z/)
+
+        hex = signature.to_s.sub(/\A0x/, "")
+        raise ArgumentError, "Invalid Ethereum signature" unless hex.match?(/\A[0-9a-fA-F]{130}\z/)
+
+        r = hex[0, 64].to_i(16)
+        s = hex[64, 64].to_i(16)
+        recovery_id = hex[128, 2].to_i(16)
+        recovery_id -= 27 if recovery_id >= 27
+        n = SECP256K1_ORDER
+        unless [ 0, 1 ].include?(recovery_id) && r.positive? && r < n && s.positive? && s <= n / 2
+          raise ArgumentError, "Invalid Ethereum signature"
+        end
+
+        p = 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFC2F
+        x = r
+        y_squared = (x.pow(3, p) + 7) % p
+        y = y_squared.pow((p + 1) / 4, p)
+        raise ArgumentError, "Invalid Ethereum signature" unless y.pow(2, p) == y_squared
+
+        y = p - y if y.odd? != recovery_id.odd?
+        group = OpenSSL::PKey::EC::Group.new("secp256k1")
+        point_bytes = [ "#{y.odd? ? '03' : '02'}#{x.to_s(16).rjust(64, '0')}" ].pack("H*")
+        point = OpenSSL::PKey::EC::Point.new(group, point_bytes)
+        inverse_r = r.pow(n - 2, n)
+        public_key = point.mul(OpenSSL::BN.new(((s * inverse_r) % n).to_s))
+          .add(group.generator.mul(OpenSSL::BN.new(((-digest.to_i(16) * inverse_r) % n).to_s)))
+
+        address_from_public_key(public_key.to_octet_string(:uncompressed))
+      rescue OpenSSL::PKey::EC::Point::Error
+        raise ArgumentError, "Invalid Ethereum signature"
+      end
+
       # ===== Подпись EVM-транзакций (EIP-155) =====
 
       #
@@ -157,6 +204,14 @@ module Crypto
         raw = rlp_encode([ nonce, gas_price, gas, to_bytes, value, data_bytes, v, r, s ])
 
         { raw: raw.unpack1("H*"), tx_hash: "0x#{keccak256(raw)}" }
+      end
+
+      def sign_digest(private_key_hex:, digest_hex:)
+        digest = digest_hex.to_s.sub(/\A0x/, "")
+        raise ArgumentError, "Invalid digest" unless digest.match?(/\A[0-9a-fA-F]{64}\z/)
+
+        r, s, parity = ecdsa_sign(digest, private_key_hex.to_i(16))
+        "0x#{r.to_s(16).rjust(64, '0')}#{s.to_s(16).rjust(64, '0')}#{(27 + parity).to_s(16).rjust(2, '0')}"
       end
 
       #
@@ -242,6 +297,40 @@ module Crypto
       #
       def encode_reward_data(to, amount_wei)
         "0x#{function_selector('sendReward(address,uint256)')}#{encode_address(to)}#{encode_uint256(amount_wei)}"
+      end
+
+      def encode_reward_claim_data(amount_wei, nonce, deadline, operator_signature)
+        signature_bytes = hex_to_bytes(operator_signature).unpack1("H*")
+        tail = "#{encode_uint256(signature_bytes.length / 2)}#{signature_bytes.ljust(((signature_bytes.length + 63) / 64) * 64, '0')}"
+        head = [
+          encode_uint256(amount_wei),
+          encode_uint256(nonce),
+          encode_uint256(deadline),
+          encode_uint256(128)
+        ].join
+
+        "0x#{function_selector('claimReward(uint256,uint256,uint256,bytes)')}#{head}#{tail}"
+      end
+
+      def encode_forwarder_execute_data(request:, signature:)
+        request_data = hex_to_bytes(request.fetch("data")).unpack1("H*")
+        signature_data = hex_to_bytes(signature).unpack1("H*")
+        request_tail = "#{encode_uint256(request_data.length / 2)}#{request_data.ljust(((request_data.length + 63) / 64) * 64, '0')}"
+        signature_tail = "#{encode_uint256(signature_data.length / 2)}#{signature_data.ljust(((signature_data.length + 63) / 64) * 64, '0')}"
+        request_offset = 7 * 32
+        signature_offset = request_offset + (request_tail.length / 2)
+        head = [
+          encode_address(request.fetch("from")),
+          encode_address(request.fetch("to")),
+          encode_uint256(request.fetch("value")),
+          encode_uint256(request.fetch("gas")),
+          encode_uint256(request.fetch("deadline")),
+          encode_uint256(request_offset),
+          encode_uint256(signature_offset)
+        ].join
+
+        tuple = "#{head}#{request_tail}#{signature_tail}"
+        "0x#{function_selector('execute((address,address,uint256,uint256,uint48,bytes,bytes))')}#{encode_uint256(32)}#{tuple}"
       end
 
       #

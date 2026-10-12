@@ -25,32 +25,32 @@
 
         <%# Email %>
         <div class="field-group mb-4">
-          <%= form.label :email, class: "field-label" %>
-          <%= form.email_field :email, autocomplete: "email", class: "field-input" %>
+          <%= form.label :email, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.email_field :email, autocomplete: "email", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500" %>
         </div>
 
         <%# Name %>
         <div class="field-group mb-4">
-          <%= form.label :name, class: "field-label" %>
-          <%= form.text_field :name, autocomplete: "off", class: "field-input" %>
+          <%= form.label :name, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.text_field :name, autocomplete: "off", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500" %>
         </div>
 
         <%# Password (leave blank if you don't want to change it) %>
         <div class="field-group mb-4">
-          <%= form.label :password, class: "field-label" %>
-          <%= form.password_field :password, autocomplete: "new-password", class: "field-input", placeholder: t('devise.registrations.edit.password_placeholder', default: 'Leave blank if you don\'t want to change it') %>
+          <%= form.label :password, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.password_field :password, autocomplete: "new-password", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.registrations.edit.password_placeholder', default: 'Leave blank if you don\'t want to change it') %>
         </div>
 
         <%# Password Confirmation %>
         <div class="field-group mb-4">
-          <%= form.label :password_confirmation, class: "field-label" %>
-          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "field-input" %>
+          <%= form.label :password_confirmation, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500" %>
         </div>
 
         <%# Current Password (needed to confirm changes) %>
         <div class="field-group mb-4">
-          <%= form.label :current_password, class: "field-label" %>
-          <%= form.password_field :current_password, autocomplete: "current-password", class: "field-input", placeholder: t('devise.registrations.edit.current_password_placeholder', default: 'We need your current password to confirm your changes') %>
+          <%= form.label :current_password, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.password_field :current_password, autocomplete: "current-password", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.registrations.edit.current_password_placeholder', default: 'We need your current password to confirm your changes') %>
         </div>
 
         <%# Update Button %>

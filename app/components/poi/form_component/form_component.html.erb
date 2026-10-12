@@ -8,10 +8,10 @@
   <%# ОКНО МОДАЛКИ — основание окна живёт в компоненте (не в index) %>
   <%# max-h учитывает навбар (h-16 = 64px) + поля p-4 центровочного контейнера
       (top-16/inset-x): 100vh - 8rem. Иначе форма 90vh наезжает под навбар. %>
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[calc(100vh-8rem)] overflow-y-auto relative">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[calc(100dvh-5rem)] overflow-y-auto relative min-w-0">
     <%= form_with model: edit_mode? ? poi : Poi.new, url: form_url, method: form_method, local: true,
-                  html: { class: "p-6", data: { action: "submit->poi--form-component#handleSubmit" } } do |f| %>
-    <div class="flex items-center justify-between mb-6">
+                  html: { class: "p-4 sm:p-6", data: { action: "submit->poi--form-component#handleSubmit" } } do |f| %>
+    <div class="flex items-center justify-between gap-2 mb-6">
       <h3 class="text-lg font-semibold text-gray-900">
         <% if edit_mode? %>
           <i class="mdi mdi-pencil text-emerald-500 mr-2"></i>
@@ -28,7 +28,7 @@
     </div>
 
     <%# Row 1: Name + Category %>
-    <div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
       <div>
         <%= f.label :name, class: "block text-sm font-medium text-gray-700 mb-1" do %>
           <%= t(".name") %><sup class="text-red-500 ml-0.5">*</sup>
@@ -111,7 +111,7 @@
     </div>
 
     <%# Row 4: City + Country + Zip %>
-    <div class="grid grid-cols-[1fr_1fr_100px] gap-4 mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-[1fr_1fr_100px] gap-4 mb-4">
       <div>
         <%= f.label :city, t(".city"), class: "block text-sm font-medium text-gray-700 mb-1" %>
         <%= f.text_field :city,
@@ -136,7 +136,7 @@
     </div>
 
     <%# Row 5: Phone + Website %>
-    <div class="grid grid-cols-2 gap-4 mb-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
       <div>
         <%= f.label :phone, t(".phone"), class: "block text-sm font-medium text-gray-700 mb-1" %>
         <%= f.text_field :phone,

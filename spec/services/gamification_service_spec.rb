@@ -69,6 +69,21 @@ RSpec.describe GamificationService, type: :service do
         .to change { user.reload.user_rewards.count }.by(1)
         .and change { TokenTransaction.count }.by(1)
     end
+
+    it 'направляет новое начисление на внешний кошелёк, не меняя основной custodial' do
+      custodial_wallet = WalletService.create_hidden_wallet(user: user)
+      external_wallet = user.wallets.create!(
+        address: "0x#{'ef' * 20}",
+        chain_id: '84532',
+        kind: :external
+      )
+      allow(TokenTransactionRelayJob).to receive(:perform_later)
+
+      described_class.award!(:registration, user)
+
+      expect(user.reload.wallet).to eq(custodial_wallet)
+      expect(user.token_transactions.last.wallet).to eq(external_wallet)
+    end
   end
 
   describe 'лок-модель (instant vs vesting)' do

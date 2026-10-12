@@ -116,4 +116,12 @@ class Users::ProfileComponent < ApplicationComponent
   def can_edit_profile?
     helpers.user_signed_in? && (helpers.current_user == user || helpers.policy(user).edit?)
   end
+
+  def connected_external_wallet
+    user.wallets.external.first
+  end
+
+  def can_manage_wallet?
+    helpers.user_signed_in? && helpers.current_user == user
+  end
 end

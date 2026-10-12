@@ -4,7 +4,7 @@
 # GamificationService — награды токенами TFT и репутационные бейджи.
 #
 # ТОКЕННАЯ МОДЕЛЬ: начисления идут в user_rewards (off-chain леджер, TFT),
-# а не в «баллы». Реальная отправка ERC-20 на custodial-кошелёк — через
+# а не в «баллы». Реальная отправка ERC-20 на кошелёк-получатель — через
 # TokenTransactionService.relay! (контракты задеплоены, см. .env).
 #
 # Конфиг: Setting.gamification_config (rewards — токены, badges — достижения);
@@ -117,7 +117,7 @@ class GamificationService
           amount: amount,
           action_key: action_key,
           log: log,
-          wallet: user.wallet,
+          wallet: WalletService.reward_wallet(user: user),
           source: source
         )
 
@@ -128,7 +128,7 @@ class GamificationService
 
     #
     # Создаёт запись журнала движения токенов (TokenTransaction) для начисления.
-    # tx_hash пустой до on-chain отправки через релей (EIP-2771); статус pending.
+    # tx_hash пустой до on-chain отправки операторским relay; статус pending.
     #
     # Лок-модель:
     #   - мгновенные начисления (registration / referral_*) → claimed=false, но

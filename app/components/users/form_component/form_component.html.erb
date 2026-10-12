@@ -42,7 +42,7 @@
         <!-- Name Field -->
         <div class="field-group">
           <label class="flex justify-between">
-            <span class="field-label"><%= t(".name") %></span>
+            <span class="mb-1.5 block text-sm font-medium text-gray-700"><%= t(".name") %></span>
             <span class="text-error text-xs">*</span>
           </label>
           <input
@@ -54,7 +54,7 @@
             minlength="2"
             maxlength="100"
             data-users--form-component-target="nameInput"
-            class="field-input"
+            class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500"
             placeholder="<%= t(".name_placeholder") %>"
             autocomplete="name">
           <p class="text-xs text-gray-500 mt-1"><%= t(".name_hint") %></p>
@@ -62,13 +62,13 @@
 
         <!-- Email Field (Read-only for security) -->
         <div class="field-group">
-          <label class="field-label"><%= t(".email") %></label>
+          <label class="mb-1.5 block text-sm font-medium text-gray-700"><%= t(".email") %></label>
           <input
             type="email"
             id="user_email"
             value="<%= @user.email %>"
             disabled
-            class="field-input bg-gray-100 cursor-not-allowed"
+            class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 bg-gray-100 cursor-not-allowed"
             autocomplete="email">
           <p class="text-xs text-gray-500 mt-1"><%= t(".email_cannot_change") %></p>
         </div>
@@ -76,7 +76,7 @@
         <!-- Avatar Upload Field -->
         <div class="field-group">
           <label class="flex justify-between">
-            <span class="field-label"><%= t(".avatar") %></span>
+            <span class="mb-1.5 block text-sm font-medium text-gray-700"><%= t(".avatar") %></span>
             <span class="text-xs text-gray-500">(JPG, PNG, WebP)</span>
           </label>
 

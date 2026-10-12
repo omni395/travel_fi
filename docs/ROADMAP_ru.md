@@ -47,7 +47,7 @@ Travel Fi
 
 ### 2.2 POI Map (карта + список + модалка)
 **Статус:** 🟡 частично — ядро работает (OpenLayers 10 + кластеризация, PostGIS-фильтры, модалка POI с табами, галерея фото, threaded-комментарии live, OSM-импорт включая `.pbf`, динамические поля категорий, награды TFT, live-карта).
-**В планах / долги (детали → [`docs/MILESTONES_ru.md`](MILESTONES_ru.md) M1/M3):** Suggested Edits + консенсус 100м, Quick Toggles, «Сообщить об ошибке», live-табы, OSRM-маршрут, PWA-офлайн. `PoiComment` live для всех (сейчас только автор). Фильтры. Компонент. Разобраться.
+**В планах / долги (детали → [`docs/MILESTONES_ru.md`](MILESTONES_ru.md) M1/M3):** Suggested Edits + консенсус 100м, Quick Toggles, «Сообщить об ошибке», live-табы, OSRM-маршрут, PWA-офлайн. Фильтры. Компонент. Разобраться.
 
 ### 2.3 User Profile (профиль пользователя)
 **Статус:** 🟡 частично — отображение профиля, история начислений TFT, блок TFT Balance (доступно/заблокировано + claim), правка имени/аватара, Pundit, автоматика `inactive`.
@@ -92,7 +92,7 @@ Travel Fi
 **В планах:** Lookbook-превью для `Admin::Comments::*`, A/B-спеки для live-комментариев.
 
 ### 3.8 Contracts (Contract Mgmt)
-**Статус:** 🔴 в планах — админ-раздел управления **ВСЕМИ ТРЕМЯ контрактами** (TravelFiToken / TravelFiRewards / TravelFiCrowdsale). Сервисный слой (`ContractService`) есть; UI отсутствует. → [`docs/MILESTONES_ru.md`](MILESTONES_ru.md) M2.
+**Статус:** 🔴 в планах — админ-раздел управления **тремя продуктовыми контрактами** (TravelFiToken / TravelFiRewards / TravelFiCrowdsale). Отдельный OpenZeppelin ERC-2771-forwarder — инфраструктура релея, а не продуктовый контракт для управления в этом UI. Сервисный слой (`ContractService`) есть; UI отсутствует. → [`docs/MILESTONES_ru.md`](MILESTONES_ru.md) M2.
 
 ---
 
@@ -103,7 +103,7 @@ Travel Fi
 
 ### 4.2 Gamification & Web3
 **Статус:** 🟡 — токен-модель работает (off-chain `UserReward` + журнал `TokenTransaction`, on-chain relay, claim); 6 бейджей. **Decimals:** токен = 18, jetton в TON = 9 (мост маппит 9↔18, без переделки контрактов).
-**В планах:** уровни/бейджи по вкладу юзера (→ M1), on-chain `balanceOf` как источник правды TFT-баланса (→ M1), два кошелька (custodial/external; external = MetaMask/hot-wallet; WalletConnect — на будущее) + EIP-2771 (→ M2), Token Spend (→ M2), Contract Mgmt UI (→ M2), распределённое хранение ключей / Vault (поиск бесплатного сервиса, → M2).
+**В работе:** подключение внешнего кошелька доступно в профиле через injected-кошельки и WalletConnect. Отдельный OpenZeppelin v5 `TravelFiForwarder` и backend EIP-712 relay-flow добавлены. До использования контракты Rewards и Cashier должны предоставлять `isTrustedForwarder(address)`, чтобы форвардер мог проверять целевые контракты; затем нужно развернуть/настроить форвардер и три продуктовых контракта и проверить доверие целей. Ещё нужны автоматические тесты и UI кассира. Principal ETH-покупки не спонсируется; для покупки за USDT нужен allowance, если этот USDT не поддерживает authorization. Token Spend (→ M2), Contract Mgmt UI (→ M2) и распределённое хранение ключей / Vault (поиск бесплатного сервиса, → M2) остаются в планах. Прежний операторский `sendReward` сохраняется для начислений без пользовательского Claim.
 
 ### 4.3 Realtime-инфраструктура
 **Статус:** ✅ — StimulusReflex + CableReady + SolidCable, каналы `UserChannel`/`AdminChannel`, SolidQueue + SolidQueueDashboard, SolidCache (инфраструктура).

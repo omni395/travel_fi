@@ -4,11 +4,11 @@
 # app/views/devise/registrations/new.html.erb - форма регистрации
 #
 # Единый стиль с primary цветовой схемой.
-# Использует field-input, field-label, btn-ui классы.
+# Использует Tailwind utility classes и общий btn-ui компонент.
 # Аватар — кликабельный с badge-индикатором.
 # %>
 
-<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
+<div class="min-h-[calc(100dvh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
   <div class="w-full max-w-md">
     <%# Header %>
     <div class="text-center mb-2">
@@ -18,7 +18,7 @@
     </div>
 
     <%# Sign Up Form %>
-    <div id="devise_registration_form" class="bg-white rounded-xl shadow-lg p-6 mb-2">
+    <div id="devise_registration_form" class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-2">
       <%= form_with(model: resource, as: resource_name, url: registration_path(resource_name), html: { multipart: true }) do |form| %>
         <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
         <% if resource.errors.any? %>
@@ -33,18 +33,18 @@
 
         <%# Email %>
         <div class="field-group mb-4">
-          <%= form.label :email, class: "field-label" %>
-          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "field-input", placeholder: t('devise.registrations.new.email_placeholder') %>
+          <%= form.label :email, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.registrations.new.email_placeholder') %>
         </div>
 
         <%# Name + Avatar (stack на mobile, строка на desktop) %>
         <div class="flex flex-col sm:flex-row gap-3 mb-4">
           <div class="field-group flex-1">
-            <%= form.label :name, class: "field-label" %>
-            <%= form.text_field :name, value: "", autocomplete: "off", class: "field-input", placeholder: t('devise.registrations.new.name_placeholder') %>
+            <%= form.label :name, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+            <%= form.text_field :name, value: "", autocomplete: "off", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.registrations.new.name_placeholder') %>
           </div>
           <div class="field-group sm:w-auto shrink-0">
-            <%= form.label :avatar, class: "field-label" %>
+            <%= form.label :avatar, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
             <%# Одна кнопка — на телефоне системный выбор (галерея + «Сделать фото» внутри пикера) %>
             <%= form.file_field :avatar, id: "user_avatar_input", accept: "image/*", class: "hidden" %>
             <%= render Ui::BtnComponent.new(color: :secondary, size: :md, html: { type: "button", onclick: "document.getElementById('user_avatar_input').click()" }) do %>
@@ -57,22 +57,22 @@
         <%# Password + Confirmation (stack на mobile, строка на desktop) %>
         <div class="flex flex-col sm:flex-row gap-3 mb-4">
           <div class="field-group flex-1">
-            <%= form.label :password, class: "field-label" %>
-            <%= form.password_field :password, autocomplete: "new-password", class: "field-input", placeholder: t('devise.registrations.new.password_placeholder') %>
+            <%= form.label :password, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+            <%= form.password_field :password, autocomplete: "new-password", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.registrations.new.password_placeholder') %>
           </div>
           <div class="field-group flex-1">
-            <%= form.label :password_confirmation, class: "field-label" %>
-            <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "field-input", placeholder: t('devise.registrations.new.password_placeholder') %>
+            <%= form.label :password_confirmation, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+            <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.registrations.new.password_placeholder') %>
           </div>
         </div>
 
         <%# Referral Code (открытое поле, предзаполняется из params[:ref]) %>
         <div class="field-group mb-4">
-          <%= form.label :referral_code_input, class: "field-label" %>
+          <%= form.label :referral_code_input, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
           <%= form.text_field :referral_code_input,
                 value: params[:ref],
                 autocomplete: "off",
-                class: "field-input",
+                class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500",
                 placeholder: t('devise.registrations.new.referral_placeholder') %>
           <p class="text-xs text-gray-500 mt-1">
             <!-- mdi: information-outline -->

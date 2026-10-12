@@ -25,15 +25,15 @@
 
         <%# New Password %>
         <div class="field-group mb-4">
-          <%= form.label :password, class: "field-label" %>
-          <%= form.password_field :password, autocomplete: "new-password", class: "field-input", placeholder: t('devise.passwords.edit.password_hint', default: 'At least 8 characters') %>
+          <%= form.label :password, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.password_field :password, autocomplete: "new-password", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.passwords.edit.password_hint', default: 'At least 8 characters') %>
           <p class="text-xs text-gray-500 mt-1"><%= t('devise.passwords.edit.password_requirements', default: 'Minimum 8 characters required') %></p>
         </div>
 
         <%# Confirm Password %>
         <div class="field-group mb-4">
-          <%= form.label :password_confirmation, class: "field-label" %>
-          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "field-input" %>
+          <%= form.label :password_confirmation, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.password_field :password_confirmation, autocomplete: "new-password", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500" %>
         </div>
 
         <%# Submit Button %>

@@ -59,13 +59,4 @@ class PoiCommentNotification < ApplicationNotification
       poi_id: params[:poi].id
     }
   end
-
-  #
-  # Персональный стрим получателя.
-  #
-  # @return [String]
-  #
-  def user_stream
-    "user_#{recipient.id}"
-  end
 end

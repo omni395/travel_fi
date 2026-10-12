@@ -12,7 +12,7 @@ require 'rails_helper'
 #   3. update — inner_html на [data-comment-content] конкретного комментария
 #      (БЕЗ самовложения обёртки [data-comment-id]);
 #   4. destroy — remove ноды [data-comment-id='X'] у публичных зрителей;
-#   5. dispatch_event родителю-автору ветки (poi:comment-reply).
+#   5. create скрывает форму автора точечным inner_html в личном потоке.
 #
 RSpec.describe PoiCommentBroadcaster, type: :service do
   let(:poi) { create(:poi) }
@@ -26,6 +26,8 @@ RSpec.describe PoiCommentBroadcaster, type: :service do
     allow_any_instance_of(described_class).to receive(:cable_ready).and_return(cable_mock)
     allow(cable_mock).to receive(:[]).with('pois_map').and_return(pois_map_mock)
     allow(cable_mock).to receive(:[]).with("user_#{parent_author.id}").and_return(cable_mock)
+    allow(cable_mock).to receive(:[]).with("user_#{comment.user_id}").and_return(cable_mock)
+    allow(cable_mock).to receive(:inner_html)
     allow(cable_mock).to receive(:dispatch_event)
     allow(cable_mock).to receive(:broadcast)
     allow(pois_map_mock).to receive(:insert_adjacent_html)
@@ -50,9 +52,36 @@ RSpec.describe PoiCommentBroadcaster, type: :service do
 
       broadcaster.broadcast
     end
+
+    it 'очищает форму автора через inner_html в личном потоке' do
+      broadcaster = described_class.new(comment: comment, event: :create)
+      expect(cable_mock).to receive(:[]).with("user_#{comment.user_id}").and_return(cable_mock)
+      expect(cable_mock).to receive(:inner_html).with(
+        selector: "[data-commentable-type='Poi'][data-commentable-id='#{comment.poi_id}'] [data-comments--comments-component-target='rootForm']",
+        html: ""
+      )
+
+      broadcaster.broadcast
+    end
   end
 
   context 'create ответа (с родителем)' do
+    it 'очищает авторские элементы ответа в личном потоке' do
+      broadcaster = described_class.new(comment: comment, event: :create)
+      root_selector = "[data-comment-id='#{comment.root_id || comment.parent_id}']"
+
+      expect(cable_mock).to receive(:inner_html).with(
+        selector: "#{root_selector} [data-comments--comment-component-target='replyButton']",
+        html: ""
+      )
+      expect(cable_mock).to receive(:inner_html).with(
+        selector: "#{root_selector} [data-comments--comment-component-target='replyForm']",
+        html: ""
+      )
+
+      broadcaster.broadcast
+    end
+
     it 'insert_adjacent_html в [data-comment-children] родителя ВМЕСТО top-level списка' do
       broadcaster = described_class.new(comment: comment, event: :create)
 

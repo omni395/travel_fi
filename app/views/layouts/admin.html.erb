@@ -41,7 +41,7 @@
     <%= javascript_include_tag "admin", type: "module" %>
   </head>
 
-  <body class="flex flex-col h-screen overflow-hidden bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable" data-current-user-id="<%= current_user&.id %>" data-user-role="<%= current_user&.admin? ? 'admin' : (current_user&.moderator? ? 'moderator' : '') %>">
+  <body class="flex flex-col h-dvh overflow-hidden bg-linear-to-br from-primary/5 to-secondary/10" data-controller="cable" data-current-user-id="<%= current_user&.id %>" data-user-role="<%= current_user&.admin? ? 'admin' : (current_user&.moderator? ? 'moderator' : '') %>">
 
     <%# Полноэкранный спиннер загрузки (Ui::SpinnerComponent). Появляется ПЕРВЫМ,
         скрывается после полной загрузки страницы. %>
@@ -59,25 +59,25 @@
         <div class="sticky top-0 bg-white border-b border-gray-200 px-4 py-3 z-10">
           <div class="flex items-center gap-2">
             <i class="mdi mdi-view-dashboard text-primary text-xl"></i>
-            <h2 class="text-md font-semibold text-gray-900">Admin Panel</h2>
+            <h2 class="text-md font-semibold text-gray-900"><%= t("admin.title") %></h2>
           </div>
         </div>
         <nav class="py-2">
           <%= link_to admin_root_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
             <i class="mdi mdi-view-dashboard text-xl mr-3 shrink-0"></i>
-            <span class="text-sm whitespace-nowrap">Dashboard</span>
+            <span class="text-sm whitespace-nowrap"><%= t("admin.layout.dashboard") %></span>
           <% end %>
           <%= link_to admin_users_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
             <i class="mdi mdi-account-multiple text-xl mr-3 shrink-0"></i>
-            <span class="text-sm whitespace-nowrap">Users</span>
+            <span class="text-sm whitespace-nowrap"><%= t("admin.layout.users") %></span>
           <% end %>
           <%= link_to admin_poi_categories_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
             <i class="mdi mdi-shape-outline text-xl mr-3 shrink-0"></i>
-            <span class="text-sm whitespace-nowrap">POI Categories</span>
+            <span class="text-sm whitespace-nowrap"><%= t("admin.layout.poi_categories") %></span>
           <% end %>
           <%= link_to admin_pois_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
             <i class="mdi mdi-map-marker-multiple text-xl mr-3 shrink-0"></i>
-            <span class="text-sm whitespace-nowrap">POIs</span>
+            <span class="text-sm whitespace-nowrap"><%= t("admin.layout.pois") %></span>
           <% end %>
           <%= link_to solid_queue_dashboard.root_path, target: "_blank", rel: "noopener", class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
             <%# MDI: tray-full %>
@@ -86,13 +86,13 @@
           <% end %>
           <%= link_to admin_settings_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-700 hover:bg-gray-100 hover:text-gray-900 transition-colors" do %>
             <i class="mdi mdi-cog text-xl mr-3 shrink-0"></i>
-            <span class="text-sm whitespace-nowrap">Settings</span>
+            <span class="text-sm whitespace-nowrap"><%= t("admin.layout.settings") %></span>
           <% end %>
         </nav>
         <div class="absolute bottom-0 left-0 right-0 border-t border-gray-200">
           <%= link_to root_path(locale: I18n.locale), class: "flex items-center h-11 px-4 text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors" do %>
             <i class="mdi mdi-home text-xl mr-3 shrink-0"></i>
-            <span class="text-sm whitespace-nowrap">Back to Site</span>
+            <span class="text-sm whitespace-nowrap"><%= t("admin.back_to_site") %></span>
           <% end %>
         </div>
       <% end %>

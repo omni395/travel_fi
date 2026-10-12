@@ -73,9 +73,9 @@ RSpec.describe VoteBroadcaster, type: :service do
   end
 
   describe 'PoiComment' do
-    it 'шлёт text_content счётчиков в личный стрим автора user_<author_id>' do
+    it 'шлёт text_content счётчиков в общий стрим pois_map' do
       b = build_broadcaster(comment)
-      expect(cable_mock).to receive(:[]).with("user_#{author.id}").and_return(cable_mock)
+      expect(cable_mock).to receive(:[]).with('pois_map').and_return(cable_mock)
       selectors = zone_selectors('poi_comment', comment.id)
       expect(cable_mock).to receive(:text_content).with(selector: selectors[:up], text: '0')
       expect(cable_mock).to receive(:text_content).with(selector: selectors[:down], text: '0')

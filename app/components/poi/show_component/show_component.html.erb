@@ -13,7 +13,7 @@
       (top-16/inset-x): 100vh - 8rem. Иначе карточка 90vh наезжает под навбар.
       Карточка — flex-колонка: шапка (shrink-0) закреплена и не скроллится,
       скролл только у таб-контента (flex-1 min-h-0 overflow-y-auto). %>
-  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[calc(100vh-8rem)] flex flex-col relative">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[calc(100dvh-5rem)] flex flex-col relative min-w-0">
     <%# Кнопка закрытия — правый верхний угол окна, вне контента, не прокручивается %>
     <%= render Ui::BtnComponent.new(color: :ghost, size: :sm, html: { class: "absolute top-3 right-3 z-10", data: { action: "click->poi--show-component#close" } }) do %>
       <%# Иконка: mdi-close %>
@@ -22,9 +22,9 @@
 
     <%# ШАПКА: двухколонная структура по образцу Ui::TooltipComponent.
         shrink-0 — шапка всегда видна, не прокручивается вместе с таб-контентом %>
-    <div class="flex p-4 gap-4 border-b border-gray-200 pr-12 shrink-0">
+    <div class="flex p-3 sm:p-4 gap-3 sm:gap-4 border-b border-gray-200 pr-12 shrink-0 min-w-0">
       <%# Фото (обложка) слева %>
-      <div class="w-28 h-28 shrink-0 rounded-lg overflow-hidden border border-gray-200">
+      <div class="w-16 h-16 sm:w-28 sm:h-28 shrink-0 rounded-lg overflow-hidden border border-gray-200">
         <img src="<%= cover_photo_url %>"
              alt="<%= t('.photo_alt') %>"
              class="w-full h-full object-cover">
@@ -32,7 +32,7 @@
 
       <%# Текстовая колонка: категория / название / статус / рейтинг / адрес %>
       <div class="flex-1 min-w-0 flex flex-col gap-1">
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2 min-w-0">
           <% if poi.poi_category&.category_icon_url.present? %>
             <img src="<%= poi.poi_category.category_icon_url %>"
                  alt="<%= t('.icon_alt') %>"
@@ -52,7 +52,7 @@
 
         <h2 class="text-lg font-bold text-gray-900 leading-tight wrap-break-word"><%= poi.localized_name %></h2>
 
-        <div class="flex items-center gap-3 text-sm">
+        <div class="flex flex-wrap items-center gap-3 text-sm">
           <% if poi.rating.present? && poi.rating > 0 %>
             <span class="flex items-center gap-0.5">
               <i class="mdi mdi-star text-yellow-400 text-sm"></i>
@@ -70,10 +70,10 @@
         </div>
 
         <% if poi.address.present? || poi.city.present? %>
-          <p class="flex items-center gap-1 text-sm text-gray-600 truncate">
+          <p class="flex items-start gap-1 text-sm text-gray-600 min-w-0">
             <i class="mdi mdi-map-marker text-gray-400 text-sm"></i>
             <%# Иконка: mdi-map-marker %>
-            <span><%= [poi.address, poi.city, poi.country].compact.join(", ") %></span>
+            <span class="min-w-0 wrap-break-word"><%= [poi.address, poi.city, poi.country].compact.join(", ") %></span>
           </p>
         <% end %>
 

@@ -18,19 +18,19 @@
 
   <%# Юзер-события (строка за строкой с 3 переключателями) %>
   <div class="bg-white rounded-lg shadow-md overflow-hidden">
-    <div class="flex items-center justify-between px-6 py-4 bg-linear-to-br from-primary to-secondary text-white font-semibold text-sm">
-      <span class="w-1/3"><%= t('settings.columns.event_type') %></span>
-      <div class="flex items-center space-x-6">
+    <div class="flex items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-linear-to-br from-primary to-secondary text-white font-semibold text-sm">
+      <span class="flex-1 min-w-0"><%= t('settings.columns.event_type') %></span>
+      <div class="flex shrink-0 items-center gap-2 sm:gap-6">
         <%# MDI: bell-ring %>
-        <span class="flex items-center space-x-2"><i class="mdi mdi-bell-ring text-lg"></i> <span><%= t('settings.columns.in_app') %></span></span>
+        <span class="flex items-center gap-1 sm:gap-2"><i class="mdi mdi-bell-ring text-lg"></i> <span class="hidden sm:inline"><%= t('settings.columns.in_app') %></span></span>
         <%# MDI: email %>
-        <span class="flex items-center space-x-2"><i class="mdi mdi-email text-lg"></i> <span><%= t('settings.columns.email') %></span></span>
+        <span class="flex items-center gap-1 sm:gap-2"><i class="mdi mdi-email text-lg"></i> <span class="hidden sm:inline"><%= t('settings.columns.email') %></span></span>
         <%# MDI: cellphone-wireless %>
-        <span class="flex items-center space-x-2"><i class="mdi mdi-cellphone-wireless text-lg"></i> <span><%= t('settings.columns.push') %></span></span>
+        <span class="flex items-center gap-1 sm:gap-2"><i class="mdi mdi-cellphone-wireless text-lg"></i> <span class="hidden sm:inline"><%= t('settings.columns.push') %></span></span>
       </div>
     </div>
 
-    <div class="px-6 divide-y divide-gray-100">
+    <div class="px-4 sm:px-6 divide-y divide-gray-100">
       <% %w[
         my_poi_status my_poi_comment my_poi_photo
         reward_available reward_locked badge_earned

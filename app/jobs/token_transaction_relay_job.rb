@@ -29,8 +29,10 @@ class TokenTransactionRelayJob < ApplicationJob
   #
   def perform(token_transaction_id)
     transaction = TokenTransaction.find_by(id: token_transaction_id)
-    return unless transaction
-
+    unless transaction
+      Rails.logger.warn("TokenTransactionRelayJob: transaction not found (tx_id=#{token_transaction_id})")
+      return
+    end
     lock_id = Zlib.crc32("token-relay-operator")
     Rails.logger.info("TokenTransactionRelayJob: waiting for advisory lock (tx_id=#{token_transaction_id})")
 
@@ -41,7 +43,13 @@ class TokenTransactionRelayJob < ApplicationJob
 
     begin
       Rails.logger.info("TokenTransactionRelayJob: acquired lock (tx_id=#{token_transaction_id})")
-      TokenTransactionService.relay!(transaction)
+      tx_hash = TokenTransactionService.relay!(transaction)
+      transaction.reload
+      Rails.logger.info(
+        "TokenTransactionRelayJob: finished (tx_id=#{token_transaction_id}, status=#{transaction.status}, " \
+        "tx_hash_present=#{transaction.tx_hash.present?}, relay_result=#{tx_hash.present? ? 'sent' : 'none'})"
+      )
+      tx_hash
     ensure
       sql_unlock = ActiveRecord::Base.sanitize_sql_array([ "SELECT pg_advisory_unlock(?)", lock_id ])
       ActiveRecord::Base.connection.execute(sql_unlock)

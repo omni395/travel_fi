@@ -6,11 +6,11 @@
      data-admin--poi-categories--poi-category--osm-import-component-pbf-import-path="<%= pbf_import_path %>">
 
   <%# Затемнённый оверлей (скрыт по умолчанию) %>
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 hidden"
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4 hidden"
        data-admin--poi-categories--poi-category--osm-import-component-target="overlay">
-    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[calc(100dvh-1rem)] overflow-y-auto p-4 sm:p-6">
       <%# Заголовок %>
-      <div class="flex items-center justify-between mb-4">
+      <div class="flex items-center justify-between gap-2 mb-4">
         <h3 class="text-lg font-semibold text-gray-900">
           <!-- mdi: cloud-download -->
           <i class="mdi mdi-cloud-download text-emerald-500 mr-2"></i>
@@ -46,7 +46,7 @@
             <% dropdown.with_trigger do %>
               <button type="button"
                       data-action="ui--dropdown-component#toggle"
-                      class="field-input w-full text-left flex items-center justify-between">
+                      class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 w-full text-left flex items-center justify-between">
                 <span data-admin--poi-categories--poi-category--osm-import-component-target="cityTriggerText"><%= t(".choose_city") %></span>
                 <!-- mdi: chevron-down -->
                 <i class="mdi mdi-chevron-down text-gray-400"></i>
@@ -88,43 +88,43 @@
             <label class="block text-xs font-medium text-gray-600 mb-1"><%= t(".city_name") %></label>
             <input type="text"
                    data-admin--poi-categories--poi-category--osm-import-component-target="customCity"
-                   class="field-input w-full"
+                   class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 w-full"
                    autocomplete="off">
           </div>
           <div>
             <label class="block text-xs font-medium text-gray-600 mb-1"><%= t(".country") %></label>
             <input type="text"
                    data-admin--poi-categories--poi-category--osm-import-component-target="customCountry"
-                   class="field-input w-full"
+                   class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 w-full"
                    autocomplete="off">
           </div>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">South</label>
               <input type="number" step="0.01"
                      data-admin--poi-categories--poi-category--osm-import-component-target="customSouth"
-                     class="field-input w-full"
+                     class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 w-full"
                      autocomplete="off">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">West</label>
               <input type="number" step="0.01"
                      data-admin--poi-categories--poi-category--osm-import-component-target="customWest"
-                     class="field-input w-full"
+                     class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 w-full"
                      autocomplete="off">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">North</label>
               <input type="number" step="0.01"
                      data-admin--poi-categories--poi-category--osm-import-component-target="customNorth"
-                     class="field-input w-full"
+                     class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 w-full"
                      autocomplete="off">
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">East</label>
               <input type="number" step="0.01"
                      data-admin--poi-categories--poi-category--osm-import-component-target="customEast"
-                     class="field-input w-full"
+                     class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 w-full"
                      autocomplete="off">
             </div>
           </div>

@@ -47,7 +47,7 @@ Travel Fi
 
 ### 2.2 POI Map (map + list + modal)
 **Status:** 🟡 partial — core works (OpenLayers 10 + clustering, PostGIS filters, POI modal with tabs, photo gallery, threaded comments live, OSM import incl. `.pbf`, dynamic category fields, TFT rewards, map-live updates).
-**Planned / debts (details → [`MILESTONES.md`](MILESTONES.md) M1/M3):** Suggested Edits + 100m consensus, Quick Toggles, «Report an error», live tabs, OSRM route, PWA offline. `PoiComment` live for everyone (currently author-only). Filters component — figure it out.
+**Planned / debts (details → [`MILESTONES.md`](MILESTONES.md) M1/M3):** Suggested Edits + 100m consensus, Quick Toggles, «Report an error», live tabs, OSRM route, PWA offline. Filters component — figure it out.
 
 ### 2.3 User Profile (user profile)
 **Status:** 🟡 partial — profile display, TFT rewards history, TFT Balance block (available/locked + claim), name/avatar edit, Pundit, `inactive` automation.
@@ -92,7 +92,7 @@ Travel Fi
 **Planned:** Lookbook previews for `Admin::Comments::*`, A/B specs for live comments.
 
 ### 3.8 Contracts (Contract Mgmt)
-**Status:** 🔴 planned — admin section to manage **all three contracts** (TravelFiToken / TravelFiRewards / TravelFiCrowdsale). Service layer (`ContractService`) exists; UI missing. → [`MILESTONES.md`](MILESTONES.md) M2.
+**Status:** 🔴 planned — admin section to manage **the three product contracts** (TravelFiToken / TravelFiRewards / TravelFiCrowdsale). The separate OpenZeppelin ERC-2771 forwarder is relay infrastructure, not a product contract managed by this UI. Service layer (`ContractService`) exists; UI missing. → [`MILESTONES.md`](MILESTONES.md) M2.
 
 ---
 
@@ -103,7 +103,7 @@ Travel Fi
 
 ### 4.2 Gamification & Web3
 **Status:** 🟡 — token model works (off-chain `UserReward` + `TokenTransaction` journal, on-chain relay, claim); 6 badges. **Decimals:** token = 18, jetton in TON = 9 (bridge maps 9↔18, no contract rewrite).
-**Planned:** levels/badges by user contribution (→ M1), on-chain `balanceOf` as TFT-balance source of truth (→ M1), two wallets (custodial/external; external = MetaMask/hot-wallet; WalletConnect on future need) + EIP-2771 (→ M2), Token Spend (→ M2), Contract Mgmt UI (→ M2), distributed key storage / Vault (free service research, → M2).
+**In progress:** external wallet connection is available in the profile via injected wallets and WalletConnect. The dedicated OpenZeppelin v5 `TravelFiForwarder` and backend EIP-712 relay flow are present. Before use, the Rewards and Cashier contracts must expose `isTrustedForwarder(address)` so the forwarder can validate them; then deploy/configure the forwarder and all three product contracts and verify target trust. Automated coverage and cashier UI remain. ETH purchase principal is not sponsored; USDT purchase requires allowance unless that USDT supports authorization. Token Spend (→ M2), Contract Mgmt UI (→ M2), and distributed key storage / Vault (free service research, → M2) remain planned. The previous operator-funded `sendReward` path remains available for non-user-initiated rewards.
 
 ### 4.3 Realtime infrastructure
 **Status:** ✅ — StimulusReflex + CableReady + SolidCable, channels `UserChannel`/`AdminChannel`, SolidQueue + SolidQueueDashboard, SolidCache (infrastructure).

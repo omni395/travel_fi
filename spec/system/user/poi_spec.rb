@@ -300,6 +300,47 @@ RSpec.describe 'POI (пользователь, браузер А → брауз�
     expect(page).to have_content('Reopen Bridge', wait: 10)
   end
 
+  it 'детали POI не выходят за границы экрана на мобильной ширине' do
+    poi = create(
+      :poi,
+      user: user_a,
+      poi_category: category,
+      coordinates: PoiService.parse_coordinates(POI_LAT, POI_LNG),
+      name: { 'en' => 'A very long place name that should wrap', 'ru' => 'Очень длинное название места, которое должно переноситься' },
+      address: 'A very long street address with an unusually long unbroken identifier abcdefghijklmnopqrstuvwxyz0123456789',
+      website: "https://example.com/#{'long-segment-' * 12}",
+      phone: '+123456789012345678901234567890',
+      opening_hours: 'Monday through Sunday, 24 hours, with additional long informational details'
+    )
+
+    sign_in_via_ui(user_b)
+    visit pois_path
+    page.driver.browser.manage.window.resize_to(375, 812)
+
+    page.execute_script(<<~JS)
+      document.dispatchEvent(new CustomEvent('poi:show-detail', { detail: { poiId: #{poi.id} } }))
+    JS
+    wait_for_selector("[data-poi--show-component-target='overlay']:not(.hidden)", timeout: 30)
+
+    geometry = page.evaluate_script(<<~JS)
+      (() => {
+        const modal = document.querySelector('#poi-detail-modal-body .bg-white')
+        const viewportWidth = document.documentElement.clientWidth
+        const modalRect = modal?.getBoundingClientRect()
+        return {
+          viewportWidth,
+          documentWidth: document.documentElement.scrollWidth,
+          modalLeft: modalRect?.left,
+          modalRight: modalRect?.right
+        }
+      })()
+    JS
+
+    expect(geometry['documentWidth']).to be <= geometry['viewportWidth']
+    expect(geometry['modalLeft']).to be >= 0
+    expect(geometry['modalRight']).to be <= geometry['viewportWidth']
+  end
+
   # PENDING (инфраструктурный блокер, аналогично админскому сценарию в admin/pois_spec.rb):
   # форма редактирования открывается через PoiReflex#edit_poi → check_proximity!.
   # Координаты пользователя пишутся в session рефлексом set_location. Единый

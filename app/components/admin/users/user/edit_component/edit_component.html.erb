@@ -45,14 +45,14 @@
           <%= f.text_field :name,
                            value: user.name,
                            autocomplete: "name",
-                           class: "field-input text-2xl font-bold text-gray-900 truncate",
+                           class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 text-2xl font-bold text-gray-900 truncate",
                            data: { "admin--users--user--edit-component_target" => "nameInput" } %>
 
           <%# Email %>
           <%= f.email_field :email,
                             value: user.email,
                             autocomplete: "email",
-                            class: "field-input text-gray-500 font-medium mt-1" %>
+                            class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 text-gray-500 font-medium mt-1" %>
 
           <%# Статус + роль в flex-row %>
           <div class="mt-4 flex flex-wrap items-center gap-3">
