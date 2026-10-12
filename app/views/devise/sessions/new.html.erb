@@ -4,10 +4,10 @@
 # app/views/devise/sessions/new.html.erb - форма входа
 #
 # Единый стиль с primary цветовой схемой.
-# Использует field-input, field-label, btn-ui классы.
+# Использует Tailwind utility classes и общий btn-ui компонент.
 # %>
 
-<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
+<div class="min-h-[calc(100dvh-4rem)] flex items-center justify-center py-4 px-4 sm:px-6 lg:px-8">
   <div class="w-full max-w-md">
     <%# Header %>
     <div class="text-center mb-2">
@@ -17,7 +17,7 @@
     </div>
 
     <%# Sign In Form %>
-    <div id="devise_session_form" class="bg-white rounded-xl shadow-lg p-6 mb-2">
+    <div id="devise_session_form" class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-2">
       <%= form_with(model: resource, as: resource_name, url: session_path(resource_name)) do |form| %>
         <%= hidden_field_tag :authenticity_token, form_authenticity_token %>
         <% if resource.errors.any? %>
@@ -32,19 +32,19 @@
 
         <%# Email %>
         <div class="field-group mb-4">
-          <%= form.label :email, class: "field-label" %>
-          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "field-input", placeholder: t('devise.sessions.new.email_placeholder') %>
+          <%= form.label :email, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.sessions.new.email_placeholder') %>
         </div>
 
         <%# Password %>
         <div class="field-group mb-4">
-          <%= form.label :password, class: "field-label" %>
-          <%= form.password_field :password, autocomplete: "current-password", class: "field-input" %>
+          <%= form.label :password, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.password_field :password, autocomplete: "current-password", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500" %>
         </div>
 
         <%# Remember Me %>
         <div class="mb-4 flex items-center">
-          <%= form.check_box :remember_me, class: "field-checkbox" %>
+          <%= form.check_box :remember_me, class: "h-4 w-4 shrink-0 accent-primary" %>
           <%= form.label :remember_me, t('devise.sessions.new.remember_me'), class: "ml-2 block text-sm text-gray-700" %>
         </div>
 

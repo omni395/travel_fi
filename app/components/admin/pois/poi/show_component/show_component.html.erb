@@ -1,37 +1,37 @@
 <%# Admin::Pois::Poi::ShowComponent - детальная информация POI (контент таба Details) %>
-<div class="bg-white shadow rounded-lg p-6" data-controller="admin--pois--poi--show-component">
-  <div class="grid grid-cols-2 gap-6">
-    <div>
+<div class="bg-white shadow rounded-lg p-4 sm:p-6 min-w-0" data-controller="admin--pois--poi--show-component">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
+    <div class="min-w-0 wrap-break-word">
       <h3 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-3">
         <%= t(".details") %>
       </h3>
       <dl class="space-y-3">
         <% if poi.localized_description.present? %>
-          <div>
+          <div class="min-w-0 wrap-break-word">
             <dt class="text-xs text-gray-400"><%= t(".description") %></dt>
-            <dd class="text-sm text-gray-900"><%= poi.localized_description %></dd>
+            <dd class="text-sm text-gray-900 wrap-break-word"><%= poi.localized_description %></dd>
           </div>
         <% end %>
         <div>
           <dt class="text-xs text-gray-400"><%= t(".address") %></dt>
-          <dd class="text-sm text-gray-900"><%= [poi.address, poi.city, poi.country].compact.join(", ") %></dd>
+          <dd class="text-sm text-gray-900 wrap-break-word"><%= [poi.address, poi.city, poi.country].compact.join(", ") %></dd>
         </div>
         <% if poi.phone.present? %>
           <div>
             <dt class="text-xs text-gray-400"><%= t(".phone") %></dt>
-            <dd class="text-sm text-gray-900"><%= poi.phone %></dd>
+            <dd class="text-sm text-gray-900 wrap-break-word"><%= poi.phone %></dd>
           </div>
         <% end %>
         <% if poi.website.present? %>
           <div>
             <dt class="text-xs text-gray-400"><%= t(".website") %></dt>
-            <dd class="text-sm text-gray-900"><%= link_to poi.website, poi.website, target: "_blank", class: "text-emerald-600 hover:text-emerald-800" %></dd>
+            <dd class="text-sm text-gray-900 wrap-break-word"><%= link_to poi.website, poi.website, target: "_blank", rel: "noopener", class: "text-emerald-600 hover:text-emerald-800" %></dd>
           </div>
         <% end %>
         <% if poi.price_info.present? %>
           <div>
             <dt class="text-xs text-gray-400"><%= t(".price_info") %></dt>
-            <dd class="text-sm text-gray-900"><%= poi.price_info %></dd>
+            <dd class="text-sm text-gray-900 wrap-break-word"><%= poi.price_info %></dd>
           </div>
         <% end %>
         <div>
@@ -50,7 +50,7 @@
           <% metadata_fields.each do |field| %>
             <div>
               <dt class="text-xs text-gray-400"><%= field[:label] %></dt>
-              <dd class="text-sm text-gray-900">
+              <dd class="text-sm text-gray-900 wrap-break-word">
                 <% if field[:value].is_a?(Array) %>
                   <%= field[:value].join(", ") %>
                 <% elsif [true, false].include?(field[:value]) %>
@@ -80,14 +80,14 @@
       <% if poi.opening_hours.present? %>
         <div class="mt-4">
           <dt class="text-xs text-gray-400"><%= t(".opening_hours") %></dt>
-          <dd class="text-sm text-gray-900"><%= poi.opening_hours.is_a?(Hash) ? poi.opening_hours.to_json : poi.opening_hours %></dd>
+          <dd class="text-sm text-gray-900 wrap-break-word"><%= poi.opening_hours.is_a?(Hash) ? poi.opening_hours.to_json : poi.opening_hours %></dd>
         </div>
       <% end %>
     </div>
   </div>
 
   <div class="mt-6 pt-6 border-t border-gray-200">
-    <div class="flex items-center gap-4 text-sm text-gray-500">
+    <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-500">
       <span><%= t(".created_by") %>: <%= poi.user.name %></span>
       <span><%= t(".created_at") %>: <%= render Ui::DateComponent.new(poi.created_at, format: :long) %></span>
       <% if poi.verification_count > 0 %>

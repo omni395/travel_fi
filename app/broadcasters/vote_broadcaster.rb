@@ -20,7 +20,7 @@
 #
 # Каналы/стримы (модель из README):
 #   - POI/Photo → "pois_map" (общая карта)
-#   - PoiComment → "user_<id_involved>"
+#   - PoiComment → "pois_map" (shared counters; author-specific vote state stays local)
 #
 class VoteBroadcaster
   include CableReady::Broadcaster
@@ -82,7 +82,7 @@ class VoteBroadcaster
   #
   # Имя стрима по типу сущности (модель каналов из README):
   #   - Poi/Photo → "pois_map" (общая карта)
-  #   - PoiComment → "user_<author_id>"
+  #   - PoiComment → "pois_map" (все зрители комментария)
   #
   # @return [String]
   #
@@ -91,7 +91,7 @@ class VoteBroadcaster
     when Poi, Photo
       "pois_map"
     when PoiComment
-      "user_#{votable.user_id}"
+      "pois_map"
     end
   end
 end

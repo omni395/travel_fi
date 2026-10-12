@@ -92,8 +92,18 @@ class Comments::CommentContentComponent < ApplicationComponent
   #
   def edited_version
     @edited_version ||= comment.versions.reverse.find do |v|
-      v.event == "update" && v.object_changes&.key?("body")
+      changed_body?(v)
     end
+  end
+
+  def changed_body?(version)
+    return false unless version.event == "update"
+
+    changes = version.object_changes
+    changes = JSON.parse(changes) if changes.is_a?(String)
+    changes.is_a?(Hash) && (changes.key?("body") || changes.key?(:body))
+  rescue JSON::ParserError
+    false
   end
 
   #

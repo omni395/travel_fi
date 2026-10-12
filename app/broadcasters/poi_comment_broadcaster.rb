@@ -62,6 +62,26 @@ class PoiCommentBroadcaster
       return
     end
 
+    if event == :create
+      author_stream = cable_ready["user_#{comment.user_id}"]
+      if comment.parent_id.present?
+        root_id = comment.root_id || comment.parent_id
+        author_stream.inner_html(
+          selector: "[data-comment-id='#{root_id}'] [data-comments--comment-component-target='replyButton']",
+          html: ""
+        )
+        author_stream.inner_html(
+          selector: "[data-comment-id='#{root_id}'] [data-comments--comment-component-target='replyForm']",
+          html: ""
+        )
+      else
+        author_stream.inner_html(
+          selector: "[data-commentable-type='Poi'][data-commentable-id='#{comment.poi_id}'] [data-comments--comments-component-target='rootForm']",
+          html: ""
+        )
+      end
+    end
+
     html = render_comment_component
     if html.present?
       if event == :create

@@ -15,11 +15,6 @@ import ApplicationController from '../../../javascript/controllers/application_c
  *   data-comment-id        — id комментария
  *   data-comment-author-id — id автора комментария
  *   data-comment-replyable — "true" если можно отвечать (корневой комментарий)
- *
- * Принцип (общий): общий стрим (pois_map) раздаёт контент ОДНИМ нодом без
- * персональных кнопок; персональные элементы (кнопки автора/admin/mod) рисует
- * клиент по данным сущности (author-id) и текущему пользователю (<body>).
- * Личный стрим user_<id> — ТОЛЬКО уведомления/награды, НЕ контент.
  */
 export default class extends ApplicationController {
   static targets = ['replyForm', 'editForm', 'replies', 'replyButton', 'authorActions', 'staffActions', 'deleteDialog', 'suspendDialog']

@@ -25,8 +25,8 @@
 
         <%# Email %>
         <div class="field-group mb-4">
-          <%= form.label :email, class: "field-label" %>
-          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "field-input", placeholder: t('devise.unlocks.new.email_placeholder', default: 'your@email.com') %>
+          <%= form.label :email, class: "mb-1.5 block text-sm font-medium text-gray-700" %>
+          <%= form.email_field :email, autofocus: true, autocomplete: "email", class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500", placeholder: t('devise.unlocks.new.email_placeholder', default: 'your@email.com') %>
         </div>
 
         <%# Submit Button %>

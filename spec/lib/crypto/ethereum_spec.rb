@@ -26,6 +26,23 @@ RSpec.describe Crypto::Ethereum do
     end
   end
 
+  describe '.recover_personal_signer' do
+    it 'recovers the wallet address from an EIP-191 personal_sign signature' do
+      message = "TravelFi wallet verification\nNonce: 0123456789abcdef\nChain ID: 11155111"
+      signature = '0x5689a4e34e15ffa5bc96757b172611dd9bfa4367ee57d0f8b0f8d1b7bc19f0957e55298d6a2efb75dffad20c4333f8737ce2a5b5afda3faa7538ae821ba127ed1b'
+
+      expect(described_class.recover_personal_signer(message:, signature:)).to eq(
+        '0x7E5F4552091A69125d5DfCb7b8C2659029395Bdf'
+      )
+    end
+
+    it 'rejects malformed signatures' do
+      expect {
+        described_class.recover_personal_signer(message: 'message', signature: '0x1234')
+      }.to raise_error(ArgumentError, 'Invalid Ethereum signature')
+    end
+  end
+
   describe '.generate_keypair' do
     it 'возвращает 32-байтовый приватный ключ и валидный EIP-55 адрес' do
       private_key, address = described_class.generate_keypair

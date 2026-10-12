@@ -1,4 +1,14 @@
 zh:
+  wallets:
+    invalid_address: "请输入有效的钱包地址。"
+    challenge_expired: "钱包验证请求已过期，请重试。"
+    signature_invalid: "钱包签名无效，请重试。"
+    connected: "钱包已连接。"
+    disconnected: "钱包已断开。"
+    address_in_use: "此钱包已连接到其他账户。"
+    claim_unavailable: "没有可通过赞助 gas 领取的奖励。"
+    cashier_unavailable: "此赞助交易暂不可用。"
+
   locales:
     en: "English"
     ru: "Русский"
@@ -194,6 +204,11 @@ zh:
     layout:
       loading: "加载中..."
       solid_queue_dashboard: "SolidQueue"
+      dashboard: "仪表板"
+      users: "用户"
+      poi_categories: "POI 分类"
+      pois: "POI"
+      settings: "设置"
     title: "管理面板"
     back_to_site: "返回网站"
     profile: "资料"
@@ -400,6 +415,7 @@ zh:
   comments:
     cannot_reply_to_self: "不能回复自己的评论"
     already_replied: "你已经回复过这条评论"
+    already_commented_on_poi: "你已经评论过这个地点"
 
   time:
     formats:

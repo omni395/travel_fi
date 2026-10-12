@@ -19,10 +19,10 @@
 # @example (расширенный со слотами кастомных фильтров)
 #   <%= render Ui::FiltersComponent.new(reset_action: "admin--orders--table-component#resetFilters") do |f| %>
 #     <% f.with_search do %>
-#       <input type="text" placeholder="Поиск по ID..." class="field-input text-sm">
+#       <input type="text" placeholder="Поиск по ID..." class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 text-sm">
 #     <% end %>
 #     <% f.with_filter do %>
-#       <input type="date" class="field-input text-sm">
+#       <input type="date" class="block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 text-sm">
 #     <% end %>
 #   <% end %>
 #

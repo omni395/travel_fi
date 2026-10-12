@@ -45,19 +45,9 @@ class CommentService
     def create_comment(commentable:, user:, body:, parent_id: nil)
       parent = parent_id.present? ? commentable.poi_comments.find(parent_id) : nil
 
-      # Анти-флуд ответов (защита на бэкенде — независимо от UI):
-      #   1. нельзя отвечать на СВОЙ собственный комментарий;
-      #   2. на один и тот же чужой комментарий юзер может оставить максимум
-      #      ОДИН ответ (нельзя нафлудить ответами, накрутив токены comment_create).
-      # Жёсткая проверка выполняется ДО создания, поэтому прямой RPC-вызов
-      # Reflex (в обход кнопки Reply) тоже блокируется.
       if parent.present?
         if parent.user_id == user.id
           raise CreateError, I18n.t("comments.cannot_reply_to_self")
-        end
-
-        if user.poi_comments.where(parent_id: parent.id).exists?
-          raise CreateError, I18n.t("comments.already_replied")
         end
       end
 
@@ -73,6 +63,18 @@ class CommentService
       apply_threading(comment, parent)
 
       ActiveRecord::Base.transaction do
+        # Сериализуем создание комментариев одного пользователя, чтобы параллельные
+        # Reflex-запросы не прошли проверку лимита одновременно.
+        user.lock!
+
+        if parent.nil? && user.poi_comments.where(poi_id: commentable.id, parent_id: nil).exists?
+          raise CreateError, I18n.t("comments.already_commented_on_poi")
+        end
+
+        if parent.present? && user.poi_comments.where(parent_id: parent.id).exists?
+          raise CreateError, I18n.t("comments.already_replied")
+        end
+
         comment.save!
 
         # Инкремент счётчика ответов корня ветки (только если это ответ).

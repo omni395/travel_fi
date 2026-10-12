@@ -34,4 +34,12 @@ RSpec.describe 'Noticed email-доставка (ROADMAP 4.5)' do
       expect(user.setting.user_updated_by_user_email_enabled?).to be false
     end
   end
+
+  describe 'ActionCable stream callback' do
+    it 'принимает notification, переданный Noticed, и возвращает личный stream' do
+      notification = double(recipient_id: user.id)
+
+      expect(described_class.allocate.user_stream(notification)).to eq("user_#{user.id}")
+    end
+  end
 end

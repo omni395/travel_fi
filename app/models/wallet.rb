@@ -22,6 +22,7 @@ class Wallet < ApplicationRecord
   validates :chain_id, presence: true
   # Приватный ключ храним зашифрованным ТОЛЬКО для custodial-кошельков платформы.
   validates :encrypted_private_key, presence: true, if: :custodial?
+  validates :encrypted_private_key, absence: true, if: :external?
 
   #
   # Возвращает расшифрованный приватный ключ (32 байта) для custodial-кошелька.

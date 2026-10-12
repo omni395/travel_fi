@@ -141,6 +141,36 @@ RSpec.describe UserService, type: :service do
 
       count = described_class.claim_rewards!(user)
       expect(count).to eq(1)
+      expect(available_tx.reload.wallet).to be_custodial
+    end
+
+    it 'создаёт custodial-кошелёк и привязывает его к доступным начислениям' do
+      user = create(:user)
+      available_tx = create(:token_transaction, user: user, status: :pending, claimed: false,
+                                                action_key: 'poi_create', created_at: 10.days.ago)
+      allow(TokenTransactionRelayJob).to receive(:perform_later)
+
+      expect { described_class.claim_rewards!(user) }
+        .to change { user.wallets.custodial.count }.from(0).to(1)
+      expect(available_tx.reload.wallet).to eq(user.wallets.custodial.first)
+    end
+
+    it 'использует подключённый внешний кошелёк вместо custodial для выдачи наград' do
+      user = create(:user)
+      custodial_wallet = WalletService.create_hidden_wallet(user: user)
+      available_tx = create(:token_transaction, user: user, status: :pending, claimed: false,
+                                                action_key: 'poi_create', created_at: 10.days.ago)
+      external_wallet = user.wallets.create!(
+        address: "0x#{'ab' * 20}",
+        chain_id: '84532',
+        kind: :external
+      )
+      allow(TokenTransactionRelayJob).to receive(:perform_later)
+
+      expect { described_class.claim_rewards!(user) }
+        .not_to change { user.reload.wallet }
+      expect(user.wallet).to eq(custodial_wallet)
+      expect(available_tx.reload.wallet).to eq(external_wallet)
     end
 
     it 'возвращает 0, если нет разблокированных начислений' do
@@ -150,6 +180,17 @@ RSpec.describe UserService, type: :service do
 
       count = described_class.claim_rewards!(user)
       expect(count).to eq(0)
+    end
+
+    it 'передаёт ошибку постановки relay-джобы вызывающему коду' do
+      user = create(:user)
+      available_tx = create(:token_transaction, user: user, status: :pending, claimed: false,
+                                                action_key: 'poi_create', created_at: 10.days.ago)
+      allow(TokenTransactionRelayJob).to receive(:perform_later).with(available_tx.id)
+        .and_raise(StandardError, 'queue unavailable')
+
+      expect { described_class.claim_rewards!(user) }
+        .to raise_error(StandardError, 'queue unavailable')
     end
   end
 

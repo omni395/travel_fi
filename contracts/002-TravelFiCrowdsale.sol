@@ -7,8 +7,12 @@ import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "./01-TravelFiToken.sol";
+import "./001-TravelFiToken.sol";
 
+/**
+ * @title TravelFiCrowdsale
+ * @notice Контракт обменного пункта TFT (покупка за USDT/ETH, выкуп с комиссией, аналитика TON).
+ */
 contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
     using SafeERC20 for IERC20;
 
@@ -16,11 +20,11 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
 
     TravelFiToken public token;
     IERC20 public usdt;
+    address public immutable trustedForwarder;
     
-    // Курсы, управляемые бэкендом (оператором)
-    uint256 public usdtRate; // Количество TFT за 1 USDT
-    uint256 public ethRate;  // Цена ETH в USD (18 знаков)
-    uint256 public tonRate;  // Цена TON в USD (18 знаков)
+    uint256 public usdtRate; 
+    uint256 public ethRate;  
+    uint256 public tonRate;  
     uint256 public usdtDecimals;
 
     uint256 public constant MAX_RATE_CHANGE_BPS = 1500;
@@ -38,12 +42,14 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
 
     receive() external payable {}
 
-    constructor(address _token, address _usdt) payable {
+    constructor(address _token, address _usdt, address _forwarder) payable {
         require(_token != address(0), "Invalid token address");
         require(_usdt != address(0), "Invalid USDT address");
+        require(_forwarder != address(0), "Invalid forwarder address");
 
         token = TravelFiToken(payable(_token));
         usdt = IERC20(_usdt);
+        trustedForwarder = _forwarder;
 
         usdtDecimals = IERC20Metadata(_usdt).decimals();
         usdtRate = 10 * 10**18;
@@ -54,13 +60,20 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         _grantRole(OPERATOR_ROLE, msg.sender);
     }
 
-    // Вспомогательная функция для бэкенда: расчет TFT за переданное количество TON (в wei)
+    function _msgSender2771() internal view returns (address sender) {
+        if (msg.sender == trustedForwarder && msg.data.length >= 20) {
+            return address(bytes20(msg.data[msg.data.length - 20:]));
+        }
+        return msg.sender;
+    }
+
     function calculateTftForTon(uint256 tonAmountWei) public view returns (uint256) {
         require(tonRate > 0, "TON rate not set");
         return (tonAmountWei * tonRate * usdtRate) / (10 ** (18 + 18));
     }
 
     function buyWithUSDT(uint256 usdtAmount, uint256 minTftOut) external nonReentrant whenNotPaused {
+        address buyer = _msgSender2771();
         require(usdtAmount > 0, "Amount must be > 0");
         
         uint256 tftAmount = (usdtAmount * usdtRate) / (10 ** usdtDecimals);
@@ -68,37 +81,29 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         require(tftAmount >= minTftOut, "Slippage too high");
         require(token.balanceOf(address(this)) >= tftAmount, "Insufficient TFT in contract");
 
-        usdt.safeTransferFrom(msg.sender, address(this), usdtAmount);
-        token.transfer(msg.sender, tftAmount);
+        usdt.safeTransferFrom(buyer, address(this), usdtAmount);
+        token.transfer(buyer, tftAmount);
 
-        emit TokensPurchased(msg.sender, usdtAmount, tftAmount, "USDT", block.timestamp);
+        emit TokensPurchased(buyer, usdtAmount, tftAmount, "USDT", block.timestamp);
     }
 
     function buyWithETH(uint256 minTftOut) external payable nonReentrant whenNotPaused {
+        require(msg.sender != trustedForwarder, "ETH purchase cannot be relayed");
         require(msg.value > 0, "Must send ETH");
-        require(ethRate > 0, "ETH rate not set");
         
         uint256 tftAmount = (msg.value * ethRate * usdtRate) / (10 ** (18 + 18));
-
         require(tftAmount >= minTftOut, "Slippage too high");
         require(token.balanceOf(address(this)) >= tftAmount, "Insufficient TFT in contract");
 
         token.transfer(msg.sender, tftAmount);
-
         emit TokensPurchased(msg.sender, msg.value, tftAmount, "ETH", block.timestamp);
     }
 
-    function sellWithUSDT(
-        uint256 tftAmount,
-        uint256 minUsdtOut,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external nonReentrant whenNotPaused {
+    function sellWithUSDT(uint256 tftAmount, uint256 minUsdtOut, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external nonReentrant whenNotPaused {
+        address seller = _msgSender2771();
         require(tftAmount > 0, "Amount must be > 0");
 
-        try token.permit(msg.sender, address(this), tftAmount, deadline, v, r, s) {} catch {}
+        try token.permit(seller, address(this), tftAmount, deadline, v, r, s) {} catch {}
 
         uint256 grossUsdtAmount = (tftAmount * (10 ** usdtDecimals)) / usdtRate;
         uint256 feeUsdt = (grossUsdtAmount * sellFeeBps) / 10000;
@@ -107,38 +112,30 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         require(netUsdtAmount >= minUsdtOut, "Slippage too high");
         require(usdt.balanceOf(address(this)) >= netUsdtAmount, "Insufficient USDT in contract");
 
-        token.transferFrom(msg.sender, address(this), tftAmount);
-        usdt.safeTransfer(msg.sender, netUsdtAmount);
+        token.transferFrom(seller, address(this), tftAmount);
+        usdt.safeTransfer(seller, netUsdtAmount);
 
-        emit TokensSold(msg.sender, tftAmount, netUsdtAmount, feeUsdt, "USDT", block.timestamp);
+        emit TokensSold(seller, tftAmount, netUsdtAmount, feeUsdt, "USDT", block.timestamp);
     }
 
-    function sellWithETH(
-        uint256 tftAmount,
-        uint256 minEthOut,
-        uint256 deadline,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external nonReentrant whenNotPaused {
+    function sellWithETH(uint256 tftAmount, uint256 minEthOut, uint256 deadline, uint8 v, bytes32 r, bytes32 s) external nonReentrant whenNotPaused {
+        address seller = _msgSender2771();
         require(tftAmount > 0, "Amount must be > 0");
-        require(ethRate > 0, "ETH rate not set");
 
-        try token.permit(msg.sender, address(this), tftAmount, deadline, v, r, s) {} catch {}
+        try token.permit(seller, address(this), tftAmount, deadline, v, r, s) {} catch {}
 
         uint256 grossEthAmount = (tftAmount * (10 ** 18) * (10 ** 18)) / (ethRate * usdtRate);
-
         uint256 feeEth = (grossEthAmount * sellFeeBps) / 10000;
         uint256 netEthAmount = grossEthAmount - feeEth;
 
         require(netEthAmount >= minEthOut, "Slippage too high");
         require(address(this).balance >= netEthAmount, "Insufficient ETH in contract");
 
-        token.transferFrom(msg.sender, address(this), tftAmount);
-        (bool success, ) = payable(msg.sender).call{value: netEthAmount}("");
+        token.transferFrom(seller, address(this), tftAmount);
+        (bool success, ) = payable(seller).call{value: netEthAmount}("");
         require(success, "ETH transfer failed");
 
-        emit TokensSold(msg.sender, tftAmount, netEthAmount, feeEth, "ETH", block.timestamp);
+        emit TokensSold(seller, tftAmount, netEthAmount, feeEth, "ETH", block.timestamp);
     }
 
     function setRates(uint256 newUsdtRate, uint256 newEthRate, uint256 newTonRate) external {
@@ -166,11 +163,7 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         emit SellFeeUpdated(_sellFeeBps, block.timestamp);
     }
 
-    function transferToken(address tokenAddr, address to, uint256 amount)
-        external
-        onlyRole(DEFAULT_ADMIN_ROLE)
-        nonReentrant
-    {
+    function transferToken(address tokenAddr, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) nonReentrant {
         require(to != address(0), "Invalid recipient");
         require(amount > 0, "Amount must be > 0");
 
@@ -188,10 +181,7 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
     }
 
     function pause() external {
-        require(
-            hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(OPERATOR_ROLE, msg.sender),
-            "Not admin or operator"
-        );
+        require(hasRole(DEFAULT_ADMIN_ROLE, msg.sender) || hasRole(OPERATOR_ROLE, msg.sender), "Not admin or operator");
         _pause();
     }
 
@@ -199,20 +189,7 @@ contract TravelFiCrowdsale is ReentrancyGuard, Pausable, AccessControl {
         _unpause();
     }
 
-    function getContractStatus()
-        external
-        view
-        returns (
-            uint256 tftBalance,
-            uint256 usdtBalance,
-            uint256 ethBalance,
-            uint256 currentUsdtRate,
-            uint256 currentEthRate,
-            uint256 currentTonRate,
-            uint256 currentSellFeeBps,
-            bool isPaused
-        )
-    {
+    function getContractStatus() external view returns (uint256 tftBalance, uint256 usdtBalance, uint256 ethBalance, uint256 currentUsdtRate, uint256 currentEthRate, uint256 currentTonRate, uint256 currentSellFeeBps, bool isPaused) {
         tftBalance = token.balanceOf(address(this));
         usdtBalance = usdt.balanceOf(address(this));
         ethBalance = address(this).balance;

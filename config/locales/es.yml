@@ -1,4 +1,14 @@
 es:
+  wallets:
+    invalid_address: "Introduce una dirección de billetera válida."
+    challenge_expired: "La solicitud de verificación de la billetera ha caducado. Inténtalo de nuevo."
+    signature_invalid: "La firma de la billetera no es válida. Inténtalo de nuevo."
+    connected: "Billetera conectada."
+    disconnected: "Billetera desconectada."
+    address_in_use: "Esta billetera ya está conectada a otra cuenta."
+    claim_unavailable: "No hay recompensas disponibles para reclamar con gas patrocinado."
+    cashier_unavailable: "Esta operación patrocinada de compra o venta no está disponible."
+
   locales:
     en: "English"
     ru: "Русский"
@@ -192,6 +202,11 @@ es:
     layout:
       loading: "Cargando..."
       solid_queue_dashboard: "SolidQueue"
+      dashboard: "Panel"
+      users: "Usuarios"
+      poi_categories: "Categorías de POI"
+      pois: "POI"
+      settings: "Configuración"
     title: "Panel de administración"
     back_to_site: "Volver al sitio"
     profile: "Perfil"
@@ -363,6 +378,7 @@ es:
   comments:
     cannot_reply_to_self: "No puedes responder a tu propio comentario"
     already_replied: "Ya has respondido a este comentario"
+    already_commented_on_poi: "Ya has comentado en este lugar"
 
   time:
     formats:

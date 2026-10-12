@@ -7,7 +7,85 @@
 # Ключ шифрования: ENV['WALLET_ENCRYPTION_KEY'] (64 hex) или дериват от secret_key_base.
 #
 class WalletService
+  class ChallengeExpired < StandardError; end
+
   class << self
+    #
+    # Builds a short-lived proof-of-ownership challenge for an external wallet.
+    #
+    # @param address [String] wallet address supplied by the client
+    # @param base_url [String] application origin included in the signed message
+    # @return [Hash] challenge state and response fields
+    #
+    def build_external_wallet_challenge(address:, base_url:)
+      address = normalize_external_address!(address)
+      chain_id = configured_chain_id
+      issued_at = Time.current
+      expires_at = issued_at + 5.minutes
+      message = [
+        "TravelFi wallet ownership verification",
+        "URI: #{base_url}",
+        "Version: 1",
+        "Chain ID: #{chain_id}",
+        "Nonce: #{SecureRandom.hex(16)}",
+        "Issued At: #{issued_at.iso8601}",
+        "Expiration Time: #{expires_at.iso8601}"
+      ].join("\n")
+
+      {
+        challenge: {
+          "address" => address.downcase,
+          "chain_id" => chain_id,
+          "message" => message,
+          "expires_at" => expires_at.to_i
+        },
+        message: message,
+        chain_id: chain_id
+      }
+    end
+
+    #
+    # Verifies an external wallet's challenge and atomically replaces its linked wallet.
+    #
+    # @param user [User] wallet owner
+    # @param challenge [Hash] one-time challenge from the user's session
+    # @param signature [String] personal_sign signature
+    # @return [Wallet] linked external wallet
+    #
+    def connect_external!(user:, challenge:, signature:)
+      raise ChallengeExpired unless valid_external_wallet_challenge?(challenge)
+
+      recovered_address = Crypto::Ethereum.recover_personal_signer(
+        message: challenge.fetch("message"),
+        signature: signature
+      )
+      unless recovered_address.casecmp?(challenge.fetch("address"))
+        raise ArgumentError, "Wallet signature does not match challenge"
+      end
+
+      user.with_lock do
+        wallet = user.wallets.external.find_by(address: recovered_address)
+        next wallet if wallet
+
+        user.wallets.external.where.not(address: recovered_address).destroy_all
+        user.wallets.create!(
+          address: recovered_address,
+          chain_id: challenge.fetch("chain_id"),
+          kind: :external
+        )
+      end
+    end
+
+    #
+    # Removes linked external wallets while preserving the custodial wallet.
+    #
+    # @param user [User] wallet owner
+    # @return [void]
+    #
+    def disconnect_external!(user:)
+      user.wallets.external.destroy_all
+    end
+
     #
     # Создаёт скрытый custodial-кошелёк для пользователя (идемпотентно).
     # Адрес денормализуется в users.wallet_address.
@@ -37,6 +115,20 @@ class WalletService
     end
 
     #
+    # Выбирает адрес для выдачи наград: подключённый внешний кошелёк имеет
+    # приоритет, иначе используется custodial. При необходимости создаёт его.
+    #
+    # @param user [User] получатель наград
+    # @param create_if_missing [Boolean] создать custodial, если кошельков нет
+    # @return [Wallet, nil]
+    #
+    def reward_wallet(user:, create_if_missing: false)
+      user.wallets.external.first ||
+        user.wallet ||
+        (create_hidden_wallet(user: user) if create_if_missing)
+    end
+
+    #
     # Расшифровывает приватный ключ custodial-кошелька.
     #
     # @param wallet [Wallet] кошелёк
@@ -47,6 +139,42 @@ class WalletService
     end
 
     private
+
+    #
+    # Validates and normalizes an externally supplied EVM address.
+    #
+    # @param value [String] address
+    # @return [String] validated address
+    #
+    def normalize_external_address!(value)
+      address = value.to_s
+      raise ArgumentError, "Invalid Ethereum address" unless address.match?(/\A0x[0-9a-fA-F]{40}\z/)
+
+      address
+    end
+
+    #
+    # Reads and validates the configured EVM chain id.
+    #
+    # @return [String] decimal chain id
+    #
+    def configured_chain_id
+      Integer(ENV["CHAIN_ID"].presence || "0x14a34", 0).to_s
+    rescue ArgumentError
+      raise ArgumentError, "Invalid configured chain id"
+    end
+
+    #
+    # Checks that a challenge is current and bound to the configured network.
+    #
+    # @param challenge [Hash, nil] session challenge
+    # @return [Boolean]
+    #
+    def valid_external_wallet_challenge?(challenge)
+      challenge.is_a?(Hash) &&
+        challenge["expires_at"].to_i > Time.current.to_i &&
+        challenge["chain_id"] == configured_chain_id
+    end
 
     #
     # Возвращает id сети по умолчанию из ENV (CHAIN_ID, например 0x14a34 → 84532).

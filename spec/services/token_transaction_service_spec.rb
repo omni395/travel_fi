@@ -122,18 +122,38 @@ RSpec.describe TokenTransactionService, type: :service do
         .to change { tx.reload.status }.from('pending').to('failed')
     end
 
-    it 'пропускает без OPERATOR_PRIVATE_KEY' do
+    it 'помечает транзакцию failed, если отсутствует обязательный OPERATOR_PRIVATE_KEY' do
       allow(ENV).to receive(:[]).with('OPERATOR_PRIVATE_KEY').and_return(nil)
       tx = create(:token_transaction, user: user, wallet: wallet, status: :pending)
 
-      expect { described_class.relay!(tx) }.not_to change { tx.reload.status }
+      expect { described_class.relay!(tx) }
+        .to change { tx.reload.status }.from('pending').to('failed')
     end
 
-    it 'пропускает без custodial-кошелька' do
+    it 'пропускает без кошелька-получателя' do
       stub_rpc
       tx = create(:token_transaction, user: user, wallet: nil, status: :pending)
 
+      expect(Rails.logger).to receive(:error).with(
+        "TokenTransactionService: cannot relay tx_id=#{tx.id}; reward wallet is missing"
+      )
       expect { described_class.relay!(tx) }.not_to change { tx.reload.status }
+    end
+
+    it 'отправляет награду на подключённый внешний кошелёк, сохраняя custodial отдельно' do
+      custodial_wallet = wallet
+      external_wallet = user.wallets.create!(
+        address: "0x#{'cd' * 20}",
+        chain_id: '84532',
+        kind: :external
+      )
+      stub_rpc
+      tx = create(:token_transaction, user: user, wallet: custodial_wallet, status: :pending)
+
+      expect { described_class.relay!(tx) }
+        .to change { tx.reload.status }.from('pending').to('confirmed')
+      expect(tx.reload.wallet).to eq(external_wallet)
+      expect(user.reload.wallet).to eq(custodial_wallet)
     end
 
     it 'не дублирует уже отправленную транзакцию' do

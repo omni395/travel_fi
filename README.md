@@ -16,7 +16,7 @@ Architecture — Rails 8.1, WebSocket-first: asynchronous updates via ActionCabl
 > Support Travel Fi on Artizen: https://artizen.fund/index/p/travel-fi
 > Support Travel Fi on Karmahq: https://www.karmahq.org/project/travel-fi
 
-> **Document set:** product status by section → [`ROADMAP.md`](ROADMAP.md); grant estimate (what to build + time + cost) → [`MILESTONES.md`](MILESTONES.md); debts register → [`TECH-DEBTS.md`](TECH-DEBTS.md); AI-agent instructions → `.roo/rules/*`. Bilingual mirror → `docs/*_ru.md`.
+> **Document set:** product status by section → [`ROADMAP.md`](ROADMAP.md); grant estimate (what to build + time + cost) → [`MILESTONES.md`](MILESTONES.md); debts register → [`TECH-DEBTS.md`](TECH-DEBTS.md).
 
 ---
 
@@ -39,7 +39,7 @@ Architecture — Rails 8.1, WebSocket-first: asynchronous updates via ActionCabl
 | **Gamification** | Custom system: TFT tokens + badges; levels — from user contribution (not `token_balance`) |
 | **Notifications** | Noticed (database + email + action_cable + web_push) |
 | **CSS Framework** | Tailwind CSS, Stimulus-Components |
-| **Web3** | viem (frontend), 3 EVM contracts |
+| **Web3** | viem (frontend), three product contracts plus the EIP-2771 forwarder |
 
 ---
 
@@ -71,12 +71,13 @@ Architecture — Rails 8.1, WebSocket-first: asynchronous updates via ActionCabl
 
 ## 💰 Web3 & Smart Contracts
 
-**Three EVM contracts** (written, deployed, and verified on testnet; all 18 decimals):
-- [`TravelFiToken.sol`](contracts/TravelFiToken.sol:13) — **Issuer**: hard supply `MAX_SUPPLY = 1 000 000 000`, one-time distribution, then paused.
-- [`TravelFiCrowdsale.sol`](contracts/TravelFiCrowdsale.sol) — **Cashier**: token buy/sell for ETH/USDT (sell fee — anti-arbitrage), feature payment (Token Spend).
-- [`TravelFiRewards.sol`](contracts/TravelFiRewards.sol) — **Rewards**: issuance with vesting (`lockDays`).
+**Four EVM contract sources** (three product contracts plus the EIP-2771 relay; TFT uses 18 decimals):
+- [`000-TravelFiForwarder.sol`](contracts/000-TravelFiForwarder.sol) — OpenZeppelin v5 `ERC2771Forwarder`, the separately deployed relayer for signed gas-sponsored calls.
+- [`001-TravelFiToken.sol`](contracts/001-TravelFiToken.sol:13) — **Issuer**: hard supply `MAX_SUPPLY = 1 000 000 000`, one-time distribution, then paused; trusts the configured ERC-2771 forwarder.
+- [`002-TravelFiCrowdsale.sol`](contracts/002-TravelFiCrowdsale.sol) — **Cashier**: token buy/sell for ETH/USDT (sell fee — anti-arbitrage), feature payment (Token Spend).
+- [`003-TravelFiRewards.sol`](contracts/003-TravelFiRewards.sol) — **Rewards**: operator-authorized payouts from the reward pool; vesting/lock periods are enforced by the backend ledger.
 
-**Gasless (EIP-2771):** the backend (`Crypto::Ethereum`) acts as a Relayer — signs and broadcasts without shifting gas onto user wallets.
+**Gas-sponsored actions:** `000-TravelFiForwarder.sol` executes signed EIP-712 requests; product contracts must validate the forwarded sender and expose the target-trust interface. Reward claims and eligible USDT/ETH cashier calls use signed requests; the operator submits the forward request and pays gas. ETH purchases remain ordinary user transactions: only gas is sponsored for forwarded calls, never the ETH purchase principal. USDT purchases still require an allowance unless the specific USDT deployment supports an authorization method. The current Cashier and Rewards sources do not expose the `isTrustedForwarder(address)` view required by OpenZeppelin's forwarder target validation. That contract-interface change and deployment/configuration of the four contract addresses are prerequisites; deployed instances remain unchanged until separately approved and executed.
 
 **Decimals:** EVM contracts = 18; future TON Jetton = 9 (standard). The bridge maps 9↔18 via a conversion factor — existing contracts are NOT rewritten.
 
@@ -88,8 +89,8 @@ Architecture — Rails 8.1, WebSocket-first: asynchronous updates via ActionCabl
 
 ### 🔐 Web3 & Onboarding (wallets)
 - **Custodial** — hidden wallet generated server-side in Ruby (`OpenSSL::PKey::EC` secp256k1 + keccak256 + EIP-55, [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1), no new gems); private key encrypted with `ActiveSupport::MessageEncryptor` (`WalletService`). Zero-Friction UX: the user does not interact with Web3 at the start.
-- **External** — advanced user connects their own wallet (**MetaMask / hot-wallet**) and signs independently; **WalletConnect — future option**.
-- **`viem` — frontend only** (npm, [`package.json`](package.json:23)): EIP-2771 sponsored tx, Contract Mgmt, reading ERC-20 balance. Server-side key generation has nothing to do with viem.
+- **External** — the wallet model keeps external and custodial wallets separate. The profile supports **MetaMask and other injected hot wallets**, mobile MetaMask deep links, and **WalletConnect**; private keys are never stored by the server. Once linked, the external wallet can sign EIP-2771 reward claims.
+- **`viem` — frontend only** (npm, [`package.json`](package.json:23)): wallet connection, Contract Mgmt, and reading ERC-20 balance. Server-side key generation has nothing to do with viem.
 - **DeFi integration:** off-chain ledger `UserReward` + `TokenTransaction` credited for activity → premium access. On-chain sending via `TokenTransactionService.relay!` (contracts deployed, see `.env`).
 
 ---
@@ -168,7 +169,7 @@ One admin entity (User, Poi, Setting, PoiCategory…) follows one template (deta
 | Proximity Check (100m) | Anti-fraud for comments and voting via `ST_DWithin` |
 | Suggested Edits (100m consensus) | Apply by author / independent local users / reputation instead of direct writes |
 | ERC-20 (TFT) gamification | Utility token: rewards, verification, premium |
-| EIP-2771 | Sponsored transactions — gas paid by the platform |
+| Reward relay (implemented) / EIP-2771 (backend flow implemented; contract interface and deployment prerequisites remain) | Operator-funded legacy payouts remain available; signed user actions require target trust support and deployment/configuration of the forwarder and product contracts |
 | TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton for the Telegram ecosystem |
 | SolidQueue instead of Sidekiq | Zero Redis (SolidQueue/SolidCache/SolidCable) |
 | PWA + Telegram Mini App | Instead of native apps — reach, budget, TON Foundation grants |
@@ -177,11 +178,11 @@ One admin entity (User, Poi, Setting, PoiCategory…) follows one template (deta
 
 ## 🏆 TFT Tokenomics
 
-- **Emission limit:** 1 000 000 000 TFT (18 decimals), [`TravelFiToken.sol`](contracts/TravelFiToken.sol:31) `MAX_SUPPLY`. **No burn** — TFT circulate in a closed loop (activity → premium/verification → back into circulation).
+- **Emission limit:** 1 000 000 000 TFT (18 decimals), [`001-TravelFiToken.sol`](contracts/001-TravelFiToken.sol:31) `MAX_SUPPLY`. **No burn** — TFT circulate in a closed loop (activity → premium/verification → back into circulation).
 - **Utility:** rewards, reputation (badges, levels from **user contribution**, not `token_balance`), premium filters, priority verification, DAO voting.
 - **Sale (crowdsale) — separate legally-vetted entity**, not in the grant.
 - **Circulation:** Issuer mints and distributes once → paused. Then only the Cashier (`TravelFiCrowdsale`) and Rewards (`TravelFiRewards`) work. Rewards without lock (registration, newcomer referral) or **with vesting** (`lockDays`; rest + referrer's referral bonus — anti-fraud). Lock computed on the fly (`updated_at + lock_days`).
-- **Two-stage on-chain crediting:** off-chain (`UserReward` + `TokenTransaction`) immediately → "Claim rewards" (or auto-claim job) → one on-chain send to the custodial wallet. `TokenTransactionRelayJob` serialized by operator (`limits_concurrency`); `TokenTransactionRetryJob` resends failed; `sendRewardBatch` for promotions.
+- **Two-stage on-chain crediting:** off-chain (`UserReward` + `TokenTransaction`) immediately → "Claim rewards" (or auto-claim job) → one on-chain send to the selected reward wallet (linked external first, custodial otherwise). `TokenTransactionRelayJob` serialized by operator (`limits_concurrency`); `TokenTransactionRetryJob` resends failed; `sendRewardBatch` for promotions.
 - **Gamification:** rewards — registration 10, referral (referrer) 5 (vesting), referral (newcomer) 5, POI 20, photo 5, comment 5, vote 2. Badges — `registration_complete`, `first_poi`, `contributor`, `explorer`, `recruiter`, `veteran`. Config in `Setting.gamification_config` (admin-editable, no redeploy). `GamificationService.revoke!` — global revoke of not-yet-relayed rewards.
 
 ---
@@ -204,7 +205,7 @@ An extension over `Vote` + `ReputationService`. Direct edit — only the POI aut
 Full description in [`.roo/rules/01-INSTRUCTIONS.md`](.roo/rules/01-INSTRUCTIONS.md) and [`.roo/rules/03-COMPONENT-REFERENCE.md`](.roo/rules/03-COMPONENT-REFERENCE.md). Summary: class `XxxComponent < ApplicationComponent` (NOT module wrappers, NOT `ViewComponent::Base`); sidecar folder same name (`html.erb` + `css` + `controller.js` + 4 yml) — **full set, always**; root tag `data-controller="kebab-case-name"`; partials and inline `<script>`/`<style>` forbidden; **Lookbook preview mandatory**.
 
 ### Live comments (no duplicated/nested HTML)
-`Comments::CommentComponent` — pure wrapper with `[data-comment-content]` + `[data-comment-children]`; content in `Comments::CommentContentComponent`. `PoiCommentBroadcaster` inserts roots/replies; `:update` = `inner_html`. `VersionObserverJob#children_count_only_changed?` suppresses reply-increment broadcasts. **"Edited by" label** reads the last UPDATE-version changing `body`; after live edit the broadcaster dispatches `poi:comment-updated` → `refreshPermissions()`. **Interaction gating:** commenting/voting/photo require active status (`UserAccessService.can_interact?`).
+`Comments::CommentComponent` — pure wrapper with `[data-comment-content]` + `[data-comment-children]`; content in `Comments::CommentContentComponent`. `PoiCommentBroadcaster` inserts roots/replies; `:update` = `inner_html`. `VersionObserverJob#children_count_only_changed?` suppresses reply-increment broadcasts. Comment and reply counters/events are delivered to the shared `pois_map` stream; after a successful create, the author's personal stream clears only the matching form using a targeted `inner_html` operation. **Limits:** one root comment per user per POI and one reply per user per comment; root comments and replies both receive the current activity reward. Future policy to consider once the community is large enough: reward only comments approved by the community. **"Edited by" label** reads the last UPDATE-version changing `body`; after live edit the broadcaster dispatches `poi:comment-updated` → `refreshPermissions()`. **Interaction gating:** commenting/voting/photo require active status (`UserAccessService.can_interact?`).
 
 ### Style, i18n, comments
 Only green-blue Tailwind palette (`emerald`, `teal`, `sky`); icons — only MDI with class comment. 4 locales; translations in sidecar YAML, relative keys `t(".key")`; no hardcoding. Every method documented with a comment immediately before the declaration.

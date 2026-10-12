@@ -28,6 +28,14 @@ RSpec.describe CommentService, type: :service do
       expect(comment.root_id).to be_nil
     end
 
+    it 'запрещает второй корневой комментарий того же пользователя к POI' do
+      CommentService.create_comment(commentable: poi, user: user, body: 'Первый комментарий')
+
+      expect {
+        CommentService.create_comment(commentable: poi, user: user, body: 'Второй комментарий')
+      }.to raise_error(CommentService::CreateError, /already commented|уже оставили/)
+    end
+
     it 'создаёт ответ на корень и инкрементирует children_count' do
       root = CommentService.create_comment(commentable: poi, user: user, body: 'Корень')
 
@@ -100,7 +108,7 @@ RSpec.describe CommentService, type: :service do
 
     it 'фильтрует скрытые комментарии (.visible)' do
       visible = CommentService.create_comment(commentable: poi, user: user, body: 'Видимый')
-      hidden = CommentService.create_comment(commentable: poi, user: user, body: 'Скрытый')
+      hidden = CommentService.create_comment(commentable: poi, user: other_user, body: 'Скрытый')
       hidden.update!(hidden_at: Time.current)
 
       roots = CommentService.roots(poi, sort: :new)

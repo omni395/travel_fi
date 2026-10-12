@@ -13,7 +13,7 @@ require "json"
 # у пула OPERATOR_ROLE) → для юзера это gasless и без лок-периода.
 #
 # Флоу:
-#   1. Берём custodial-адрес юзера (user.wallet.address)
+#   1. Берём адрес получателя награды (external при подключении, иначе custodial)
 #   2. Собираем calldata sendReward(address,uint256) (ABI) для REWARDS_CONTRACT_ADDRESS
 #   3. Подписываем транзакцию EIP-155 приватным ключом оператора (OPERATOR_PRIVATE_KEY)
 #   4. eth_sendRawTransaction → tx_hash
@@ -25,8 +25,8 @@ require "json"
 # Relay начислений идёт ТОЛЬКО на REWARDS; TOKEN/CROWDSALE используются другими
 # потоками (mint/продажи) и relay не затрагивают.
 #
-# Без OPERATOR_PRIVATE_KEY или без custodial-кошелька — транзакция пропускается
-# (остаётся pending, отправится позже после появления кошелька).
+# OPERATOR_PRIVATE_KEY — обязательная конфигурация relay. Без кошелька-получателя
+# транзакция пропускается (кошелёк может появиться позже через backfill).
 #
 class TokenTransactionService
   DEFAULT_GAS = 120_000
@@ -94,15 +94,29 @@ class TokenTransactionService
     new(token_transaction).relay!
   end
 
+  def self.rpc_call(method, params)
+    new(nil).send(:rpc, method, params)
+  end
+
+  def self.submit_forwarder_transaction!(request:, signature:, forwarder_address:, chain_id:)
+    new(nil).send(
+      :submit_forwarder_transaction!,
+      request: request,
+      signature: signature,
+      forwarder_address: forwarder_address,
+      chain_id: chain_id
+    )
+  end
+
   #
-  # Backfill: отправляет pending-начисления юзера после появления custodial-кошелька.
-  # Назначает кошелёк на транзакции (у email-регистрации welcome идёт ДО создания
-  # кошелька) и ставит их в очередь на on-chain отправку.
+  # Backfill: отправляет pending-начисления после появления кошелька.
+  # Назначает приоритетный адрес награды (external, затем custodial) на
+  # транзакции и ставит их в очередь на on-chain отправку.
   #
-  # @param user [User] пользователь, получивший custodial-кошелёк
+  # @param user [User] пользователь, получивший кошелёк-получатель
   #
   def self.backfill_pending!(user)
-    wallet = user.wallet
+    wallet = WalletService.reward_wallet(user:)
     return unless wallet
 
     # Возвращает записи, которые можно отправить сразу: мгновенные (lock=0,
@@ -111,7 +125,7 @@ class TokenTransactionService
     user.token_transactions.where(status: :pending).where(tx_hash: nil).find_each do |tx|
       next unless tx.instant? || tx.available?
 
-      tx.update!(wallet: wallet) if tx.wallet_id.blank?
+      tx.update!(wallet: wallet) if tx.wallet_id != wallet.id
       TokenTransactionRelayJob.perform_later(tx.id)
     end
   end
@@ -129,12 +143,21 @@ class TokenTransactionService
   # @return [String, nil] tx_hash
   #
   def relay!
-    return unless operator_private_key.present?
-    return if token_transaction.tx_hash.present?
-    return unless %w[pending failed].include?(token_transaction.status)
+    if token_transaction.tx_hash.present?
+      Rails.logger.info("TokenTransactionService: skip tx_id=#{token_transaction.id}; tx_hash already present")
+      return
+    end
+    unless %w[pending failed].include?(token_transaction.status)
+      Rails.logger.warn("TokenTransactionService: skip tx_id=#{token_transaction.id}; status=#{token_transaction.status}")
+      return
+    end
 
-    wallet = token_transaction.wallet
-    return unless wallet&.address.present?
+    wallet = WalletService.reward_wallet(user: token_transaction.user)
+    unless wallet&.address.present?
+      Rails.logger.error("TokenTransactionService: cannot relay tx_id=#{token_transaction.id}; reward wallet is missing")
+      return
+    end
+    token_transaction.update!(wallet: wallet) if token_transaction.wallet_id != wallet.id
 
     # Ретрай после failed: сбрасываем в pending перед повторной отправкой.
     # Передаём флаг is_retry=true, чтобы использовать бо́льший bump газа.
@@ -220,6 +243,29 @@ class TokenTransactionService
     )
   end
 
+  def submit_forwarder_transaction!(request:, signature:, forwarder_address:, chain_id:)
+    data = Crypto::Ethereum.encode_forwarder_execute_data(request:, signature:)
+    nonce = nonce_of(operator_address)
+    gas_price = gas_price_for
+    gas = estimate_gas(data, to_address: forwarder_address, fallback: 550_000)
+    gas = (gas * 1.2).ceil
+
+    signed = Crypto::Ethereum.sign_transaction(
+      private_key_hex: operator_private_key,
+      nonce: nonce,
+      gas_price: gas_price,
+      gas: gas,
+      to: forwarder_address,
+      value: 0,
+      data: data,
+      chain_id: chain_id
+    )
+    tx_hash = send_raw_transaction(signed[:raw])
+    raise "EIP-2771 relay transaction failed or timed out (#{tx_hash})" unless wait_for_receipt(tx_hash)
+
+    tx_hash
+  end
+
   #
   # Отправляет подписанную сырую транзакцию в сеть через eth_sendRawTransaction.
   #
@@ -293,7 +339,9 @@ class TokenTransactionService
   #
   def operator_private_key
     key = ENV["OPERATOR_PRIVATE_KEY"]
-    key&.sub(/\A0x/, "")
+    raise KeyError, "OPERATOR_PRIVATE_KEY is required" if key.blank?
+
+    key.sub(/\A0x/, "")
   end
 
   #
@@ -374,10 +422,10 @@ class TokenTransactionService
   # @param data [String] calldata
   # @return [Integer] лимит газа
   #
-  def estimate_gas(data)
-    rpc("eth_estimateGas", [ { from: operator_address, to: token_address, data: data }, "latest" ]).to_i(16)
+  def estimate_gas(data, to_address: token_address, fallback: DEFAULT_GAS)
+    rpc("eth_estimateGas", [ { from: operator_address, to: to_address, data: data }, "latest" ]).to_i(16)
   rescue StandardError
-    DEFAULT_GAS
+    fallback
   end
 
   #

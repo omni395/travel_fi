@@ -16,7 +16,7 @@ Travel Fi — **открытая комьюнити-платформа гума�
 > Поддержать Travel Fi на Artizen: https://artizen.fund/index/p/travel-fi
 > Поддержать Travel Fi на Karmahq: https://www.karmahq.org/project/travel-fi
 
-> **Набор документов:** статус продукта по секциям → [`docs/ROADMAP_ru.md`](docs/ROADMAP_ru.md); грант-оценка (что делать + время + стоимость) → [`docs/MILESTONES_ru.md`](docs/MILESTONES_ru.md); реестр долгов → [`docs/TECH-DEBTS_ru.md`](docs/TECH-DEBTS_ru.md); инструкции для ИИ-агента — `.roo/rules/*`. Английское зеркало — `README.md`.
+> **Набор документов:** статус продукта по секциям → [`docs/ROADMAP_ru.md`](docs/ROADMAP_ru.md); грант-оценка (что делать + время + стоимость) → [`docs/MILESTONES_ru.md`](docs/MILESTONES_ru.md); реестр долгов → [`docs/TECH-DEBTS_ru.md`](docs/TECH-DEBTS_ru.md).
 
 ---
 
@@ -71,12 +71,13 @@ Travel Fi — **открытая комьюнити-платформа гума�
 
 ## 💰 Web3 и смарт-контракты
 
-**Три EVM-контракта** (написаны, задеплоены и верифицированы в тестнете; все — 18 decimals):
-- [`TravelFiToken.sol`](contracts/TravelFiToken.sol:13) — **Эмитент**: жёсткая эмиссия `MAX_SUPPLY = 1 000 000 000`, разовое распределение, затем пауза.
-- [`TravelFiCrowdsale.sol`](contracts/TravelFiCrowdsale.sol) — **Кассир**: покупка/продажа токенов за ETH/USDT (комиссия при продаже — анти-арбитраж), оплата фич (Token Spend).
-- [`TravelFiRewards.sol`](contracts/TravelFiRewards.sol) — **Награды**: выдача с vesting (`lockDays`).
+**Четыре исходника EVM-контрактов** (три продуктовых контракта и EIP-2771-релейер; TFT использует 18 decimals):
+- [`000-TravelFiForwarder.sol`](../contracts/000-TravelFiForwarder.sol) — отдельный релейер на базе OpenZeppelin v5 `ERC2771Forwarder` для подписанных gas-sponsored вызовов.
+- [`001-TravelFiToken.sol`](../contracts/001-TravelFiToken.sol:13) — **Эмитент**: жёсткая эмиссия `MAX_SUPPLY = 1 000 000 000`, разовое распределение, затем пауза; доверяет настроенному ERC-2771-forwarder.
+- [`002-TravelFiCrowdsale.sol`](../contracts/002-TravelFiCrowdsale.sol) — **Кассир**: покупка/продажа токенов за ETH/USDT (комиссия при продаже — анти-арбитраж), оплата фич (Token Spend).
+- [`003-TravelFiRewards.sol`](../contracts/003-TravelFiRewards.sol) — **Награды**: выплаты из reward pool по разрешению оператора; vesting/lock-периоды проверяются backend-леджером.
 
-**Gasless (EIP-2771):** бэкенд (`Crypto::Ethereum`) выступает как Relayer — подписывает и транслирует, не перекладывая оплату газа на кошельки пользователей.
+**Операции с оплатой газа платформой:** отдельный `000-TravelFiForwarder.sol` исполняет EIP-712-запросы; продуктовые контракты должны проверять forwarded sender и предоставлять интерфейс проверки доверия цели. Claim наград и разрешённые операции кассира за USDT/ETH используют подписанные запросы; оператор отправляет forward-запрос и платит за газ. Покупка за ETH остаётся обычной пользовательской транзакцией: forwarding покрывает только газ и не principal покупки. Для USDT-покупки всё ещё нужен allowance, если используемый USDT не поддерживает отдельный authorization-метод. В текущих исходниках Cashier и Rewards отсутствует view `isTrustedForwarder(address)`, который OpenZeppelin вызывает при проверке целевого контракта. Это изменение интерфейса контрактов и развёртывание/настройка адресов четырёх контрактов — предварительные условия; развёрнутые экземпляры не меняются до отдельного согласования и выполнения.
 
 **Decimals:** EVM-контракты = 18; будущий TON Jetton = 9 (стандарт). Мост маппит 9↔18 через коэффициент конверсии — существующие контракты НЕ переписываются.
 
@@ -88,8 +89,8 @@ Travel Fi — **открытая комьюнити-платформа гума�
 
 ### 🔐 Web3 & Onboarding (кошельки)
 - **Custodial** — скрытый кошелёк, генерируется на сервере на Ruby (`OpenSSL::PKey::EC` secp256k1 + keccak256 + EIP-55, [`Crypto::Ethereum`](lib/crypto/ethereum.rb:1), без новых гемов); приватный ключ шифруется `ActiveSupport::MessageEncryptor` (`WalletService`). Zero-Friction UX: пользователь не взаимодействует с Web3 на старте.
-- **External** — продвинутый пользователь подключает свой кошелёк (**MetaMask / hot-wallet**) и подписывает сам; **WalletConnect — на будущее**.
-- **`viem` — только фронтенд** (npm, [`package.json`](package.json:23)): EIP-2771 sponsored-транзакции, Contract Mgmt, чтение баланса ERC-20. Генерация ключей на сервере к viem отношения не имеет.
+- **External** — модель кошельков разделяет внешние и custodial-кошельки. Профиль поддерживает **MetaMask и другие injected hot wallet**, мобильные диплинки MetaMask и **WalletConnect**; сервер никогда не хранит приватные ключи. Привязанный внешний кошелёк может подписывать EIP-2771-запросы на получение наград.
+- **`viem` — только фронтенд** (npm, [`package.json`](../package.json:23)): подключение кошелька, Contract Mgmt, чтение баланса ERC-20. Генерация ключей на сервере к viem отношения не имеет.
 - **DeFi-интеграция:** off-chain леджер `UserReward` + `TokenTransaction` зачисляется за активность → доступ к premium. On-chain отправка через `TokenTransactionService.relay!` (контракты задеплоены, см. `.env`).
 
 ---
@@ -168,7 +169,7 @@ Stimulus → Reflex (morph :nothing + Pundit) → Service (бизнес-логи
 | Proximity Check (100м) | Антифрод для комментариев и голосования через `ST_DWithin` |
 | Предложения правок (консенсус 100м) | Применение по автору / независимым локальным юзерам / репутации вместо прямых записей |
 | ERC-20 (TFT) геймификация | Utility-токен: награды, верификация, premium |
-| EIP-2771 | Спонсированные транзакции — газ платит платформа |
+| Reward relay (реализован) / EIP-2771 (исходники готовы, нужен редеплой) | Старые начисления оплачивает оператор; для пользовательских вызовов нужны новые экземпляры существующих контрактов |
 | TON Cross-chain Bridge | Lock ERC-20 → Mint Jetton для экосистемы Telegram |
 | SolidQueue вместо Sidekiq | Zero Redis (SolidQueue/SolidCache/SolidCable) |
 | PWA + Telegram Mini App | Вместо нативных приложений — охват, бюджет, гранты TON Foundation |
@@ -177,11 +178,11 @@ Stimulus → Reflex (morph :nothing + Pundit) → Service (бизнес-логи
 
 ## 🏆 Токеномика TFT
 
-- **Лимит эмиссии:** 1 000 000 000 TFT (18 decimals), [`TravelFiToken.sol`](contracts/TravelFiToken.sol:31) `MAX_SUPPLY`. **No burn** — TFT циркулируют в замкнутом контуре (активность → premium/верификация → обратно в оборот).
+- **Лимит эмиссии:** 1 000 000 000 TFT (18 decimals), [`001-TravelFiToken.sol`](../contracts/001-TravelFiToken.sol:31) `MAX_SUPPLY`. **No burn** — TFT циркулируют в замкнутом контуре (активность → premium/верификация → обратно в оборот).
 - **Utility:** награды, репутация (бейджи, уровни от **вклада пользователя**, не `token_balance`), премиум-фильтры, приоритетная верификация, DAO-голосование.
 - **Продажа (crowdsale) — отдельная юридически выверенная сущность**, не входит в грант.
 - **Кругооборот:** Эмитент выпускает и распределяет разово → пауза. Дальше работают только Кассир (`TravelFiCrowdsale`) и Награды (`TravelFiRewards`). Награды без локдейса (регистрация, реферал новичку) или **с vesting** (`lockDays`; остальные + реферальный бонус реферера — антифрод). Лок считается на лету (`updated_at + lock_days`).
-- **Двухэтапное on-chain начисление:** off-chain (`UserReward` + `TokenTransaction`) сразу → кнопка «Забрать награды» (или авто-claim) → одна on-chain отправка на custodial-кошелёк. `TokenTransactionRelayJob` сериализован по оператору (`limits_concurrency`); `TokenTransactionRetryJob` переотправляет упавшие; `sendRewardBatch` для акций.
+- **Двухэтапное on-chain начисление:** off-chain (`UserReward` + `TokenTransaction`) сразу → кнопка «Забрать награды» (или авто-claim) → одна on-chain отправка на выбранный кошелёк (сначала привязанный внешний, иначе custodial). `TokenTransactionRelayJob` сериализован по оператору (`limits_concurrency`); `TokenTransactionRetryJob` переотправляет упавшие; `sendRewardBatch` для акций.
 - **Геймификация:** награды — регистрация 10, реферал (реферер) 5 (vesting), реферал (новичок) 5, POI 20, фото 5, комментарий 5, голос 2. Бейджи — `registration_complete`, `first_poi`, `contributor`, `explorer`, `recruiter`, `veteran`. Конфиг в `Setting.gamification_config` (правится в админке, без редеплоя). `GamificationService.revoke!` — глобальный отзыв не отправленных начислений.
 
 ---
@@ -204,7 +205,7 @@ Stimulus → Reflex (morph :nothing + Pundit) → Service (бизнес-логи
 Полное описание — в [`.roo/rules/01-INSTRUCTIONS.md`](.roo/rules/01-INSTRUCTIONS.md) и [`.roo/rules/03-COMPONENT-REFERENCE.md`](.roo/rules/03-COMPONENT-REFERENCE.md). Кратко: класс `XxxComponent < ApplicationComponent` (НЕ module-обёртки, НЕ `ViewComponent::Base`); sidecar-папка с одноимённым именем (`html.erb` + `css` + `controller.js` + 4 yml) — **полный набор, всегда**; корневой тег `data-controller="kebab-case-name"`; partial'ы и инлайн `<script>`/`<style>` запрещены; **Lookbook-превью обязательно**.
 
 ### Live-комментарии (без дублей/вложенного HTML)
-`Comments::CommentComponent` — чистая обёртка с `[data-comment-content]` + `[data-comment-children]`; контент в `Comments::CommentContentComponent`. `PoiCommentBroadcaster` вставляет корни/ответы; `:update` = `inner_html`. `VersionObserverJob#children_count_only_changed?` подавляет broadcast при изменении только `children_count`. Метка «(изменено {кем} {когда})» читает последнюю UPDATE-версию, менявшую `body`; после live-правки бродкастер шлёт `poi:comment-updated` → `refreshPermissions()`. **Ограничение взаимодействия:** комментирование/голосование/фото требуют активного статуса (`UserAccessService.can_interact?`).
+`Comments::CommentComponent` — чистая обёртка с `[data-comment-content]` + `[data-comment-children]`; контент в `Comments::CommentContentComponent`. `PoiCommentBroadcaster` вставляет корни/ответы; `:update` = `inner_html`. `VersionObserverJob#children_count_only_changed?` подавляет broadcast при изменении только `children_count`. Счётчики голосов комментариев идут в общий стрим `pois_map`; после успешного создания личный стрим автора очищает только соответствующую форму адресной операцией `inner_html`. **Лимиты:** один корневой комментарий пользователя на POI и один ответ этого пользователя на комментарий; оба типа сейчас оплачиваются. На будущее, после роста сообщества, рассмотреть выплату награды только за одобренные сообществом комментарии. Метка «(изменено {кем} {когда})» читает последнюю UPDATE-версию, менявшую `body`; после live-правки бродкастер шлёт `poi:comment-updated` → `refreshPermissions()`. **Ограничение взаимодействия:** комментирование/голосование/фото требуют активного статуса (`UserAccessService.can_interact?`).
 
 ### Стиль, i18n, комментарии
 Только зелено-голубая гамма Tailwind (`emerald`, `teal`, `sky`); иконки — только MDI с комментарием класса. 4 локали; переводы в sidecar YAML, относительные ключи `t(".key")`; хардкод запрещён. Каждый метод документируется комментарием непосредственно перед объявлением.

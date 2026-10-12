@@ -34,21 +34,24 @@ class UserService
   #
   #
   # Забирает разблокированные по лок-периоду начисления пользователя: ставит
-  # relay-Джоб (SolidQueue) для каждой available-записи, чтобы токены ушли на
-  # custodial-кошелёк. on-chain отправка — асинхронно, через очередь.
+  # relay-Джоб (SolidQueue) для каждой available-записи. Привязывает подключённый
+  # внешний кошелёк, если он есть; иначе использует или создаёт custodial.
+  # On-chain отправка — асинхронно, через очередь.
   #
   # @param user [User] пользователь, забирающий награды
   # @return [Integer] количество поставленных в очередь начислений
   #
   def self.claim_rewards!(user)
-    available = user.token_transactions.unclaimed.available
+    available = user.token_transactions.unclaimed.available.to_a
+    return 0 if available.empty?
+
+    wallet = WalletService.reward_wallet(user: user, create_if_missing: true)
+
     available.each do |tx|
+      tx.update!(wallet: wallet) if tx.wallet_id != wallet.id
       TokenTransactionRelayJob.perform_later(tx.id)
     end
-    available.count
-  rescue StandardError => e
-    Rails.logger.error("UserService.claim_rewards! error: #{e.class} #{e.message}")
-    0
+    available.length
   end
 
   def self.call(user:, params:)

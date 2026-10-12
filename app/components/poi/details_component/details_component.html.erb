@@ -1,39 +1,39 @@
 <%# Poi::DetailsComponent - таб «Детали» карточки POI %>
 <%# Иконки: mdi-phone / mdi-web / mdi-wheelchair / mdi-currency-usd / mdi-clock-outline / mdi-source-branch / mdi-map-marker / mdi-content-copy / mdi-map-marker-outline / mdi-directions %>
-<div data-controller="poi--details-component" class="space-y-4 p-4">
+<div data-controller="poi--details-component" class="space-y-4 p-3 sm:p-4 min-w-0">
   <%# Описание %>
   <% if poi.localized_description.present? %>
     <div>
       <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"><%= t(".description") %></h4>
-      <p class="text-sm text-gray-700"><%= poi.localized_description %></p>
+      <p class="text-sm text-gray-700 wrap-break-word"><%= poi.localized_description %></p>
     </div>
   <% end %>
 
   <%# Контакты и доступность %>
-  <div class="grid grid-cols-2 gap-3">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
     <% if poi.phone.present? %>
-      <div class="flex items-center gap-2 text-sm">
+      <div class="flex items-center gap-2 text-sm min-w-0">
         <i class="mdi mdi-phone text-gray-400"></i>
         <%# Иконка: mdi-phone %>
-        <a href="tel:<%= poi.phone %>" class="text-emerald-600 hover:text-emerald-800"><%= poi.phone %></a>
+        <a href="tel:<%= poi.phone %>" class="text-emerald-600 hover:text-emerald-800 min-w-0 wrap-break-word"><%= poi.phone %></a>
       </div>
     <% end %>
     <% if poi.website.present? %>
-      <div class="flex items-center gap-2 text-sm">
+      <div class="flex items-center gap-2 text-sm min-w-0">
         <i class="mdi mdi-web text-gray-400"></i>
         <%# Иконка: mdi-web %>
-        <a href="<%= poi.website %>" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-800 truncate"><%= poi.website %></a>
+        <a href="<%= poi.website %>" target="_blank" rel="noopener" class="text-emerald-600 hover:text-emerald-800 min-w-0 wrap-break-word"><%= poi.website %></a>
       </div>
     <% end %>
     <% if poi.wheelchair_accessible %>
-      <div class="flex items-center gap-2 text-sm text-gray-600">
+      <div class="flex items-center gap-2 text-sm text-gray-600 min-w-0">
         <i class="mdi mdi-wheelchair text-gray-400"></i>
         <%# Иконка: mdi-wheelchair %>
         <%= t(".wheelchair_accessible") %>
       </div>
     <% end %>
     <% if poi.price_info.present? %>
-      <div class="flex items-center gap-2 text-sm text-gray-600">
+      <div class="flex items-center gap-2 text-sm text-gray-600 min-w-0 wrap-break-word">
         <i class="mdi mdi-currency-usd text-gray-400"></i>
         <%# Иконка: mdi-currency-usd %>
         <%= poi.price_info %>
@@ -45,7 +45,7 @@
   <% if poi.opening_hours.present? %>
     <div>
       <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1"><%= t(".opening_hours") %></h4>
-      <p class="text-sm text-gray-700 flex items-start gap-1">
+      <p class="text-sm text-gray-700 flex items-start gap-1 min-w-0 wrap-break-word">
         <i class="mdi mdi-clock-outline text-gray-400 mt-0.5"></i>
         <%# Иконка: mdi-clock-outline %>
         <%= poi.opening_hours.is_a?(Hash) ? poi.opening_hours.to_json : poi.opening_hours %>
@@ -57,11 +57,11 @@
   <% if metadata_fields.any? %>
     <div>
       <h4 class="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2"><%= t(".characteristics") %></h4>
-      <dl class="grid grid-cols-2 gap-2">
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-0">
         <% metadata_fields.each do |field| %>
-          <div class="text-sm">
+          <div class="text-sm min-w-0">
             <dt class="text-xs text-gray-400"><%= field[:label] %></dt>
-            <dd class="text-gray-900">
+            <dd class="text-gray-900 wrap-break-word">
               <% if field[:value].is_a?(Array) %>
                 <%= field[:value].join(", ") %>
               <% elsif [true, false].include?(field[:value]) %>
@@ -77,7 +77,7 @@
   <% end %>
 
   <%# Источник %>
-  <div class="flex items-center gap-2 text-sm text-gray-600">
+  <div class="flex flex-wrap items-center gap-2 text-sm text-gray-600 min-w-0">
     <i class="mdi mdi-source-branch text-gray-400"></i>
     <%# Иконка: mdi-source-branch %>
     <span><%= source_label %></span>
@@ -92,8 +92,8 @@
     <div data-poi--details-component-target="viewMap"
          class="w-full h-48 rounded-lg border border-gray-200 overflow-hidden"></div>
     <% if coordinates_text.present? %>
-      <div class="flex flex-wrap items-center gap-3 mt-2">
-        <span class="text-xs text-gray-400 font-mono"><%= coordinates_text %></span>
+      <div class="flex flex-wrap items-center gap-3 mt-2 min-w-0">
+        <span class="text-xs text-gray-400 font-mono wrap-break-word"><%= coordinates_text %></span>
         <button type="button"
                 data-controller="ui--clipboard-component"
                 data-clipboard-text-value="<%= coordinates_text %>"

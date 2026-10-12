@@ -25,14 +25,14 @@
           <%= t(".name") %>
           <span class="text-red-500">*</span>
         </label>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <% locales.each do |locale| %>
             <div>
               <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
               <%# Для en: слушаем input для авто-заполнения slug + обязательно %>
               <%= text_field_tag "poi_category[name][#{locale}]", localized_value(:name, locale),
                                  autocomplete: "off",
-                                 class: "field-input mt-1",
+                                 class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 mt-1",
                                  placeholder: t("locales.#{locale}"),
                                  data: (locale == "en" ? { action: "input->admin--poi-categories--poi-category--edit-component#autoFillSlug" } : {}),
                                  required: (locale == "en") %>
@@ -57,7 +57,7 @@
         <%= f.text_field :slug,
                          autocomplete: "off",
                          required: true,
-                         class: "field-input",
+                         class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500",
                          data: {
                            "admin--poi-categories--poi-category--edit-component_target": "slugInput",
                            action: "input->admin--poi-categories--poi-category--edit-component#markSlugEdited"
@@ -80,7 +80,7 @@
                                    "admin--poi-categories--poi-category--edit-component_target" => "iconInput" },
                            autocomplete: "off",
                            placeholder: "mdi-icon-name",
-                           class: "field-input flex-1" %>
+                           class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 flex-1" %>
         </div>
       </div>
 
@@ -156,14 +156,14 @@
           <i class="mdi mdi-text-box-outline mr-1"></i>
           <%= t(".description") %>
         </label>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <% locales.each do |locale| %>
             <div>
               <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
               <%= text_area_tag "poi_category[description][#{locale}]", localized_value(:description, locale),
                                 rows: 3,
                                 autocomplete: "off",
-                                class: "field-input mt-1",
+                                class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 mt-1",
                                 placeholder: t("locales.#{locale}") %>
             </div>
           <% end %>
@@ -204,7 +204,7 @@
           <%= text_field_tag "poi_category[osm_tags]", osm_tags_string,
                              autocomplete: "off",
                              placeholder: "amenity=toilets, amenity=shower",
-                             class: "field-input w-full" %>
+                             class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 w-full" %>
           <p class="mt-1 text-xs text-gray-500"><%= t(".osm_tags_hint") %></p>
         </div>
 
@@ -215,13 +215,13 @@
             <i class="mdi mdi-translate mr-1"></i>
             <%= t(".osm_default_name_label") %>
           </label>
-          <div class="grid grid-cols-2 gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <% locales.each do |locale| %>
               <div>
                 <span class="text-xs text-gray-400 uppercase"><%= locale %></span>
                 <%= text_field_tag "poi_category[osm_default_name][#{locale}]", localized_value(:osm_default_name, locale),
                                    autocomplete: "off",
-                                   class: "field-input mt-1",
+                                   class: "block w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm leading-5 text-gray-900 placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-500 mt-1",
                                    placeholder: t("locales.#{locale}") %>
               </div>
             <% end %>

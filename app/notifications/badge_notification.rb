@@ -46,15 +46,6 @@ class BadgeNotification < ApplicationNotification
     }
   end
 
-  #
-  # Персональный стрим получателя.
-  #
-  # @return [String]
-  #
-  def user_stream
-    "user_#{recipient.id}"
-  end
-
   private
 
   #

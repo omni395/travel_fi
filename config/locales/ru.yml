@@ -1,4 +1,14 @@
 ru:
+  wallets:
+    invalid_address: "Укажите корректный адрес кошелька."
+    challenge_expired: "Запрос подтверждения кошелька истёк. Попробуйте ещё раз."
+    signature_invalid: "Подпись кошелька недействительна. Попробуйте ещё раз."
+    connected: "Кошелёк подключён."
+    disconnected: "Кошелёк отключён."
+    address_in_use: "Этот кошелёк уже подключён к другой учётной записи."
+    claim_unavailable: "Нет доступных наград для спонсируемого получения."
+    cashier_unavailable: "Эта спонсируемая операция обмена недоступна."
+
   locales:
     en: "English"
     ru: "Русский"
@@ -216,6 +226,11 @@ ru:
     layout:
       loading: "Загрузка..."
       solid_queue_dashboard: "SolidQueue"
+      dashboard: "Обзор"
+      users: "Пользователи"
+      poi_categories: "Категории POI"
+      pois: "POI"
+      settings: "Настройки"
     title: "Админ-панель"
     back_to_site: "Вернуться на сайт"
     profile: "Профиль"
@@ -384,6 +399,7 @@ ru:
   comments:
     cannot_reply_to_self: "Нельзя отвечать на свой собственный комментарий"
     already_replied: "Вы уже ответили на этот комментарий"
+    already_commented_on_poi: "Вы уже оставили комментарий к этой точке"
 
   time:
     formats:

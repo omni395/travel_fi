@@ -15,7 +15,7 @@
 %>
 <% if dropdown_variant? %>
   <%# Вариант :dropdown — фильтры скрыты под кнопку с иконкой %>
-  <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "w-80 p-2 bg-white border border-gray-200") do |dropdown| %>
+  <%= render Ui::DropdownComponent.new(position: "right", menu_classes: "w-[calc(100vw-2rem)] max-w-80 p-2 bg-white border border-gray-200") do |dropdown| %>
     <% dropdown.with_trigger do %>
       <button type="button"
               data-action="ui--dropdown-component#toggle"

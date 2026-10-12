@@ -42,13 +42,4 @@ class UserProfileNotification < ApplicationNotification
       event_type: params[:event_type]
     }
   end
-
-  #
-  # Персональный стрим получателя.
-  #
-  # @return [String]
-  #
-  def user_stream
-    "user_#{recipient.id}"
-  end
 end

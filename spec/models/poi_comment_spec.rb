@@ -30,6 +30,13 @@ RSpec.describe PoiComment, type: :model do
     it 'отклоняет слишком длинное body' do
       expect(build(:poi_comment, poi: poi, body: 'x' * 1001)).not_to be_valid
     end
+
+    it 'оставляет проверку лимита корневого комментария сервисному слою' do
+      user = create(:user)
+      create(:poi_comment, poi: poi, user: user)
+
+      expect(build(:poi_comment, poi: poi, user: user)).to be_valid
+    end
   end
 
   describe 'ассоциации' do
